@@ -11,8 +11,8 @@ tutor cara masang raylib
     -IC:\\raylib-5.5_win32_mingw-w64\\include -LC:\\raylib-5.5_win32_mingw-w64\\lib -lraylib -lopengl32 -lgdi32 -lwinmm
 
 
-cara untuk ngerun program ini
-make app
+cara untuk ngerun program ini :
+- make app
 
-cara hapus file build dan exe
-make cln
+cara hapus file build dan exe :
+- make cln
