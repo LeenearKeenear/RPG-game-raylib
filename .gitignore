@@ -1,0 +1,8 @@
+# binary
+*.exe
+
+# object file
+*.o
+
+# optional: ignore build folder entirely
+build/s
