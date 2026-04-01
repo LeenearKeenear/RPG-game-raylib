@@ -48,7 +48,7 @@ void UpdateGame(GameState *state) {
 
 void DrawRenderTexture(GameState *state) {
     Vector2 Mouse = GetMousePosition();
-    Vector2 virtualMouse = {0};
+    Vector2 virtualMouse = {0, 0};
     virtualMouse.x = (Mouse.x - (state->WindowScreenWidth  - (GameScreenWidth  * state->ScaleMultiplier)) * 0.5f) / state->ScaleMultiplier;
     virtualMouse.y = (Mouse.y - (state->WindowScreenHeight - (GameScreenHeight * state->ScaleMultiplier)) * 0.5f) / state->ScaleMultiplier;
     virtualMouse   = Vector2Clamp(virtualMouse, (Vector2){0, 0}, (Vector2){(float)GameScreenWidth, (float)GameScreenHeight});
