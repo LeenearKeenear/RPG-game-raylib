@@ -1,32 +1,25 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17 -I./lib/include
-LDFLAGS = -L./lib/lib -lraylib -lopengl32 -lgdi32 -lwinmm
+CXXFLAGS = -Wall -Wextra -std=c++17 -I./include -I./lib/include
+LDFLAGS = -L./lib -lraylib -lopengl32 -lgdi32 -lwinmm
 
 SRC_DIR = src
 OBJ_DIR = build
 EXE = main.exe
 
-app: CC = g++
-app: CXX = g++
-app:
+SRC = $(wildcard $(SRC_DIR)/*.cpp)
+OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+
+app: $(OBJ)
 	@rm -f $(EXE)
-	@mkdir -p $(OBJ_DIR)/g++
-	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/logic.cpp -o $(OBJ_DIR)/g++/logic.o
-	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/main.cpp -o $(OBJ_DIR)/g++/main.o
-	$(CXX) $(OBJ_DIR)/g++/logic.o $(OBJ_DIR)/g++/main.o -o $(EXE) $(LDFLAGS)
-	cp lib/lib/raylib.dll .
+	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
+	cp lib/raylib.dll .
 	@echo Build selesai!
 
-app-clang: CC = clang++
-app-clang: CXX = clang++
-app-clang:
-	@rm -f $(EXE)
-	@mkdir -p $(OBJ_DIR)/clang++
-	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/logic.cpp -o $(OBJ_DIR)/clang++/logic.o
-	$(CXX) $(CXXFLAGS) -c $(SRC_DIR)/main.cpp -o $(OBJ_DIR)/clang++/main.o
-	$(CXX) $(OBJ_DIR)/clang++/logic.o $(OBJ_DIR)/clang++/main.o -o $(EXE) $(LDFLAGS)
-	cp lib/lib/raylib.dll .
-	@echo Build selesai!
+$(OBJ_DIR):
+	@mkdir -p $(OBJ_DIR)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
 	rm -rf $(OBJ_DIR) $(EXE) raylib.dll
