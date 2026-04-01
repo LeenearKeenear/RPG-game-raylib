@@ -1,18 +1,61 @@
-tutor cara masang raylib
+# Game RPG - Raylib
 
-1. download filenya
-2. kalo udah extract
-3. kalo udah kalian buka raylibnya
-4. lalu cari file header raylibnya di path ini "C:\raylib-5.5_win32_mingw-w64\include\raylib.h"
-5. sekarang copy filenya terus paste di folder include compiler kalian. contoh : "C:\MinGW\include\raylib.h"
-6. lakukan untuk semua header yang ada pada folder include raylib (ada 3)
-7. lakukan langkah 3-5 untuk file dengan nama "C:\raylib-5.5_win32_mingw-w64\lib\libraylib.a". bedanya ini di taro di folder lib compiler kalian. contoh : "C:\MinGW\lib\libraylib.a"
-8. kalo mau compile di linking pake flag ini
-    -IC:\\raylib-5.5_win32_mingw-w64\\include -LC:\\raylib-5.5_win32_mingw-w64\\lib -lraylib -lopengl32 -lgdi32 -lwinmm
+Game RPG 2D yang dibuat dengan Raylib.
 
+## Persyaratan
 
-cara untuk ngerun program ini :
-- make app
+- MinGW (g++) atau LLVM (clang++)
+- [Raylib 5.5](https://www.raylib.com/) (sudah termasuk dalam `lib/`)
 
-cara hapus file build dan exe :
-- make cln
+## Struktur Proyek
+
+```
+.
+├── src/                # Kode sumber
+│   ├── main.cpp
+│   ├── logic.cpp
+│   └── dungeon.h
+├── lib/                # Library eksternal
+│   ├── include/        # Header
+│   └── lib/             # Static library + DLL
+├── Makefile            # Konfigurasi build
+└── .vscode/            # Konfigurasi VSCode
+```
+
+## Instruksi Build
+
+### Build dengan GCC (Default)
+
+```bash
+make app
+```
+
+### Build dengan Clang
+
+```bash
+make app-clang
+```
+
+### Bersihkan Build
+
+```bash
+make cln
+```
+
+### Jalankan Game
+
+```bash
+./main.exe
+```
+
+## Setup di VSCode
+
+1. Install extensions:
+   - C/C++ (Microsoft)
+   - Makefile Tools (microsoft)
+
+2. Buka folder proyek
+3. Gunakan Makefile Tools untuk build dan run
+
+> [!NOTE]
+> Raylib 5.5 sudah termasuk dalam direktori `lib/`.
