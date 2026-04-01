@@ -1,10 +1,18 @@
-#include "dungeon.h"
-#include <iostream>
+#include "include/dungeon.h"
+#include "include/screen.h"
 #include <raylib.h>
+#include <raymath.h>
 
-int main(int argc, char const *argv[])
-{
-    sayhello();
-    system("pause");
+int main(void) {
+    GameState state = InitScreen();
+
+    while (!WindowShouldClose()) {
+        UpdateGame(&state);
+        DrawRenderTexture(&state);
+        DrawRenderWindows(&state);
+    }
+
+    UnloadRenderTexture(state.Dungeon);
+    CloseWindow();
     return 0;
 }

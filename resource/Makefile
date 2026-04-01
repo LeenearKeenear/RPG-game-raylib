@@ -4,7 +4,7 @@ LDFLAGS = -LC:/raylib-5.5_win32_mingw-w64/lib -lraylib -lopengl32 -lgdi32 -lwinm
 
 OBJ_DIR = build
 
-SRC = main.cpp logic.cpp
+SRC = main.cpp logic.cpp screen_handler.cpp
 OBJ = $(SRC:%.cpp=$(OBJ_DIR)/%.o)
 
 EXE = main.exe
