@@ -1,8 +1,4 @@
-# binary
-*.exe
-
-# object file
+/build/
+/main.exe
+raylib.dll
 *.o
-
-# optional: ignore build folder entirely
-build/s
