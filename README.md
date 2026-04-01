@@ -7,6 +7,21 @@ Game RPG 2D yang dibuat dengan Raylib.
 - MinGW (g++) atau LLVM (clang++)
 - [Raylib 5.5](https://www.raylib.com/) (sudah termasuk dalam `lib/`)
 
+## Struktur Proyek
+
+```
+.
+├── src/                # Kode sumber
+│   ├── main.cpp
+│   ├── logic.cpp
+│   └── dungeon.h
+├── lib/                # Library eksternal
+│   ├── include/        # Header
+│   └── lib/             # Static library + DLL
+├── Makefile            # Konfigurasi build
+└── .vscode/            # Konfigurasi VSCode
+```
+
 ## Instruksi Build
 
 ### Build dengan GCC (Default)
