@@ -1,4 +1,4 @@
-#include "include/screen.h"
+#include "screen.h"
 #include <raylib.h>
 #include <raymath.h>
 
