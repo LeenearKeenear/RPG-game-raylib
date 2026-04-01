@@ -13,6 +13,7 @@ Game RPG 2D yang dibuat dengan Raylib.
 Jika belum punya MinGW, install salah satu:
 
 1. **Scoop** (direkomendasikan):
+
    ```powershell
    scoop install mingw
    ```
@@ -55,17 +56,3 @@ make cln
 
 2. Buka folder proyek
 3. Gunakan Makefile Tools untuk build dan run
-
-## Struktur Proyek
-
-```
-.
-├── src/                # Kode sumber
-├── include/            # Header proyek
-├── lib/                # Library dan header raylib
-├── Makefile            # Konfigurasi build
-└── build/              # File objek (dibuat otomatis)
-```
-
-> [!NOTE]
-> Raylib 5.5 sudah termasuk dalam direktori `lib/`. Tidak perlu instalasi tambahan.
