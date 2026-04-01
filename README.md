@@ -4,7 +4,7 @@ Game RPG 2D yang dibuat dengan Raylib.
 
 ## Persyaratan
 
-- MinGW (g++) atau LLVM (clang++)
+- MinGW (g++)
 - [Raylib 5.5](https://www.raylib.com/) (sudah termasuk dalam `lib/`)
 
 ## Instruksi Build
