@@ -11,13 +11,14 @@ OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 app: $(OBJ)
 	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
-	cp lib/raylib.dll .
+	cmd /c copy /Y lib\\raylib.dll .
 
 $(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+	cmd /c mkdir $(OBJ_DIR) 2>nul
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
-	rm -rf $(OBJ_DIR) $(EXE) raylib.dll
+	cmd /c rmdir /S /Q $(OBJ_DIR) 2>nul
+	cmd /c del /Q $(EXE) raylib.dll 2>nul
