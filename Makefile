@@ -14,11 +14,10 @@ app: $(OBJ)
 	powershell -Command "Copy-Item -Force lib/raylib.dll ."
 
 $(OBJ_DIR):
-	powershell -Command "if (!(Test-Path build)) { New-Item -ItemType Directory build }"
+	powershell -Command "if (!(Test-Path $(OBJ_DIR))) { New-Item -ItemType Directory $(OBJ_DIR) }"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
-	powershell -Command "Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue; exit 0"
-	powershell -Command "Remove-Item -Force main.exe, raylib.dll -ErrorAction SilentlyContinue; exit 0"
+	powershell -Command "Remove-Item -Recurse -Force $(OBJ_DIR) -ErrorAction SilentlyContinue; Remove-Item -Force $(EXE), raylib.dll -ErrorAction SilentlyContinue; exit 0"
