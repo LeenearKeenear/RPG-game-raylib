@@ -11,12 +11,16 @@ EXE_CLANG = main-clang.exe
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
 
 app: $(OBJ_DIR)
+	@cls
 	$(CXX) $(SRC) -o $(EXE) $(LDFLAGS) -I./include -I./lib/include
 	cp lib/raylib.dll .
+	@echo file app telah dibuat
 
 app-clang: $(OBJ_DIR_CLANG)
+	@cls
 	clang++ $(SRC) -o $(EXE_CLANG) $(LDFLAGS) -I./include -I./lib/include
 	cp lib/raylib.dll .
+	@echo file app telah dibuat
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
@@ -25,4 +29,6 @@ $(OBJ_DIR_CLANG):
 	mkdir -p $(OBJ_DIR_CLANG)
 
 cln:
-	rm -rf $(OBJ_DIR) $(OBJ_DIR_CLANG) $(EXE) $(EXE_CLANG) raylib.dll
+	@cls
+	@del /Q $(OBJ_DIR) $(OBJ_DIR_CLANG) $(EXE) $(EXE_CLANG) raylib.dll
+	@echo Semua file dihapus
