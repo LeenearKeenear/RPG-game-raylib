@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17 -I./include -I./lib/include
-LDFLAGS = -L./lib -lraylib -lopengl32 -lgdi32 -lwinmm
+CXXFLAGS = -Wall -Wextra -std=c++17 -I./include -I./lib/include -Wno-missing-field-initializers
+LDFLAGS = -L./lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
 
 SRC_DIR = src
 OBJ_DIR = build
@@ -11,14 +11,14 @@ OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 app: $(OBJ)
 	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
-	cmd /c copy /Y lib\\raylib.dll .
+	powershell -Command "Copy-Item -Force lib/raylib.dll ."
 
 $(OBJ_DIR):
-	cmd /c mkdir $(OBJ_DIR) 2>nul
+	powershell -Command "if (!(Test-Path build)) { New-Item -ItemType Directory build }"
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
-	cmd /c rmdir /S /Q $(OBJ_DIR) 2>nul
-	cmd /c del /Q $(EXE) raylib.dll 2>nul
+	powershell -Command "Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue; exit 0"
+	powershell -Command "Remove-Item -Force main.exe, raylib.dll -ErrorAction SilentlyContinue; exit 0"
