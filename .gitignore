@@ -1,6 +1,5 @@
 /build/
 /main.exe
-raylib.dll
 *.o
 /.vscode/
 
@@ -76,4 +75,4 @@ dkms.conf
 # End of https://www.toptal.com/developers/gitignore/api/c,c++
 
 # Track raylib library files
-!lib/
+!raylib/
