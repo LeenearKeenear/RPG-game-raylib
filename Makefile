@@ -4,23 +4,25 @@ LDFLAGS = -L./lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
 
 SRC_DIR = src
 OBJ_DIR = build
+OBJ_DIR_CLANG = build-clang
 EXE = main.exe
+EXE_CLANG = main-clang.exe
 
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
-OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-app: $(OBJ)
-	@cls
-	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
+app: $(OBJ_DIR)
+	$(CXX) $(SRC) -o $(EXE) $(LDFLAGS) -I./include -I./lib/include
+	cp lib/raylib.dll .
+
+app-clang: $(OBJ_DIR_CLANG)
+	clang++ $(SRC) -o $(EXE_CLANG) $(LDFLAGS) -I./include -I./lib/include
 	cp lib/raylib.dll .
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(OBJ_DIR_CLANG):
+	mkdir -p $(OBJ_DIR_CLANG)
 
 cln:
-	@cls
-	cmd /c "del /Q $(OBJ_DIR)\*.o $(EXE) raylib.dll"
-	@echo Semua file dihapus
+	rm -rf $(OBJ_DIR) $(OBJ_DIR_CLANG) $(EXE) $(EXE_CLANG) raylib.dll
