@@ -11,14 +11,13 @@ OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 app: $(OBJ)
 	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
-	cp lib/raylib.dll .
+	powershell -Command "Copy-Item -Force lib/raylib.dll ."
 
 $(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+	powershell -Command "if (!(Test-Path $(OBJ_DIR))) { New-Item -ItemType Directory $(OBJ_DIR) }"
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
-	cmd /c "del /Q $(OBJ_DIR)\*.o $(EXE) raylib.dll"
-	@echo Semua file dihapus
+	powershell -Command "Remove-Item -Recurse -Force $(OBJ_DIR) -ErrorAction Continue; Remove-Item -Force $(EXE), raylib.dll -ErrorAction Continue; exit 0"
