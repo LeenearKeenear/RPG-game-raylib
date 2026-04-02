@@ -20,4 +20,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
-	powershell -Command "Remove-Item -Recurse -Force $(OBJ_DIR) -ErrorAction SilentlyContinue; Remove-Item -Force $(EXE), raylib.dll -ErrorAction SilentlyContinue; exit 0"
+	powershell -Command "Remove-Item -Recurse -Force $(OBJ_DIR) -ErrorAction Continue; Remove-Item -Force $(EXE), raylib.dll -ErrorAction Continue; exit 0"
