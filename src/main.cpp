@@ -1,5 +1,5 @@
-#include "dungeon.h"
-#include "screen.h"
+#include "../include/dungeon.h"
+#include "../include/screen.h"
 #include <raylib.h>
 #include <raymath.h>
 

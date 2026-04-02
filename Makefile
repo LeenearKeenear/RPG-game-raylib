@@ -10,6 +10,7 @@ SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 app: $(OBJ)
+	@cls
 	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
 	cp lib/raylib.dll .
 
@@ -20,5 +21,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
+	@cls
 	cmd /c "del /Q $(OBJ_DIR)\*.o $(EXE) raylib.dll"
 	@echo Semua file dihapus
