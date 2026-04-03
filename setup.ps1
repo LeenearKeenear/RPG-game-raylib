@@ -13,8 +13,11 @@ function Write-Step($message) {
 function Install-Raylib() {
     Write-Step "Checking for raylib..."
 
-    $installDir = "lib/raylib"
-    if ((Test-Path "$installDir/include/raylib.h") -and (Test-Path "$installDir/lib/libraylib.a")) {
+    $cwd = $PWD.Path
+    $installDir = Join-Path $cwd "lib/raylib"
+    $zipFile = Join-Path $cwd "raylib.zip"
+    
+    if ((Test-Path (Join-Path $installDir "include/raylib.h")) -and (Test-Path (Join-Path $installDir "lib/libraylib.a"))) {
         Write-Step "raylib already installed at $installDir"
         return
     }
@@ -23,20 +26,33 @@ function Install-Raylib() {
 
     # Download using curl.exe
     Write-Step "Downloading..."
-    & curl.exe -L -o raylib.zip $RepoUrl
+    & curl.exe -L -o $zipFile $RepoUrl
 
-    if (-not (Test-Path "raylib.zip")) {
+    if (-not (Test-Path $zipFile)) {
         Write-Host "[SETUP] Download failed!" -ForegroundColor Red
         exit 1
     }
 
     Write-Step "Download complete. Extracting..."
 
-    # Clean and extract using bash
-    bash -c "rm -rf lib/raylib raylib-5.5_win64_mingw-w64 && unzip -o -q raylib.zip && mkdir -p lib/raylib && mv raylib-5.5_win64_mingw-w64/* lib/raylib/ && rm -rf raylib-5.5_win64_mingw-w64 raylib.zip"
+    # Extract using bash (more reliable for this structure)
+    Write-Step "Extracting..."
+    $bashPath = "C:\Users\Epb\scoop\apps\git\current\usr\bin\bash.exe"
+    $raylibFolder = "raylib-5.5_win64_mingw-w64"
+    $extractCmd = "cd '$cwd' && rm -rf '$raylibFolder' && unzip -o -q 'raylib.zip' && rm -f 'raylib.zip'"
+    & $bashPath -c $extractCmd
+    
+    # Move extracted folder to lib/raylib using PowerShell
+    $extractedPath = Join-Path $cwd $raylibFolder
+    if (Test-Path $extractedPath) {
+        if (Test-Path $installDir) {
+            Remove-Item -Path $installDir -Recurse -Force
+        }
+        Move-Item -Path $extractedPath -Destination $installDir
+    }
 
     # Verify installation
-    if ((Test-Path "$installDir/include/raylib.h") -and (Test-Path "$installDir/lib/libraylib.a")) {
+    if ((Test-Path (Join-Path $installDir "include/raylib.h")) -and (Test-Path (Join-Path $installDir "lib/libraylib.a"))) {
         Write-Step "raylib installed successfully to $installDir" -ForegroundColor Green
     } else {
         Write-Host "[SETUP] Installation verification failed!" -ForegroundColor Red
