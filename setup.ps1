@@ -1,11 +1,9 @@
 # setup.ps1 - Auto-download raylib if not present
-# Downloads raylib from GitHub master branch to lib/raylib/
+# Downloads raylib 5.5 from GitHub releases to lib/raylib/
 
 param(
-    [string]$RepoUrl = "https://github.com/raysan5/raylib/archive/refs/heads/master.zip",
-    [string]$ZipFile = "raylib.zip",
-    [string]$TempDir = "lib_temp",
-    [string]$InstallDir = "lib/raylib"
+    [string]$RaylibVersion = "5.5",
+    [string]$RepoUrl = "https://github.com/raysan5/raylib/releases/download/5.5/raylib-5.5_win64_mingw-w64.zip"
 )
 
 function Write-Step($message) {
@@ -15,34 +13,35 @@ function Write-Step($message) {
 function Install-Raylib() {
     Write-Step "Checking for raylib..."
 
-    if ((Test-Path "$InstallDir/include/raylib.h") -and (Test-Path "$InstallDir/lib/libraylib.a")) {
-        Write-Step "raylib already installed at $InstallDir"
+    $installDir = "lib/raylib"
+    if ((Test-Path "$installDir/include/raylib.h") -and (Test-Path "$installDir/lib/libraylib.a")) {
+        Write-Step "raylib already installed at $installDir"
         return
     }
 
-    Write-Step "raylib not found. Downloading from GitHub (master branch)..."
+    Write-Step "raylib not found. Downloading raylib $RaylibVersion from GitHub..."
 
-    # Download
-    Invoke-WebRequest -Uri $RepoUrl -OutFile $ZipFile
+    # Download using curl.exe
+    Write-Step "Downloading..."
+    & curl.exe -L -o raylib.zip $RepoUrl
+
+    if (-not (Test-Path "raylib.zip")) {
+        Write-Host "[SETUP] Download failed!" -ForegroundColor Red
+        exit 1
+    }
+
     Write-Step "Download complete. Extracting..."
 
-    # Extract to temp
-    Expand-Archive -Path $ZipFile -DestinationPath $TempDir -Force
+    # Clean and extract using bash
+    bash -c "rm -rf lib/raylib raylib-5.5_win64_mingw-w64 && unzip -o -q raylib.zip && mkdir -p lib/raylib && mv raylib-5.5_win64_mingw-w64/* lib/raylib/ && rm -rf raylib-5.5_win64_mingw-w64 raylib.zip"
 
-    # Create lib/raylib/ structure
-    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-    New-Item -ItemType Directory -Path "$InstallDir/include" -Force | Out-Null
-    New-Item -ItemType Directory -Path "$InstallDir/lib" -Force | Out-Null
-
-    # Move contents
-    $sourceDir = "$TempDir/raylib-master"
-    Move-Item -Path "$sourceDir/*" -Destination "$InstallDir/" -Force
-
-    # Cleanup
-    Remove-Item -Path $ZipFile -Force -ErrorAction SilentlyContinue
-    Remove-Item -Path $TempDir -Recurse -Force -ErrorAction SilentlyContinue
-
-    Write-Step "raylib installed to $InstallDir" -ForegroundColor Green
+    # Verify installation
+    if ((Test-Path "$installDir/include/raylib.h") -and (Test-Path "$installDir/lib/libraylib.a")) {
+        Write-Step "raylib installed successfully to $installDir" -ForegroundColor Green
+    } else {
+        Write-Host "[SETUP] Installation verification failed!" -ForegroundColor Red
+        exit 1
+    }
 }
 
 Install-Raylib
