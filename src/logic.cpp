@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../include/raylib.h"
+#include "../lib/raylib/include/raylib.h"
 
 void sayhello()
 {

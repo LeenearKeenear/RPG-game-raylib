@@ -2,6 +2,7 @@
 /main.exe
 *.o
 /.vscode/
+.clangd
 *.bak
 /Backups/
 
