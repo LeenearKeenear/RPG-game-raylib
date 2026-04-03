@@ -4,31 +4,20 @@ LDFLAGS = -L./lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
 
 SRC_DIR = src
 OBJ_DIR = build
-OBJ_DIR_CLANG = build-clang
 EXE = main.exe
-EXE_CLANG = main-clang.exe
 
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
+OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-app: $(OBJ_DIR)
-	@cls
-	$(CXX) $(SRC) -o $(EXE) $(LDFLAGS) -I./include -I./lib/include
-	cp lib/raylib.dll .
-	@echo file app telah dibuat
-
-app-clang: $(OBJ_DIR_CLANG)
-	@cls
-	clang++ $(SRC) -o $(EXE_CLANG) $(LDFLAGS) -I./include -I./lib/include
-	cp lib/raylib.dll .
-	@echo file app telah dibuat
+app: $(OBJ)
+	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
+	powershell -Command "Copy-Item -Force lib/raylib.dll ."
 
 $(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+	powershell -Command "if (!(Test-Path $(OBJ_DIR))) { New-Item -ItemType Directory $(OBJ_DIR) }"
 
-$(OBJ_DIR_CLANG):
-	mkdir -p $(OBJ_DIR_CLANG)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
-	@cls
-	@del /Q $(OBJ_DIR) $(OBJ_DIR_CLANG) $(EXE) $(EXE_CLANG) raylib.dll
-	@echo Semua file dihapus
+	powershell -Command "Remove-Item -Recurse -Force $(OBJ_DIR) -ErrorAction Continue; Remove-Item -Force $(EXE), raylib.dll -ErrorAction Continue; exit 0"
