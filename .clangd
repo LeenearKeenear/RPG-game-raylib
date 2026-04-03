@@ -1,0 +1,17 @@
+CompileFlags:
+  Add:
+    - -std=c++17
+    - -I./include
+    - -I./lib/include
+    - -Wno-missing-field-initializers
+  CompilationDatabase: .
+
+Diagnostics:
+  ClangTidy:
+    Add:
+      - modernize-*
+      - performance-*
+      - readability-*
+    Remove:
+      - modernize-use-trailing-return-type
+      - readability-magic-numbers
