@@ -12,14 +12,12 @@ SRC = $(wildcard $(SRC_DIR)/*.cpp)
 
 app: $(OBJ_DIR)
 	@cls
-	$(CXX) $(SRC) -o $(EXE) $(LDFLAGS) -I./include -I./lib/include
-	cp lib/raylib.dll .
+	$(CXX) $(SRC) -o $(EXE) $(LDFLAGS) -I./include -I./raylib/include
 	@echo file app telah dibuat
 
 app-clang: $(OBJ_DIR_CLANG)
 	@cls
-	clang++ $(SRC) -o $(EXE_CLANG) $(LDFLAGS) -I./include -I./lib/include
-	cp lib/raylib.dll .
+	clang++ $(SRC) -o $(EXE_CLANG) $(LDFLAGS) -I./include -I./raylib/include
 	@echo file app telah dibuat
 
 $(OBJ_DIR):

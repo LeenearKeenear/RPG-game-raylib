@@ -54,5 +54,6 @@ Semua file .h harus diletakkan di folder: include/
 
 ## 📌 To do :
 
-1. 
-2.
+1. buat data struct buat item, player, enemy sama data data struct yang penting
+2. desain layout menu secara kasar
+3. implementasi pertama tile map sama player movement
