@@ -85,5 +85,6 @@ dkms.conf
 # Auto-downloaded raylib
 lib/raylib/
 
-# Temp directory
+# Temp directories
 tmp/
+temp/
