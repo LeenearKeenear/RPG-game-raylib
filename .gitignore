@@ -82,5 +82,8 @@ dkms.conf
 
 # End of https://www.toptal.com/developers/gitignore/api/c,c++
 
-# Track raylib library files
-!raylib/
+# Auto-downloaded raylib
+lib/raylib/
+
+# Temp directory
+tmp/
