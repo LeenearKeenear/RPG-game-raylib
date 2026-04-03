@@ -62,7 +62,7 @@ Semua file .h harus diletakkan di folder: include/
 
 Usahakan diurutkan berdasarkan prioritas; dari yang paling penting ke kurang penting
 
-- [ ] Buat logic utama
-- [ ] Buat asset game yang dibutuhkan
+- [ ] Buat Data Struct buat item, player, enemy sama data data struct yang penting
+- [ ] Desain Layout menu secara kasar
+- [ ] Implementasi pertama tile map sama player movement
 - [ ] Migrasi projek menggunakan `Cmake`
-- [ ] dst.
