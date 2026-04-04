@@ -101,7 +101,7 @@ function Install-Raylib() {
     }
 }
 
-function Clean-OldRaylib() {
+function Remove-OldRaylib() {
     $cwd = $PWD.Path
     $oldRaylib = Join-Path $cwd "raylib"
     
@@ -113,5 +113,5 @@ function Clean-OldRaylib() {
     }
 }
 
-Clean-OldRaylib
+Remove-OldRaylib
 Install-Raylib
