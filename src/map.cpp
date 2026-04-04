@@ -5,16 +5,19 @@
 
 // ukuran map berdasarkan tilesnya (jadi (20 x TILE_WIDTH) x (20 x TILE_HEIGHT))
 // oh ya ini masih eksperimen buat sizenya. nanti bakal diubah
-#define WORLD_WIDTH 20
-#define WORLD_HEIGHT 20
+#define WORLD_WIDTH 30
+#define WORLD_HEIGHT 30
 
 sTile WorldMap[WORLD_WIDTH][WORLD_HEIGHT];
+sTile Dungeon[WORLD_WIDTH][WORLD_HEIGHT];
 
 Texture2D TexturesMap[MAX_TEXTURES];
 
 Camera2D camera = {0};
 Entity Player;
+PropsAttributes Door;
 
+// sementara tapi konsepnya gini
 TileCoordinate TileCoords[] = {
     [TILE_CLU_WALL] = {0, 0},
     [TILE_CMU_WALL] = {1, 0},
@@ -27,7 +30,10 @@ TileCoordinate TileCoords[] = {
     [TILE_CRD_WALL] = {3, 2},
     [TILE_POOL] = {12, 8},
     [TILE_BIGMAN] = {7, 0},
-};
+    [TILE_GRASS1] = {4, 4},
+    [TILE_GRASS2] = {5, 4},
+    [TILE_DOOR_OPEN] = {4, 2},
+    [TILE_DOOR_CLOSE] = {5, 2}};
 
 // buat ngeload texture dari berbagai png
 void LoadTileTexture(TextureAsset Slot, const char *Path)
@@ -65,24 +71,57 @@ void InitDrawMap(GameState *state)
 {
     LoadTileTexture(TEXTURE_TILEMAP, "texture/colored_tilemap.png");
 
-    // inisialisasi tile dalam bentuk array 2d 
+    // inisialisasi tile dalam bentuk array 2d. entry point buat desain map nya juga bisa
     for (int i = 0; i < WORLD_WIDTH; i++)
     {
         for (int j = 0; j < WORLD_HEIGHT; j++)
         {
+            // ini keknya sementara
             WorldMap[i][j] = (sTile){
                 .x = i,
                 .y = j,
-            };
+                .type = (TileType)GetRandomValue(TILE_GRASS1, TILE_GRASS2)};
+
+            Dungeon[i][j] = (sTile){
+                .x = i,
+                .y = j,
+                .type = (TileType)TILE_GRASS2};
         }
     }
 }
 
 // update map
-void UpdateMap(GameState *state)
+void UpdatePlayer(GameState *state)
 {
+    Player.MoveTimer += GetFrameTime(); // ngambil frame sekarang
 
-    float Maxzoom = 3.5f; // maksimal zoom in
+    // player movement
+    float PlayerPosition_x = Player.x;
+    float PlayerPostition_y = Player.y;
+
+    if (Player.MoveTimer >= Player.MoveDelay)
+    {
+        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
+        {
+            PlayerPosition_x -= 1 * TILE_WIDTH;
+        }
+        else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
+        {
+            PlayerPosition_x += 1 * TILE_WIDTH;
+        }
+        else if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
+        {
+            PlayerPostition_y -= 1 * TILE_HEIGHT;
+        }
+        else if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
+        {
+            PlayerPostition_y += 1 * TILE_HEIGHT;
+        }
+
+        Player.MoveTimer = 0.0f;
+    }
+
+    float Maxzoom = 3.5f;  // maksimal zoom in
     float MinZoom = 0.85f; // minimal zoom out
 
     // fungsi biar bisa ngezoom via mousewheel
@@ -97,8 +136,21 @@ void UpdateMap(GameState *state)
             camera.zoom = MinZoom;
     }
 
+    Player.x = PlayerPosition_x;
+    Player.y = PlayerPostition_y;
+
     // buat selalu update posisi kameranya berdasarkan player
     camera.target = (Vector2){Player.x, Player.y};
+
+    // interaksi player
+    if (IsKeyPressed(KEY_E))
+    {
+        // sementara variabelnya
+        if (Player.x == Door.x && Player.y == Door.y)
+        {
+            /* code */
+        }
+    }
 }
 
 // render mapnya berdasarkan data
@@ -115,11 +167,13 @@ void RenderMap(GameState *state)
             tile = WorldMap[i][j];
 
             // buat ngetrack indexing dari gambar png nya
-            RenderTilePNG((tile.x * TILE_WIDTH), (tile.y * TILE_HEIGHT), TILE_POOL, 0, TEXTURE_TILEMAP);
+            RenderTilePNG((tile.x * TILE_WIDTH), (tile.y * TILE_HEIGHT), tile.type, 0, TEXTURE_TILEMAP);
         }
     }
+    // sementara
+    RenderTilePNG(Door.x, Door.y, TILE_DOOR_OPEN, 0.0, TEXTURE_TILEMAP);
 
-    RenderTilePNG(camera.target.x, camera.target.y, TILE_BIGMAN, 0.0, TEXTURE_TILEMAP);
+    RenderTilePNG(camera.target.x, camera.target.y, TILE_BIGMAN, 0.0, TEXTURE_TILEMAP); // disini playernya
     EndMode2D();
     DebugMenu();
 }

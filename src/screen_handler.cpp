@@ -40,10 +40,19 @@ GameState InitScreen(void)
     camera.rotation = {0};
     camera.zoom = 1.0f;
 
-     // inisialisasi player potition
+    // sementara
+    // inisialisasi player potition
     Player = (Entity){
         .x = TILE_WIDTH * 4,
         .y = TILE_HEIGHT * 4,
+        .MoveTimer = 0.0f,
+        .MoveDelay = 0.15,
+    };
+
+    // sementara
+    Door = (PropsAttributes){
+        .x = TILE_WIDTH * 10,
+        .y = TILE_HEIGHT * 10,
     };
 
     return state;

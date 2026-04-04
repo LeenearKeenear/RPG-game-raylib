@@ -12,7 +12,7 @@ int main(void)
     while (!WindowShouldClose())
     {
         UpdateGame(&state);
-        UpdateMap(&state);
+        UpdatePlayer(&state);
         DrawRenderTexture(&state);
         DrawRenderWindows(&state);
     }
