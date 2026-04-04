@@ -19,6 +19,9 @@ lib/raylib/
 tmp/
 temp/
 
+
+# ===================================================================
+
 # Created by https://www.toptal.com/developers/gitignore/api/c,c++
 # Edit at https://www.toptal.com/developers/gitignore?templates=c,c++
 
@@ -90,3 +93,5 @@ dkms.conf
 # Executables
 
 # End of https://www.toptal.com/developers/gitignore/api/c,c++
+
+# ===================================================================
