@@ -1,4 +1,5 @@
 #include "../include/screen.h"
+#include "../include/map.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -6,8 +7,8 @@
 // variabel konstanta
 const float ScaleMultiplierMonitor = 0.7F;
 const float ScaleMinMultiplierMonitor = 0.4F;
-const int GameScreenWidth = 1280;
-const int GameScreenHeight = 720;
+extern const int GameScreenWidth = 1280;
+extern const int GameScreenHeight = 720;
 
 // inisialisasi screen
 GameState InitScreen(void)
@@ -16,6 +17,7 @@ GameState InitScreen(void)
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT); // ini yang ngatur windows bisa di resize
     InitWindow(1280, 720, "Dungeon Game");                   // inisialisasi windows pertama
+    InitAudioDevice();                                       // inisialisasi audio
 
     state.WindowScreenWidth = (int)(GetMonitorWidth(0) * ScaleMultiplierMonitor);
     state.WindowScreenHeight = (int)(GetMonitorHeight(0) * ScaleMultiplierMonitor);
@@ -56,10 +58,20 @@ void DrawRenderTexture(GameState *state)
 
     BeginTextureMode(state->Dungeon);
     ClearBackground(RAYWHITE);
-    DrawRectangle(0, 0, GameScreenWidth, GameScreenHeight, RED);
-    DrawText("If executed inside a window,\nyou can resize the window,\nand see the screen scaling!", 10, 25, 20, WHITE);
-    DrawText(TextFormat("Default Mouse: [%i , %i]", (int)Mouse.x, (int)Mouse.y), 350, 25, 20, GREEN);
-    DrawText(TextFormat("Virtual Mouse: [%i , %i]", (int)virtualMouse.x, (int)virtualMouse.y), 350, 55, 20, YELLOW);
+    /*
+
+    DrawRectangle(0, 0, GameScreenWidth, GameScreenHeight, GREEN);
+        DrawText("If executed inside a window,\nyou can resize the window,\nand see the screen scaling!", 10, 25, 20, WHITE);
+        DrawText(TextFormat("Default Mouse: [%i , %i]", (int)Mouse.x, (int)Mouse.y), 350, 25, 20, GREEN);
+        DrawText(TextFormat("Virtual Mouse: [%i , %i]", (int)virtualMouse.x, (int)virtualMouse.y), 350, 55, 20, YELLOW);
+    DrawRectangle(0, 0, GameScreenWidth, GameScreenHeight, GREEN);
+        DrawText("If executed inside a window,\nyou can resize the window,\nand see the screen scaling!", 10, 25, 20, WHITE);
+        DrawText(TextFormat("Default Mouse: [%i , %i]", (int)Mouse.x, (int)Mouse.y), 350, 25, 20, GREEN);
+        DrawText(TextFormat("Virtual Mouse: [%i , %i]", (int)virtualMouse.x, (int)virtualMouse.y), 350, 55, 20, YELLOW);
+
+    */
+
+    RenderMap(state);
     EndTextureMode();
 }
 
@@ -79,4 +91,17 @@ void DrawRenderWindows(GameState *state)
         0.0F,
         WHITE);
     EndDrawing();
+}
+
+void GameShutDown(GameState *state)
+{
+
+    for (int i = 0; i < MAX_TEXTURES; i++)
+    {
+        UnloadTexture(TexturesMap[i]);
+    }
+
+    UnloadRenderTexture(state->Dungeon);
+    CloseAudioDevice();
+    CloseWindow();
 }
