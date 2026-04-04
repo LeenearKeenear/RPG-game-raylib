@@ -34,6 +34,18 @@ GameState InitScreen(void)
     SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_BILINEAR); // ini yang ngatur jenis renderingnya
     SetTargetFPS(60);
 
+    // inisialisasi camera
+    camera.target = (Vector2){Player.x, Player.y};
+    camera.offset = (Vector2){(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
+    camera.rotation = {0};
+    camera.zoom = 1.0f;
+
+     // inisialisasi player potition
+    Player = (Entity){
+        .x = TILE_WIDTH * 4,
+        .y = TILE_HEIGHT * 4,
+    };
+
     return state;
 }
 
