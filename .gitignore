@@ -2,6 +2,25 @@
 /main.exe
 *.o
 /.vscode/
+.clangd
+*.bak
+/Backups/
+
+# Personal
+*.Personal.*
+
+# AI Agents
+AGENTS.md
+
+# Auto-downloaded raylib
+lib/raylib/
+
+# Temp directories
+tmp/
+temp/
+
+
+# ===================================================================
 
 # Created by https://www.toptal.com/developers/gitignore/api/c,c++
 # Edit at https://www.toptal.com/developers/gitignore?templates=c,c++
@@ -26,6 +45,7 @@
 *.pch
 
 # Shared objects (inc. Windows DLLs)
+*.dll
 *.so
 *.so.*
 *.dylib
@@ -74,5 +94,4 @@ dkms.conf
 
 # End of https://www.toptal.com/developers/gitignore/api/c,c++
 
-# Track raylib library files
-!raylib/
+# ===================================================================

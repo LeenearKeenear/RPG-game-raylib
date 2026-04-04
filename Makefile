@@ -1,32 +1,35 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17 -I./include -I./lib/include -Wno-missing-field-initializers
-LDFLAGS = -L./lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
+CXXFLAGS = -Wall -Wextra -std=c++17 -I./include -I./lib/raylib/include -Wno-missing-field-initializers
+LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
+
+TMPDIR := tmp
+
+$(TMPDIR):
+	mkdir -p $(TMPDIR)
+
+export TMP := $(CURDIR)/$(TMPDIR)
+export TEMP := $(TMP)
 
 SRC_DIR = src
 OBJ_DIR = build
-OBJ_DIR_CLANG = build-clang
 EXE = main.exe
-EXE_CLANG = main-clang.exe
+DLL_SOURCE = lib/raylib/lib/raylib.dll
 
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
+OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-app: $(OBJ_DIR)
-	@cls
-	$(CXX) $(SRC) -o $(EXE) $(LDFLAGS) -I./include -I./raylib/include
-	@echo file app telah dibuat
+app: setup $(OBJ)
+	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
+	powershell -Command "if (Test-Path '$(DLL_SOURCE)') { Copy-Item -Force '$(DLL_SOURCE)' . }"
 
-app-clang: $(OBJ_DIR_CLANG)
-	@cls
-	clang++ $(SRC) -o $(EXE_CLANG) $(LDFLAGS) -I./include -I./raylib/include
-	@echo file app telah dibuat
+setup:
+	@powershell -ExecutionPolicy Bypass -File setup.ps1
 
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+$(OBJ_DIR): $(TMPDIR)
+	powershell -Command "if (!(Test-Path $(OBJ_DIR))) { New-Item -ItemType Directory $(OBJ_DIR) }"
 
-$(OBJ_DIR_CLANG):
-	mkdir -p $(OBJ_DIR_CLANG)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
-	@cls
-	@del /Q $(OBJ_DIR) $(OBJ_DIR_CLANG) $(EXE) $(EXE_CLANG) raylib.dll
-	@echo Semua file dihapus
+	powershell -Command "Remove-Item -Recurse -Force $(OBJ_DIR) -ErrorAction Continue; Remove-Item -Recurse -Force $(TMPDIR) -ErrorAction Continue; Remove-Item -Force $(EXE), raylib.dll -ErrorAction Continue; exit 0"

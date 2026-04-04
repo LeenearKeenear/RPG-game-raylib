@@ -1,9 +1,13 @@
+# Tugas yang harus diselesaikan
+
 ## 📌 Aturan Penulisan Kode (Syntax)
 
 ### 1. Hindari Magic Number
+
 Jangan langsung memasukkan angka ke dalam parameter function.
 
 ❌ Contoh:
+
 ```cpp
 InitWindow(1280, 720, "Dungeon Game");
 ```
@@ -31,6 +35,7 @@ void DrawTextureText();
 ```
 
 ### 3. Wajib Menggunakan Komentar
+
 Setiap function harus punya deskripsi singkat.
 Syntax yang kompleks wajib diberi penjelasan.
 
@@ -48,12 +53,16 @@ Kumpulkan perubahan secukupnya sebelum membuat PR agar repo tetap rapi.
 ### 5. Struktur File (.cpp)
 
 Semua file .cpp harus diletakkan di folder: src/
+
 ### 6. Struktur File Header (.h)
 
 Semua file .h harus diletakkan di folder: include/
 
-## 📌 To do :
+## 📌 To do
 
-1. buat data struct buat item, player, enemy sama data data struct yang penting
-2. desain layout menu secara kasar
-3. implementasi pertama tile map sama player movement
+Usahakan diurutkan berdasarkan prioritas; dari yang paling penting ke kurang penting
+
+- [ ] Buat Data Struct buat item, player, enemy sama data data struct yang penting
+- [ ] Desain Layout menu secara kasar
+- [ ] Implementasi pertama tile map sama player movement
+- [ ] Migrasi projek menggunakan `Cmake`

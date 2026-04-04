@@ -1,7 +1,7 @@
 #include "../include/dungeon.h"
 #include "../include/screen.h"
-#include <raylib.h>
-#include <raymath.h>
+#include "../lib/raylib/include/raylib.h"
+#include "../lib/raylib/include/raymath.h"
 
 int main(void) {
     GameState state = InitScreen();
