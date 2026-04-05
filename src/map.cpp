@@ -15,25 +15,25 @@ Texture2D TexturesMap[MAX_TEXTURES];
 
 Camera2D camera = {0};
 Entity Player;
-PropsAttributes Door;
+sTile Door;
 
-// sementara tapi konsepnya gini
-TileCoordinate TileCoords[] = {
-    [TILE_CLU_WALL] = {0, 0},
-    [TILE_CMU_WALL] = {1, 0},
-    [TILE_CRU_WALL] = {3, 0},
-    [TILE_CML_WALL] = {0, 1},
-    [TILE_M_WALL] = {1, 1},
-    [TILE_CMR_WALL] = {3, 1},
-    [TILE_CLD_WALL] = {0, 2},
-    [TILE_CMD_WALL] = {1, 2},
-    [TILE_CRD_WALL] = {3, 2},
-    [TILE_POOL] = {12, 8},
-    [TILE_BIGMAN] = {7, 0},
-    [TILE_GRASS1] = {4, 4},
-    [TILE_GRASS2] = {5, 4},
-    [TILE_DOOR_OPEN] = {4, 2},
-    [TILE_DOOR_CLOSE] = {5, 2}};
+TileDefinition TileProperty[] = {
+    [TILE_CLU_WALL] = {{0, 0}, false, false},
+    [TILE_CMU_WALL] = {{1, 0}, false, false},
+    [TILE_CRU_WALL] = {{3, 0}, false, false},
+    [TILE_CML_WALL] = {{0, 1}, false, false},
+    [TILE_M_WALL] = {{1, 1}, false, false},
+    [TILE_CMR_WALL] = {{3, 1}, false, false},
+    [TILE_CLD_WALL] = {{0, 2}, false, false},
+    [TILE_CMD_WALL] = {{1, 2}, false, false},
+    [TILE_CRD_WALL] = {{3, 2}, false, false},
+    [TILE_POOL] = {{12, 8}, false, false},
+    [TILE_BIGMAN] = {{7, 0}, false, false},
+    [TILE_GRASS1] = {{4, 4}, true, false},
+    [TILE_GRASS2] = {{5, 4}, true, false},
+    [TILE_DOOR_OPEN] = {{4, 2}, true, true},
+    [TILE_DOOR_CLOSE] = {{5, 2}, false, true},
+};
 
 // buat ngeload texture dari berbagai png
 void LoadTileTexture(TextureAsset Slot, const char *Path)
@@ -47,12 +47,34 @@ void LoadTileTexture(TextureAsset Slot, const char *Path)
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
 {
     // buat ngetrack indexing dari gambar png nya
-    Rectangle Source = {(float)(TileCoords[Type].x * (TILE_WIDTH + TILE_GAP)), (float)(TileCoords[Type].y * (TILE_HEIGHT + TILE_GAP)),
+    Rectangle Source = {(float)(TileProperty[Type].CoordID.x * (TILE_WIDTH + TILE_GAP)), (float)(TileProperty[Type].CoordID.y * (TILE_HEIGHT + TILE_GAP)),
                         (float)TILE_WIDTH, (float)TILE_HEIGHT};
     Rectangle Destination = {(float)(pos_x), (float)(pos_y),
                              (float)TILE_WIDTH, (float)TILE_HEIGHT};
     Vector2 origin = {0, 0};
     DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
+}
+
+void DebugCollision(float NewX, float NewY)
+{
+    Rectangle MapBounds = {
+        0, 0,
+        WORLD_WIDTH * TILE_WIDTH,
+        WORLD_HEIGHT * TILE_HEIGHT};
+
+    Rectangle PlayerCollisionBox = {
+        NewX, NewY,
+        (float)TILE_WIDTH,
+        (float)TILE_HEIGHT};
+
+    bool hit = CheckCollisionRecs(PlayerCollisionBox, MapBounds);
+
+    DrawRectangle(5, 121, 330, 100, DARKGRAY);
+    DrawRectangleLines(5, 121, 330, 100, WHITE);
+    DrawText("-- DEBUG COLLISION --", 15, 215, 25, YELLOW);
+    DrawText(TextFormat("Player Pos: (%.0f, %.0f)", NewX, NewY), 15, 125, 25, WHITE);
+    DrawText(TextFormat("Map Bounds: (%d x %d)", WORLD_WIDTH * TILE_WIDTH, WORLD_HEIGHT * TILE_HEIGHT), 15, 155, 25, WHITE);
+    DrawText(TextFormat("CheckCollisionRecs: %s", hit ? "TRUE" : "FALSE"), 15, 185, 25, hit ? GREEN : RED);
 }
 
 // fungsi debugger
@@ -78,13 +100,11 @@ void InitDrawMap(GameState *state)
         {
             // ini keknya sementara
             WorldMap[i][j] = (sTile){
-                .x = i,
-                .y = j,
+                .CoordinateTile = {i, j},
                 .type = (TileType)GetRandomValue(TILE_GRASS1, TILE_GRASS2)};
 
             Dungeon[i][j] = (sTile){
-                .x = i,
-                .y = j,
+                .CoordinateTile = {i, j},
                 .type = (TileType)TILE_GRASS2};
         }
     }
@@ -96,8 +116,8 @@ void UpdatePlayer(GameState *state)
     Player.MoveTimer += GetFrameTime(); // ngambil frame sekarang
 
     // player movement
-    float PlayerPosition_x = Player.x;
-    float PlayerPostition_y = Player.y;
+    float PlayerPosition_x = Player.PlayerPosition.x;
+    float PlayerPostition_y = Player.PlayerPosition.y;
 
     if (Player.MoveTimer >= Player.MoveDelay)
     {
@@ -118,6 +138,31 @@ void UpdatePlayer(GameState *state)
             PlayerPostition_y += 1 * TILE_HEIGHT;
         }
 
+        // batas map dalam pixel (sementara)
+        Rectangle MapBounds = {
+            0,
+            0,
+            WORLD_WIDTH * TILE_WIDTH,
+            WORLD_HEIGHT * TILE_HEIGHT,
+        };
+
+        Rectangle PlayerCollisionBox = {
+            PlayerPosition_x,
+            PlayerPostition_y,
+            (float)TILE_WIDTH,
+            (float)TILE_HEIGHT,
+        };
+
+        // cek collision
+        if (PlayerPosition_x >= 0 &&
+            PlayerPostition_y >= 0 &&
+            PlayerPosition_x + TILE_WIDTH <= WORLD_WIDTH * TILE_WIDTH &&
+            PlayerPostition_y + TILE_HEIGHT <= WORLD_HEIGHT * TILE_HEIGHT)
+        {
+            Player.PlayerPosition.x = PlayerPosition_x;
+            Player.PlayerPosition.y = PlayerPostition_y;
+        }
+
         Player.MoveTimer = 0.0f;
     }
 
@@ -136,17 +181,17 @@ void UpdatePlayer(GameState *state)
             camera.zoom = MinZoom;
     }
 
-    Player.x = PlayerPosition_x;
-    Player.y = PlayerPostition_y;
+    Player.PlayerPosition.x = PlayerPosition_x;
+    Player.PlayerPosition.y = PlayerPostition_y;
 
     // buat selalu update posisi kameranya berdasarkan player
-    camera.target = (Vector2){Player.x, Player.y};
+    camera.target = (Vector2){Player.PlayerPosition.x, Player.PlayerPosition.y};
 
     // interaksi player
     if (IsKeyPressed(KEY_E))
     {
         // sementara variabelnya
-        if (Player.x == Door.x && Player.y == Door.y)
+        if (Player.PlayerPosition.x == Door.CoordinateTile.x && Player.PlayerPosition.y == Door.CoordinateTile.y)
         {
             /* code */
         }
@@ -167,13 +212,15 @@ void RenderMap(GameState *state)
             tile = WorldMap[i][j];
 
             // buat ngetrack indexing dari gambar png nya
-            RenderTilePNG((tile.x * TILE_WIDTH), (tile.y * TILE_HEIGHT), tile.type, 0, TEXTURE_TILEMAP);
+            RenderTilePNG((tile.CoordinateTile.x * TILE_WIDTH), (tile.CoordinateTile.y * TILE_HEIGHT), tile.type, 0, TEXTURE_TILEMAP);
         }
     }
     // sementara
-    RenderTilePNG(Door.x, Door.y, TILE_DOOR_OPEN, 0.0, TEXTURE_TILEMAP);
+    RenderTilePNG(Door.CoordinateTile.x, Door.CoordinateTile.y, TILE_DOOR_OPEN, 0.0, TEXTURE_TILEMAP);
 
     RenderTilePNG(camera.target.x, camera.target.y, TILE_BIGMAN, 0.0, TEXTURE_TILEMAP); // disini playernya
+
     EndMode2D();
+    DebugCollision(Player.PlayerPosition.x, Player.PlayerPosition.y);
     DebugMenu();
 }

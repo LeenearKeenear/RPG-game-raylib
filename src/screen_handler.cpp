@@ -35,7 +35,7 @@ GameState InitScreen(void)
     SetTargetFPS(60);
 
     // inisialisasi camera
-    camera.target = (Vector2){Player.x, Player.y};
+    camera.target = (Vector2){Player.PlayerPosition.x, Player.PlayerPosition.y};
     camera.offset = (Vector2){(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
     camera.rotation = {0};
     camera.zoom = 1.0f;
@@ -43,16 +43,14 @@ GameState InitScreen(void)
     // sementara
     // inisialisasi player potition
     Player = (Entity){
-        .x = TILE_WIDTH * 4,
-        .y = TILE_HEIGHT * 4,
+        .PlayerPosition = {TILE_WIDTH * 4, TILE_HEIGHT * 4},
         .MoveTimer = 0.0f,
         .MoveDelay = 0.15,
     };
 
     // sementara
-    Door = (PropsAttributes){
-        .x = TILE_WIDTH * 10,
-        .y = TILE_HEIGHT * 10,
+    Door = (sTile){
+        .CoordinateTile = {TILE_WIDTH * 10, TILE_HEIGHT * 10},
     };
 
     return state;

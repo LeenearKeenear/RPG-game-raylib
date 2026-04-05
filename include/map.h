@@ -10,6 +10,14 @@ typedef enum
 extern Texture2D TexturesMap[MAX_TEXTURES];
 extern Camera2D camera;
 
+// struct kordinat universal
+typedef struct
+{
+    int x;
+    int y;
+} TileCoordinate;
+
+// enum buat definisiin gambar biar enak
 typedef enum
 {
     TILE_CLU_WALL,
@@ -29,32 +37,33 @@ typedef enum
     TILE_DOOR_CLOSE,
 } TileType;
 
+// struct buat koordinat tile
 typedef struct
 {
-    int x;
-    int y;
+    TileCoordinate CoordinateTile;
     TileType type;
 } sTile;
 
 // sementara doang (ini buat entity (contoh player, enemy, npc))
 typedef struct
 {
-    int x;
-    int y;
+    TileCoordinate PlayerPosition;
     float MoveTimer;
     float MoveDelay;
 } Entity;
 
-// sementara. ini buat prop atributte (contoh. wall, door, chest etc)
-typedef struct 
+// struct buat tile properti
+typedef struct
 {
-    int x;
-    int y;
-} PropsAttributes;
+    TileCoordinate CoordID;
+    bool IsWalkable;
+    bool HasInteraction;
+} TileDefinition;
 
-
+// definisi struct
 extern Entity Player;
-extern PropsAttributes Door;
+extern sTile Door;
+extern TileDefinition TileDefs[];
 
 // ukuran tile buat di mapping sprite nya
 #define TILE_WIDTH 32
@@ -62,16 +71,6 @@ extern PropsAttributes Door;
 #define TILE_GAP 4
 
 // enum buat texture id nya
-typedef struct
-{
-    int x;
-    int y;
-} TileCoordinate;
-
-
-
-extern TileCoordinate TileCoords[];
-
 
 void InitDrawMap(GameState *state);
 void UpdatePlayer(GameState *state);
