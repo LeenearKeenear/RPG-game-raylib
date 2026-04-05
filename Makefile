@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17 -I./include -I./lib/raylib/include -Wno-missing-field-initializers
-LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
+CXXFLAGS = -Wall -Wextra -std=c++17 -I./include -I./raylib/include -Wno-missing-field-initializers
+LDFLAGS = -L./raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
 
 TMPDIR := tmp
 
@@ -13,7 +13,7 @@ export TEMP := $(TMP)
 SRC_DIR = src
 OBJ_DIR = build
 EXE = main.exe
-DLL_SOURCE = lib/raylib/lib/raylib.dll
+DLL_SOURCE = raylib/lib/raylib.dll
 
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
@@ -32,4 +32,4 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
-	powershell -Command "Remove-Item -Recurse -Force $(OBJ_DIR) -ErrorAction Continue; Remove-Item -Recurse -Force $(TMPDIR) -ErrorAction Continue; Remove-Item -Force $(EXE), raylib.dll -ErrorAction Continue; exit 0"
+	powershell -Command "Stop-Process -Name main -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Remove-Item -Recurse -Force $(OBJ_DIR) -ErrorAction Continue; Remove-Item -Recurse -Force $(TMPDIR) -ErrorAction Continue; Remove-Item -Force $(EXE), raylib.dll -ErrorAction SilentlyContinue; exit 0"
