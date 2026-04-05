@@ -1,30 +1,18 @@
 #pragma once
 #include "../raylib/include/raylib.h"
 
-// ======================
-// CONFIG
-// ======================
-namespace Config
-{
-    const int GAME_WIDTH = 1280;
-    const int GAME_HEIGHT = 720;
-}
+extern const int GameScreenWidth;
+extern const int GameScreenHeight;
 
-// ======================
-// GAME STATE
-// ======================
-struct GameState
-{
+typedef struct {
     RenderTexture2D Dungeon;
     float ScaleMultiplier;
-    int WindowWidth;
-    int WindowHeight;
-};
+    int WindowScreenWidth;
+    int WindowScreenHeight;
+} GameState;
 
-// ======================
-// FUNCTIONS
-// ======================
-GameState InitScreen();
-void UpdateGameState(GameState *Game);
-void DrawRenderTexture(GameState *Game);
-void DrawRenderWindow(GameState *Game);
+GameState InitScreen(void);
+void UpdateGame(GameState *state);
+void DrawRenderTexture(GameState *state);
+void DrawRenderWindows(GameState *state);
+void GameShutDown(GameState *state);
