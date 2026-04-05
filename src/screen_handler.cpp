@@ -10,6 +10,32 @@ const float ScaleMinMultiplierMonitor = 0.4F;
 extern const int GameScreenWidth = 1280;
 extern const int GameScreenHeight = 720;
 
+void InitAll(void)
+{
+    // TODO MULTI-MAP: spawn point player harusnya diambil dari data map aktif
+    // bukan hardcode ke tengah WORLD_WIDTH/HEIGHT
+    // sementara
+    // inisialisasi player potition
+    Player = (Entity){
+        .PlayerPosition = {(WORLD_WIDTH * TILE_WIDTH / 2), (WORLD_HEIGHT * TILE_HEIGHT / 2)}, // biar ditengah
+        .MoveTimer = 0.0f,
+        .MoveDelay = 0.15,
+    };
+
+    // TODO MULTI-MAP: Door harusnya diambil dari data object layer map aktif
+    // sementara
+    Door = (sTile){
+        .CoordinateTile = {TILE_WIDTH * 10, TILE_HEIGHT * 10},
+    };
+
+    // TODO MULTI-MAP: target kamera harusnya dari spawn point map aktif
+    // inisialisasi camera
+    camera.target = (Vector2){(float)(WORLD_WIDTH * TILE_WIDTH / 2), (float)(WORLD_HEIGHT * TILE_HEIGHT / 2)}; // ini targetin player biar ditengah map
+    camera.offset = (Vector2){(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};                    // kamera di tengah map
+    camera.rotation = {0};
+    camera.zoom = 1.0f;
+}
+
 // inisialisasi screen
 GameState InitScreen(void)
 {
@@ -34,24 +60,7 @@ GameState InitScreen(void)
     SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_BILINEAR); // ini yang ngatur jenis renderingnya
     SetTargetFPS(60);
 
-    // inisialisasi camera
-    camera.target = (Vector2){Player.PlayerPosition.x, Player.PlayerPosition.y};
-    camera.offset = (Vector2){(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
-    camera.rotation = {0};
-    camera.zoom = 1.0f;
-
-    // sementara
-    // inisialisasi player potition
-    Player = (Entity){
-        .PlayerPosition = {TILE_WIDTH * 4, TILE_HEIGHT * 4},
-        .MoveTimer = 0.0f,
-        .MoveDelay = 0.15,
-    };
-
-    // sementara
-    Door = (sTile){
-        .CoordinateTile = {TILE_WIDTH * 10, TILE_HEIGHT * 10},
-    };
+    InitAll();
 
     return state;
 }
@@ -114,7 +123,8 @@ void DrawRenderWindows(GameState *state)
 
 void GameShutDown(GameState *state)
 {
-
+    // TODO MULTI-MAP: kalau nanti tiap map punya texture sendiri
+    // unload harus per map, bukan cuma loop MAX_TEXTURES global
     for (int i = 0; i < MAX_TEXTURES; i++)
     {
         UnloadTexture(TexturesMap[i]);

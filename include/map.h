@@ -17,6 +17,8 @@ typedef struct
     int y;
 } TileCoordinate;
 
+// TODO MULTI-MAP: nanti TileType bakal nambah banyak seiring
+// nambahnya jenis tile baru. pastiin TileProperty[] di map.cpp ikut diupdate
 // enum buat definisiin gambar biar enak
 typedef enum
 {
@@ -44,6 +46,8 @@ typedef struct
     TileType type;
 } sTile;
 
+// TODO MULTI-MAP: Entity nanti bakal butuh info
+// di map mana dia berada (map id / pointer ke map aktif)
 // sementara doang (ini buat entity (contoh player, enemy, npc))
 typedef struct
 {
@@ -65,13 +69,19 @@ extern Entity Player;
 extern sTile Door;
 extern TileDefinition TileDefs[];
 
-// ukuran tile buat di mapping sprite nya
+// ukuran tile buat di mapping sprite nya (dalam bentuk pixel)
 #define TILE_WIDTH 32
 #define TILE_HEIGHT 32
 #define TILE_GAP 4
 
-// enum buat texture id nya
+// TODO MULTI-MAP: WORLD_WIDTH dan WORLD_HEIGHT harus jadi bagian dari
+// struct MapData, bukan variabel global. tiap map punya ukuran sendiri
+// ukuran worldnya (sementara 1 world dulu)
+extern const int WORLD_WIDTH;
+extern const int WORLD_HEIGHT;
 
+// TODO MULTI-MAP: tambah fungsi LoadMap(const char* file) dan UnloadMap()
+// buat swap antar map
 void InitDrawMap(GameState *state);
 void UpdatePlayer(GameState *state);
 void RenderMap(GameState *state);
