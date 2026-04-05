@@ -1,18 +1,20 @@
-#include "../include/dungeon.h"
 #include "../include/screen.h"
-#include "../lib/raylib/include/raylib.h"
-#include "../lib/raylib/include/raymath.h"
+#include "../raylib/include/raylib.h"
 
-int main(void) {
-    GameState state = InitScreen();
+int main(void)
+{
+    GameState Game = InitScreen();
 
-    while (!WindowShouldClose()) {
-        UpdateGame(&state);
-        DrawRenderTexture(&state);
-        DrawRenderWindows(&state);
+    while (!WindowShouldClose())
+    {
+        UpdateGameState(&Game);
+
+        DrawRenderTexture(&Game);
+        DrawRenderWindow(&Game);
     }
 
-    UnloadRenderTexture(state.Dungeon);
+    UnloadRenderTexture(Game.Dungeon);
     CloseWindow();
+
     return 0;
 }
