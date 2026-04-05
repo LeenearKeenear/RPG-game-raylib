@@ -66,3 +66,29 @@ Usahakan diurutkan berdasarkan prioritas; dari yang paling penting ke kurang pen
 - [ ] Desain Layout menu secara kasar
 - [ ] Implementasi pertama tile map sama player movement
 - [ ] Migrasi projek menggunakan `Cmake`
+
+#### Todo Multi-Map Preparation
+Diurutkan berdasarkan prioritas
+
+#### Fondasi
+- [ ] Bikin `struct MapData` yang nyimpen `width`, `height`, array tile, dan spawn point
+- [ ] Ganti `WorldMap[][]` dari hardcode jadi dinamis ikut ukuran `MapData`
+- [ ] Pindahin `WORLD_WIDTH` dan `WORLD_HEIGHT` ke dalam `struct MapData`
+- [ ] Bikin variabel global `CurrentMap` (pointer ke `MapData` yang lagi aktif)
+
+#### Load & Unload
+- [ ] Bikin fungsi `LoadMap(const char* file)` buat load data map dari file
+- [ ] Bikin fungsi `UnloadMap()` buat cleanup memori map sebelum swap
+
+#### Refactor Fungsi yang Bergantung ke `WORLD_WIDTH`/`WORLD_HEIGHT`
+- [ ] `PlayerMovement()` — `MapBounds` harus ngambil dari `CurrentMap`
+- [ ] `PlayerCamera()` — `mapW` dan `mapH` harus dari `CurrentMap`
+- [ ] `RenderMap()` — loop render harus ikut ukuran `CurrentMap`
+- [ ] `DebugMenu()` — `MapBounds` harus dari `CurrentMap`
+
+#### Inisialisasi
+- [ ] `InitAll()` — spawn point player ngambil dari data `CurrentMap`, bukan hardcode
+- [ ] `InitAll()` — posisi kamera awal ikut spawn point `CurrentMap`
+
+#### Object Layer
+- [ ] `Door` dan object lain dibaca dari object layer `CurrentMap`, bukan hardcode
