@@ -1,7 +1,7 @@
 #include "../include/screen.h"
 #include "../include/map.h"
-#include "../lib/raylib/include/raylib.h"
-#include "../lib/raylib/include/raymath.h"
+#include "../raylib/include/raylib.h"
+#include "../raylib/include/raymath.h"
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 // variabel konstanta
