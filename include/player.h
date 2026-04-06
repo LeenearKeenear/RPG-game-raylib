@@ -1,44 +1,89 @@
 #pragma once
+#include <cmath>
 #include "../lib/raylib/include/raylib.h"
+#include "Map.h"
 
 struct Player
 {
-    Vector2 position = {100, 100};
-    float speed = 200.0f;
-    int size = 32;
+    Vector2 Position = {200, 200};
+    float Speed = 150.0f;
+    int Size = 32;
 
-    Rectangle src = {4 * 36, 0 * 36, 32, 32};
+    int Frame = 0;
+    float FrameTime = 0;
+    float FrameSpeed = 0.1f;
 
-    void Update(float dt)
+    void Update(float Dt, Map &Map)
     {
+        Vector2 Movement = {0, 0};
+
         if (IsKeyDown(KEY_RIGHT))
-            position.x += speed * dt;
+        {
+            Movement.x += 1;
+            Frame = 2;
+        }
         if (IsKeyDown(KEY_LEFT))
-            position.x -= speed * dt;
+        {
+            Movement.x -= 1;
+            Frame = 3;
+        }
         if (IsKeyDown(KEY_DOWN))
-            position.y += speed * dt;
+        {
+            Movement.y += 1;
+            Frame = 0;
+        }
         if (IsKeyDown(KEY_UP))
-            position.y -= speed * dt;
+        {
+            Movement.y -= 1;
+            Frame = 1;
+        }
+
+        if (Movement.x != 0 || Movement.y != 0)
+        {
+            float Len = sqrt(Movement.x * Movement.x + Movement.y * Movement.y);
+            Movement.x /= Len;
+            Movement.y /= Len;
+        }
+        else
+        {
+            Frame = 0;
+        }
+
+        Vector2 NewPos = {
+            Position.x + Movement.x * Speed * Dt,
+            Position.y + Movement.y * Speed * Dt};
+
+        int Left = (int)(NewPos.x / Map.TILE_SIZE);
+        int Right = (int)((NewPos.x + Size - 1) / Map.TILE_SIZE);
+        int Top = (int)(NewPos.y / Map.TILE_SIZE);
+        int Bottom = (int)((NewPos.y + Size - 1) / Map.TILE_SIZE);
+
+        if (!Map.IsBlocked(Left, Top) &&
+            !Map.IsBlocked(Right, Top) &&
+            !Map.IsBlocked(Left, Bottom) &&
+            !Map.IsBlocked(Right, Bottom))
+        {
+            Position = NewPos;
+        }
     }
 
-    void ClampToMap(int mapWidth, int mapHeight, int tileSize)
+    void Animate(float Dt)
     {
-        float maxX = mapWidth * tileSize - size;
-        float maxY = mapHeight * tileSize - size;
-
-        if (position.x < 0)
-            position.x = 0;
-        if (position.y < 0)
-            position.y = 0;
-        if (position.x > maxX)
-            position.x = maxX;
-        if (position.y > maxY)
-            position.y = maxY;
+        FrameTime += Dt;
+        if (FrameTime >= FrameSpeed)
+        {
+            Frame++;
+            if (Frame > 3)
+                Frame = 0;
+            FrameTime = 0;
+        }
     }
 
-    void Draw(Texture2D texture)
+    void Draw(Texture2D Texture)
     {
-        Rectangle dest = {position.x, position.y, (float)size, (float)size};
-        DrawTexturePro(texture, src, dest, {0, 0}, 0.0f, WHITE);
+        Rectangle Src = {Frame * 32.0f, 0, 32, 32};
+        Rectangle Dest = {Position.x, Position.y, (float)Size, (float)Size};
+
+        DrawTexturePro(Texture, Src, Dest, {0, 0}, 0.0f, WHITE);
     }
 };
