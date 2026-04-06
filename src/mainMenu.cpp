@@ -31,7 +31,9 @@ void UpdateMainMenu(GameState* state)
 
 void DrawMainMenu(GameState* state)
 {
+    BeginDrawing();
     ClearBackground(BLACK);
     startButton.Draw();
     quitButton.Draw();
+    EndDrawing();
 }
