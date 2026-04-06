@@ -5,7 +5,7 @@ LDFLAGS = -L./raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
 TMPDIR := tmp
 
 $(TMPDIR):
-	mkdir -p $(TMPDIR)
+	powershell -Command "if (!(Test-Path $(TMPDIR))) { New-Item -ItemType Directory -Path $(TMPDIR) -Force | Out-Null }"
 
 export TMP := $(CURDIR)/$(TMPDIR)
 export TEMP := $(TMP)
@@ -14,15 +14,16 @@ SRC_DIR = src
 OBJ_DIR = build
 EXE = main.exe
 DLL_SOURCE = raylib/lib/raylib.dll
+RAYLIB_LIB = raylib/lib/libraylib.a
 
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
-app: setup $(OBJ)
+app: $(RAYLIB_LIB) $(OBJ)
 	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
 	powershell -Command "if (Test-Path '$(DLL_SOURCE)') { Copy-Item -Force '$(DLL_SOURCE)' . }"
 
-setup:
+$(RAYLIB_LIB):
 	@powershell -ExecutionPolicy Bypass -File setup.ps1
 
 $(OBJ_DIR): $(TMPDIR)
