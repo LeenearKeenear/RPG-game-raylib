@@ -3,7 +3,7 @@
 static buttonTxt startButton;
 static buttonTxt quitButton;
 
-void InitMainMenu()
+void InitMainMenu(GameState* state)
 {
     int centerX = (GameScreenWidth / 2) - 50;
     int buttonSpacing = 50;
@@ -29,7 +29,7 @@ void UpdateMainMenu(GameState* state)
     }
 }
 
-void DrawMainMenu()
+void DrawMainMenu(GameState* state)
 {
     BeginDrawing();
     ClearBackground(BLACK);
