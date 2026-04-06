@@ -14,6 +14,7 @@ typedef struct {
 
 GameState InitScreen(void);
 void UpdateGame(GameState *state);
+void InitAll(void);
 void DrawRenderTexture(GameState *state);
 void DrawRenderWindows(GameState *state);
 void GameShutDown(GameState *state);

@@ -64,10 +64,22 @@ typedef struct
     bool HasInteraction;
 } TileDefinition;
 
-// definisi struct
+// struct buat map
+typedef struct
+{
+    int TileWidth;
+    int TileHeight;
+    sTile** Tiles;
+    TileCoordinate SpawnPointPlayer;
+} MapDataDefinition;
+
+// definisi struct entity ama tile khusus
 extern Entity Player;
 extern sTile Door;
+
+// definisi struct yang handle map
 extern TileDefinition TileDefs[];
+extern MapDataDefinition* CurrentMap;
 
 // ukuran tile buat di mapping sprite nya (dalam bentuk pixel)
 #define TILE_WIDTH 32

@@ -1,4 +1,4 @@
-#include "../include/dungeon.h"
+#include "../include/player.h"
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../lib/raylib/include/raylib.h"
@@ -8,6 +8,7 @@ int main(void)
 {
     GameState state = InitScreen();
     InitDrawMap(&state);
+    InitAll();
 
     while (!WindowShouldClose())
     {

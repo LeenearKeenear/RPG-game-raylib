@@ -1,17 +1,10 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../include/screen.h"
-#include "../include/map.h"
+#include "../include/Map.h"
 
-// ukuran map berdasarkan tilesnya
-// TODO MULTI-MAP: jadiin variabel dinamis per map, bukan const global
-const int mapsize = 50;
-const int WORLD_WIDTH = mapsize;
-const int WORLD_HEIGHT = mapsize;
-
-// TODO MULTI-MAP: ganti jadi pointer atau vector biar bisa swap map
-sTile WorldMap[WORLD_WIDTH][WORLD_HEIGHT];
-sTile Dungeon[WORLD_WIDTH][WORLD_HEIGHT];
+// definisi awal currentmap harus nullptr
+MapDataDefinition *CurrentMap = nullptr;
 
 Texture2D TexturesMap[MAX_TEXTURES];
 
@@ -67,7 +60,7 @@ void DebugMenu(float NewX, float NewY)
     DrawText(TextFormat("kamera zoom: %06.2f", camera.zoom), 15, 30, 25, YELLOW);
 
     // debug collision
-    // TODO MULTI-MAP: MapBounds harus ngambil dari data map aktif, bukan WORLD_WIDTH/HEIGHT langsung
+    // TODO MULTI-MAP: MapBounds harus ngambil dari data Map aktif, bukan WORLD_WIDTH/HEIGHT langsung
     Rectangle MapBounds = {0, 0, WORLD_WIDTH * TILE_WIDTH, WORLD_HEIGHT * TILE_HEIGHT};
     Rectangle PlayerCollisionBox = {NewX, NewY, (float)TILE_WIDTH, (float)TILE_HEIGHT};
     bool hit = CheckCollisionRecs(PlayerCollisionBox, MapBounds);
@@ -76,32 +69,8 @@ void DebugMenu(float NewX, float NewY)
     DrawRectangleLines(5, 130, 330, 100, WHITE);
     DrawText("-- DEBUG COLLISION --", 15, 135, 25, YELLOW);
     DrawText(TextFormat("Player Pos: (%.0f, %.0f)", NewX / TILE_WIDTH, NewY / TILE_HEIGHT), 15, 155, 25, WHITE);
-    DrawText(TextFormat("Map Bounds: (%d x %d)", (WORLD_WIDTH * TILE_WIDTH) / TILE_WIDTH, (WORLD_HEIGHT * TILE_HEIGHT) / TILE_HEIGHT), 15, 175, 25, WHITE);
+    DrawText(TextFormat("Map Bounds: (%d x %d)", (CurrentMap->TileWidth * TILE_WIDTH) / TILE_WIDTH, (CurrentMap->TileHeight * TILE_HEIGHT) / TILE_HEIGHT), 15, 175, 25, WHITE);
     DrawText(TextFormat("CheckCollisionRecs: %s", hit ? "TRUE" : "FALSE"), 15, 195, 25, hit ? GREEN : RED);
-}
-
-// TODO MULTI-MAP: fungsi ini harus nerima parameter map mana yang mau di-load
-// bukan hardcode ke WorldMap
-// inisialisasi map dalam bentuk data (handle map)
-void InitDrawMap(GameState *state)
-{
-    LoadTileTexture(TEXTURE_TILEMAP, "texture/colored_tilemap.png");
-
-    // inisialisasi tile dalam bentuk array 2d. entry point buat desain map nya juga bisa
-    for (int i = 0; i < WORLD_WIDTH; i++)
-    {
-        for (int j = 0; j < WORLD_HEIGHT; j++)
-        {
-            // ini keknya sementara
-            WorldMap[i][j] = (sTile){
-                .CoordinateTile = {i, j},
-                .type = (TileType)GetRandomValue(TILE_GRASS1, TILE_GRASS2)};
-
-            Dungeon[i][j] = (sTile){
-                .CoordinateTile = {i, j},
-                .type = (TileType)TILE_GRASS2};
-        }
-    }
 }
 
 // movement player + collisionnya (sementara collisonnya)
@@ -132,12 +101,12 @@ void PlayerMovement(void)
             PlayerPostition_y += 1 * TILE_HEIGHT;
         }
 
-        // TODO MULTI-MAP: MapBounds harus dari data map aktif
+        // TODO MULTI-MAP: MapBounds harus dari data Map aktif
         Rectangle MapBounds = {
             0,
             0,
-            WORLD_WIDTH * TILE_WIDTH,
-            WORLD_HEIGHT * TILE_HEIGHT,
+            CurrentMap->TileWidth * TILE_WIDTH,
+            CurrentMap->TileHeight * TILE_HEIGHT,
         };
 
         Rectangle PlayerCollisionBox = {
@@ -216,19 +185,20 @@ void PlayerCamera(void)
     float halfW = (GameScreenWidth / 2.0f) / camera.zoom;
     float halfH = (GameScreenHeight / 2.0f) / camera.zoom;
 
-    // TODO MULTI-MAP: mapW dan mapH harus dari ukuran map aktif
-    float mapW = WORLD_WIDTH * TILE_WIDTH;
-    float mapH = WORLD_HEIGHT * TILE_HEIGHT;
+    // TODO MULTI-MAP: MapW dan MapH harus dari ukuran Map aktif
+    float MapW = CurrentMap->TileWidth * TILE_WIDTH;
+    float MapH = CurrentMap->TileHeight * TILE_HEIGHT;
 
     if (camera.target.x < halfW)
         camera.target.x = halfW;
     if (camera.target.y < halfH)
         camera.target.y = halfH;
-    if (camera.target.x > mapW - halfW)
-        camera.target.x = mapW - halfW;
-    if (camera.target.y > mapH - halfH)
-        camera.target.y = mapH - halfH;
+    if (camera.target.x > MapW - halfW)
+        camera.target.x = MapW - halfW;
+    if (camera.target.y > MapH - halfH)
+        camera.target.y = MapH - halfH;
 }
+
 // update player behavior
 void UpdatePlayer(GameState *state)
 {
@@ -237,18 +207,68 @@ void UpdatePlayer(GameState *state)
     PlayerCamera();
 }
 
-// render mapnya berdasarkan data (handle map)
+// fungsi buat loadmap dan ini masih prototipe tester
+// semua data level map lewat entry point ini
+void LoadMap(void)
+{
+    MapDataDefinition *Map = new MapDataDefinition();
+    Map->TileWidth = 20;
+    Map->TileHeight = 20;
+    Map->SpawnPointPlayer = {0, 0};
+
+    // alokasi 2D array dinamis
+    Map->Tiles = new sTile *[Map->TileWidth];
+    for (int i = 0; i < Map->TileWidth; i++)
+    {
+        Map->Tiles[i] = new sTile[Map->TileHeight];
+        for (int j = 0; j < Map->TileHeight; j++)
+        {
+            Map->Tiles[i][j] = (sTile){
+                .CoordinateTile = {i, j},
+                .type = (TileType)GetRandomValue(TILE_GRASS1, TILE_GRASS2)}; // bagian ini bisa digamti, tapi karena masih tester gini dulu
+        }
+    }
+
+    CurrentMap = Map;
+}
+
+// buat hapus buffer array 2d nya kalo udah gak kepake
+void UnloadMap()
+{
+    if (CurrentMap == nullptr)
+        return;
+
+    for (int i = 0; i < CurrentMap->TileWidth; i++)
+    {
+        delete[] CurrentMap->Tiles[i];
+    }
+
+    delete[] CurrentMap->Tiles;
+    delete CurrentMap;
+    CurrentMap = nullptr;
+}
+
+// TODO MULTI-MAP: fungsi ini harus nerima parameter Map mana yang mau di-load
+// bukan hardcode ke WorldMap
+// inisialisasi Map dalam bentuk data (handle Map)
+void InitDrawMap(GameState *state)
+{
+    LoadTileTexture(TEXTURE_TILEMAP, "texture/colored_tileMap.png");
+    LoadMap();
+}
+
+// render Mapnya berdasarkan data (handle Map)
 void RenderMap(GameState *state)
 {
     BeginMode2D(camera);
 
     sTile tile;
 
-    for (int i = 0; i < WORLD_WIDTH; i++)
+    for (int i = 0; i < CurrentMap->TileWidth; i++)
     {
-        for (int j = 0; j < WORLD_HEIGHT; j++)
+        for (int j = 0; j < CurrentMap->TileHeight; j++)
         {
-            tile = WorldMap[i][j];
+            tile = CurrentMap->Tiles[i][j];
 
             // buat ngetrack indexing dari gambar png nya
             RenderTilePNG((tile.CoordinateTile.x * TILE_WIDTH), (tile.CoordinateTile.y * TILE_HEIGHT), tile.type, 0, TEXTURE_TILEMAP);

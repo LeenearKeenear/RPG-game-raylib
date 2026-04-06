@@ -17,7 +17,8 @@ void InitAll(void)
     // sementara
     // inisialisasi player potition
     Player = (Entity){
-        .PlayerPosition = {(WORLD_WIDTH * TILE_WIDTH / 2), (WORLD_HEIGHT * TILE_HEIGHT / 2)}, // biar ditengah
+        .PlayerPosition = {(float)(CurrentMap->SpawnPointPlayer.x * TILE_WIDTH),
+                           (float)(CurrentMap->SpawnPointPlayer.y * TILE_HEIGHT)}, // biar ditengah
         .MoveTimer = 0.0f,
         .MoveDelay = 0.15,
     };
@@ -30,7 +31,7 @@ void InitAll(void)
 
     // TODO MULTI-MAP: target kamera harusnya dari spawn point map aktif
     // inisialisasi camera
-    camera.target = (Vector2){(float)(WORLD_WIDTH * TILE_WIDTH / 2), (float)(WORLD_HEIGHT * TILE_HEIGHT / 2)}; // ini targetin player biar ditengah map
+    camera.target = (Vector2){(float)(CurrentMap->SpawnPointPlayer.x * TILE_WIDTH), (float)(CurrentMap->SpawnPointPlayer.y * TILE_HEIGHT)}; // ini targetin player biar ditengah map
     camera.offset = (Vector2){(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};                    // kamera di tengah map
     camera.rotation = {0};
     camera.zoom = 1.0f;
@@ -41,9 +42,9 @@ GameState InitScreen(void)
 {
     GameState state = {{0}};
 
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT); // ini yang ngatur windows bisa di resize
-    InitWindow(1280, 720, "Dungeon Game");                   // inisialisasi windows pertama
-    InitAudioDevice();                                       // inisialisasi audio
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE); // ini yang ngatur windows bisa di resize
+    InitWindow(1280, 720, "Dungeon Game"); // inisialisasi windows pertama
+    InitAudioDevice();                     // inisialisasi audio
 
     state.WindowScreenWidth = (int)(GetMonitorWidth(0) * ScaleMultiplierMonitor);
     state.WindowScreenHeight = (int)(GetMonitorHeight(0) * ScaleMultiplierMonitor);
@@ -59,8 +60,6 @@ GameState InitScreen(void)
     state.Dungeon = LoadRenderTexture(GameScreenWidth, GameScreenHeight);
     SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_BILINEAR); // ini yang ngatur jenis renderingnya
     SetTargetFPS(60);
-
-    InitAll();
 
     return state;
 }
