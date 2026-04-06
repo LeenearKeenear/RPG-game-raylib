@@ -1,4 +1,5 @@
 #pragma once
+
 #include "../lib/raylib/include/raylib.h"
 
 class buttonImage 
@@ -10,6 +11,7 @@ class buttonImage
         void Draw();
 
         bool isClicked(Vector2 mousePosition, bool mouseClicked);
+    
     private:
         Texture2D texture;
         Vector2 position;

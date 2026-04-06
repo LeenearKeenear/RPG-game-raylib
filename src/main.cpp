@@ -4,7 +4,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 
-int main(void)
+int main()
 {
     GameState state = InitScreen();
     InitDrawMap(&state);

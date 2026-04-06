@@ -1,5 +1,5 @@
 // #include <iostream>
-#include "../include/button_img.h"
+#include "../include/buttonImg.h"
 
 /**
  * Konstruktor Button
