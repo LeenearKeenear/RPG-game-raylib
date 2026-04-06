@@ -21,7 +21,7 @@ function Write-Err($message) {
 
 function Install-Raylib() {
     $cwd = $PWD.Path
-    $installDir = Join-Path $cwd "raylib"
+    $installDir = Join-Path $cwd "lib\raylib"
     $zipPath = Join-Path $cwd $ZipFile
     $tempExtract = Join-Path $cwd "raylib-$($RaylibVersion)_win64_mingw-w64"
     
