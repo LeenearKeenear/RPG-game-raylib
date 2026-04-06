@@ -9,8 +9,8 @@ void InitMainMenu(GameState* state)
     int buttonSpacing = 50;
     int fontSize = 30;
 
-    startButton = buttonTxt("Start Game", centerX, 300, fontSize, WHITE, 0.6f);
-    quitButton = buttonTxt("Quit", centerX, 300 + buttonSpacing, fontSize, WHITE, 0.6f);
+    startButton = buttonTxt("Start Game", centerX, 300, fontSize, WHITE, 0.6F);
+    quitButton = buttonTxt("Quit", centerX, 300 + buttonSpacing, fontSize, WHITE, 0.6F);
 }
 
 void UpdateMainMenu(GameState* state)
