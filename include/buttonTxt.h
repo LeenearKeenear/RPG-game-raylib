@@ -7,12 +7,15 @@ class buttonTxt
 {
     public:
         buttonTxt();
-        buttonTxt(const char* text, int posX, int posY, int fontSize, Color color);
+        buttonTxt(const char* text, int posX, int posY, int fontSize, Color color, float hoverAmount = 1.0f);
+        // hoverAmount: 0.0 = black, 1.0 = no darkening, <1.0 = darker on hover
         ~buttonTxt();
 
         void Draw();
-        
-        bool isClicked(Vector2 mousePosition, bool mouseClicked) const;
+
+        // state checks
+        [[nodiscard]] bool isClicked(Vector2 mousePosition, bool mouseClicked) const;
+        [[nodiscard]] bool isHovered(Vector2 mousePosition) const;
 
     private:
         const char* text;
@@ -21,4 +24,5 @@ class buttonTxt
         int fontSize;
         Color textColor;
         int textWidth;
+        float hoverAmount;
 };
