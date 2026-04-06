@@ -123,12 +123,14 @@ struct Map
 
     Tile Tiles[MAP_HEIGHT][MAP_WIDTH];
 
+    // inisialisasi tile dengan contoh map sederhana
     void Init()
     {
         for (int y = 0; y < MAP_HEIGHT; y++)
         {
             for (int x = 0; x < MAP_WIDTH; x++)
             {
+                // jika tile berada di tepi, maka visualnya adalah wall
                 if (x == 0 && y == 0)
                 {
                     Tiles[y][x] = {WALL_TOP_LEFT, BLOCK};
@@ -161,7 +163,7 @@ struct Map
                 {
                     Tiles[y][x] = {WALL_RIGHT, BLOCK};
                 }
-                else
+                else // jika tile bukan di tepi, maka visualnya floor
                 {
                     Tiles[y][x] = {FLOOR, SURFACE};
                 }
@@ -169,14 +171,18 @@ struct Map
         }
     }
 
+    // cek apakah tile di koordinat yang dikirimkan bertipe blocked atau tidak
     bool IsBlocked(int x, int y)
     {
+        // apakah posisi berada di luar map atau tidak
         if (x < 0 || y < 0 || x > MAP_WIDTH - 1 || y > MAP_HEIGHT - 1)
             return true;
 
+        // cek tipe tile di posisi koordinat yang dikirimkan
         return Tiles[y][x].Type == BLOCK;
     }
 
+    // pilih visual apa yang ditampilkan di posisi tile tertentu
     Rectangle GetSource(Visual Visual)
     {
         int TileX = 0;
@@ -222,10 +228,12 @@ struct Map
             break;
         }
 
-        return {TileX * 36.0f, TileY * 36.0f, 32, 32};
+        // hitung posisi visual tile pada gambar beserta ukuran gap nya
+        return {TileX * (TILE_SIZE + 4), TileY * (TILE_SIZE + 4), 32, 32};
     }
 
-    void Draw(Texture2D Tileset)
+    // menggambar map ke render texture
+    void Draw(Texture2D TileMap)
     {
         for (int y = 0; y < MAP_HEIGHT; y++)
         {
@@ -233,13 +241,14 @@ struct Map
             {
                 Tile Tile = Tiles[y][x];
 
-                Rectangle Src = GetSource(Tile.Visual);
-
-                Vector2 Pos = {
+                Rectangle Source = GetSource(Tile.Visual);
+                Vector2 Position = {
                     x * (float)TILE_SIZE,
-                    y * (float)TILE_SIZE};
+                    y * (float)TILE_SIZE
+                };
 
-                DrawTextureRec(Tileset, Src, Pos, WHITE);
+                // mirip draw texture pro, hanya saja lebih sederhana
+                DrawTextureRec(TileMap, Source, Position, WHITE);
             }
         }
     }
