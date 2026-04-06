@@ -1,21 +1,28 @@
-#include "../include/screen.h"
-#include "../include/map.h"
+// #include "../include/screen.h"
+// #include "../include/map.h"
+#include "../include/game.h"
 #include "../lib/raylib/include/raylib.h"
-#include "../lib/raylib/include/raymath.h"
 
-int main(void)
+int main()
 {
-    GameState state = InitScreen();
-    InitDrawMap(&state);
+    // GameState Game = InitScreen();
+    // InitDrawMap(&Game);
+    Game Game;
+    Game.Init();
 
     while (!WindowShouldClose())
     {
-        UpdateGame(&state);
-        UpdatePlayer(&state);
-        DrawRenderTexture(&state);
-        DrawRenderWindows(&state);
+        // UpdateGame(&Game);
+        // UpdatePlayer(&Game);
+        Game.Update();  
+        Game.Draw();
+        
+        // DrawRenderTexture(&Game);
+        // DrawRenderWindows(&Game);   
     }
 
-    GameShutDown(&state);
+    // GameShutDown(&Game);
+    Game.Close();
+
     return 0;
 }
