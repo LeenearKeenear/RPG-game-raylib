@@ -1,5 +1,11 @@
 #include "../include/buttonTxt.h"
 
+// default constructor
+buttonTxt::buttonTxt()
+    : text(nullptr), posX(0), posY(0), fontSize(0), textColor(BLANK), textWidth(0)
+{
+}
+
 // constructor
 buttonTxt::buttonTxt(const char* text, int posX, int posY, int fontSize, Color color) {
     this->text = text;

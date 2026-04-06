@@ -6,6 +6,7 @@
 class buttonTxt 
 {
     public:
+        buttonTxt();
         buttonTxt(const char* text, int posX, int posY, int fontSize, Color color);
         ~buttonTxt();
 
