@@ -1,12 +1,16 @@
 #pragma once
 #include "../lib/raylib/include/raylib.h"
 
+// jumlah maksimum gambar texture png yang dibolehin
 #define MAX_TEXTURES 3
+
+// enum buat milih texture pack
 typedef enum
 {
     TEXTURE_TILEMAP = 0
 } TextureAsset;
 
+// ini masukin maksimum texture ke array ini
 extern Texture2D TexturesMap[MAX_TEXTURES];
 extern Camera2D camera;
 
@@ -46,16 +50,6 @@ typedef struct
     TileType type;
 } sTile;
 
-// TODO MULTI-MAP: Entity nanti bakal butuh info
-// di map mana dia berada (map id / pointer ke map aktif)
-// sementara doang (ini buat entity (contoh player, enemy, npc))
-typedef struct
-{
-    TileCoordinate PlayerPosition;
-    float MoveTimer;
-    float MoveDelay;
-} Entity;
-
 // struct buat tile properti
 typedef struct
 {
@@ -69,31 +63,26 @@ typedef struct
 {
     int TileWidth;
     int TileHeight;
-    sTile** Tiles;
+    sTile **Tiles;
     TileCoordinate SpawnPointPlayer;
 } MapDataDefinition;
 
-// definisi struct entity ama tile khusus
-extern Entity Player;
-extern sTile Door;
-
 // definisi struct yang handle map
 extern TileDefinition TileDefs[];
-extern MapDataDefinition* CurrentMap;
+extern MapDataDefinition *CurrentMap;
 
 // ukuran tile buat di mapping sprite nya (dalam bentuk pixel)
 #define TILE_WIDTH 32
 #define TILE_HEIGHT 32
 #define TILE_GAP 4
 
-// TODO MULTI-MAP: WORLD_WIDTH dan WORLD_HEIGHT harus jadi bagian dari
-// struct MapData, bukan variabel global. tiap map punya ukuran sendiri
-// ukuran worldnya (sementara 1 world dulu)
-extern const int WORLD_WIDTH;
-extern const int WORLD_HEIGHT;
+// gak penting (tunggu kalo dah jadi)
+void LoadTileTexture(TextureAsset Slot, const char *Path);
+void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
+void DebugMenu(float NewX, float NewY);
+void LoadMap(void);
+void UnloadMap();
 
-// TODO MULTI-MAP: tambah fungsi LoadMap(const char* file) dan UnloadMap()
-// buat swap antar map
+// penting
 void InitDrawMap(GameState *state);
-void UpdatePlayer(GameState *state);
 void RenderMap(GameState *state);

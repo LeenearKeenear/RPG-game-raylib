@@ -1,6 +1,6 @@
-#include "../include/player.h"
 #include "../include/screen.h"
 #include "../include/map.h"
+#include "../include/player.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 

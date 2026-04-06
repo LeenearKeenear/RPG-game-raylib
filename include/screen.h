@@ -1,10 +1,11 @@
 #pragma once
 #include "../lib/raylib/include/raylib.h"
 
-
+// definisi size render virtualnya
 extern const int GameScreenWidth;
 extern const int GameScreenHeight;
 
+// definisi gamestate
 typedef struct {
     RenderTexture2D Dungeon;
     float ScaleMultiplier;

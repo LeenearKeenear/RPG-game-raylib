@@ -2,17 +2,15 @@
 #include "../lib/raylib/include/raymath.h"
 #include "../include/screen.h"
 #include "../include/Map.h"
+#include "../include/player.h"
 
 // definisi awal currentmap harus nullptr
 MapDataDefinition *CurrentMap = nullptr;
 
 Texture2D TexturesMap[MAX_TEXTURES];
 
-Camera2D camera = {0};
-Entity Player;
-sTile Door;
-
 // definisi tile property sama id gambarnya (bisa berubah tergantung kalian)
+// sama ini keknya dipindah di file baru aja yang isinya nge handle definisi tile
 TileDefinition TileProperty[] = {
     [TILE_CLU_WALL] = {{0, 0}, false, false},
     [TILE_CMU_WALL] = {{1, 0}, false, false},
@@ -32,6 +30,7 @@ TileDefinition TileProperty[] = {
 };
 
 // buat ngeload texture dari berbagai png
+// sama ini keknya dipindah di file baru aja yang isinya nge handle definisi tile
 void LoadTileTexture(TextureAsset Slot, const char *Path)
 {
     Image img = LoadImage(Path);
@@ -40,6 +39,7 @@ void LoadTileTexture(TextureAsset Slot, const char *Path)
 }
 
 // buat ngerender tile dari gambar png nya
+// sama ini keknya dipindah di file baru aja yang isinya nge handle definisi tile
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
 {
     // buat ngetrack indexing dari gambar png nya
@@ -51,6 +51,7 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
     DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
 }
 
+// fungsi buat debug menu
 void DebugMenu(float NewX, float NewY)
 {
     // debug camera
@@ -60,8 +61,7 @@ void DebugMenu(float NewX, float NewY)
     DrawText(TextFormat("kamera zoom: %06.2f", camera.zoom), 15, 30, 25, YELLOW);
 
     // debug collision
-    // TODO MULTI-MAP: MapBounds harus ngambil dari data Map aktif, bukan WORLD_WIDTH/HEIGHT langsung
-    Rectangle MapBounds = {0, 0, WORLD_WIDTH * TILE_WIDTH, WORLD_HEIGHT * TILE_HEIGHT};
+    Rectangle MapBounds = {0, 0, CurrentMap->TileWidth * TILE_WIDTH, CurrentMap->TileHeight * TILE_HEIGHT};
     Rectangle PlayerCollisionBox = {NewX, NewY, (float)TILE_WIDTH, (float)TILE_HEIGHT};
     bool hit = CheckCollisionRecs(PlayerCollisionBox, MapBounds);
 
@@ -73,142 +73,8 @@ void DebugMenu(float NewX, float NewY)
     DrawText(TextFormat("CheckCollisionRecs: %s", hit ? "TRUE" : "FALSE"), 15, 195, 25, hit ? GREEN : RED);
 }
 
-// movement player + collisionnya (sementara collisonnya)
-void PlayerMovement(void)
-{
-    Player.MoveTimer += GetFrameTime(); // ngambil frame sekarang
-
-    // player movement
-    float PlayerPosition_x = Player.PlayerPosition.x;
-    float PlayerPostition_y = Player.PlayerPosition.y;
-
-    if (Player.MoveTimer >= Player.MoveDelay)
-    {
-        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
-        {
-            PlayerPosition_x -= 1 * TILE_WIDTH;
-        }
-        else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
-        {
-            PlayerPosition_x += 1 * TILE_WIDTH;
-        }
-        else if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
-        {
-            PlayerPostition_y -= 1 * TILE_HEIGHT;
-        }
-        else if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
-        {
-            PlayerPostition_y += 1 * TILE_HEIGHT;
-        }
-
-        // TODO MULTI-MAP: MapBounds harus dari data Map aktif
-        Rectangle MapBounds = {
-            0,
-            0,
-            CurrentMap->TileWidth * TILE_WIDTH,
-            CurrentMap->TileHeight * TILE_HEIGHT,
-        };
-
-        Rectangle PlayerCollisionBox = {
-            PlayerPosition_x,
-            PlayerPostition_y,
-            (float)TILE_WIDTH,
-            (float)TILE_HEIGHT,
-        };
-
-        // cek collision
-        if (CheckCollisionRecs(PlayerCollisionBox, MapBounds))
-        {
-            Player.PlayerPosition.x = PlayerPosition_x;
-            Player.PlayerPosition.y = PlayerPostition_y;
-        }
-
-        Player.MoveTimer = 0.0f;
-    }
-}
-
-// buat control player selain movement kaya interaksi, open inventory dll
-void PlayerControl(void)
-{
-    // interaksi player
-    if (IsKeyPressed(KEY_E))
-    {
-        // sementara variabelnya
-        if (Player.PlayerPosition.x == Door.CoordinateTile.x && Player.PlayerPosition.y == Door.CoordinateTile.y)
-        {
-            /* code */
-        }
-    }
-}
-
-// buat setup camera
-void PlayerCamera(void)
-{
-    float Maxzoom = 3.5f;  // maksimal zoom in
-    float MinZoom = 0.85f; // minimal zoom out
-
-    int SizeDeadZone_x = 300;
-    int SizeDeadZone_y = 200;
-
-    // buat zoom multipliernya. makin gede makin cepet zoomnya
-    const float ZoomIncrement = 0.250f;
-
-    Rectangle DeadZone = {SizeDeadZone_x, SizeDeadZone_y, SizeDeadZone_x, SizeDeadZone_y};
-
-    // fungsi biar bisa ngezoom via mousewheel
-    float MouseWheel = GetMouseWheelMove();
-    if (MouseWheel != 0)
-    {
-        camera.zoom += (MouseWheel * ZoomIncrement);
-        if (camera.zoom > Maxzoom)
-            camera.zoom = Maxzoom;
-        if (camera.zoom < MinZoom)
-            camera.zoom = MinZoom;
-    }
-
-    // konversi posisi player dari world ke screen
-    Vector2 ScreenPoint = GetWorldToScreen2D(
-        (Vector2){(float)Player.PlayerPosition.x, (float)Player.PlayerPosition.y},
-        camera);
-
-    // cek apakah player keluar deadzone, baru gerakin kamera
-    if (ScreenPoint.x < DeadZone.x)
-        camera.target.x -= DeadZone.x - ScreenPoint.x;
-    if (ScreenPoint.x > GameScreenWidth - DeadZone.width)
-        camera.target.x += ScreenPoint.x - (GameScreenWidth - DeadZone.width);
-    if (ScreenPoint.y < DeadZone.y)
-        camera.target.y -= DeadZone.y - ScreenPoint.y;
-    if (ScreenPoint.y > GameScreenHeight - DeadZone.height)
-        camera.target.y += ScreenPoint.y - (GameScreenHeight - DeadZone.height);
-
-    // clamp biar gak keliatan area putih
-    float halfW = (GameScreenWidth / 2.0f) / camera.zoom;
-    float halfH = (GameScreenHeight / 2.0f) / camera.zoom;
-
-    // TODO MULTI-MAP: MapW dan MapH harus dari ukuran Map aktif
-    float MapW = CurrentMap->TileWidth * TILE_WIDTH;
-    float MapH = CurrentMap->TileHeight * TILE_HEIGHT;
-
-    if (camera.target.x < halfW)
-        camera.target.x = halfW;
-    if (camera.target.y < halfH)
-        camera.target.y = halfH;
-    if (camera.target.x > MapW - halfW)
-        camera.target.x = MapW - halfW;
-    if (camera.target.y > MapH - halfH)
-        camera.target.y = MapH - halfH;
-}
-
-// update player behavior
-void UpdatePlayer(GameState *state)
-{
-    PlayerMovement();
-    PlayerControl();
-    PlayerCamera();
-}
-
 // fungsi buat loadmap dan ini masih prototipe tester
-// semua data level map lewat entry point ini
+// semua data level map lewat entry point ini (handle map)
 void LoadMap(void)
 {
     MapDataDefinition *Map = new MapDataDefinition();
@@ -225,14 +91,15 @@ void LoadMap(void)
         {
             Map->Tiles[i][j] = (sTile){
                 .CoordinateTile = {i, j},
-                .type = (TileType)GetRandomValue(TILE_GRASS1, TILE_GRASS2)}; // bagian ini bisa digamti, tapi karena masih tester gini dulu
+                .type = (TileType)GetRandomValue(TILE_GRASS1, TILE_GRASS2)};
+            // bagian ini bisa digamti, tapi karena masih tester gini dulu
         }
     }
 
     CurrentMap = Map;
 }
 
-// buat hapus buffer array 2d nya kalo udah gak kepake
+// buat hapus buffer array 2d nya kalo udah gak kepake (handle map)
 void UnloadMap()
 {
     if (CurrentMap == nullptr)
@@ -248,8 +115,6 @@ void UnloadMap()
     CurrentMap = nullptr;
 }
 
-// TODO MULTI-MAP: fungsi ini harus nerima parameter Map mana yang mau di-load
-// bukan hardcode ke WorldMap
 // inisialisasi Map dalam bentuk data (handle Map)
 void InitDrawMap(GameState *state)
 {
@@ -264,6 +129,8 @@ void RenderMap(GameState *state)
 
     sTile tile;
 
+    // kayaknya ini fungsinya sementara deh
+    // tapi jangan di hapus dulu sampe bisa ngambil data desain level dalam bentuk json atau apapun itu kesini
     for (int i = 0; i < CurrentMap->TileWidth; i++)
     {
         for (int j = 0; j < CurrentMap->TileHeight; j++)
