@@ -1,7 +1,7 @@
 #pragma once
 #include "../lib/raylib/include/raylib.h"
-#include "Player.h"
-#include "Map.h"
+#include "player.h"
+#include "map.h"
 
 struct Game
 {

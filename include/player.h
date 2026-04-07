@@ -1,7 +1,7 @@
 #pragma once
 #include <cmath>
 #include "../lib/raylib/include/raylib.h"
-#include "Map.h"
+#include "map.h"
 
 enum Direction {
     DOWN,
