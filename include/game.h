@@ -1,8 +1,10 @@
 #pragma once
 #include "screen.h"
 #include "render.h"
+#include "debug.h"
 
-class Game {
+class Game
+{
 public:
     void Init();
     void Run();
@@ -11,6 +13,7 @@ public:
 private:
     Screen Screen;
     Render Render;
+    Debug Debug;
     void Update();
     void Draw();
 };

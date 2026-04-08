@@ -19,13 +19,18 @@ void Game::Run()
 void Game::Update()
 {
     Screen.Update();
-    // entry point untuk update 
+    // entry point untuk update
 }
 
 void Game::Draw()
 {
-    Render.TextureMode(Screen);
-    Render.Drawing(Screen);
+    Render.Begin();
+
+    // entry point untuk render
+    Debug.Mouse(Screen);
+
+    Render.End();
+    Render.Draw(Screen);
 }
 
 void Game::Shutdown()
