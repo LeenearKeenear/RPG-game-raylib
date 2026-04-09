@@ -56,11 +56,11 @@ function Install-Raylib() {
     
     if (Test-Path $installDir) {
         Write-Debug "Removing existing $installDir"
-        Remove-Item -Path $installDir -Recurse -Force
+        Remove-Item -Path $installDir -Recurse -Force -ErrorAction SilentlyContinue
     }
     if (Test-Path $tempExtract) {
         Write-Debug "Removing existing $tempExtract"
-        Remove-Item -Path $tempExtract -Recurse -Force
+        Remove-Item -Path $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
     }
     
     try {
@@ -126,7 +126,7 @@ function Remove-OldRaylib() {
     if (Test-Path $oldRaylib) {
         Write-Step "Removing old bundled raylib folder..."
         Write-Debug "Removing $oldRaylib"
-        Remove-Item -Path $oldRaylib -Recurse -Force
+        Remove-Item -Path $oldRaylib -Recurse -Force -ErrorAction SilentlyContinue
         Write-Step "Old raylib folder removed" -ForegroundColor Green
     }
 }
