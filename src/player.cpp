@@ -21,35 +21,35 @@ void PlayerMovement(void)
     {
         if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
         {
-            PlayerPosition_x -= 1 * TILE_WIDTH;
+            PlayerPosition_x -= 1 * TILE_SIZE;
         }
         else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
         {
-            PlayerPosition_x += 1 * TILE_WIDTH;
+            PlayerPosition_x += 1 * TILE_SIZE;
         }
         else if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
         {
-            PlayerPostition_y -= 1 * TILE_HEIGHT;
+            PlayerPostition_y -= 1 * TILE_SIZE;
         }
         else if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
         {
-            PlayerPostition_y += 1 * TILE_HEIGHT;
+            PlayerPostition_y += 1 * TILE_SIZE;
         }
 
         // mapbounds dari data Map aktif
         Rectangle MapBounds = {
             0.0f,
             0.0f,
-            (float)CurrentMap->TileWidth * TILE_WIDTH,
-            (float)CurrentMap->TileHeight * TILE_HEIGHT,
+            (float)CurrentMap->TileWidth * TILE_SIZE,
+            (float)CurrentMap->TileHeight * TILE_SIZE,
         };
 
         // ngasih player collison box sendiri dengan ukuran 32 x 32 pixel
         Rectangle PlayerCollisionBox = {
             PlayerPosition_x,
             PlayerPostition_y,
-            (float)TILE_WIDTH,
-            (float)TILE_HEIGHT,
+            (float)TILE_SIZE,
+            (float)TILE_SIZE,
         };
 
         // cek collision
@@ -93,13 +93,13 @@ void PlayerCamera(void)
             camera.zoom = MinZoom;
     }
 
-    camera.target.x = (float)Player.PlayerPosition.x + (TILE_WIDTH / 2.0f);
-    camera.target.y = (float)Player.PlayerPosition.y + (TILE_HEIGHT / 2.0f);
+    camera.target.x = (float)Player.PlayerPosition.x + (TILE_SIZE / 2.0f);
+    camera.target.y = (float)Player.PlayerPosition.y + (TILE_SIZE / 2.0f);
 
     float halfW = (GameScreenWidth / 2.0f) / camera.zoom;
     float halfH = (GameScreenHeight / 2.0f) / camera.zoom;
-    float MapW = (float)CurrentMap->TileWidth * TILE_WIDTH;
-    float MapH = (float)CurrentMap->TileHeight * TILE_HEIGHT;
+    float MapW = (float)CurrentMap->TileWidth * TILE_SIZE;
+    float MapH = (float)CurrentMap->TileHeight * TILE_SIZE;
 
     if (camera.target.x < halfW)
         camera.target.x = halfW;

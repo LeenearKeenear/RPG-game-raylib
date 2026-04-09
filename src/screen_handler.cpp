@@ -1,6 +1,7 @@
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/player.h"
+#include "../include/tileson_map.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -16,8 +17,8 @@ void InitAll(void)
     // sementara
     // inisialisasi player potition
     Player = (Entity){
-        .PlayerPosition = {CurrentMap->SpawnPointPlayer.x * TILE_WIDTH,
-                           CurrentMap->SpawnPointPlayer.y * TILE_HEIGHT},
+        .PlayerPosition = {CurrentMap->SpawnPointPlayer.x * TILE_SIZE,
+                           CurrentMap->SpawnPointPlayer.y * TILE_SIZE},
         .MoveTimer = 0.0f,
         .MoveDelay = 0.15,
     };
@@ -25,11 +26,11 @@ void InitAll(void)
     // TODO MULTI-MAP: Door harusnya diambil dari data object layer map aktif
     // sementara
     Door = (sTile){
-        .CoordinateTile = {TILE_WIDTH * 10, TILE_HEIGHT * 10},
+        .CoordinateTile = {TILE_SIZE * 10, TILE_SIZE * 10},
     };
 
     // inisialisasi camera
-    camera.target = (Vector2){(float)(CurrentMap->SpawnPointPlayer.x * TILE_WIDTH), (float)(CurrentMap->SpawnPointPlayer.y * TILE_HEIGHT)}; // ini targetin player biar ditengah map
+    camera.target = (Vector2){(float)(CurrentMap->SpawnPointPlayer.x * TILE_SIZE), (float)(CurrentMap->SpawnPointPlayer.y * TILE_SIZE)}; // ini targetin player biar ditengah map
     camera.offset = (Vector2){(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};                    // kamera di tengah map
     camera.rotation = {0};
     camera.zoom = 1.0f;
@@ -80,7 +81,9 @@ void DrawRenderTexture(GameState *state)
     BeginTextureMode(state->Dungeon);
     ClearBackground(RAYWHITE);
 
-    RenderMap(state);
+    //RenderMap(state);
+    TilesonRender(state);    // tambahin ini
+    TilesonDebugDraw(); 
 
     EndTextureMode();
 }

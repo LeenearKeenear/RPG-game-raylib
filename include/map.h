@@ -72,8 +72,7 @@ extern TileDefinition TileDefs[];
 extern MapDataDefinition *CurrentMap;
 
 // ukuran tile buat di mapping sprite nya (dalam bentuk pixel)
-#define TILE_WIDTH 32
-#define TILE_HEIGHT 32
+#define TILE_SIZE 32
 #define TILE_GAP 4
 
 // gak penting (tunggu kalo dah jadi)
