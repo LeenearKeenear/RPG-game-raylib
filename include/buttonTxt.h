@@ -11,7 +11,7 @@ class buttonTxt
         // hoverAmount: 0.0 = black, 1.0 = no darkening, <1.0 = darker on hover
         ~buttonTxt();
 
-        void Draw();
+        void Draw(Vector2 mousePosition);
 
         // state checks
         [[nodiscard]] bool isClicked(Vector2 mousePosition, bool mouseClicked) const;

@@ -24,9 +24,9 @@ buttonTxt::~buttonTxt()
 }
 
 // draw
-void buttonTxt::Draw() {
+void buttonTxt::Draw(Vector2 mousePosition) {
     Color currentColor = textColor;
-    if (isHovered(GetMousePosition())) {
+    if (isHovered(mousePosition)) {
         currentColor = (Color) {
             static_cast<unsigned char>(textColor.r * hoverAmount),
             static_cast<unsigned char>(textColor.g * hoverAmount),
