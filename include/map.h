@@ -1,88 +1,16 @@
 #pragma once
-#include "../lib/raylib/include/raylib.h"
+#include "tileset.h"
 
-// jumlah maksimum gambar texture png yang dibolehin
-#define MAX_TEXTURES 3
-
-// enum buat milih texture pack
-typedef enum
+class Map
 {
-    TEXTURE_TILEMAP = 0
-} TextureAsset;
+public:
+    void Init();
+    void Render();
 
-// ini masukin maksimum texture ke array ini
-extern Texture2D TexturesMap[MAX_TEXTURES];
-extern Camera2D camera;
-
-// struct kordinat universal
-typedef struct
-{
-    int x;
-    int y;
-} TileCoordinate;
-
-// TODO MULTI-MAP: nanti TileType bakal nambah banyak seiring
-// nambahnya jenis tile baru. pastiin TileProperty[] di map.cpp ikut diupdate
-// enum buat definisiin gambar biar enak
-typedef enum
-{
-    TILE_CLU_WALL,
-    TILE_CMU_WALL,
-    TILE_CRU_WALL,
-    TILE_CML_WALL,
-    TILE_M_WALL,
-    TILE_CMR_WALL,
-    TILE_CLD_WALL,
-    TILE_CMD_WALL,
-    TILE_CRD_WALL,
-    TILE_POOL,
-    TILE_BIGMAN,
-    TILE_GRASS1,
-    TILE_GRASS2,
-    TILE_DOOR_OPEN,
-    TILE_DOOR_CLOSE,
-} TileType;
-
-// struct buat koordinat tile
-typedef struct
-{
-    TileCoordinate CoordinateTile;
-    TileType type;
-} sTile;
-
-// struct buat tile properti
-typedef struct
-{
-    TileCoordinate CoordID;
-    bool IsWalkable;
-    bool HasInteraction;
-} TileDefinition;
-
-// struct buat map
-typedef struct
-{
-    int TileWidth;
-    int TileHeight;
-    sTile **Tiles;
-    TileCoordinate SpawnPointPlayer;
-} MapDataDefinition;
-
-// definisi struct yang handle map
-extern TileDefinition TileDefs[];
-extern MapDataDefinition *CurrentMap;
-
-// ukuran tile buat di mapping sprite nya (dalam bentuk pixel)
-#define TILE_WIDTH 32
-#define TILE_HEIGHT 32
-#define TILE_GAP 4
-
-// gak penting (tunggu kalo dah jadi)
-void LoadTileTexture(TextureAsset Slot, const char *Path);
-void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
-void DebugMenu(float NewX, float NewY);
-void LoadMap(void);
-void UnloadMap();
-
-// penting
-void InitDrawMap(GameState *state);
-void RenderMap(GameState *state);
+private:
+    static const int MAP_WIDTH = 20;
+    static const int MAP_HEIGHT = 12;
+    static const int TILE_SIZE = 32;
+    TileType Tiles[MAP_HEIGHT][MAP_WIDTH];
+    Tileset Tileset;
+};
