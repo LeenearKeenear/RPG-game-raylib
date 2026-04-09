@@ -16,6 +16,7 @@ int main()
     {
         if (state.currentScreen == MAIN_MENU)
         {
+            UpdateGame(&state);
             UpdateMainMenu(&state);
             RenderMainMenuToVirtualScreen(&state);
             DrawRenderWindows(&state);
