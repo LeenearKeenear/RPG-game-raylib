@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -I./lib/raylib/include -I./include
-LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
+LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -v
 
 TMPDIR := tmp
 
