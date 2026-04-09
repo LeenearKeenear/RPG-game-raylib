@@ -38,10 +38,10 @@ void PlayerMovement(void)
 
         // mapbounds dari data Map aktif
         Rectangle MapBounds = {
-            0,
-            0,
-            CurrentMap->TileWidth * TILE_WIDTH,
-            CurrentMap->TileHeight * TILE_HEIGHT,
+            0.0f,
+            0.0f,
+            (float)CurrentMap->TileWidth * TILE_WIDTH,
+            (float)CurrentMap->TileHeight * TILE_HEIGHT,
         };
 
         // ngasih player collison box sendiri dengan ukuran 32 x 32 pixel
@@ -77,23 +77,12 @@ void PlayerControl(void)
     }
 }
 
-// buat setup camera
 void PlayerCamera(void)
 {
-    float Maxzoom = 3.5f;  // maksimal zoom in
-    float MinZoom = 0.85f; // minimal zoom out
-
-    // ukuran kotak deadzone dalam pixel
-    int SizeDeadZone_x = 300;
-    int SizeDeadZone_y = 200;
-
-    // buat zoom multipliernya. makin gede makin cepet zoomnya
+    float Maxzoom = 3.5f;
+    float MinZoom = 0.85f;
     const float ZoomIncrement = 0.250f;
 
-    // inisialisasi deadzonennya
-    Rectangle DeadZone = {SizeDeadZone_x, SizeDeadZone_y, SizeDeadZone_x, SizeDeadZone_y};
-
-    // fungsi biar bisa ngezoom via mousewheel
     float MouseWheel = GetMouseWheelMove();
     if (MouseWheel != 0)
     {
@@ -104,28 +93,13 @@ void PlayerCamera(void)
             camera.zoom = MinZoom;
     }
 
-    // konversi posisi player dari world ke screen
-    Vector2 ScreenPoint = GetWorldToScreen2D(
-        (Vector2){(float)Player.PlayerPosition.x, (float)Player.PlayerPosition.y},
-        camera);
+    camera.target.x = (float)Player.PlayerPosition.x + (TILE_WIDTH / 2.0f);
+    camera.target.y = (float)Player.PlayerPosition.y + (TILE_HEIGHT / 2.0f);
 
-    // cek apakah player keluar deadzone, baru gerakin kamera
-    if (ScreenPoint.x < DeadZone.x)
-        camera.target.x -= DeadZone.x - ScreenPoint.x;
-    if (ScreenPoint.x > GameScreenWidth - DeadZone.width)
-        camera.target.x += ScreenPoint.x - (GameScreenWidth - DeadZone.width);
-    if (ScreenPoint.y < DeadZone.y)
-        camera.target.y -= DeadZone.y - ScreenPoint.y;
-    if (ScreenPoint.y > GameScreenHeight - DeadZone.height)
-        camera.target.y += ScreenPoint.y - (GameScreenHeight - DeadZone.height);
-
-    // clamp biar gak keliatan area putih
     float halfW = (GameScreenWidth / 2.0f) / camera.zoom;
     float halfH = (GameScreenHeight / 2.0f) / camera.zoom;
-
-    // data buat clamp kamera berdasarkan data size current map
-    float MapW = CurrentMap->TileWidth * TILE_WIDTH;
-    float MapH = CurrentMap->TileHeight * TILE_HEIGHT;
+    float MapW = (float)CurrentMap->TileWidth * TILE_WIDTH;
+    float MapH = (float)CurrentMap->TileHeight * TILE_HEIGHT;
 
     if (camera.target.x < halfW)
         camera.target.x = halfW;

@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17 -I./include -I./lib/raylib/include -Wno-missing-field-initializers
-LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
+CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -std=c++17 -I./lib/raylib/include -I./lib/tileson -I./include
+LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -v
 
 TMPDIR := tmp
 
@@ -33,3 +33,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 
 cln:
 	powershell -Command "Remove-Item -Recurse -Force $(OBJ_DIR) -ErrorAction Continue; Remove-Item -Recurse -Force $(TMPDIR) -ErrorAction Continue; Remove-Item -Force $(EXE), raylib.dll -ErrorAction Continue; exit 0"
+
+refresh:
+	make cln
+	make app

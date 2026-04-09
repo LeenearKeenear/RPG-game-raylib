@@ -56,11 +56,11 @@ function Install-Raylib() {
     
     if (Test-Path $installDir) {
         Write-Debug "Removing existing $installDir"
-        Remove-Item -Path $installDir -Recurse -Force
+        Remove-Item -Path $installDir -Recurse -Force -ErrorAction SilentlyContinue
     }
     if (Test-Path $tempExtract) {
         Write-Debug "Removing existing $tempExtract"
-        Remove-Item -Path $tempExtract -Recurse -Force
+        Remove-Item -Path $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
     }
     
     try {
@@ -101,6 +101,24 @@ function Install-Raylib() {
     }
 }
 
+function Install-Tileson() {
+    $cwd = $PWD.Path
+    $tilesonDir = Join-Path $cwd "lib\tileson"
+    $tilesonFile = Join-Path $tilesonDir "tileson.hpp"
+    
+    Write-Step "Checking for tileson..."
+    Write-Debug "Tileson path: $tilesonFile"
+    
+    if (Test-Path $tilesonFile) {
+        Write-Step "tileson.hpp already exists at $tilesonDir"
+        return
+    }
+    
+    Write-Step "tileson.hpp not found!"
+    Write-Host "  Please download tileson from: https://github.com/SSBMTonberry/tileson" -ForegroundColor Yellow
+    Write-Host "  Copy 'tileson.hpp' to: lib/tileson/" -ForegroundColor Yellow
+}
+
 function Remove-OldRaylib() {
     $cwd = $PWD.Path
     $oldRaylib = Join-Path $cwd "raylib"
@@ -108,10 +126,11 @@ function Remove-OldRaylib() {
     if (Test-Path $oldRaylib) {
         Write-Step "Removing old bundled raylib folder..."
         Write-Debug "Removing $oldRaylib"
-        Remove-Item -Path $oldRaylib -Recurse -Force
+        Remove-Item -Path $oldRaylib -Recurse -Force -ErrorAction SilentlyContinue
         Write-Step "Old raylib folder removed" -ForegroundColor Green
     }
 }
 
 Remove-OldRaylib
 Install-Raylib
+Install-Tileson

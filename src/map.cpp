@@ -61,7 +61,7 @@ void DebugMenu(float NewX, float NewY)
     DrawText(TextFormat("kamera zoom: %06.2f", camera.zoom), 15, 30, 25, YELLOW);
 
     // debug collision
-    Rectangle MapBounds = {0, 0, CurrentMap->TileWidth * TILE_WIDTH, CurrentMap->TileHeight * TILE_HEIGHT};
+    Rectangle MapBounds = {0.0f, 0.0f, (float)CurrentMap->TileWidth * TILE_WIDTH, (float)CurrentMap->TileHeight * TILE_HEIGHT};
     Rectangle PlayerCollisionBox = {NewX, NewY, (float)TILE_WIDTH, (float)TILE_HEIGHT};
     bool hit = CheckCollisionRecs(PlayerCollisionBox, MapBounds);
 
