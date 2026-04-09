@@ -1,13 +1,13 @@
 #include "../include/game.h"
 
-void Game::Init()
+void Game::Open()
 {
     Screen.Init();
     Render.Init();
-    // entry point untuk inisialisasi
+    Map.Init();
 }
 
-void Game::Run()
+void Game::Loop()
 {
     while (!WindowShouldClose())
     {
@@ -19,21 +19,20 @@ void Game::Run()
 void Game::Update()
 {
     Screen.Update();
-    // entry point untuk update
 }
 
 void Game::Draw()
 {
     Render.Begin();
 
-    // entry point untuk render
+    Map.Render();
     Debug.Mouse(Screen);
 
     Render.End();
     Render.Draw(Screen);
 }
 
-void Game::Shutdown()
+void Game::Close()
 {
     Render.Shutdown();
     Screen.Shutdown();

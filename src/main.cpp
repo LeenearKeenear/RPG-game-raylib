@@ -4,9 +4,9 @@ int main()
 {
     Game Game;
 
-    Game.Init();
-    Game.Run();
-    Game.Shutdown();
+    Game.Open();
+    Game.Loop();
+    Game.Close();
 
     return 0;
 }

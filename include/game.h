@@ -2,18 +2,20 @@
 #include "screen.h"
 #include "render.h"
 #include "debug.h"
+#include "map.h"
 
 class Game
 {
 public:
-    void Init();
-    void Run();
-    void Shutdown();
+    void Open();
+    void Loop();
+    void Close();
 
 private:
     Screen Screen;
     Render Render;
     Debug Debug;
+    Map Map;
     void Update();
     void Draw();
 };
