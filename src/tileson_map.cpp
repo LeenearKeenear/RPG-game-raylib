@@ -21,8 +21,9 @@ void TilesonLoadMap(const char *mapPath)
     }
 
     tilesonMap = new TilesonMapData();
-    tilesonMap->width = parsedMap->getWidth();
-    tilesonMap->height = parsedMap->getHeight();
+    tson::Vector2i mapSize = parsedMap->getSize();
+    tilesonMap->width = mapSize.x;
+    tilesonMap->height = mapSize.y;
     tilesonMap->tiles = new int[tilesonMap->width * tilesonMap->height];
 
     for (auto &layer : parsedMap->getLayers())
