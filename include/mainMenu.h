@@ -4,4 +4,4 @@
 
 void InitMainMenu(GameState* state);
 void UpdateMainMenu(GameState* state);
-void DrawMainMenu(GameState* state);
+void RenderMainMenuToVirtualScreen(GameState* state);

@@ -17,7 +17,8 @@ int main()
         if (state.currentScreen == MAIN_MENU)
         {
             UpdateMainMenu(&state);
-            DrawMainMenu(&state);
+            RenderMainMenuToVirtualScreen(&state);
+            DrawRenderWindows(&state);
         }
         else if (state.currentScreen == PLAY)
         {

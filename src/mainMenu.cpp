@@ -1,7 +1,17 @@
 #include "../include/mainMenu.h"
+#include "../lib/raylib/include/raymath.h"
 
 static buttonTxt startButton;
 static buttonTxt quitButton;
+
+static Vector2 GetVirtualMousePosition(GameState* state)
+{
+    Vector2 mouse = GetMousePosition();
+    Vector2 virtualMouse = {0, 0};
+    virtualMouse.x = (mouse.x - ((state->WindowScreenWidth - (GameScreenWidth * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
+    virtualMouse.y = (mouse.y - ((state->WindowScreenHeight - (GameScreenHeight * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
+    return Vector2Clamp(virtualMouse, (Vector2){0, 0}, (Vector2){(float)GameScreenWidth, (float)GameScreenHeight});
+}
 
 void InitMainMenu(GameState* state)
 {
@@ -15,7 +25,7 @@ void InitMainMenu(GameState* state)
 
 void UpdateMainMenu(GameState* state)
 {
-    Vector2 mousePosition = GetMousePosition();
+    Vector2 mousePosition = GetVirtualMousePosition(state);
     bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
     if (startButton.isClicked(mousePosition, mouseClicked))
@@ -29,11 +39,12 @@ void UpdateMainMenu(GameState* state)
     }
 }
 
-void DrawMainMenu(GameState* state)
+void RenderMainMenuToVirtualScreen(GameState* state)
 {
-    BeginDrawing();
-    ClearBackground(BLACK);
-    startButton.Draw();
-    quitButton.Draw();
-    EndDrawing();
+    Vector2 virtualMouse = GetVirtualMousePosition(state);
+    BeginTextureMode(state->Dungeon);
+    ClearBackground(DARKGRAY);
+    startButton.Draw(virtualMouse);
+    quitButton.Draw(virtualMouse);
+    EndTextureMode();
 }
