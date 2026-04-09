@@ -38,10 +38,10 @@ void PlayerMovement(void)
 
         // mapbounds dari data Map aktif
         Rectangle MapBounds = {
-            0,
-            0,
-            CurrentMap->TileWidth * TILE_WIDTH,
-            CurrentMap->TileHeight * TILE_HEIGHT,
+            0.0f,
+            0.0f,
+            (float)CurrentMap->TileWidth * TILE_WIDTH,
+            (float)CurrentMap->TileHeight * TILE_HEIGHT,
         };
 
         // ngasih player collison box sendiri dengan ukuran 32 x 32 pixel
@@ -91,7 +91,7 @@ void PlayerCamera(void)
     const float ZoomIncrement = 0.250f;
 
     // inisialisasi deadzonennya
-    Rectangle DeadZone = {SizeDeadZone_x, SizeDeadZone_y, SizeDeadZone_x, SizeDeadZone_y};
+    Rectangle DeadZone = {(float)SizeDeadZone_x, (float)SizeDeadZone_y, (float)SizeDeadZone_x, (float)SizeDeadZone_y};
 
     // fungsi biar bisa ngezoom via mousewheel
     float MouseWheel = GetMouseWheelMove();

@@ -16,8 +16,8 @@ void InitAll(void)
     // sementara
     // inisialisasi player potition
     Player = (Entity){
-        .PlayerPosition = {(float)(CurrentMap->SpawnPointPlayer.x * TILE_WIDTH),
-                           (float)(CurrentMap->SpawnPointPlayer.y * TILE_HEIGHT)}, // biar ditengah
+        .PlayerPosition = {CurrentMap->SpawnPointPlayer.x * TILE_WIDTH,
+                           CurrentMap->SpawnPointPlayer.y * TILE_HEIGHT},
         .MoveTimer = 0.0f,
         .MoveDelay = 0.15,
     };
