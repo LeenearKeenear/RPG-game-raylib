@@ -2,6 +2,13 @@
 
 Game RPG 2D yang dibuat dengan Raylib.
 
+## Fitur
+
+- Main menu dengan button components
+- Player movement system
+- Tilemap support (Tileson JSON)
+- Virtual screen rendering (640x360)
+
 ## Persyaratan
 
 - **Windows** (10/11)
@@ -9,13 +16,18 @@ Game RPG 2D yang dibuat dengan Raylib.
 - PowerShell 7
 - Git
 
+## Dependencies
+
+- **Raylib 5.5** - Auto-download via `setup.ps1`
+- **Tileson** - Download manual dari [GitHub Tileson](https://github.com/SSBMTonberry/tileson), copy `tileson.hpp` ke `lib/tileson/`
+
 ### Instalasi MSYS2
 
-1. Install MSYS2 dari [scoop](https://scoop.sh/): `scoop install msys2`
+1. Install MSYS2 dari [scoop](https://scoop.sh/): `scoop install msys2`, atau dari tempat lain.
 2. Install MinGW-w64 dari MSYS shell: `pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make`
 
 > [!IMPORTANT]
-> Proyek ini hanya berjalan di **Windows**. Tidak mendukung Linux atau macOS.
+> Proyek ini hanya berjalan di **Windows**. Dukungan untuk Linux dan macOS akan dibuat nanti.
 
 ## Setup Pertama Kali
 
@@ -35,13 +47,9 @@ Ini akan:
 ## Build
 
 ```bash
-make app
-```
-
-### Bersihkan Build
-
-```bash
-make cln
+make app      # Setup + Build
+make cln      # Clean build artifacts
+make refresh  # Clean + Build ulang
 ```
 
 ### Jalankan Game
