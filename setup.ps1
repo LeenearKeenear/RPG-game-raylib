@@ -101,6 +101,24 @@ function Install-Raylib() {
     }
 }
 
+function Install-Tileson() {
+    $cwd = $PWD.Path
+    $tilesonDir = Join-Path $cwd "lib\tileson"
+    $tilesonFile = Join-Path $tilesonDir "tileson.hpp"
+    
+    Write-Step "Checking for tileson..."
+    Write-Debug "Tileson path: $tilesonFile"
+    
+    if (Test-Path $tilesonFile) {
+        Write-Step "tileson.hpp already exists at $tilesonDir"
+        return
+    }
+    
+    Write-Step "tileson.hpp not found!"
+    Write-Host "  Please download tileson from: https://github.com/SSBMTonberry/tileson" -ForegroundColor Yellow
+    Write-Host "  Copy 'tileson.hpp' to: lib/tileson/" -ForegroundColor Yellow
+}
+
 function Remove-OldRaylib() {
     $cwd = $PWD.Path
     $oldRaylib = Join-Path $cwd "raylib"
@@ -115,3 +133,4 @@ function Remove-OldRaylib() {
 
 Remove-OldRaylib
 Install-Raylib
+Install-Tileson
