@@ -7,50 +7,50 @@
 
 int main()
 {
-    // Initialize the game window and rendering system
-    // Creates a virtual screen (1280x720) that scales to fit the actual window
+    // Inisialisasi jendela game dan sistem rendering
+    // Membuat layar virtual (1280x720) yang diskalakan untuk menyesuaikan jendela sebenarnya
     GameState state = InitScreen();
 
-    // Initialize the map data (load tiles, parse JSON, etc.)
+    // Inisialisasi data map (load tiles, parse JSON, dll)
     InitDrawMap(&state);
 
-    // Initialize player position and other game entities
+    // Inisialisasi posisi player dan entity game lainnya
     InitAll();
 
-    // Initialize main menu UI elements (buttons, etc.)
+    // Inisialisasi elemen UI menu utama (tombol, dll)
     InitMainMenu(&state);
 
-    // Main game loop - runs every frame until window is closed
+    // Main game loop - berjalan setiap frame sampai jendela ditutup
     while (!WindowShouldClose())
     {
-        // MAIN_MENU state - displays the start screen with buttons
+        // State MAIN_MENU - menampilkan layar awal dengan tombol
         if (state.currentScreen == MAIN_MENU)
         {
-            // UpdateGame handles window resize events and updates ScaleMultiplier
-            // This ensures the menu scales correctly when window size changes
+            // UpdateGame menangani event resize jendela dan mengupdate ScaleMultiplier
+            // Ini memastikan menu diskalakan dengan benar saat ukuran jendela berubah
             UpdateGame(&state);
-            // Handle button clicks and transitions
+            // Menangani klik tombol dan transisi
             UpdateMainMenu(&state);
-            // Draw buttons to the virtual screen (1280x720 RenderTexture)
+            // Menggambar tombol ke layar virtual (1280x720 RenderTexture)
             RenderMainMenuToVirtualScreen(&state);
-            // Draw the virtual screen to the window, scaling to fit while maintaining aspect ratio
+            // Menggambar layar virtual ke jendela, diskalakan untuk menyesuaikan sambil mempertahankan rasio aspek
             DrawRenderWindows(&state);
         }
-        // PLAY state - the actual gameplay
+        // State PLAY - gameplay sebenarnya
         else if (state.currentScreen == PLAY)
         {
-            // Update window/scale info and game logic
+            // Update info jendela/skala dan logika game
             UpdateGame(&state);
-            // Update player movement and actions
+            // Update pergerakan dan aksi player
             UpdatePlayer(&state);
-            // Render game world to virtual screen
+            // Merender game world ke layar virtual
             DrawRenderTexture(&state);
-            // Draw virtual screen to window with proper scaling
+            // Menggambar layar virtual ke jendela dengan scaling yang tepat
             DrawRenderWindows(&state);
         }
     }
 
-    // Clean up resources (textures, maps, window, etc.)
+    // Clean up resource (textures, maps, window, dll)
     GameShutDown(&state);
     return 0;
 }

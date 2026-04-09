@@ -5,12 +5,12 @@ static buttonTxt startButton;
 static buttonTxt quitButton;
 
 /**
- * Converts window mouse coordinates to virtual screen coordinates.
- * The virtual screen is 1280x720 (GameScreenWidth x GameScreenHeight) and
- * gets scaled to fit the window while maintaining aspect ratio.
+ * Mengonversi koordinat mouse jendela ke koordinat layar virtual.
+ * Layar virtual adalah 1280x720 (GameScreenWidth x GameScreenHeight) dan
+ * akan diskalakan untuk menyesuaikan jendela sambil mempertahankan rasio aspek.
  *
- * @param state Pointer to the current game state containing window/scale info
- * @return Vector2 position in virtual screen coordinates (0-1280, 0-720)
+ * @param state Pointer ke state game saat ini yang berisi info jendela/skala
+ * @return Vector2 posisi dalam koordinat layar virtual (0-1280, 0-720)
  */
 static Vector2 GetVirtualMousePosition(GameState* state)
 {
@@ -22,10 +22,10 @@ static Vector2 GetVirtualMousePosition(GameState* state)
 }
 
 /**
- * Initializes the main menu buttons.
- * Creates "Start Game" and "Quit" buttons centered on the virtual screen.
+ * Menginisialisasi tombol menu utama.
+ * Membuat tombol "Start Game" dan "Quit" yang centered di layar virtual.
  *
- * @param state Pointer to the game state (unused, reserved for future use)
+ * @param state Pointer ke state game (tidak digunakan, reserved untuk penggunaan masa depan)
  */
 void InitMainMenu(GameState* state)
 {
@@ -38,11 +38,11 @@ void InitMainMenu(GameState* state)
 }
 
 /**
- * Updates main menu state - handles mouse input and button click detection.
- * Uses virtual screen coordinates to correctly detect button clicks regardless
- * of window size/scaling.
+ * Mengupdate state menu utama - menangani input mouse dan pendeteksian klik tombol.
+ * Menggunakan koordinat layar virtual untuk mendeteksi klik tombol dengan benar
+ * terlepas dari ukuran/skala jendela.
  *
- * @param state Pointer to the current game state
+ * @param state Pointer ke state game saat ini
  */
 void UpdateMainMenu(GameState* state)
 {
@@ -61,11 +61,11 @@ void UpdateMainMenu(GameState* state)
 }
 
 /**
- * Renders the main menu to the virtual screen (RenderTexture2D).
- * This draws to an off-screen 1280x720 buffer which is then scaled
- * to fit the window by DrawRenderWindows().
+ * Merender menu utama ke layar virtual (RenderTexture2D).
+ * Ini menggambar ke buffer off-screen 1280x720 yang kemudian diskalakan
+ * untuk menyesuaikan jendela oleh DrawRenderWindows().
  *
- * @param state Pointer to the current game state
+ * @param state Pointer ke state game saat ini
  */
 void RenderMainMenuToVirtualScreen(GameState* state)
 {
