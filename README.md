@@ -19,7 +19,7 @@ Game RPG 2D yang dibuat dengan Raylib.
 ## Dependencies
 
 - **Raylib 5.5** - Auto-download via `setup.ps1`
-- **Tileson** - Download manual dari https://github.com/SSBMTonberry/tileson, copy `tileson.hpp` ke `lib/tileson/`
+- **Tileson** - Download manual dari [GitHub Tileson](https://github.com/SSBMTonberry/tileson), copy `tileson.hpp` ke `lib/tileson/`
 
 ### Instalasi MSYS2
 
