@@ -2,6 +2,7 @@
 #include "../include/map.h"
 #include "../include/player.h"
 #include "../include/mainMenu.h"
+#include "../include/tileson_map.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 
@@ -16,6 +17,8 @@ int main()
 
     // Inisialisasi posisi player dan entity game lainnya
     InitAll();
+
+    TilesonInit(&state);
 
     // Inisialisasi elemen UI menu utama (tombol, dll)
     InitMainMenu(&state);

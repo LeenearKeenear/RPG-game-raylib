@@ -3,14 +3,16 @@
 #include "../lib/tileson/tileson.hpp"
 #include "screen.h"
 
-#define TILE_SIZE 16
-
 using TilesonMapData = struct
 {
     int width;
     int height;
-    int *tiles;
+    int layerCount;
+    int **tiles;
     Texture2D tilesetTexture;
+    int tilesetCols;
+    int tilesetSpacing;
+    int tilesetFirstgid;
 };
 
 extern TilesonMapData *tilesonMap;

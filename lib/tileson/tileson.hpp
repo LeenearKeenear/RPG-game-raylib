@@ -58,6 +58,10 @@
 
 #pragma once
 
+// plis tambahin ini kalo lu mau tuning lagi ini library busuk
+#include <algorithm> // baru
+#include <iterator> // baru
+#include <cstdint> // baru
 #include <string>
 #include <vector>
 #include <map>

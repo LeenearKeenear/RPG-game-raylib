@@ -43,10 +43,10 @@ void LoadTileTexture(TextureAsset Slot, const char *Path)
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
 {
     // buat ngetrack indexing dari gambar png nya
-    Rectangle Source = {(float)(TileProperty[Type].CoordID.x * (TILE_WIDTH + TILE_GAP)), (float)(TileProperty[Type].CoordID.y * (TILE_HEIGHT + TILE_GAP)),
-                        (float)TILE_WIDTH, (float)TILE_HEIGHT};
+    Rectangle Source = {(float)(TileProperty[Type].CoordID.x * (TILE_SIZE + TILE_GAP)), (float)(TileProperty[Type].CoordID.y * (TILE_SIZE + TILE_GAP)),
+                        (float)TILE_SIZE, (float)TILE_SIZE};
     Rectangle Destination = {(float)(pos_x), (float)(pos_y),
-                             (float)TILE_WIDTH, (float)TILE_HEIGHT};
+                             (float)TILE_SIZE, (float)TILE_SIZE};
     Vector2 origin = {0, 0};
     DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
 }
@@ -61,15 +61,15 @@ void DebugMenu(float NewX, float NewY)
     DrawText(TextFormat("kamera zoom: %06.2f", camera.zoom), 15, 30, 25, YELLOW);
 
     // debug collision
-    Rectangle MapBounds = {0.0f, 0.0f, (float)CurrentMap->TileWidth * TILE_WIDTH, (float)CurrentMap->TileHeight * TILE_HEIGHT};
-    Rectangle PlayerCollisionBox = {NewX, NewY, (float)TILE_WIDTH, (float)TILE_HEIGHT};
+    Rectangle MapBounds = {0.0f, 0.0f, (float)CurrentMap->TileWidth * TILE_SIZE, (float)CurrentMap->TileHeight * TILE_SIZE};
+    Rectangle PlayerCollisionBox = {NewX, NewY, (float)TILE_SIZE, (float)TILE_SIZE};
     bool hit = CheckCollisionRecs(PlayerCollisionBox, MapBounds);
 
     DrawRectangle(5, 130, 330, 100, DARKGRAY);
     DrawRectangleLines(5, 130, 330, 100, WHITE);
     DrawText("-- DEBUG COLLISION --", 15, 135, 25, YELLOW);
-    DrawText(TextFormat("Player Pos: (%.0f, %.0f)", NewX / TILE_WIDTH, NewY / TILE_HEIGHT), 15, 155, 25, WHITE);
-    DrawText(TextFormat("Map Bounds: (%d x %d)", (CurrentMap->TileWidth * TILE_WIDTH) / TILE_WIDTH, (CurrentMap->TileHeight * TILE_HEIGHT) / TILE_HEIGHT), 15, 175, 25, WHITE);
+    DrawText(TextFormat("Player Pos: (%.0f, %.0f)", NewX / TILE_SIZE, NewY / TILE_SIZE), 15, 155, 25, WHITE);
+    DrawText(TextFormat("Map Bounds: (%d x %d)", (CurrentMap->TileWidth * TILE_SIZE) / TILE_SIZE, (CurrentMap->TileHeight * TILE_SIZE) / TILE_SIZE), 15, 175, 25, WHITE);
     DrawText(TextFormat("CheckCollisionRecs: %s", hit ? "TRUE" : "FALSE"), 15, 195, 25, hit ? GREEN : RED);
 }
 
@@ -138,7 +138,7 @@ void RenderMap(GameState *state)
             tile = CurrentMap->Tiles[i][j];
 
             // buat ngetrack indexing dari gambar png nya
-            RenderTilePNG((tile.CoordinateTile.x * TILE_WIDTH), (tile.CoordinateTile.y * TILE_HEIGHT), tile.type, 0, TEXTURE_TILEMAP);
+            RenderTilePNG((tile.CoordinateTile.x * TILE_SIZE), (tile.CoordinateTile.y * TILE_SIZE), tile.type, 0, TEXTURE_TILEMAP);
         }
     }
     // sementara
