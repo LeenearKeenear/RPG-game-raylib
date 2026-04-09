@@ -5,13 +5,13 @@
 
 #define TILE_SIZE 16
 
-typedef struct
+using TilesonMapData = struct
 {
     int width;
     int height;
     int *tiles;
     Texture2D tilesetTexture;
-} TilesonMapData;
+};
 
 extern TilesonMapData *tilesonMap;
 

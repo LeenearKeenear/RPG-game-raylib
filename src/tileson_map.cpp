@@ -37,7 +37,7 @@ void TilesonLoadMap(const char *mapPath)
                 int y = std::get<1>(pos);
                 if (tile != nullptr && x < tilesonMap->width && y < tilesonMap->height)
                 {
-                    tilesonMap->tiles[y * tilesonMap->width + x] = (int)tile->getId();
+                    tilesonMap->tiles[(y * tilesonMap->width) + x] = (int)tile->getId();
                 }
             }
         }
@@ -64,10 +64,8 @@ void TilesonUnloadMap()
 {
     if (tilesonMap != nullptr)
     {
-        if (tilesonMap->tiles != nullptr)
-        {
-            delete[] tilesonMap->tiles;
-        }
+        delete[] tilesonMap->tiles;
+        
         if (tilesonMap->tilesetTexture.id != 0)
         {
             UnloadTexture(tilesonMap->tilesetTexture);
@@ -85,8 +83,9 @@ void TilesonInit(GameState *state)
 
 void TilesonRender(GameState *state)
 {
-    if (tilesonMap == nullptr || tilesonMap->tilesetTexture.id == 0)
+    if (tilesonMap == nullptr || tilesonMap->tilesetTexture.id == 0) {
         return;
+}
 
     BeginMode2D(camera);
 
@@ -94,9 +93,10 @@ void TilesonRender(GameState *state)
     {
         for (int x = 0; x < tilesonMap->width; x++)
         {
-            int tileId = tilesonMap->tiles[y * tilesonMap->width + x];
-            if (tileId == 0)
+            int tileId = tilesonMap->tiles[(y * tilesonMap->width) + x];
+            if (tileId == 0) {
                 continue;
+}
 
             int tilesetCols = 8;
             int srcX = (tileId % tilesetCols) * TILE_SIZE;
@@ -105,7 +105,7 @@ void TilesonRender(GameState *state)
             Rectangle srcRec = {(float)srcX, (float)srcY, (float)TILE_SIZE, (float)TILE_SIZE};
             Rectangle dstRec = {(float)(x * TILE_SIZE), (float)(y * TILE_SIZE), (float)TILE_SIZE, (float)TILE_SIZE};
 
-            DrawTexturePro(tilesonMap->tilesetTexture, srcRec, dstRec, (Vector2){0, 0}, 0.0f, WHITE);
+            DrawTexturePro(tilesonMap->tilesetTexture, srcRec, dstRec, (Vector2){0, 0}, 0.0F, WHITE);
         }
     }
 
@@ -114,8 +114,9 @@ void TilesonRender(GameState *state)
 
 void TilesonDebugDraw()
 {
-    if (tilesonMap == nullptr)
+    if (tilesonMap == nullptr) {
         return;
+}
 
     DrawRectangle(5, 5, 250, 80, DARKGRAY);
     DrawRectangleLines(5, 5, 250, 80, WHITE);
