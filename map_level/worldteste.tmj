@@ -1,0 +1,34 @@
+{ "compressionlevel":-1,
+ "height":20,
+ "infinite":false,
+ "layers":[
+        {
+         "compression":"gzip",
+         "data":"H4sIAAAAAAAACq2UwQqAMAxDq3gXvAv+yPz\/z3KChxKStAeFgs72GZd2S0SsP8U2Y59xQwxxj2uYd3y8YXJUPfIzj+Uo3hBcp489V\/+K+hQTw+0v47nvV3nIq3Q6\/9X+KSa+Y55kXqcfXB8wP1yt0pXXUJ+rdV4zHvOs6jvnr5oDp7WaD9dnVe+p\/uucL4qv9HX6jdV05s3xlB\/56mphc\/TyzvjvvL9mPJV6gwJABgAA",
+         "encoding":"base64",
+         "height":20,
+         "id":1,
+         "name":"Tile Layer 1",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":20,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":2,
+ "nextobjectid":1,
+ "orientation":"orthogonal",
+ "renderorder":"right-up",
+ "tiledversion":"1.12.1",
+ "tileheight":32,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "source":"../map_level_tsj/contoh.tsj"
+        }],
+ "tilewidth":32,
+ "type":"map",
+ "version":"1.10",
+ "width":20
+}

@@ -1,0 +1,15 @@
+{ "columns":14,
+ "image":"Dungeon\/texture\/colored_tilemap.png",
+ "imageheight":428,
+ "imagewidth":500,
+ "margin":0,
+ "name":"contoh",
+ "spacing":4,
+ "tilecount":168,
+ "tiledversion":"1.12.1",
+ "tileheight":32,
+ "tilewidth":32,
+ "transparentcolor":"#222323",
+ "type":"tileset",
+ "version":"1.10"
+}
