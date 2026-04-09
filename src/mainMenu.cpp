@@ -43,7 +43,7 @@ void RenderMainMenuToVirtualScreen(GameState* state)
 {
     Vector2 virtualMouse = GetVirtualMousePosition(state);
     BeginTextureMode(state->Dungeon);
-    ClearBackground(RAYWHITE);
+    ClearBackground(DARKGRAY);
     startButton.Draw(virtualMouse);
     quitButton.Draw(virtualMouse);
     EndTextureMode();
