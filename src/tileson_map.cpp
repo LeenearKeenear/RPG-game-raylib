@@ -61,6 +61,30 @@ void TilesonLoadMap(const char *mapPath)
         }
     }
 
+    // parse object layer
+    for (auto &layer : parsedMap->getLayers())
+    {
+        if (layer.getType() == tson::LayerType::ObjectGroup)
+        {
+            for (auto &obj : layer.getObjects())
+            {
+                MapObject mapObj;
+                mapObj.name = obj.getName();
+                mapObj.type = obj.getType();
+
+                tson::Vector2i pos = obj.getPosition();
+                tson::Vector2i size = obj.getSize();
+                mapObj.bounds = {(float)pos.x, (float)pos.y, (float)size.x, (float)size.y};
+
+                // ambil semua custom properties nya
+                for (auto &[key, prop] : obj.getProperties().getProperties())
+                    mapObj.properties[key] = prop;
+
+                tilesonMap->Objects.push_back(mapObj);
+            }
+        }
+    }
+
     // ambil tileset pertama yang ada di map
     auto &tilesets = parsedMap->getTilesets();
     if (!tilesets.empty())
@@ -94,6 +118,8 @@ void TilesonUnloadMap()
         for (int i = 0; i < tilesonMap->layerCount; i++)
             delete[] tilesonMap->tiles[i];
         delete[] tilesonMap->tiles;
+
+        tilesonMap->Objects.clear(); // tambahin ini
 
         // unload texture dari GPU kalau emang udah ke-load
         if (tilesonMap->tilesetTexture.id != 0)
@@ -165,4 +191,21 @@ void TilesonDebugDraw()
     DrawText(TextFormat("Size: %dx%d", tilesonMap->width, tilesonMap->height), 15, 30, 18, WHITE);
     DrawText(TextFormat("Layers: %d", tilesonMap->layerCount), 15, 50, 18, WHITE);
     DrawText(TextFormat("Tileset: %s", tilesonMap->tilesetTexture.id != 0 ? "Loaded" : "Not loaded"), 15, 70, 18, WHITE);
+}
+
+std::vector<MapObject> TilesonGetObjectsByType(const std::string &type)
+{
+    std::vector<MapObject> result;
+    for (auto &obj : tilesonMap->Objects)
+        if (obj.type == type)
+            result.push_back(obj);
+    return result;
+}
+
+MapObject *TilesonGetObjectByName(const std::string &name)
+{
+    for (auto &obj : tilesonMap->Objects)
+        if (obj.name == name)
+            return &obj;
+    return nullptr;
 }
