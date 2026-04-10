@@ -28,12 +28,12 @@
         {
             "name": "ninja",
             "configurePreset": "ninja",
-            "nativeBuildOptions": ["--parallel"]
+            "jobs": 0
         },
         {
             "name": "ninja-debug",
             "configurePreset": "ninja-debug",
-            "nativeBuildOptions": ["--parallel"]
+            "jobs": 0
         }
     ]
 }
