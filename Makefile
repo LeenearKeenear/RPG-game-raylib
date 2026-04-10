@@ -4,7 +4,7 @@
 # Lihat CONTRIBUTING.md untuk petunjuk pembangunan.
 # ==============================================================================
 
-CXX = ccache g++
+CXX = g++
 CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -std=c++17 -I./lib/raylib/include -I./lib/tileson -I./include
 LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -v
 
