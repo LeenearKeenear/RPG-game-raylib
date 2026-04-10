@@ -22,6 +22,7 @@ private:
     Player Player;
     Camera2D Camera;
     float CameraZoom = 1.0f;
+    Rectangle DeadZone;
     void Update();
     void Draw();
 };
