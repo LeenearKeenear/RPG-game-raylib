@@ -36,6 +36,8 @@ cmake --build --preset ninja
 
 File executable akan berada di `build/bin/main.exe`.
 
+> **Catatan**: ccache digunakan secara otomatis jika terpasang. Tidak perlu konfigurasi tambahan.
+
 ### Preset Build
 
 | Preset | Deskripsi |
