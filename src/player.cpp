@@ -1,120 +1,57 @@
-#include "../lib/raylib/include/raylib.h"
-#include "../lib/raylib/include/raymath.h"
-#include "../include/screen.h"
-#include "../include/Map.h"
 #include "../include/player.h"
+#include <cmath>
 
-Camera2D camera = {0};
-Entity Player;
-sTile Door;
-
-// movement player + collisionnya
-void PlayerMovement(void)
+void Player::Init(Map *Map)
 {
-    Player.MoveTimer += GetFrameTime(); // ngambil frame sekarang
+    MapRef = Map;
+    TilesetRef = Map->GetTilesetRef();
+    Position = {160.0f, 160.0f};
+    TileCharacter = CHARACTER1;
+}
 
-    // player movement
-    float PlayerPosition_x = Player.PlayerPosition.x;
-    float PlayerPostition_y = Player.PlayerPosition.y;
+void Player::Update()
+{
+    Velocity = {0, 0};
 
-    if (Player.MoveTimer >= Player.MoveDelay)
+    if (IsKeyDown(KEY_UP))    Velocity.y -= 1;
+    if (IsKeyDown(KEY_DOWN))  Velocity.y += 1;
+    if (IsKeyDown(KEY_LEFT))  Velocity.x -= 1;
+    if (IsKeyDown(KEY_RIGHT)) Velocity.x += 1;
+
+    float Length = sqrtf(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
+    if (Length != 0)
     {
-        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
-        {
-            PlayerPosition_x -= 1 * TILE_SIZE;
-        }
-        else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
-        {
-            PlayerPosition_x += 1 * TILE_SIZE;
-        }
-        else if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
-        {
-            PlayerPostition_y -= 1 * TILE_SIZE;
-        }
-        else if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
-        {
-            PlayerPostition_y += 1 * TILE_SIZE;
-        }
+        Velocity.x /= Length;
+        Velocity.y /= Length;
+    }
 
-        // mapbounds dari data Map aktif
-        Rectangle MapBounds = {
-            0.0f,
-            0.0f,
-            (float)CurrentMap->TileWidth * TILE_SIZE,
-            (float)CurrentMap->TileHeight * TILE_SIZE,
-        };
+    float NewX = Position.x + Velocity.x * Speed;
+    float NewY = Position.y + Velocity.y * Speed;
 
-        // ngasih player collison box sendiri dengan ukuran 32 x 32 pixel
-        Rectangle PlayerCollisionBox = {
-            PlayerPosition_x,
-            PlayerPostition_y,
-            (float)TILE_SIZE,
-            (float)TILE_SIZE,
-        };
+    TilePos checkPos;
+    checkPos.x = (int)(NewX / TileSize);
+    checkPos.y = (int)(NewY / TileSize);
 
-        // cek collision
-        if (CheckCollisionRecs(PlayerCollisionBox, MapBounds))
-        {
-            Player.PlayerPosition.x = PlayerPosition_x;
-            Player.PlayerPosition.y = PlayerPostition_y;
-        }
-
-        Player.MoveTimer = 0.0f;
+    if (CanMove(checkPos))
+    {
+        Position.x = NewX;
+        Position.y = NewY;
     }
 }
 
-// buat control player selain movement kaya interaksi, open inventory dll
-void PlayerControl(void)
+void Player::Render()
 {
-    // interaksi player
-    if (IsKeyPressed(KEY_E))
-    {
-        // sementara variabelnya
-        if (Player.PlayerPosition.x == Door.CoordinateTile.x && Player.PlayerPosition.y == Door.CoordinateTile.y)
-        {
-            /* code */
-        }
-    }
+    TilesetRef->RenderChar(TileCharacter, {(int)Position.x, (int)Position.y});
 }
 
-void PlayerCamera(void)
+bool Player::CanMove(TilePos NewTilePos)
 {
-    float Maxzoom = 3.5f;
-    float MinZoom = 0.85f;
-    const float ZoomIncrement = 0.250f;
+    if (NewTilePos.x < 0 || NewTilePos.y < 0 ||
+        NewTilePos.x >= MapRef->GetWidth() ||
+        NewTilePos.y >= MapRef->GetHeight())
+        return false;
 
-    float MouseWheel = GetMouseWheelMove();
-    if (MouseWheel != 0)
-    {
-        camera.zoom += (MouseWheel * ZoomIncrement);
-        if (camera.zoom > Maxzoom)
-            camera.zoom = Maxzoom;
-        if (camera.zoom < MinZoom)
-            camera.zoom = MinZoom;
-    }
-
-    camera.target.x = (float)Player.PlayerPosition.x + (TILE_SIZE / 2.0f);
-    camera.target.y = (float)Player.PlayerPosition.y + (TILE_SIZE / 2.0f);
-
-    float halfW = (GameScreenWidth / 2.0f) / camera.zoom;
-    float halfH = (GameScreenHeight / 2.0f) / camera.zoom;
-    float MapW = (float)CurrentMap->TileWidth * TILE_SIZE;
-    float MapH = (float)CurrentMap->TileHeight * TILE_SIZE;
-
-    if (camera.target.x < halfW)
-        camera.target.x = halfW;
-    if (camera.target.y < halfH)
-        camera.target.y = halfH;
-    if (camera.target.x > MapW - halfW)
-        camera.target.x = MapW - halfW;
-    if (camera.target.y > MapH - halfH)
-        camera.target.y = MapH - halfH;
-}
-
-// update player behavior
-void UpdatePlayer(GameState *state)
-{
-    PlayerMovement();
-    PlayerControl();
-    PlayerCamera();
+    TileMapType Tile = MapRef->Tiles[NewTilePos.y][NewTilePos.x];
+    TileDef &Def = TilesetRef->GetTileMapType(Tile);
+    return !Def.Blocked;
 }

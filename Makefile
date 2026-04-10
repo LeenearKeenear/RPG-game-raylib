@@ -13,14 +13,12 @@ export TEMP := $(TMP)
 SRC_DIR = src
 OBJ_DIR = build
 EXE = main.exe
-DLL_SOURCE = lib/raylib/lib/raylib.dll
 
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 app: setup $(OBJ)
 	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
-	powershell -Command "if (Test-Path '$(DLL_SOURCE)') { Copy-Item -Force '$(DLL_SOURCE)' . }"
 
 setup:
 	@powershell -ExecutionPolicy Bypass -File setup.ps1
