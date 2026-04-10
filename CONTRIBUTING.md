@@ -1,55 +1,55 @@
-# Contributing
+# Kontribusi
 
-## Development Setup
+## Pengaturan Pengembangan
 
-### Required Tools
+### Alat yang Diperlukan
 
-Install the following tools to build the project:
+Pasang alat-alat berikut untuk membangun proyek:
 
-| Tool | Windows (scoop) | macOS (brew) | Linux (apt) |
+| Alat | Windows (scoop) | macOS (brew) | Linux (apt) |
 |------|-----------------|--------------|-------------|
 | **Compiler (gcc)** | `scoop install gcc` | `brew install gcc` | `apt install gcc` |
 | **CMake** | `scoop install cmake` | `brew install cmake` | `apt install cmake` |
 | **Ninja** | `scoop install ninja` | `brew install ninja` | `apt install ninja-build` |
 | **ccache** | `scoop install ccache` | `brew install ccache` | `apt install ccache` |
 
-### First-Time Setup
+### Pengaturan Pertama
 
-1. Install all required tools (see table above)
-2. Run the setup script to download raylib:
+1. Pasang semua alat yang diperlukan (lihat tabel di atas)
+2. Jalankan skrip setup untuk mengunduh raylib:
    ```powershell
    .\setup.ps1
    ```
 
-## Building
+## Membangun
 
-### Quick Start
+### Mulai Cepat
 
 ```bash
-# Configure (one time, or after adding new files)
+# Configure (sekali saja, atau setelah menambah file baru)
 cmake --preset ninja
 
 # Build
 cmake --build --preset ninja
 ```
 
-The executable will be at `build/bin/main.exe`.
+File executable akan berada di `build/bin/main.exe`.
 
-### Build Presets
+### Preset Build
 
-| Preset | Description |
-|--------|-------------|
-| `ninja` | Release build with optimizations (default) |
-| `ninja-debug` | Debug build with symbols |
+| Preset | Deskripsi |
+|--------|-----------|
+| `ninja` | Build release dengan optimasi (default) |
+| `ninja-debug` | Build debug dengan simbol |
 
-### Manual Build (without presets)
+### Build Manual (tanpa preset)
 
 ```bash
 cmake -B build -G Ninja
 cmake --build build --parallel
 ```
 
-### Clean Build
+### Build Bersih
 
 ```bash
 # PowerShell
@@ -58,24 +58,24 @@ Remove-Item -Recurse -Force build
 # CMD
 rmdir /s /q build
 
-# Then rebuild
+# Kemudian build ulang
 cmake --preset ninja
 cmake --build --preset ninja
 ```
 
-### Command Reference
+### Referensi Perintah
 
-| Action | PowerShell | CMD |
-|--------|------------|-----|
+| Aksi | PowerShell | CMD |
+|------|------------|-----|
 | **Configure** | `cmake --preset ninja` | `cmake --preset ninja` |
 | **Build** | `cmake --build --preset ninja` | `cmake --build --preset ninja` |
 | **Clean** | `Remove-Item -Recurse -Force build` | `rmdir /s /q build` |
 
-## Adding New Source Files
+## Menambahkan File Sumber Baru
 
-New `.cpp` files in `src/` are automatically discovered on the next CMake run. No manual changes needed.
+File `.cpp` baru di `src/` akan otomatis ditemukan pada saat CMake berjalan ulang. Tidak perlu perubahan manual.
 
-## Troubleshooting
+## Pemecahan Masalah
 
-- **"No such file or directory" errors**: Run `.\setup.ps1` to download dependencies
-- **Build errors after adding files**: Run `cmake --preset ninja` to reconfigure
+- **Error "No such file or directory"**: Jalankan `.\setup.ps1` untuk mengunduh dependensi
+- **Build error setelah menambah file**: Jalankan `cmake --preset ninja` untuk mengkonfigurasi ulang
