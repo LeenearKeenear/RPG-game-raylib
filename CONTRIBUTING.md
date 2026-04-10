@@ -17,6 +17,7 @@ Pasang alat-alat berikut untuk membangun proyek:
 
 1. Pasang semua alat yang diperlukan (lihat tabel di atas)
 2. Jalankan skrip setup untuk mengunduh raylib:
+
    ```powershell
    .\setup.ps1
    ```
