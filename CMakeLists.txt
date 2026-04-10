@@ -21,6 +21,12 @@ else()
     add_compile_options(-Wall -Wextra -Wno-missing-field-initializers)
 endif()
 
+# Enable ccache for faster recompilation
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
+endif()
+
 # Automatic source file discovery
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
