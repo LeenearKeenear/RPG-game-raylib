@@ -52,10 +52,24 @@ cmake --build build --parallel
 ### Clean Build
 
 ```bash
-rm -rf build
+# PowerShell
+Remove-Item -Recurse -Force build
+
+# CMD
+rmdir /s /q build
+
+# Then rebuild
 cmake --preset ninja
 cmake --build --preset ninja
 ```
+
+### Command Reference
+
+| Action | PowerShell | CMD |
+|--------|------------|-----|
+| **Configure** | `cmake --preset ninja` | `cmake --preset ninja` |
+| **Build** | `cmake --build --preset ninja` | `cmake --build --preset ninja` |
+| **Clean** | `Remove-Item -Recurse -Force build` | `rmdir /s /q build` |
 
 ## Adding New Source Files
 
