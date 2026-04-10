@@ -27,11 +27,13 @@
     "buildPresets": [
         {
             "name": "ninja",
-            "configurePreset": "ninja"
+            "configurePreset": "ninja",
+            "nativeBuildOptions": ["--parallel"]
         },
         {
             "name": "ninja-debug",
-            "configurePreset": "ninja-debug"
+            "configurePreset": "ninja-debug",
+            "nativeBuildOptions": ["--parallel"]
         }
     ]
 }
