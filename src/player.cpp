@@ -46,8 +46,10 @@ void Player::Render()
 
 bool Player::CanMove(TilePos NewTilePos)
 {
-    if (NewTilePos.x < 0 || NewTilePos.y < 0 || 
-        NewTilePos.x >= 20 || NewTilePos.y >= 12) return false;
+    if (NewTilePos.x < 0 || NewTilePos.y < 0 ||
+        NewTilePos.x >= MapRef->GetWidth() ||
+        NewTilePos.y >= MapRef->GetHeight())
+        return false;
 
     TileMapType Tile = MapRef->Tiles[NewTilePos.y][NewTilePos.x];
     TileDef &Def = TilesetRef->GetTileMapType(Tile);

@@ -10,6 +10,7 @@ public:
     void Init(Map *Map);
     void Update();
     void Render();
+    Vector2 GetPosition() { return Position; }
 
 private:
     Vector2 Position;

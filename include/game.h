@@ -20,6 +20,8 @@ private:
     Tileset Tileset;
     Map Map;
     Player Player;
+    Camera2D Camera;
+    float CameraZoom = 1.0f;
     void Update();
     void Draw();
 };
