@@ -6,9 +6,11 @@
 
 Pasang alat-alat berikut untuk membangun proyek:
 
+- **Windows**: Untuk kemudahan menggunakan dan mengunduh alat-alat, gunakan [scoop](https://scoop.sh/), lalu ikuti perintah setup yang ada pada halaman. Selebihnya, mohon untuk menggunakan PowerShell (5.1+) untuk memaksimalkan kemudahan.
+
 | Alat | Windows (scoop) | macOS (brew) | Linux (apt) |
 |------|-----------------|--------------|-------------|
-| **Compiler (gcc)** | `scoop install gcc` | `brew install gcc` | `apt install gcc` |
+| **Compiler (gcc)** | `scoop install gcc` atau `scoop install mingw-mstorsjo-llvm-ucrt` (Clang) | `brew install gcc` | `apt install gcc` |
 | **CMake** | `scoop install cmake` | `brew install cmake` | `apt install cmake` |
 | **Ninja** | `scoop install ninja` | `brew install ninja` | `apt install ninja-build` |
 | **ccache** | `scoop install ccache` | `brew install ccache` | `apt install ccache` |
@@ -36,7 +38,15 @@ cmake --build --preset ninja
 
 File executable akan berada di `build/bin/main.exe`.
 
-> **Catatan**: ccache digunakan secara otomatis jika terpasang. Tidak perlu konfigurasi tambahan.
+#### Jalankan Program
+
+```bash
+# Bash atau CMD 
+./build/bin/main.exe
+
+# PowerShell
+.\build\bin\main.exe
+```
 
 ### Preset Build
 
