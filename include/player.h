@@ -1,26 +1,23 @@
 #pragma once
-#include "../lib/raylib/include/raylib.h"
-#include "../include/screen.h"
-#include "../include/map.h"
+#include <raylib.h>
+#include "map.h"
+#include "tileset.h"
+#include "screen.h"
 
-// TODO MULTI-MAP: Entity nanti bakal butuh info
-// di map mana dia berada (map id / pointer ke map aktif)
-// sementara doang (ini buat entity (contoh player, enemy, npc))
-typedef struct
+class Player
 {
-    TileCoordinate PlayerPosition;
-    float MoveTimer;
-    float MoveDelay;
-} Entity;
+public:
+    void Init(Map *Map);
+    void Update();
+    void Render();
 
-// definisi struct entity ama tile khusus
-extern Entity Player;
-extern sTile Door;
-
-// gak penting
-void PlayerMovement(void);
-void PlayerControl(void);
-void PlayerCamera(void);
-
-// penting
-void UpdatePlayer(GameState *state);
+private:
+    Vector2 Position;
+    Vector2 Velocity;
+    int TileSize = 32;
+    float Speed = 4.0f;
+    Tileset *TilesetRef;
+    Map *MapRef;
+    TileCharType TileCharacter;
+    bool CanMove(TilePos NewTilePos);
+};

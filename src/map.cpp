@@ -1,8 +1,8 @@
 #include "../include/map.h"
 
-void Map::Init()
+void Map::Init(Tileset *Tileset)
 {
-    Tileset.Load("texture/map.png");
+    TilesetRef = *Tileset;
     for (int y = 0; y < MAP_HEIGHT; y++)
     {
         for (int x = 0; x < MAP_WIDTH; x++)
@@ -18,7 +18,7 @@ void Map::Render()
     {
         for (int x = 0; x < MAP_WIDTH; x++)
         {
-            Tileset.Render(Tiles[y][x], {x * TILE_SIZE, y * TILE_SIZE});
+            TilesetRef.RenderMap(Tiles[y][x], {x * TILE_SIZE, y * TILE_SIZE});
         }
     }
 }

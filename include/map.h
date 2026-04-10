@@ -4,13 +4,15 @@
 class Map
 {
 public:
-    void Init();
+    void Init(Tileset *Tileset);
     void Render();
+    Tileset *GetTilesetRef() { return &TilesetRef; }
 
 private:
     static const int MAP_WIDTH = 20;
     static const int MAP_HEIGHT = 12;
     static const int TILE_SIZE = 32;
-    TileType Tiles[MAP_HEIGHT][MAP_WIDTH];
-    Tileset Tileset;
+    TileMapType Tiles[MAP_HEIGHT][MAP_WIDTH];
+    Tileset TilesetRef;
+    friend class Player;
 };

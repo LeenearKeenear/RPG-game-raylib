@@ -1,146 +1,55 @@
-// #include "../lib/raylib/include/raylib.h"
-// #include "../lib/raylib/include/raymath.h"
-// #include "../include/screen.h"
-// #include "../include/Map.h"
-// #include "../include/player.h"
+#include "../include/player.h"
+#include <cmath>
 
-// Camera2D camera = {0};
-// Entity Player;
-// sTile Door;
+void Player::Init(Map *Map)
+{
+    MapRef = Map;
+    TilesetRef = Map->GetTilesetRef();
+    Position = {160.0f, 160.0f};
+    TileCharacter = CHARACTER1;
+}
 
-// // movement player + collisionnya
-// void PlayerMovement(void)
-// {
-//     Player.MoveTimer += GetFrameTime(); // ngambil frame sekarang
+void Player::Update()
+{
+    Velocity = {0, 0};
 
-//     // player movement
-//     float PlayerPosition_x = Player.PlayerPosition.x;
-//     float PlayerPostition_y = Player.PlayerPosition.y;
+    if (IsKeyDown(KEY_UP))    Velocity.y -= 1;
+    if (IsKeyDown(KEY_DOWN))  Velocity.y += 1;
+    if (IsKeyDown(KEY_LEFT))  Velocity.x -= 1;
+    if (IsKeyDown(KEY_RIGHT)) Velocity.x += 1;
 
-//     if (Player.MoveTimer >= Player.MoveDelay)
-//     {
-//         if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
-//         {
-//             PlayerPosition_x -= 1 * TILE_WIDTH;
-//         }
-//         else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
-//         {
-//             PlayerPosition_x += 1 * TILE_WIDTH;
-//         }
-//         else if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
-//         {
-//             PlayerPostition_y -= 1 * TILE_HEIGHT;
-//         }
-//         else if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
-//         {
-//             PlayerPostition_y += 1 * TILE_HEIGHT;
-//         }
+    float Length = sqrtf(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
+    if (Length != 0)
+    {
+        Velocity.x /= Length;
+        Velocity.y /= Length;
+    }
 
-//         // mapbounds dari data Map aktif
-//         Rectangle MapBounds = {
-//             0,
-//             0,
-//             CurrentMap->TileWidth * TILE_WIDTH,
-//             CurrentMap->TileHeight * TILE_HEIGHT,
-//         };
+    float NewX = Position.x + Velocity.x * Speed;
+    float NewY = Position.y + Velocity.y * Speed;
 
-//         // ngasih player collison box sendiri dengan ukuran 32 x 32 pixel
-//         Rectangle PlayerCollisionBox = {
-//             PlayerPosition_x,
-//             PlayerPostition_y,
-//             (float)TILE_WIDTH,
-//             (float)TILE_HEIGHT,
-//         };
+    TilePos checkPos;
+    checkPos.x = (int)(NewX / TileSize);
+    checkPos.y = (int)(NewY / TileSize);
 
-//         // cek collision
-//         if (CheckCollisionRecs(PlayerCollisionBox, MapBounds))
-//         {
-//             Player.PlayerPosition.x = PlayerPosition_x;
-//             Player.PlayerPosition.y = PlayerPostition_y;
-//         }
+    if (CanMove(checkPos))
+    {
+        Position.x = NewX;
+        Position.y = NewY;
+    }
+}
 
-//         Player.MoveTimer = 0.0f;
-//     }
-// }
+void Player::Render()
+{
+    TilesetRef->RenderChar(TileCharacter, {(int)Position.x, (int)Position.y});
+}
 
-// // buat control player selain movement kaya interaksi, open inventory dll
-// void PlayerControl(void)
-// {
-//     // interaksi player
-//     if (IsKeyPressed(KEY_E))
-//     {
-//         // sementara variabelnya
-//         if (Player.PlayerPosition.x == Door.CoordinateTile.x && Player.PlayerPosition.y == Door.CoordinateTile.y)
-//         {
-//             /* code */
-//         }
-//     }
-// }
+bool Player::CanMove(TilePos NewTilePos)
+{
+    if (NewTilePos.x < 0 || NewTilePos.y < 0 || 
+        NewTilePos.x >= 20 || NewTilePos.y >= 12) return false;
 
-// // buat setup camera
-// void PlayerCamera(void)
-// {
-//     float Maxzoom = 3.5f;  // maksimal zoom in
-//     float MinZoom = 0.85f; // minimal zoom out
-
-//     // ukuran kotak deadzone dalam pixel
-//     int SizeDeadZone_x = 300;
-//     int SizeDeadZone_y = 200;
-
-//     // buat zoom multipliernya. makin gede makin cepet zoomnya
-//     const float ZoomIncrement = 0.250f;
-
-//     // inisialisasi deadzonennya
-//     Rectangle DeadZone = {SizeDeadZone_x, SizeDeadZone_y, SizeDeadZone_x, SizeDeadZone_y};
-
-//     // fungsi biar bisa ngezoom via mousewheel
-//     float MouseWheel = GetMouseWheelMove();
-//     if (MouseWheel != 0)
-//     {
-//         camera.zoom += (MouseWheel * ZoomIncrement);
-//         if (camera.zoom > Maxzoom)
-//             camera.zoom = Maxzoom;
-//         if (camera.zoom < MinZoom)
-//             camera.zoom = MinZoom;
-//     }
-
-//     // konversi posisi player dari world ke screen
-//     Vector2 ScreenPoint = GetWorldToScreen2D(
-//         (Vector2){(float)Player.PlayerPosition.x, (float)Player.PlayerPosition.y},
-//         camera);
-
-//     // cek apakah player keluar deadzone, baru gerakin kamera
-//     if (ScreenPoint.x < DeadZone.x)
-//         camera.target.x -= DeadZone.x - ScreenPoint.x;
-//     if (ScreenPoint.x > GameScreenWidth - DeadZone.width)
-//         camera.target.x += ScreenPoint.x - (GameScreenWidth - DeadZone.width);
-//     if (ScreenPoint.y < DeadZone.y)
-//         camera.target.y -= DeadZone.y - ScreenPoint.y;
-//     if (ScreenPoint.y > GameScreenHeight - DeadZone.height)
-//         camera.target.y += ScreenPoint.y - (GameScreenHeight - DeadZone.height);
-
-//     // clamp biar gak keliatan area putih
-//     float halfW = (GameScreenWidth / 2.0f) / camera.zoom;
-//     float halfH = (GameScreenHeight / 2.0f) / camera.zoom;
-
-//     // data buat clamp kamera berdasarkan data size current map
-//     float MapW = CurrentMap->TileWidth * TILE_WIDTH;
-//     float MapH = CurrentMap->TileHeight * TILE_HEIGHT;
-
-//     if (camera.target.x < halfW)
-//         camera.target.x = halfW;
-//     if (camera.target.y < halfH)
-//         camera.target.y = halfH;
-//     if (camera.target.x > MapW - halfW)
-//         camera.target.x = MapW - halfW;
-//     if (camera.target.y > MapH - halfH)
-//         camera.target.y = MapH - halfH;
-// }
-
-// // update player behavior
-// void UpdatePlayer(GameState *state)
-// {
-//     PlayerMovement();
-//     PlayerControl();
-//     PlayerCamera();
-// }
+    TileMapType Tile = MapRef->Tiles[NewTilePos.y][NewTilePos.x];
+    TileDef &Def = TilesetRef->GetTileMapType(Tile);
+    return !Def.Blocked;
+}

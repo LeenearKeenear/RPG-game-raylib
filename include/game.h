@@ -3,6 +3,8 @@
 #include "render.h"
 #include "debug.h"
 #include "map.h"
+#include "player.h"
+#include "tileset.h"
 
 class Game
 {
@@ -15,7 +17,9 @@ private:
     Screen Screen;
     Render Render;
     Debug Debug;
+    Tileset Tileset;
     Map Map;
+    Player Player;
     void Update();
     void Draw();
 };

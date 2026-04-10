@@ -4,7 +4,12 @@ void Game::Open()
 {
     Screen.Init();
     Render.Init();
-    Map.Init();
+
+    Tileset.LoadMap("texture/map.png");
+    Tileset.LoadChar("texture/map.png");
+
+    Map.Init(&Tileset);
+    Player.Init(&Map);
 }
 
 void Game::Loop()
@@ -19,6 +24,7 @@ void Game::Loop()
 void Game::Update()
 {
     Screen.Update();
+    Player.Update();
 }
 
 void Game::Draw()
@@ -26,6 +32,7 @@ void Game::Draw()
     Render.Begin();
 
     Map.Render();
+    Player.Render();
     Debug.Mouse(Screen);
 
     Render.End();

@@ -1,7 +1,7 @@
 #pragma once
 #include <raylib.h>
 
-enum TileType
+enum TileMapType
 {
     WALL_UP_LEFT,
     WALL_UP_CENTER,
@@ -17,7 +17,14 @@ enum TileType
     TREE2,
     DOOR_OPEN,
     DOOR_CLOSED,
-    COUNT
+    TILE_MAP
+};
+
+enum TileCharType
+{
+    CHARACTER1,
+    CHARACTER2,
+    TILE_CHAR
 };
 
 struct TilePos
@@ -36,13 +43,18 @@ struct TileDef
 class Tileset
 {
 public:
-    void Load(const char *Path);
-    void Unload();
-    void Render(TileType TileType, TilePos TilePosition);
-    TileDef &GetTileType(TileType TileType);
+    void LoadMap(const char *Path);
+    void LoadChar(const char *Path);
+    void UnloadAll();
+    void RenderMap(int TileType, TilePos TilePosition);
+    void RenderChar(int TileType, TilePos TilePosition);
+    TileDef &GetTileMapType(TileMapType TileMapType) { return TileMapDefs[TileMapType]; }
+    TileDef &GetTileCharType(TileCharType TileCharType) { return TileCharDefs[TileCharType]; }
 
 private:
-    Texture2D Texture;
-    TileDef TileDefs[COUNT];
+    Texture2D MapTexture;
+    Texture2D CharTexture;
+    TileDef TileMapDefs[TILE_MAP];
+    TileDef TileCharDefs[TILE_CHAR];
     static const int TILE_SIZE = 32;
 };
