@@ -11,67 +11,47 @@ Game RPG 2D yang dibuat dengan Raylib.
 
 ## Persyaratan
 
-- **Windows** (10/11)
-- MSYS2 dengan MinGW-w64 (g++, make)
-- PowerShell 7
-- Git
+- **OS**: Windows 10/11, macOS, atau Linux
+- **Compiler**: gcc atau clang
+- **CMake**: >= 3.20
+- **Ninja**
+- **Git**
 
 ## Dependencies
 
-- **Raylib 5.5** - Auto-download via `setup.ps1`
-- **Tileson** - Download manual dari [GitHub Tileson](https://github.com/SSBMTonberry/tileson), copy `tileson.hpp` ke `lib/tileson/`
-
-### Instalasi MSYS2
-
-1. Install MSYS2 dari [scoop](https://scoop.sh/): `scoop install msys2`, atau dari tempat lain.
-2. Install MinGW-w64 dari MSYS shell: `pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-make`
-
-> [!IMPORTANT]
-> Proyek ini hanya berjalan di **Windows**. Dukungan untuk Linux dan macOS akan dibuat nanti.
+- **Raylib 5.5**: Auto-download via `setup.ps1` (Windows) / Manual (macOS/Linux)
+- **Tileson**: Download manual dari [GitHub Tileson](https://github.com/SSBMTonberry/tileson), copy `tileson.hpp` ke `lib/tileson/`
 
 ## Setup Pertama Kali
 
-Pada clone pertama, cukup jalankan:
-
 ```bash
-make app
+# One-line
+cmake --preset ninja && cmake --build --preset ninja
 ```
 
 Ini akan:
 
-1. Download Raylib 5.5 ke `lib/raylib/`
-2. Compile semua file .cpp
+1. Download Raylib 5.5 ke `lib/raylib/` (Windows saja)
+2. Compile semua file .cpp (Unity build)
 3. Link dengan library
-4. Copy raylib.dll ke folder proyek
+4. Copy raylib.dll ke folder output
 
 ## Build
 
 ```bash
-make app      # Setup + Build
-make cln      # Clean build artifacts
-make refresh  # Clean + Build ulang
+# Build release (default)
+cmake --build --preset ninja
+
+# Build debug
+cmake --build --preset ninja-debug
 ```
 
 ### Jalankan Game
 
 ```bash
-./main.exe
+./build/bin/main.exe
 ```
 
-### Update Raylib
+## Catatan
 
-Untuk download ulang Raylib:
-
-```bash
-rm -rf lib/raylib
-make app
-```
-
-## VSCode
-
-1. Install extensions:
-   - C/C++ (Microsoft)
-   - Makefile Tools (Microsoft)
-
-2. Buka folder proyek
-3. Gunakan Makefile Tools untuk build dan run
+Untuk panduan lengkap (termasuk cara setup alat per-platform, command reference CMD/PowerShell, troubleshooting), lihat [CONTRIBUTING.md](./CONTRIBUTING.md).
