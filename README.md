@@ -25,8 +25,8 @@ Game RPG 2D yang dibuat dengan Raylib.
 ## Setup Pertama Kali
 
 ```bash
-cmake --preset ninja
-cmake --build --preset ninja
+# One-line
+cmake --preset ninja && cmake --build --preset ninja
 ```
 
 Ini akan:

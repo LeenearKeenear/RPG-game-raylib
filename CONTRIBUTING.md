@@ -80,8 +80,6 @@ cmake --build --preset ninja
 
 | Aksi | PowerShell | CMD |
 | ------ | ------------ | ----- |
-| **Configure** | `cmake --preset ninja` | `cmake --preset ninja` |
-| **Build** | `cmake --build --preset ninja` | `cmake --build --preset ninja` |
 | **Clean** | `Remove-Item -Recurse -Force build` | `rmdir /s /q build` |
 
 ## Menambahkan File Sumber Baru
