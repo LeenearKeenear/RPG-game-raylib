@@ -24,25 +24,42 @@
 class Player
 {
 public:
-    void Init();   // 🔧 direfaktor: lepas dependency Map & Tileset, baca spawn dari tilesonMap
-    void Update(); // 🔧 direfaktor: CanMove() sekarang cek object layer collision
-    void Render(); // 🔧 direfaktor: render pake Tileset sendiri, bukan lewat Map
-    void PlayerCamera(void); // buat handle camera player
-    float GetSpeed() { return Speed; } // buat liat speed player
-    void Tick(void); // wrapper function
+    // inisialisasi player — load texture, baca spawn & collision dari Tiled
+    void Init(void);
+
+    // handle input dan movement per frame, cek collision sebelum apply posisi
+    void Update(void);
+
+    // render sprite player di posisi world saat ini
+    void Render(void);
+
+    // handle camera follow player dengan clamp ke world bounds
+    void PlayerCamera(void);
+
+    // wrapper per frame — dipanggil dari UpdateLogicAll()
+    // urutan: Update() → PlayerCamera()
+    void Tick(void);
+
+    // getter posisi player dalam pixel
     Vector2 GetPosition() { return Position; }
+
+    // getter speed player — dipake debug panel
+    float GetSpeed() { return Speed; }
 
 private:
     Vector2 Position;
     Vector2 Velocity;
     int TileSize = 32;
     float Speed = 4.0f;
-    Texture2D CharTexture;        // 🆕 texture player langsung di sini
-    bool CanMove(Vector2 NewPos); // 🔧 parameter ganti ke Vector2, cek collision rectangles
+    Texture2D CharTexture;
+
+    // cek apakah posisi baru player nabrak collision rect
+    // return false kalau nabrak, true kalau aman
+    bool CanMove(Vector2 NewPos);
 
     // collision rectangles dari object layer Tiled
     // diisi pas Init() dari TilesonGetObjectsByType(COLLISION_LAYER_NAME)
-    std::vector<Rectangle> CollisionRects; // 🆕
+    std::vector<Rectangle> CollisionRects;
 };
 
 // global instance — bisa diakses file lain via extern

@@ -7,4 +7,4 @@
 // - Nanti spawn & update logic enemy/item masuk sini juga
 // ================================================================
 
-void RenderEntities();
+void RenderEntities(void);

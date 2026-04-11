@@ -14,16 +14,15 @@
 class Debug
 {
 public:
-    void Toggle(); // handle TAB toggle + tracelog
-    void Draw();   // wrapper semua panel
+    void Toggle(void); // handle TAB toggle + tracelog
+    void Draw(void);   // wrapper semua panel
 
 private:
-    void DrawMapPanel();    // panel info map
-    void DrawCameraPanel(); // panel info camera
-    void DrawPlayerPanel(); // panel info player position
-    void DrawZoomPanel();   // panel zoom debug + handle zoom input
-    void DebugZoom(void);   // handle zoom input
-    void DebugMouse(GameState *state); // handle mouse position
+    void DrawMapPanel(void);    // panel info map
+    void DrawCameraPanel(void); // panel info camera
+    void DrawPlayerPanel(void); // panel info player position
+    void DrawZoomPanel(void);   // panel zoom debug + handle zoom input
+    // void DebugMouse(GameState *state); // handle mouse position
 };
 
 // global instance — bisa diakses file lain via extern

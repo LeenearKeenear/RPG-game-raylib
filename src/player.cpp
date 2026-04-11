@@ -3,6 +3,10 @@
 #include "../include/map.h"
 #include <cmath>
 
+// ================================================================
+// Global
+// ================================================================
+
 // global instance player — diakses file lain via extern
 Player PlayerInstance;
 
@@ -18,9 +22,8 @@ Player PlayerInstance;
 // 2. Cari object "spawn" di tilesonMap->Objects → set Position
 // 3. Ambil semua object type "collision" → simpen di CollisionRects
 // ================================================================
-void Player::Init()
+void Player::Init(void)
 {
-    // load texture character
     // TODO: path texture disesuaiin sama asset yang ada
     LoadTileTexture(TEXTURE_KNIGHT, "texture/Knight.png");
 
@@ -51,10 +54,10 @@ void Player::Init()
 // ================================================================
 // Update()
 // Handle input keyboard dan movement player per frame.
-// Normalisasi velocity biar diagonal gak lebih cepet.
+// Normalisasi velocity biar diagonal gak lebih cepet dari cardinal.
 // Cek collision sebelum apply posisi baru.
 // ================================================================
-void Player::Update()
+void Player::Update(void)
 {
     Velocity = {0, 0};
 
@@ -86,9 +89,9 @@ void Player::Update()
 // ================================================================
 // Render()
 // Render sprite player di posisi world saat ini.
-// Dipanggil dari RenderEntities() setelah TilesonRender().
+// Dipanggil dari RenderEntities() setelah RenderMap().
 // ================================================================
-void Player::Render()
+void Player::Render(void)
 {
     RenderTilePNG(Position.x, Position.y, TILE_PLAYER_NEW, 0.0f, TEXTURE_KNIGHT);
 }
@@ -119,24 +122,27 @@ bool Player::CanMove(Vector2 NewPos)
 // Handle camera follow player dengan clamp ke world bounds.
 //
 // Cara kerja:
-// 1. Zoom fixed di CameraZoom (default 1.0f), ubah nilai ini buat adjust
+// 1. Hitung zoom — auto kalau map <= MinMapTileZoom, FixedZoom kalau lebih
 // 2. Camera target selalu nge-follow tengah player
 // 3. Camera di-clamp biar gak keluar dari world bounds
+//
+// Catatan: FixedZoom bisa diubah manual sesuai kebutuhan map
 // ================================================================
 void Player::PlayerCamera(void)
 {
-    // ambil ukuran world dari tilesonMap
     float MapW = (float)tilesonMap->width * TILE_SIZE;
     float MapH = (float)tilesonMap->height * TILE_SIZE;
 
-    // zoom otomatis kalau map <= MinMapTileZoom, otherwise 1.0f (adjust manual)
-    // MinMapTileZoom = ukuran map minimum yang dijamin ngisi viewport
+    // zoom otomatis kalau map <= MinMapTileZoom biar map ngisi viewport
+    // kalau map lebih gede, pake FixedZoom — ubah nilai ini buat adjust
     const int MinMapTileZoom = 15;
     float AutoZoom = (float)GameScreenWidth / (MinMapTileZoom * TILE_SIZE);
-    float FixedZoom = 2.0f; // ini yang diganti
-    const float CameraZoom = (tilesonMap->width <= MinMapTileZoom || tilesonMap->height <= MinMapTileZoom) ? AutoZoom : FixedZoom;
+    float FixedZoom = 2.0f;
+    const float CameraZoom = (tilesonMap->width <= MinMapTileZoom || tilesonMap->height <= MinMapTileZoom)
+                                 ? AutoZoom
+                                 : FixedZoom;
 
-    // kalau debug mode off, pakai zoom fixed
+    // kalau debug mode off, pakai zoom yang udah dihitung
     if (!isDebugMode)
         camera.zoom = CameraZoom;
 
@@ -160,7 +166,12 @@ void Player::PlayerCamera(void)
         camera.target.y = MapH - halfH;
 }
 
-void Player::Tick()
+// ================================================================
+// Tick()
+// Wrapper logic player per frame — dipanggil dari UpdateLogicAll().
+// Urutan: update input/movement → update camera
+// ================================================================
+void Player::Tick(void)
 {
     Update();
     PlayerCamera();

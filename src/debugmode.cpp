@@ -5,16 +5,20 @@
 #include "../include/map.h"
 #include "../include/player.h"
 
+// ================================================================
+// Global
+// ================================================================
 
-// definisi global
+// global instance debug — diakses file lain via extern
 Debug DebugInstance;
 bool isDebugMode = false;
 
 // ================================================================
 // Toggle()
-// Handle input TAB buat nyalain/matiin debug mode
+// Handle input TAB buat nyalain/matiin debug mode.
+// Log ke console tiap kali state berubah.
 // ================================================================
-void Debug::Toggle()
+void Debug::Toggle(void)
 {
     if (IsKeyPressed(KEY_TAB))
     {
@@ -25,9 +29,10 @@ void Debug::Toggle()
 
 // ================================================================
 // Draw()
-// Wrapper semua panel debug, hanya aktif kalau isDebugMode true
+// Wrapper semua panel debug.
+// Semua panel hanya dirender kalau isDebugMode true.
 // ================================================================
-void Debug::Draw()
+void Debug::Draw(void)
 {
     if (!isDebugMode)
         return;
@@ -40,9 +45,10 @@ void Debug::Draw()
 
 // ================================================================
 // DrawMapPanel()
-// Nampilin info map: ukuran, jumlah layer, status tileset
+// Panel info map: ukuran dalam tile, jumlah layer, status tileset.
+// Di-skip kalau tilesonMap belum ke-load.
 // ================================================================
-void Debug::DrawMapPanel()
+void Debug::DrawMapPanel(void)
 {
     if (tilesonMap == nullptr)
         return;
@@ -52,14 +58,15 @@ void Debug::DrawMapPanel()
     DrawText("[ MAP DEBUG ]", 15, 10, 18, YELLOW);
     DrawText(TextFormat("Size    : %dx%d tiles", tilesonMap->width, tilesonMap->height), 15, 32, 16, WHITE);
     DrawText(TextFormat("Layers  : %d", tilesonMap->layerCount), 15, 52, 16, WHITE);
-    DrawText(TextFormat("Tileset : %s", tilesonMap->tilesetTexture.id != 0 ? "Loaded" : "Not loaded"), 15, 72, 16, tilesonMap->tilesetTexture.id != 0 ? GREEN : RED);
+    DrawText(TextFormat("Tileset : %s", tilesonMap->tilesetTexture.id != 0 ? "Loaded" : "Not loaded"),
+             15, 72, 16, tilesonMap->tilesetTexture.id != 0 ? GREEN : RED);
 }
 
 // ================================================================
 // DrawCameraPanel()
-// Nampilin info camera: target position dan zoom
+// Panel info camera: posisi target dan zoom saat ini.
 // ================================================================
-void Debug::DrawCameraPanel()
+void Debug::DrawCameraPanel(void)
 {
     DrawRectangle(5, 130, 270, 70, Fade(BLACK, 0.7f));
     DrawRectangleLines(5, 130, 270, 70, SKYBLUE);
@@ -70,9 +77,9 @@ void Debug::DrawCameraPanel()
 
 // ================================================================
 // DrawPlayerPanel()
-// Nampilin info player: posisi dalam pixel (float)
+// Panel info player: posisi dalam pixel (float) dan speed.
 // ================================================================
-void Debug::DrawPlayerPanel()
+void Debug::DrawPlayerPanel(void)
 {
     DrawRectangle(5, 210, 270, 70, Fade(BLACK, 0.7f));
     DrawRectangleLines(5, 210, 270, 70, GREEN);
@@ -83,15 +90,16 @@ void Debug::DrawPlayerPanel()
 
 // ================================================================
 // DrawZoomPanel()
-// Nampilin info zoom debug + handle input zoom via mouse wheel
+// Panel zoom debug: nampilin zoom saat ini + handle input scroll.
+// Zoom hanya bisa diubah kalau isDebugMode true.
 // ================================================================
-void Debug::DrawZoomPanel()
+void Debug::DrawZoomPanel(void)
 {
     const float MAX_ZOOM = 3.5f;
     const float MIN_ZOOM = 0.85f;
     const float ZOOM_INCREMENT = 0.25f;
 
-    // handle zoom input
+    // handle zoom input via scroll
     float MouseWheel = GetMouseWheelMove();
     if (MouseWheel != 0)
     {
@@ -110,36 +118,17 @@ void Debug::DrawZoomPanel()
 }
 
 // ================================================================
-// DebugZoom()
-// Fungsi debug buat ngatur zoom camera secara manual pake mouse wheel.
-// Dipanggil hanya kalau debug mode aktif (isDebugMode == true).
+// DebugMouse() — di-comment, sapa tau butuh nanti
+// Nampilin posisi mouse di screen asli dan layar virtual.
 // ================================================================
-void Debug::DebugZoom(void)
-{
-    const float MAX_ZOOM = 3.5f;
-    const float MIN_ZOOM = 0.85f;
-    const float ZOOM_INCREMENT = 0.25f;
-
-    float MouseWheel = GetMouseWheelMove();
-    if (MouseWheel != 0)
-    {
-        camera.zoom += MouseWheel * ZOOM_INCREMENT;
-        if (camera.zoom > MAX_ZOOM)
-            camera.zoom = MAX_ZOOM;
-        if (camera.zoom < MIN_ZOOM)
-            camera.zoom = MIN_ZOOM;
-    }
-}
-
-// isinya buat debug menu posisi mouse, sapa tau butuh kan
-void Debug::DebugMouse(GameState *state)
-{
-    Vector2 Mouse = GetMousePosition();
-    Vector2 virtualMouse = {0, 0};
-    virtualMouse.x = (Mouse.x - ((state->WindowScreenWidth - (GameScreenWidth * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
-    virtualMouse.y = (Mouse.y - ((state->WindowScreenHeight - (GameScreenHeight * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
-    virtualMouse = Vector2Clamp(virtualMouse, (Vector2){0, 0}, (Vector2){(float)GameScreenWidth, (float)GameScreenHeight});
-
-    DrawText(TextFormat("Default Mouse: [%i , %i]", (int)Mouse.x, (int)Mouse.y), 5, 240, 25, GREEN);
-    DrawText(TextFormat("Virtual Mouse: [%i , %i]", (int)virtualMouse.x, (int)virtualMouse.y), 5, 265, 25, YELLOW);
-}
+// void Debug::DebugMouse(GameState *state)
+// {
+//     Vector2 Mouse = GetMousePosition();
+//     Vector2 virtualMouse = {0, 0};
+//     virtualMouse.x = (Mouse.x - ((state->WindowScreenWidth - (GameScreenWidth * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
+//     virtualMouse.y = (Mouse.y - ((state->WindowScreenHeight - (GameScreenHeight * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
+//     virtualMouse = Vector2Clamp(virtualMouse, (Vector2){0, 0}, (Vector2){(float)GameScreenWidth, (float)GameScreenHeight});
+//
+//     DrawText(TextFormat("Default Mouse: [%i , %i]", (int)Mouse.x, (int)Mouse.y), 5, 240, 25, GREEN);
+//     DrawText(TextFormat("Virtual Mouse: [%i , %i]", (int)virtualMouse.x, (int)virtualMouse.y), 5, 265, 25, YELLOW);
+// }

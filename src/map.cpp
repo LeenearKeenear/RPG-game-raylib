@@ -6,17 +6,24 @@
 #include <memory>
 #include <string>
 
+// ================================================================
+// Global Variables
+// ================================================================
+
 TilesonMapData *tilesonMap = nullptr;
 static std::unique_ptr<tson::Map> parsedMap = nullptr;
 
-// definisi awal currentmap harus nullptr
-MapDataDefinition *CurrentMap = nullptr;
+// MapDataDefinition *CurrentMap dihapus — udah gak dipake setelah pindah ke Tileson
 
 Texture2D TexturesMap[MAX_TEXTURES];
-
 Camera2D camera = {0};
 
-// buat ngeload texture dari berbagai png
+// ================================================================
+// LoadTileTexture()
+// Load texture PNG ke slot TextureAsset yang ditentuin.
+// Slot ini dipake sama RenderTilePNG() buat milih texture yang bener.
+// ================================================================
+// dawg ini dipindah dawg 
 void LoadTileTexture(TextureAsset Slot, const char *Path)
 {
     Image img = LoadImage(Path);
@@ -24,10 +31,19 @@ void LoadTileTexture(TextureAsset Slot, const char *Path)
     UnloadImage(img);
 }
 
-// buat ngerender tile dari gambar png nya
+// ================================================================
+// RenderTilePNG()
+// Render satu tile dari spritesheet ke posisi world.
+//
+// Cara kerja:
+// 1. Lookup TileProperty berdasarkan Type — dapet koordinat di spritesheet
+// 2. Hitung Source rectangle dari koordinat itu
+// 3. DrawTexturePro ke posisi Destination di world
+// ================================================================
+// dawg ini dipindah dawg 
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
 {
-    // definisi tile property sama id gambarnya
+    // mapping TileType ke koordinat di spritesheet
     TileDefinition TileProperty[] = {
         [TILE_CLU_WALL] = {{0, 0}, false, false},
         [TILE_CMU_WALL] = {{1, 0}, false, false},
@@ -46,25 +62,33 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
         [TILE_DOOR_CLOSE] = {{5, 2}, false, true},
         [TILE_PLAYER_NEW] = {{3, 2}, false, false}};
 
-    // buat ngetrack indexing dari gambar png nya
+    // hitung posisi source di spritesheet pake koordinat + ukuran tile + gap
     Rectangle Source = {
         (float)(TileProperty[Type].CoordID.x * (TILE_SIZE + TILE_GAP)),
         (float)(TileProperty[Type].CoordID.y * (TILE_SIZE + TILE_GAP)),
         (float)TILE_SIZE,
         (float)TILE_SIZE};
+
     Rectangle Destination = {(float)pos_x, (float)pos_y, (float)TILE_SIZE, (float)TILE_SIZE};
     Vector2 origin = {0, 0};
     DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
 }
 
-// parsingnya
-void TilesonLoadMap(const char *mapPath)
+// ================================================================
+// LoadMap()
+// Parse file JSON Tiled dan load semua data map ke TilesonMapData.
+//
+// Cara kerja:
+// 1. Parse JSON pake Tileson
+// 2. Baca semua TileLayer → simpen ke tilesonMap->tiles
+// 3. Baca semua ObjectGroup → simpen ke tilesonMap->Objects
+// 4. Load texture tileset dari folder texture/
+// ================================================================
+void LoadMap(const char *mapPath)
 {
     tson::Tileson t;
-    // parse file JSON map nya
     parsedMap = t.parse(mapPath);
 
-    // cek apakah parsing berhasil
     if (parsedMap->getStatus() != tson::ParseStatus::OK)
     {
         TraceLog(LOG_ERROR, "Tileson: Failed to parse map: %s", parsedMap->getStatusMessage().c_str());
@@ -76,13 +100,13 @@ void TilesonLoadMap(const char *mapPath)
     tilesonMap->width = mapSize.x;
     tilesonMap->height = mapSize.y;
 
-    // hitung dulu berapa layer TileLayer yang ada di map
+    // hitung jumlah TileLayer dulu sebelum alokasi
     int layerCount = 0;
     for (auto &layer : parsedMap->getLayers())
         if (layer.getType() == tson::LayerType::TileLayer)
             layerCount++;
 
-    // alokasi array of array, satu slot per layer
+    // alokasi array 2D — satu slot per layer
     tilesonMap->layerCount = layerCount;
     tilesonMap->tiles = new int *[layerCount];
     for (int i = 0; i < layerCount; i++)
@@ -94,21 +118,21 @@ void TilesonLoadMap(const char *mapPath)
     {
         if (layer.getType() == tson::LayerType::TileLayer)
         {
-            // tileData itu map dengan key (x,y) dan value pointer ke Tile
+            // tileData: key = (x,y), value = pointer ke Tile
             std::map<std::tuple<int, int>, tson::Tile *> tileData = layer.getTileData();
             for (const auto &[pos, tile] : tileData)
             {
                 int x = std::get<0>(pos);
                 int y = std::get<1>(pos);
                 if (tile != nullptr && x < tilesonMap->width && y < tilesonMap->height)
-                    // konversi posisi 2D ke index 1D, simpen di layer yang sesuai
+                    // konversi posisi 2D ke index 1D
                     tilesonMap->tiles[layerIndex][(y * tilesonMap->width) + x] = (int)tile->getId();
             }
             layerIndex++;
         }
     }
 
-    // parse object layer
+    // baca semua object dari ObjectGroup layer
     for (auto &layer : parsedMap->getLayers())
     {
         if (layer.getType() == tson::LayerType::ObjectGroup)
@@ -123,7 +147,7 @@ void TilesonLoadMap(const char *mapPath)
                 tson::Vector2i size = obj.getSize();
                 mapObj.bounds = {(float)pos.x, (float)pos.y, (float)size.x, (float)size.y};
 
-                // ambil semua custom properties nya
+                // ambil semua custom properties dari object
                 for (auto &[key, prop] : obj.getProperties().getProperties())
                     mapObj.properties[key] = prop;
 
@@ -132,21 +156,22 @@ void TilesonLoadMap(const char *mapPath)
         }
     }
 
-    // ambil tileset pertama yang ada di map
+    // load texture tileset — nama file diambil dari JSON, di-prefix texture/
     auto &tilesets = parsedMap->getTilesets();
     if (!tilesets.empty())
     {
         tson::Tileset *tileset = &tilesets[0];
-        // ambil nama file nya aja, prefix texture/ di depan (sesuaiin sama struktur folder)
         std::string imagePath = "texture/" + tileset->getImagePath().filename().u8string();
-        TraceLog(LOG_INFO, "Image path: %s", imagePath.c_str());
+        TraceLog(LOG_INFO, "Tileson: Loading tileset: %s", imagePath.c_str());
+
         Image img = LoadImage(imagePath.c_str());
         tilesonMap->tilesetTexture = LoadTextureFromImage(img);
-        tilesonMap->tilesetCols = tileset->getColumns();      // jumlah kolom di tileset
-        tilesonMap->tilesetSpacing = tileset->getSpacing();   // gap antar tile di image
-        tilesonMap->tilesetFirstgid = tileset->getFirstgid(); // ID awal tile (biasanya 1)
-        UnloadImage(img);                                     // udah jadi texture, image CPU nya bisa dibuang
-        TraceLog(LOG_INFO, "Tileson: Loaded tileset texture: %s", imagePath.c_str());
+        tilesonMap->tilesetCols = tileset->getColumns();
+        tilesonMap->tilesetSpacing = tileset->getSpacing();
+        tilesonMap->tilesetFirstgid = tileset->getFirstgid();
+        UnloadImage(img);
+
+        TraceLog(LOG_INFO, "Tileson: Tileset loaded: %s", imagePath.c_str());
     }
     else
     {
@@ -156,8 +181,12 @@ void TilesonLoadMap(const char *mapPath)
     TraceLog(LOG_INFO, "Tileson: Map loaded - %dx%d tiles", tilesonMap->width, tilesonMap->height);
 }
 
-// ngeload mapnya di array
-void TilesonUnloadMap()
+// ================================================================
+// UnloadMap()
+// Bersihin semua memory yang dialokasiin pas LoadMap().
+// Harus dipanggil sebelum load map baru atau pas game shutdown.
+// ================================================================
+void UnloadMap(void)
 {
     if (tilesonMap != nullptr)
     {
@@ -168,32 +197,41 @@ void TilesonUnloadMap()
 
         tilesonMap->Objects.clear();
 
-        // unload texture dari GPU kalau emang udah ke-load
+        // unload texture dari GPU
         if (tilesonMap->tilesetTexture.id != 0)
             UnloadTexture(tilesonMap->tilesetTexture);
 
         delete tilesonMap;
         tilesonMap = nullptr;
     }
-    // bebaskan parsed map dari Tileson
+
     parsedMap.reset();
 }
 
-void TilesonInit(GameState *state)
+// ================================================================
+// InitMap()
+// Entry point load map — path map di-hardcode di sini.
+// TODO MULTI-MAP: nanti path-nya bisa dioper sebagai parameter
+// atau dibaca dari save data buat support pindah antar map.
+// ================================================================
+void InitMap(void)
 {
-    TilesonLoadMap("world_json/exampleworldmap_2.json");
+    LoadMap("world_json/exampleworldmap_2.json");
 }
 
-// ngerendering
-void TilesonRender(GameState *state)
+// ================================================================
+// RenderMap()
+// Render semua tile layer dari bawah ke atas dalam world space.
+// Dipanggil dari DrawRenderTexture() sebelum RenderEntities().
+// ================================================================
+void RenderMap(void)
 {
-    // kalau map atau texture belum siap, skip
+    // skip kalau map atau texture belum siap
     if (tilesonMap == nullptr || tilesonMap->tilesetTexture.id == 0)
         return;
 
     BeginMode2D(camera);
 
-    // render semua layer dari bawah ke atas
     for (int l = 0; l < tilesonMap->layerCount; l++)
     {
         for (int y = 0; y < tilesonMap->height; y++)
@@ -201,21 +239,19 @@ void TilesonRender(GameState *state)
             for (int x = 0; x < tilesonMap->width; x++)
             {
                 int tileId = tilesonMap->tiles[l][(y * tilesonMap->width) + x];
-                // tile ID 0 = kosong, skip
-                if (tileId == 0)
+                if (tileId == 0) // tile ID 0 = kosong, skip
                     continue;
 
                 int spacing = tilesonMap->tilesetSpacing;
                 int firstgid = tilesonMap->tilesetFirstgid;
-                int adjustedId = tileId - firstgid; // sesuaiin ID relatif ke tileset
+                int adjustedId = tileId - firstgid; // ID relatif ke tileset
                 int tilesetCols = tilesonMap->tilesetCols;
 
-                // hitung posisi potongan tile di image tileset
+                // hitung posisi potongan tile di spritesheet
                 int srcX = (adjustedId % tilesetCols) * (TILE_SIZE + spacing);
                 int srcY = (adjustedId / tilesetCols) * (TILE_SIZE + spacing);
 
                 Rectangle srcRec = {(float)srcX, (float)srcY, (float)TILE_SIZE, (float)TILE_SIZE};
-                // posisi tile di world/layar
                 Rectangle dstRec = {(float)(x * TILE_SIZE), (float)(y * TILE_SIZE), (float)TILE_SIZE, (float)TILE_SIZE};
 
                 DrawTexturePro(tilesonMap->tilesetTexture, srcRec, dstRec, (Vector2){0, 0}, 0.0F, WHITE);
@@ -226,6 +262,11 @@ void TilesonRender(GameState *state)
     EndMode2D();
 }
 
+// ================================================================
+// TilesonGetObjectsByType()
+// Ambil semua object dari tilesonMap->Objects yang type-nya cocok.
+// Dipake buat load collision rectangles pas Player::Init().
+// ================================================================
 std::vector<MapObject> TilesonGetObjectsByType(const std::string &type)
 {
     std::vector<MapObject> result;
@@ -235,6 +276,12 @@ std::vector<MapObject> TilesonGetObjectsByType(const std::string &type)
     return result;
 }
 
+// ================================================================
+// TilesonGetObjectByName()
+// Cari object pertama yang namanya cocok dari tilesonMap->Objects.
+// Dipake buat nyari spawn point pas Player::Init().
+// Return nullptr kalau gak ketemu.
+// ================================================================
 MapObject *TilesonGetObjectByName(const std::string &name)
 {
     for (auto &obj : tilesonMap->Objects)
