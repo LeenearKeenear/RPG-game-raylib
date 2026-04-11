@@ -6,11 +6,14 @@ extern const int GameScreenWidth;
 extern const int GameScreenHeight;
 
 // definisi gamestate
-typedef enum {
+typedef enum
+{
     MAIN_MENU,
     PLAY
 } ScreenState;
-typedef struct {
+
+typedef struct
+{
     RenderTexture2D Dungeon;
     float ScaleMultiplier;
     int WindowScreenWidth;
@@ -22,6 +25,6 @@ GameState InitScreen(void);
 void UpdateGame(GameState *state);
 void InitAll(void);
 void DrawRenderTexture(GameState *state);
+void UpdateLogicAll(GameState *state);
 void DrawRenderWindows(GameState *state);
 void GameShutDown(GameState *state);
-

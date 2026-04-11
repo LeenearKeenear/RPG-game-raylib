@@ -1,7 +1,8 @@
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/player.h"
-#include "../include/tileson_map.h"
+#include "../include/entities.h"
+#include "../include/debug.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -12,27 +13,17 @@ const float ScaleMinMultiplierMonitor = 0.4F;
 extern const int GameScreenWidth = 1280;
 extern const int GameScreenHeight = 720;
 
+// inisialisasi semua entity dan camera
 void InitAll(void)
 {
-    // sementara
-    // inisialisasi player potition
-    Player = (Entity){
-        .PlayerPosition = {CurrentMap->SpawnPointPlayer.x * TILE_SIZE,
-                           CurrentMap->SpawnPointPlayer.y * TILE_SIZE},
-        .MoveTimer = 0.0f,
-        .MoveDelay = 0.15,
-    };
-
-    // TODO MULTI-MAP: Door harusnya diambil dari data object layer map aktif
-    // sementara
-    Door = (sTile){
-        .CoordinateTile = {TILE_SIZE * 10, TILE_SIZE * 10},
-    };
+    // inisialisasi player — spawn point diambil otomatis dari object layer Tiled
+    PlayerInstance.Init();
 
     // inisialisasi camera
-    camera.target = (Vector2){(float)(CurrentMap->SpawnPointPlayer.x * TILE_SIZE), (float)(CurrentMap->SpawnPointPlayer.y * TILE_SIZE)}; // ini targetin player biar ditengah map
-    camera.offset = (Vector2){(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};                    // kamera di tengah map
-    camera.rotation = {0};
+    Vector2 spawnPos = PlayerInstance.GetPosition();
+    camera.target = {spawnPos.x + (TILE_SIZE / 2.0f), spawnPos.y + (TILE_SIZE / 2.0f)};
+    camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
+    camera.rotation = 0;
     camera.zoom = 1.0f;
 }
 
@@ -59,7 +50,7 @@ GameState InitScreen(void)
     state.Dungeon = LoadRenderTexture(GameScreenWidth, GameScreenHeight);
     SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_BILINEAR); // ini yang ngatur jenis renderingnya
     SetTargetFPS(60);
-    
+
     state.currentScreen = MAIN_MENU;
 
     return state;
@@ -81,11 +72,22 @@ void DrawRenderTexture(GameState *state)
     BeginTextureMode(state->Dungeon);
     ClearBackground(RAYWHITE);
 
-    //RenderMap(state);
-    TilesonRender(state);    // tambahin ini
-    TilesonDebugDraw(); 
+    TilesonRender(state);
+
+    BeginMode2D(camera);
+    RenderEntities();
+    EndMode2D();
+
+    DebugInstance.Toggle();
+    DebugInstance.Draw();
 
     EndTextureMode();
+}
+
+// isinya buat update logic buat semuanya
+void UpdateLogicAll(GameState *state)
+{
+    PlayerInstance.Tick();
 }
 
 // buat render layar windows utamanya
@@ -112,25 +114,10 @@ void GameShutDown(GameState *state)
     // TODO MULTI-MAP: kalau nanti tiap map punya texture sendiri
     // unload harus per map, bukan cuma loop MAX_TEXTURES global
     for (int i = 0; i < MAX_TEXTURES; i++)
-    {
         UnloadTexture(TexturesMap[i]);
-    }
 
-    UnloadMap();
+    TilesonUnloadMap();
     UnloadRenderTexture(state->Dungeon);
     CloseAudioDevice();
     CloseWindow();
-}
-
-// isinya buat debug menu posisi mouse, sapa tau butuh kan
-void DebugMouse(GameState *state)
-{
-    Vector2 Mouse = GetMousePosition();
-    Vector2 virtualMouse = {0, 0};
-    virtualMouse.x = (Mouse.x - ((state->WindowScreenWidth - (GameScreenWidth * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
-    virtualMouse.y = (Mouse.y - ((state->WindowScreenHeight - (GameScreenHeight * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
-    virtualMouse = Vector2Clamp(virtualMouse, (Vector2){0, 0}, (Vector2){(float)GameScreenWidth, (float)GameScreenHeight});
-
-    DrawText(TextFormat("Default Mouse: [%i , %i]", (int)Mouse.x, (int)Mouse.y), 5, 240, 25, GREEN);
-    DrawText(TextFormat("Virtual Mouse: [%i , %i]", (int)virtualMouse.x, (int)virtualMouse.y), 5, 265, 25, YELLOW);
 }

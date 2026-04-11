@@ -1,16 +1,22 @@
 #pragma once
 #include "../lib/raylib/include/raylib.h"
+#include "../lib/tileson/tileson.hpp"
+#include "screen.h"
+#include <string>
+#include <vector>
+#include <map>
 
+// texture pack
 // jumlah maksimum gambar texture png yang dibolehin
 #define MAX_TEXTURES 3
 
 // enum buat milih texture pack
 typedef enum
 {
-    TEXTURE_TILEMAP = 0
+    TEXTURE_TILEMAP = 0,
+    TEXTURE_KNIGHT
 } TextureAsset;
 
-// ini masukin maksimum texture ke array ini
 extern Texture2D TexturesMap[MAX_TEXTURES];
 extern Camera2D camera;
 
@@ -21,8 +27,6 @@ typedef struct
     int y;
 } TileCoordinate;
 
-// TODO MULTI-MAP: nanti TileType bakal nambah banyak seiring
-// nambahnya jenis tile baru. pastiin TileProperty[] di map.cpp ikut diupdate
 // enum buat definisiin gambar biar enak
 typedef enum
 {
@@ -41,6 +45,7 @@ typedef enum
     TILE_GRASS2,
     TILE_DOOR_OPEN,
     TILE_DOOR_CLOSE,
+    TILE_PLAYER_NEW
 } TileType;
 
 // struct buat koordinat tile
@@ -68,20 +73,48 @@ typedef struct
 } MapDataDefinition;
 
 // definisi struct yang handle map
-extern TileDefinition TileDefs[];
 extern MapDataDefinition *CurrentMap;
 
 // ukuran tile buat di mapping sprite nya (dalam bentuk pixel)
 #define TILE_SIZE 32
 #define TILE_GAP 4
 
-// gak penting (tunggu kalo dah jadi)
+// buat ngeload texture dari berbagai png
 void LoadTileTexture(TextureAsset Slot, const char *Path);
+// buat ngerender tile dari gambar png nya
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
-void DebugMenu(float NewX, float NewY);
-void LoadMap(void);
-void UnloadMap();
 
-// penting
-void InitDrawMap(GameState *state);
-void RenderMap(GameState *state);
+// buat nge handle map
+struct MapObject
+{
+    std::string name;
+    std::string type;
+    Rectangle bounds;
+    std::map<std::string, tson::Property> properties;
+};
+
+
+struct TilesonMapData
+{
+    int width;
+    int height;
+    int layerCount;
+    int **tiles;
+    Texture2D tilesetTexture;
+    int tilesetCols;
+    int tilesetSpacing;
+    int tilesetFirstgid;
+    std::vector<MapObject> Objects;
+};
+
+extern TilesonMapData *tilesonMap;
+
+// query functions
+std::vector<MapObject> TilesonGetObjectsByType(const std::string &type);
+MapObject *TilesonGetObjectByName(const std::string &name);
+
+void TilesonLoadMap(const char *mapPath);
+void TilesonUnloadMap();
+void TilesonInit(GameState *state);
+void TilesonRender(GameState *state);
+void TilesonDebugDraw();
