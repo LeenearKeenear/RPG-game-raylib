@@ -1,49 +1,57 @@
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/player.h"
-#include "../include/tileson_map.h"
+#include "../include/entities.h"
+#include "../include/debug.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-// variabel konstanta
-const float ScaleMultiplierMonitor = 0.7F;
-const float ScaleMinMultiplierMonitor = 0.4F;
+// ================================================================
+// Konstanta layar virtual — semua rendering di-scale ke ukuran ini
+// ================================================================
+const float ScaleMultiplierMonitor = 0.7F;    // ukuran default window = 70% monitor
+const float ScaleMinMultiplierMonitor = 0.4F; // ukuran minimum window = 40% monitor
 extern const int GameScreenWidth = 1280;
 extern const int GameScreenHeight = 720;
 
+// ================================================================
+// InitAll()
+// Inisialisasi semua entity dan camera di awal game.
+//
+// Cara kerja:
+// 1. Init player — spawn point otomatis dibaca dari object layer Tiled
+// 2. Set camera target ke posisi spawn player
+// ================================================================
 void InitAll(void)
 {
-    // sementara
-    // inisialisasi player potition
-    Player = (Entity){
-        .PlayerPosition = {CurrentMap->SpawnPointPlayer.x * TILE_SIZE,
-                           CurrentMap->SpawnPointPlayer.y * TILE_SIZE},
-        .MoveTimer = 0.0f,
-        .MoveDelay = 0.15,
-    };
+    // inisialisasi player — spawn point diambil otomatis dari object layer Tiled
+    PlayerInstance.Init();
 
-    // TODO MULTI-MAP: Door harusnya diambil dari data object layer map aktif
-    // sementara
-    Door = (sTile){
-        .CoordinateTile = {TILE_SIZE * 10, TILE_SIZE * 10},
-    };
-
-    // inisialisasi camera
-    camera.target = (Vector2){(float)(CurrentMap->SpawnPointPlayer.x * TILE_SIZE), (float)(CurrentMap->SpawnPointPlayer.y * TILE_SIZE)}; // ini targetin player biar ditengah map
-    camera.offset = (Vector2){(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};                    // kamera di tengah map
-    camera.rotation = {0};
+    // set camera ke tengah spawn player
+    Vector2 spawnPos = PlayerInstance.GetPosition();
+    camera.target = {spawnPos.x + (TILE_SIZE / 2.0f), spawnPos.y + (TILE_SIZE / 2.0f)};
+    camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
+    camera.rotation = 0;
     camera.zoom = 1.0f;
 }
 
-// inisialisasi screen
+// ================================================================
+// InitScreen()
+// Inisialisasi window, audio, dan render texture virtual.
+//
+// Cara kerja:
+// 1. Buat window resizable ukuran 70% monitor
+// 2. Buat render texture 1280x720 sebagai layar virtual
+// 3. Set FPS target ke 60
+// ================================================================
 GameState InitScreen(void)
 {
     GameState state = {{0}};
 
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE); // ini yang ngatur windows bisa di resize
-    InitWindow(1280, 720, "Dungeon Game"); // inisialisasi windows pertama
-    InitAudioDevice();                     // inisialisasi audio
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    InitWindow(1280, 720, "Dungeon Game");
+    InitAudioDevice();
 
     state.WindowScreenWidth = (int)(GetMonitorWidth(0) * ScaleMultiplierMonitor);
     state.WindowScreenHeight = (int)(GetMonitorHeight(0) * ScaleMultiplierMonitor);
@@ -51,21 +59,26 @@ GameState InitScreen(void)
         (float)state.WindowScreenWidth / GameScreenWidth,
         (float)state.WindowScreenHeight / GameScreenHeight);
 
-    SetWindowSize(state.WindowScreenWidth, state.WindowScreenHeight); // default windows size
+    // ukuran default window = 70% monitor, minimum = 40% monitor
+    SetWindowSize(state.WindowScreenWidth, state.WindowScreenHeight);
     SetWindowMinSize(
         (int)(GetMonitorWidth(0) * ScaleMinMultiplierMonitor),
-        (int)(GetMonitorHeight(0) * ScaleMinMultiplierMonitor)); // maksimum ukuran windows yang bisa di kecilin
+        (int)(GetMonitorHeight(0) * ScaleMinMultiplierMonitor));
 
     state.Dungeon = LoadRenderTexture(GameScreenWidth, GameScreenHeight);
-    SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_BILINEAR); // ini yang ngatur jenis renderingnya
+    SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_BILINEAR);
     SetTargetFPS(60);
-    
+
     state.currentScreen = MAIN_MENU;
 
     return state;
 }
 
-// buat update isi virtualisasinya
+// ================================================================
+// UpdateGame()
+// Update ukuran window dan scale multiplier tiap frame.
+// Dipanggil tiap frame biar scaling tetap bener pas window di-resize.
+// ================================================================
 void UpdateGame(GameState *state)
 {
     state->WindowScreenWidth = GetScreenWidth();
@@ -75,20 +88,50 @@ void UpdateGame(GameState *state)
         (float)state->WindowScreenHeight / GameScreenHeight);
 }
 
-// isi dari virtualisasinya dan ini bakal jadi entry point untuk semua jenis menu
+// ================================================================
+// DrawRenderTexture()
+// Entry point render — semua yang keliatan di layar lewat sini.
+//
+// Urutan render:
+// 1. RenderMap() — render tile map dari Tiled
+// 2. RenderEntities() — render semua entity dalam world space (pake camera)
+// 3. DebugInstance — toggle dan draw debug panel kalau aktif
+//
+// Catatan: debug panel di luar BeginMode2D biar posisinya fixed di layar
+// ================================================================
 void DrawRenderTexture(GameState *state)
 {
     BeginTextureMode(state->Dungeon);
     ClearBackground(RAYWHITE);
 
-    //RenderMap(state);
-    TilesonRender(state);    // tambahin ini
-    TilesonDebugDraw(); 
+    RenderMap();
+
+    BeginMode2D(camera);
+    RenderEntities();
+    EndMode2D();
+
+    DebugInstance.Toggle();
+    DebugInstance.Draw();
 
     EndTextureMode();
 }
 
-// buat render layar windows utamanya
+// ================================================================
+// UpdateLogicAll()
+// Entry point update logic — semua logic game lewat sini tiap frame.
+// Tambah logic baru di sini kalau ada entity/system baru.
+// ================================================================
+void UpdateLogicAll(void)
+{
+    PlayerInstance.Tick();
+}
+
+// ================================================================
+// DrawRenderWindows()
+// Render layar virtual (1280x720) ke window asli dengan scaling.
+// Layar virtual di-fit ke ukuran window sambil jaga aspect ratio.
+// Sisi yang gak kepakai diisi black bar.
+// ================================================================
 void DrawRenderWindows(GameState *state)
 {
     float offsetX = (state->WindowScreenWidth - ((float)GameScreenWidth * state->ScaleMultiplier)) * 0.5F;
@@ -106,31 +149,20 @@ void DrawRenderWindows(GameState *state)
     EndDrawing();
 }
 
-// buat matiin game dan ngebebasin semua memory yang ada
+// ================================================================
+// GameShutDown()
+// Bersihin semua resource sebelum game ditutup.
+//
+// TODO MULTI-MAP: kalau nanti tiap map punya texture sendiri,
+// unload harus per map, bukan cuma loop MAX_TEXTURES global
+// ================================================================
 void GameShutDown(GameState *state)
 {
-    // TODO MULTI-MAP: kalau nanti tiap map punya texture sendiri
-    // unload harus per map, bukan cuma loop MAX_TEXTURES global
     for (int i = 0; i < MAX_TEXTURES; i++)
-    {
         UnloadTexture(TexturesMap[i]);
-    }
 
     UnloadMap();
     UnloadRenderTexture(state->Dungeon);
     CloseAudioDevice();
     CloseWindow();
-}
-
-// isinya buat debug menu posisi mouse, sapa tau butuh kan
-void DebugMouse(GameState *state)
-{
-    Vector2 Mouse = GetMousePosition();
-    Vector2 virtualMouse = {0, 0};
-    virtualMouse.x = (Mouse.x - ((state->WindowScreenWidth - (GameScreenWidth * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
-    virtualMouse.y = (Mouse.y - ((state->WindowScreenHeight - (GameScreenHeight * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
-    virtualMouse = Vector2Clamp(virtualMouse, (Vector2){0, 0}, (Vector2){(float)GameScreenWidth, (float)GameScreenHeight});
-
-    DrawText(TextFormat("Default Mouse: [%i , %i]", (int)Mouse.x, (int)Mouse.y), 5, 240, 25, GREEN);
-    DrawText(TextFormat("Virtual Mouse: [%i , %i]", (int)virtualMouse.x, (int)virtualMouse.y), 5, 265, 25, YELLOW);
 }

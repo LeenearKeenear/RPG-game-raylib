@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -std=c++17 -I./lib/raylib/include -I./lib/tileson -I./include -j4
+CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -std=c++17 -I./lib/raylib/include -I./lib/tileson -I./include 
 LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -lstdc++fs -v
 
 TMPDIR := tmp
@@ -13,14 +13,12 @@ export TEMP := $(TMP)
 SRC_DIR = src
 OBJ_DIR = build
 EXE = main.exe
-DLL_SOURCE = lib/raylib/lib/raylib.dll
 
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 app: setup $(OBJ)
 	$(CXX) $(OBJ) -o $(EXE) $(LDFLAGS)
-	powershell -Command "if (Test-Path '$(DLL_SOURCE)') { Copy-Item -Force '$(DLL_SOURCE)' . }"
 
 setup:
 	@powershell -ExecutionPolicy Bypass -File setup.ps1
