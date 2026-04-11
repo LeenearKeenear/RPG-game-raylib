@@ -9,7 +9,7 @@ Pasang alat-alat berikut untuk membangun proyek:
 - **Windows**: Untuk kemudahan menggunakan dan mengunduh alat-alat, gunakan [scoop](https://scoop.sh/), lalu ikuti perintah setup yang ada pada halaman. Selebihnya, mohon untuk menggunakan PowerShell (5.1+) untuk memaksimalkan kemudahan.
 
 | Alat | Windows (scoop) | macOS (brew) | Linux (apt) |
-|------|-----------------|--------------|-------------|
+| ------------ | ----------------- | -------------- | ------------- |
 | **Compiler (gcc)** | `scoop install gcc` atau `scoop install mingw-mstorsjo-llvm-ucrt` (Clang) | `brew install gcc` | `apt install gcc` |
 | **CMake** | `scoop install cmake` | `brew install cmake` | `apt install cmake` |
 | **Ninja** | `scoop install ninja` | `brew install ninja` | `apt install ninja-build` |
@@ -51,7 +51,7 @@ File executable akan berada di `build/bin/main.exe`.
 ### Preset Build
 
 | Preset | Deskripsi |
-|--------|-----------|
+| -------- | ----------- |
 | `ninja` | Build release dengan optimasi (default) |
 | `ninja-debug` | Build debug dengan simbol |
 
@@ -79,7 +79,7 @@ cmake --build --preset ninja
 ### Referensi Perintah
 
 | Aksi | PowerShell | CMD |
-|------|------------|-----|
+| ------ | ------------ | ----- |
 | **Configure** | `cmake --preset ninja` | `cmake --preset ninja` |
 | **Build** | `cmake --build --preset ninja` | `cmake --build --preset ninja` |
 | **Clean** | `Remove-Item -Recurse -Force build` | `rmdir /s /q build` |
