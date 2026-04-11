@@ -6,11 +6,6 @@ static buttonTxt quitButton;
 
 /**
  * Mengonversi koordinat mouse jendela ke koordinat layar virtual.
- * Layar virtual adalah 1280x720 (GameScreenWidth x GameScreenHeight) dan
- * akan diskalakan untuk menyesuaikan jendela sambil mempertahankan rasio aspek.
- *
- * @param state Pointer ke state game saat ini yang berisi info jendela/skala
- * @return Vector2 posisi dalam koordinat layar virtual (0-1280, 0-720)
  */
 static Vector2 GetVirtualMousePosition(GameState* state)
 {
@@ -24,8 +19,6 @@ static Vector2 GetVirtualMousePosition(GameState* state)
 /**
  * Menginisialisasi tombol menu utama.
  * Membuat tombol "Start Game" dan "Quit" yang centered di layar virtual.
- *
- * @param state Pointer ke state game (tidak digunakan, reserved untuk penggunaan masa depan)
  */
 void InitMainMenu(GameState* state)
 {
@@ -41,8 +34,6 @@ void InitMainMenu(GameState* state)
  * Mengupdate state menu utama - menangani input mouse dan pendeteksian klik tombol.
  * Menggunakan koordinat layar virtual untuk mendeteksi klik tombol dengan benar
  * terlepas dari ukuran/skala jendela.
- *
- * @param state Pointer ke state game saat ini
  */
 void UpdateMainMenu(GameState* state)
 {
@@ -64,8 +55,6 @@ void UpdateMainMenu(GameState* state)
  * Merender menu utama ke layar virtual (RenderTexture2D).
  * Ini menggambar ke buffer off-screen 1280x720 yang kemudian diskalakan
  * untuk menyesuaikan jendela oleh DrawRenderWindows().
- *
- * @param state Pointer ke state game saat ini
  */
 void RenderMainMenuToVirtualScreen(GameState* state)
 {
