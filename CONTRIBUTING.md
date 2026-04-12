@@ -2,91 +2,105 @@
 
 ## Pengaturan Pengembangan
 
-### Alat yang Diperlukan
+### 1. Program yang dibutuhkan
 
-Pasang alat-alat berikut untuk membangun proyek:
+- [Cmake](https://cmake.org/)
+- [Ninja](https://ninja-build.org/)
+- [Ccache](https://ccache.dev/) (optional, namun rekomendasi untuk meningkatkan kecepatan kompilasi lebih lanjut)
+- C/C++ Compiler
+  - Rekomendasi: [Clang](https://github.com/mstorsjo/llvm-mingw) (Sudah termasuk GCC)
 
-- **Windows**: Untuk kemudahan menggunakan dan mengunduh alat-alat, gunakan [scoop](https://scoop.sh/), lalu ikuti perintah setup yang ada pada halaman. Selebihnya, mohon untuk menggunakan PowerShell (5.1+) untuk memaksimalkan kemudahan.
+### 2. Instalasi
 
-| Alat | Windows (scoop) | macOS (brew) | Linux (apt) |
-| ------------ | ----------------- | -------------- | ------------- |
-| **Compiler (gcc)** | `scoop install gcc` atau `scoop install mingw-mstorsjo-llvm-ucrt` (Clang) | `brew install gcc` | `apt install gcc` |
-| **CMake** | `scoop install cmake` | `brew install cmake` | `apt install cmake` |
-| **Ninja** | `scoop install ninja` | `brew install ninja` | `apt install ninja-build` |
-| **ccache** | `scoop install ccache` | `brew install ccache` | `apt install ccache` |
+1. **Windows**
+  
+   Untuk kemudahan, disarankan menggunakan program manager CLI seperti [Scoop](https://scoop.sh/). Disarankan juga menggunakan PowerShell versi 5.1+.
 
-### Pengaturan Pertama
+   Langkah instalasi menggunakan scoop
+   1. Install [scoop](https://scoop.sh/)
+   2. Install compiler
+      1. Rekomendasi: Clang (Sudah termasuk GCC)
 
-1. Pasang semua alat yang diperlukan (lihat tabel di atas)
-2. Jalankan skrip setup untuk mengunduh raylib:
+         ```powershell
+         scoop install mingw-mstorsjo-llvm-ucrt
+         ```
+
+   3. Install Cmake, Ninja, dan Ccache
+      1. Cmake dan Ninja
+
+         ```powershell
+         scoop install cmake ninja
+         ```
+
+   4. Install Ccache
+      1. Ccache (Optional, namun rekomendasi untuk meningkatkan kecepatan kompilasi lebih lanjut)
+
+         ```powershell
+         scoop install ccache
+         ```
+
+2. **Unix**
+
+   Beberapa atau bahkan semua program seharusnya sudah terinstall. Apabila ada yang kurang (misalkan ccache atau cmake), silahkan install dengan package manager sesuai dengan sistem operasi.
+
+### 3. Membangun Program
+
+1. Clone repository
+
+   ```bash
+   # Tradisional
+   git clone https://github.com/COWGRAMMAR/RPG-game-raylib.git
+
+   # GH Cli
+   gh repo clone COWGRAMMAR/RPG-game-raylib
+   ```
+
+2. Jalankan setup script (PowerShell) untuk mengunduh Raylib dan Tileson
 
    ```powershell
    .\setup.ps1
    ```
 
-## Membangun
+3. Bangun dengan Cmake dan Ninja
 
-### Mulai Cepat
+   ```powershell
+   cmake --preset ninja && cmake --build --preset ninja
+   ```
 
-```bash
-# Configure (sekali saja, atau setelah menambah file baru)
-cmake --preset ninja
+4. Jalankan program
 
-# Build
-cmake --build --preset ninja
-```
+   ```powershell
+   # PowerShell
+   .\build\bin\main.exe
+   ```
 
-File executable akan berada di `build/bin/main.exe`.
+   ```bash
+   # Bash / CMD
+   ./build/bin/main.exe
+   ```
 
-#### Jalankan Program
+5. Menghapus build artifacts
 
-```bash
-# Bash atau CMD 
-./build/bin/main.exe
+   ```powershell
+   # PowerShell
+   Remove-Item -Recurse -Force build
+   ```
 
-# PowerShell
-.\build\bin\main.exe
-```
+   ```bash
+   # CMD
+   rmdir /s /q build
+   ```
 
-### Preset Build
-
-| Preset | Deskripsi |
-| -------- | ----------- |
-| `ninja` | Build release dengan optimasi (default) |
-| `ninja-debug` | Build debug dengan simbol |
-
-### Build Manual (tanpa preset)
-
-```bash
-cmake -B build -G Ninja
-cmake --build build --parallel
-```
-
-### Build Bersih
-
-```bash
-# PowerShell
-Remove-Item -Recurse -Force build
-
-# CMD
-rmdir /s /q build
-
-# Kemudian build ulang
-cmake --preset ninja
-cmake --build --preset ninja
-```
-
-### Referensi Perintah
-
-| Aksi | PowerShell | CMD |
-| ------ | ------------ | ----- |
-| **Clean** | `Remove-Item -Recurse -Force build` | `rmdir /s /q build` |
-
-## Menambahkan File Sumber Baru
-
-File `.cpp` baru di `src/` akan otomatis ditemukan pada saat CMake berjalan ulang. Tidak perlu perubahan manual.
+   ```bash
+   # Unix
+   rm -rf build
+   ```
 
 ## Pemecahan Masalah
 
-- **Error "No such file or directory"**: Jalankan `.\setup.ps1` untuk mengunduh dependensi
-- **Build error setelah menambah file**: Jalankan `cmake --preset ninja` untuk mengkonfigurasi ulang
+   1. **Error: No such file or directory**
+      - Pastikan file yang dibutuhkan sudah terinstall.
+      - Jalankan `setup.ps1` untuk mengunduh Raylib dan Tileson.
+
+   2. **Build error setelah menambah file**
+      - Jalankan perintah build kembali untuk mengkonfigurasi ulang.
