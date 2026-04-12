@@ -98,7 +98,7 @@
 
 ## Pemecahan Masalah
 
-   1. **Error: No such file or directory**
+   1. **Error: No such file or directory** / Game crash.
       - Pastikan file yang dibutuhkan sudah terinstall.
       - Jalankan `setup.ps1` untuk mengunduh Raylib dan Tileson.
 
