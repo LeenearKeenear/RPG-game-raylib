@@ -19,6 +19,17 @@ function Write-Err($message) {
     Write-Host "[ERROR] $message" -ForegroundColor Red
 }
 
+# Early exit if all libs already exist (no output)
+$cwd = $PWD.Path
+$raylibDir = Join-Path $cwd "lib\raylib"
+$tilesonDir = Join-Path $cwd "lib\tileson"
+$raylibReady = (Test-Path (Join-Path $raylibDir "include\raylib.h")) -and (Test-Path (Join-Path $raylibDir "lib\libraylib.a"))
+$tilesonReady = Test-Path (Join-Path $tilesonDir "tileson.hpp")
+
+if ($raylibReady -and $tilesonReady) {
+    exit 0
+}
+
 function Install-Raylib() {
     $cwd = $PWD.Path
     $installDir = Join-Path $cwd "lib\raylib"
