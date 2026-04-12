@@ -5,8 +5,8 @@
 # ==============================================================================
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -std=c++17 -I./lib/raylib/include -I./lib/tileson -I./include
-LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -v
+CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -std=c++17 -I./lib/raylib/include -I./lib/tileson -I./include -v
+LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -lstdc++fs -v
 
 ifeq ($(OS),Windows_NT)
 	CORES := $(shell powershell -Command "(Get-CimInstance Win32_Processor).NumberOfLogicalProcessors")
@@ -41,7 +41,6 @@ export TEMP := $(TMP)
 SRC_DIR = src
 OBJ_DIR = build
 EXE = main.exe
-DLL_SOURCE = lib/raylib/lib/raylib.dll
 
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)

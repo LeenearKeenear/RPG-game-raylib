@@ -2,58 +2,63 @@
 #include "../include/map.h"
 #include "../include/player.h"
 #include "../include/mainMenu.h"
-#include "../include/tileson_map.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 
 int main()
 {
-    // Inisialisasi jendela game dan sistem rendering
-    // Membuat layar virtual (1280x720) yang diskalakan untuk menyesuaikan jendela sebenarnya
+    // ================================================================
+    // Inisialisasi
+    // Urutan penting: InitScreen dulu → InitMap → InitAll → InitMainMenu
+    // InitMap harus sebelum InitAll karena player butuh data map buat spawn
+    // ================================================================
+
+    // buat window, audio, dan render texture virtual (1280x720)
     GameState state = InitScreen();
 
-    // Inisialisasi data map (load tiles, parse JSON, dll)
-    InitDrawMap(&state);
+    // load map dari JSON Tiled
+    InitMap();
 
-    // Inisialisasi posisi player dan entity game lainnya
+    // init player dan camera — spawn point dibaca dari map
     InitAll();
 
-    TilesonInit(&state);
-
-    // Inisialisasi elemen UI menu utama (tombol, dll)
+    // init elemen UI main menu
     InitMainMenu(&state);
 
-    // Main game loop - berjalan setiap frame sampai jendela ditutup
+    // ================================================================
+    // Main Game Loop
+    // ================================================================
     while (!WindowShouldClose())
     {
-        // State MAIN_MENU - menampilkan layar awal dengan tombol
+        // state MAIN_MENU — tampilan awal dengan tombol start & quit
         if (state.currentScreen == MAIN_MENU)
         {
-            // UpdateGame menangani event resize jendela dan mengupdate ScaleMultiplier
-            // Ini memastikan menu diskalakan dengan benar saat ukuran jendela berubah
+            // update scale kalau window di-resize
             UpdateGame(&state);
-            // Menangani klik tombol dan transisi
+            // handle input tombol dan transisi ke state lain
             UpdateMainMenu(&state);
-            // Menggambar tombol ke layar virtual (1280x720 RenderTexture)
+            // render menu ke layar virtual
             RenderMainMenuToVirtualScreen(&state);
-            // Menggambar layar virtual ke jendela, diskalakan untuk menyesuaikan sambil mempertahankan rasio aspek
+            // scale layar virtual ke window asli
             DrawRenderWindows(&state);
         }
-        // State PLAY - gameplay sebenarnya
+        // state PLAY — gameplay
         else if (state.currentScreen == PLAY)
         {
-            // Update info jendela/skala dan logika game
+            // update scale kalau window di-resize
             UpdateGame(&state);
-            // Update pergerakan dan aksi player
-            UpdatePlayer(&state);
-            // Merender game world ke layar virtual
+            // update semua logic game (player, enemy, dll)
+            UpdateLogicAll();
+            // render semua ke layar virtual
             DrawRenderTexture(&state);
-            // Menggambar layar virtual ke jendela dengan scaling yang tepat
+            // scale layar virtual ke window asli
             DrawRenderWindows(&state);
         }
     }
 
-    // Clean up resource (textures, maps, window, dll)
+    // ================================================================
+    // Shutdown — bersihin semua resource sebelum tutup
+    // ================================================================
     GameShutDown(&state);
     return 0;
 }

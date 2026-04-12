@@ -1,106 +1,161 @@
-#include "../lib/raylib/include/raylib.h"
-#include "../lib/raylib/include/raymath.h"
-#include "../include/screen.h"
-#include "../include/Map.h"
 #include "../include/player.h"
+#include "../include/debug.h"
+#include "../include/map.h"
+#include <cmath>
 
-Camera2D camera = {0};
-Entity Player;
-sTile Door;
+// ================================================================
+// Global
+// ================================================================
 
-// movement player + collisionnya
-void PlayerMovement(void)
+// global instance player — diakses file lain via extern
+Player PlayerInstance;
+
+// ================================================================
+// Init()
+// Inisialisasi player: load texture, ambil spawn point dari
+// object layer Tiled (nama object: SPAWN_OBJECT_NAME "spawn"),
+// dan load semua collision rectangles dari object layer
+// (type: COLLISION_LAYER_NAME "collision")
+//
+// Cara kerja:
+// 1. Load texture character dari file png
+// 2. Cari object "spawn" di tilesonMap->Objects → set Position
+// 3. Ambil semua object type "collision" → simpen di CollisionRects
+// ================================================================
+void Player::Init(void)
 {
-    Player.MoveTimer += GetFrameTime(); // ngambil frame sekarang
+    // TODO: path texture disesuaiin sama asset yang ada
+    LoadTileTexture(TEXTURE_KNIGHT, "texture/Knight.png");
 
-    // player movement
-    float PlayerPosition_x = Player.PlayerPosition.x;
-    float PlayerPostition_y = Player.PlayerPosition.y;
-
-    if (Player.MoveTimer >= Player.MoveDelay)
+    // ambil spawn point dari object layer Tiled
+    MapObject *spawnObj = TilesonGetObjectByName(SPAWN_OBJECT_NAME);
+    if (spawnObj != nullptr)
     {
-        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
-        {
-            PlayerPosition_x -= 1 * TILE_SIZE;
-        }
-        else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
-        {
-            PlayerPosition_x += 1 * TILE_SIZE;
-        }
-        else if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
-        {
-            PlayerPostition_y -= 1 * TILE_SIZE;
-        }
-        else if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
-        {
-            PlayerPostition_y += 1 * TILE_SIZE;
-        }
-
-        // mapbounds dari data Map aktif
-        Rectangle MapBounds = {
-            0.0f,
-            0.0f,
-            (float)CurrentMap->TileWidth * TILE_SIZE,
-            (float)CurrentMap->TileHeight * TILE_SIZE,
-        };
-
-        // ngasih player collison box sendiri dengan ukuran 32 x 32 pixel
-        Rectangle PlayerCollisionBox = {
-            PlayerPosition_x,
-            PlayerPostition_y,
-            (float)TILE_SIZE,
-            (float)TILE_SIZE,
-        };
-
-        // cek collision
-        if (CheckCollisionRecs(PlayerCollisionBox, MapBounds))
-        {
-            Player.PlayerPosition.x = PlayerPosition_x;
-            Player.PlayerPosition.y = PlayerPostition_y;
-        }
-
-        Player.MoveTimer = 0.0f;
+        // bounds.x dan bounds.y itu posisi object di Tiled (dalam pixel)
+        Position = {spawnObj->bounds.x, spawnObj->bounds.y};
+        TraceLog(LOG_INFO, "Player: Spawn point found at (%.1f, %.1f)", Position.x, Position.y);
     }
+    else
+    {
+        // fallback kalau object spawn belum ada di Tiled
+        Position = {160.0f, 160.0f};
+        TraceLog(LOG_WARNING, "Player: Spawn object '%s' not found, using default position", SPAWN_OBJECT_NAME);
+    }
+
+    // ambil semua collision rectangles dari object layer Tiled
+    // setiap rectangle object di layer "collision" dianggap solid/blocked
+    std::vector<MapObject> collisionObjs = TilesonGetObjectsByType(COLLISION_LAYER_NAME);
+    for (auto &obj : collisionObjs)
+        CollisionRects.push_back(obj.bounds);
+
+    TraceLog(LOG_INFO, "Player: Loaded %d collision rects", (int)CollisionRects.size());
 }
 
-// buat control player selain movement kaya interaksi, open inventory dll
-void PlayerControl(void)
+// ================================================================
+// Update()
+// Handle input keyboard dan movement player per frame.
+// Normalisasi velocity biar diagonal gak lebih cepet dari cardinal.
+// Cek collision sebelum apply posisi baru.
+// ================================================================
+void Player::Update(void)
 {
-    // interaksi player
-    if (IsKeyPressed(KEY_E))
+    Velocity = {0, 0};
+
+    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
+        Velocity.y -= 1;
+    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
+        Velocity.y += 1;
+    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
+        Velocity.x -= 1;
+    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
+        Velocity.x += 1;
+
+    // normalisasi biar diagonal gak lebih cepet dari cardinal
+    float Length = sqrtf(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
+    if (Length != 0)
     {
-        // sementara variabelnya
-        if (Player.PlayerPosition.x == Door.CoordinateTile.x && Player.PlayerPosition.y == Door.CoordinateTile.y)
-        {
-            /* code */
-        }
+        Velocity.x /= Length;
+        Velocity.y /= Length;
     }
+
+    Vector2 NewPos = {
+        Position.x + Velocity.x * Speed,
+        Position.y + Velocity.y * Speed};
+
+    if (CanMove(NewPos))
+        Position = NewPos;
 }
 
-void PlayerCamera(void)
+// ================================================================
+// Render()
+// Render sprite player di posisi world saat ini.
+// Dipanggil dari RenderEntities() setelah RenderMap().
+// ================================================================
+void Player::Render(void)
 {
-    float Maxzoom = 3.5f;
-    float MinZoom = 0.85f;
-    const float ZoomIncrement = 0.250f;
+    RenderTilePNG(Position.x, Position.y, TILE_PLAYER_NEW, 0.0f, TEXTURE_KNIGHT);
+}
 
-    float MouseWheel = GetMouseWheelMove();
-    if (MouseWheel != 0)
+// ================================================================
+// CanMove()
+// Cek apakah posisi baru player (NewPos) nabrak salah satu
+// collision rectangle dari object layer Tiled.
+//
+// Collision box player diasumsiin 1 tile (TileSize x TileSize).
+// Return false kalau nabrak, true kalau aman.
+// ================================================================
+bool Player::CanMove(Vector2 NewPos)
+{
+    Rectangle playerBox = {NewPos.x, NewPos.y, (float)TileSize, (float)TileSize};
+
+    for (auto &rect : CollisionRects)
     {
-        camera.zoom += (MouseWheel * ZoomIncrement);
-        if (camera.zoom > Maxzoom)
-            camera.zoom = Maxzoom;
-        if (camera.zoom < MinZoom)
-            camera.zoom = MinZoom;
+        if (CheckCollisionRecs(playerBox, rect))
+            return false;
     }
 
-    camera.target.x = (float)Player.PlayerPosition.x + (TILE_SIZE / 2.0f);
-    camera.target.y = (float)Player.PlayerPosition.y + (TILE_SIZE / 2.0f);
+    return true;
+}
 
+// ================================================================
+// PlayerCamera()
+// Handle camera follow player dengan clamp ke world bounds.
+//
+// Cara kerja:
+// 1. Hitung zoom — auto kalau map <= MinMapTileZoom, FixedZoom kalau lebih
+// 2. Camera target selalu nge-follow tengah player
+// 3. Camera di-clamp biar gak keluar dari world bounds
+//
+// Catatan: FixedZoom bisa diubah manual sesuai kebutuhan map
+// ================================================================
+void Player::PlayerCamera(void)
+{
+    float MapW = (float)tilesonMap->width * TILE_SIZE;
+    float MapH = (float)tilesonMap->height * TILE_SIZE;
+
+    // zoom otomatis kalau map <= MinMapTileZoom biar map ngisi viewport
+    // kalau map lebih gede, pake FixedZoom — ubah nilai ini buat adjust
+    const int MinMapTileZoom = 15;
+    float AutoZoom = (float)GameScreenWidth / (MinMapTileZoom * TILE_SIZE);
+    float FixedZoom = 2.0f;
+    const float CameraZoom = (tilesonMap->width <= MinMapTileZoom || tilesonMap->height <= MinMapTileZoom)
+                                 ? AutoZoom
+                                 : FixedZoom;
+
+    // kalau debug mode off, pakai zoom yang udah dihitung
+    if (!isDebugMode)
+        camera.zoom = CameraZoom;
+
+    // camera target = tengah player
+    camera.target.x = PlayerInstance.GetPosition().x + (TILE_SIZE / 2.0f);
+    camera.target.y = PlayerInstance.GetPosition().y + (TILE_SIZE / 2.0f);
+
+    // hitung half viewport dalam world space
     float halfW = (GameScreenWidth / 2.0f) / camera.zoom;
     float halfH = (GameScreenHeight / 2.0f) / camera.zoom;
-    float MapW = (float)CurrentMap->TileWidth * TILE_SIZE;
-    float MapH = (float)CurrentMap->TileHeight * TILE_SIZE;
 
+    // clamp camera target ke world bounds
+    // camera berhenti ngikutin player kalau udah di tepi map
     if (camera.target.x < halfW)
         camera.target.x = halfW;
     if (camera.target.y < halfH)
@@ -111,10 +166,13 @@ void PlayerCamera(void)
         camera.target.y = MapH - halfH;
 }
 
-// update player behavior
-void UpdatePlayer(GameState *state)
+// ================================================================
+// Tick()
+// Wrapper logic player per frame — dipanggil dari UpdateLogicAll().
+// Urutan: update input/movement → update camera
+// ================================================================
+void Player::Tick(void)
 {
-    PlayerMovement();
-    PlayerControl();
+    Update();
     PlayerCamera();
 }

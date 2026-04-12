@@ -72,13 +72,10 @@ Usahakan diurutkan berdasarkan prioritas; dari yang paling penting ke kurang pen
 ### Tentukan Format Data
 
 - [ ] Pilih format level: JSON (rekomendasi) atau TMX
-- [ ] Tentukan struktur JSON-nya: tile layer, object layer (door, spawn, enemy)
 
 ### Tooling
 
 - [ ] Install/setup Tiled Map Editor
-- [ ] Buat 1 map sederhana di Tiled, export ke JSON
-- [ ] Pelajari struktur JSON hasil export Tiled
 
 ### Parser
 
