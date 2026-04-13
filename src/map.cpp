@@ -156,6 +156,19 @@ void LoadMap(const char *mapPath)
                 tson::Vector2i size = obj.getSize();
                 mapObj.bounds = {(float)pos.x, (float)pos.y, (float)size.x, (float)size.y};
 
+                // kalau object punya polygon, simpan semua titiknya dalam world space
+                const std::vector<tson::Vector2i> &polygon = obj.getPolygons();
+                if (!polygon.empty())
+                {
+                    mapObj.hasPolygon = true;
+
+                    for (const auto &point : polygon)
+                    {
+                        mapObj.polygonPoints.push_back({(float)pos.x + (float)point.x,
+                                                        (float)pos.y + (float)point.y});
+                    }
+                }
+
                 // ambil semua custom properties dari object
                 for (auto &[key, prop] : obj.getProperties().getProperties())
                     mapObj.properties[key] = prop;
@@ -229,7 +242,12 @@ void UnloadMap(void)
 // ================================================================
 void InitMap(void)
 {
-    LoadMap("world_json/inside.json");
+    // LoadMap("world_json/exampleworldmap_2.json");
+    LoadMap("world_json/exampleworldmap.json");
+    // LoadMap("world_json/inside.json");
+    // LoadMap("world_json/outsideDark.json");
+    // LoadMap("world_json/outsideLight.json");
+    // LoadMap("world_json/testermap.tmj");
 }
 
 // ================================================================

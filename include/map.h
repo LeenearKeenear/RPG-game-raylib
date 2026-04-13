@@ -95,6 +95,8 @@ struct MapObject
     std::string name;
     std::string type;
     Rectangle bounds;
+    std::vector<Vector2> polygonPoints; // titik polygon/polyline dalam world space
+    bool hasPolygon = false;            // true kalau object ini punya polygon custom
     std::map<std::string, tson::Property> properties;
 };
 

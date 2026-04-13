@@ -64,6 +64,14 @@ private:
     // collision rectangles dari object layer Tiled
     // diisi pas Init() dari TilesonGetObjectsByType(COLLISION_LAYER_NAME)
     std::vector<Rectangle> CollisionRects;
+
+    // collision polygon dari object layer Tiled
+    // diisi pas Init() dari object collision yang punya polygon
+    std::vector<std::vector<Vector2>> CollisionPolygons;
+
+    // custom world boundary polygon dari object layer Tiled
+    // kalau kosong, CanMove() fallback ke rectangle ukuran map
+    std::vector<Vector2> WorldBoundaryPolygon;
 };
 
 // global instance — bisa diakses file lain via extern
