@@ -190,24 +190,7 @@ void PauseMenu::Draw(Vector2 mousePosition)
         static_cast<int>(backgroundRect.height),
         WHITE);
 
-    const int fontSize = 30;
-    const int buttonSpacing = 10;
-    const int separatorSpacing = 30;
-    const int paddingY = 20;
-
     for (std::uint8_t i = 0; i < 6; i++) {
-        int separatorCount = 0;
-        if (i > 0) separatorCount++;
-        if (i > 2) separatorCount++;
-        if (i > 4) separatorCount++;
-        
-        int btnY = position.y + paddingY + i * (fontSize + buttonSpacing) + separatorCount * (separatorSpacing - buttonSpacing);
-        
-        if (i == 1 || i == 3 || i == 5) {
-            int separatorY = btnY - ((separatorSpacing - buttonSpacing) / 2);
-            DrawLine(20, separatorY, static_cast<int>(width) - 20, separatorY, LIGHTGRAY);
-        }
-        
         buttons[i].Draw(mousePosition);
     }
 
