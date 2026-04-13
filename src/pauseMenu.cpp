@@ -69,10 +69,10 @@ void PauseMenu::CalculateDimensions()
     }
 
     width = maxWidth;
-    height = (fontSize + buttonSpacing) * 5 + (paddingY * 2);
+    height = GameScreenHeight;
 
     position.x = 0;
-    position.y = (GameScreenHeight - height) / 2.0F;
+    position.y = 0;
 
     backgroundRect = {position.x, position.y, static_cast<float>(width), static_cast<float>(height)};
 
