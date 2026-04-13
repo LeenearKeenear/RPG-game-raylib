@@ -23,8 +23,8 @@ private:
     void HandleButtonClick(int buttonIndex, GameState* state);
 
     bool active;
-    std::array<buttonTxt, 5> buttons;
-    std::array<const char*, 5> buttonTexts;
+    std::array<buttonTxt, 6> buttons;
+    std::array<const char*, 6> buttonTexts;
 
     Vector2 position;
     int width;

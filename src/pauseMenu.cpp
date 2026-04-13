@@ -3,13 +3,20 @@
 
 static Popup savePopup("Game Saved!", "OK", 0.7F);
 static Popup loadPopup("Game Loaded!", "OK", 0.7F);
+static Popup optionsPopup("Coming Soon!", "OK", 0.7F);
 
 /**
  * @brief Default constructor.
  */
 PauseMenu::PauseMenu() : active(false), position({0, 0}), width(0), height(0)
 {
-    buttonTexts = {"Resume", "Save Game", "Load Game", "Return to Main Menu", "Exit Game"};
+    buttonTexts = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+    buttonTexts[0] = "Resume";
+    buttonTexts[1] = "Save Game";
+    buttonTexts[2] = "Load Game";
+    buttonTexts[3] = "Options";
+    buttonTexts[4] = "Return to Main Menu";
+    buttonTexts[5] = "Close Game";
     CalculateDimensions();
 }
 
@@ -59,9 +66,10 @@ void PauseMenu::CalculateDimensions()
     const int paddingX = 20;
     const int paddingY = 20;
     const int buttonSpacing = 10;
+    const int separatorSpacing = 30;
 
     int maxButtonWidth = 0;
-    for (std::uint8_t i = 0; i < 5; i++) {
+    for (std::uint8_t i = 0; i < 6; i++) {
         int btnWidth = MeasureText(buttonTexts[i], fontSize);
         if (btnWidth > maxButtonWidth) {
             maxButtonWidth = btnWidth;
@@ -76,10 +84,16 @@ void PauseMenu::CalculateDimensions()
 
     backgroundRect = {position.x, position.y, static_cast<float>(width), static_cast<float>(height)};
 
-    for (std::uint8_t i = 0; i < 5; i++) {
+    for (std::uint8_t i = 0; i < 6; i++) {
         int btnWidth = MeasureText(buttonTexts[i], fontSize);
         int btnX = position.x + (width - btnWidth) / 2;
-        int btnY = position.y + paddingY + i * (fontSize + buttonSpacing);
+        
+        int separatorCount = 0;
+        if (i > 0) separatorCount++;
+        if (i > 2) separatorCount++;
+        if (i > 4) separatorCount++;
+        
+        int btnY = position.y + paddingY + i * (fontSize + buttonSpacing) + separatorCount * (separatorSpacing - buttonSpacing);
         buttons[i] = buttonTxt(buttonTexts[i], btnX, btnY, fontSize, WHITE, 0.7F);
     }
 }
@@ -102,11 +116,14 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
         case 2:  // Load Game
             loadPopup.Show();
             break;
-        case 3:  // Return to Main Menu
+        case 3:  // Options
+            optionsPopup.Show();
+            break;
+        case 4:  // Return to Main Menu
             state->currentScreen = MAIN_MENU;
             Hide();
             break;
-        case 4:  // Exit Game
+        case 5:  // Close Game
             CloseWindow();
             break;
         default:
@@ -137,7 +154,12 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
         return;
     }
 
-    for (std::uint8_t i = 0; i < 5; i++) {
+    if (optionsPopup.IsActive()) {
+        optionsPopup.Update(mousePosition, mouseClicked);
+        return;
+    }
+
+    for (std::uint8_t i = 0; i < 6; i++) {
         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
             HandleButtonClick(i, state);
         }
@@ -168,7 +190,24 @@ void PauseMenu::Draw(Vector2 mousePosition)
         static_cast<int>(backgroundRect.height),
         WHITE);
 
-    for (std::uint8_t i = 0; i < 5; i++) {
+    const int fontSize = 30;
+    const int buttonSpacing = 10;
+    const int separatorSpacing = 30;
+    const int paddingY = 20;
+
+    for (std::uint8_t i = 0; i < 6; i++) {
+        int separatorCount = 0;
+        if (i > 0) separatorCount++;
+        if (i > 2) separatorCount++;
+        if (i > 4) separatorCount++;
+        
+        int btnY = position.y + paddingY + i * (fontSize + buttonSpacing) + separatorCount * (separatorSpacing - buttonSpacing);
+        
+        if (i == 1 || i == 3 || i == 5) {
+            int separatorY = btnY - ((separatorSpacing - buttonSpacing) / 2);
+            DrawLine(20, separatorY, static_cast<int>(width) - 20, separatorY, LIGHTGRAY);
+        }
+        
         buttons[i].Draw(mousePosition);
     }
 
@@ -178,5 +217,9 @@ void PauseMenu::Draw(Vector2 mousePosition)
 
     if (loadPopup.IsActive()) {
         loadPopup.Draw(mousePosition);
+    }
+
+    if (optionsPopup.IsActive()) {
+        optionsPopup.Draw(mousePosition);
     }
 }
