@@ -1,8 +1,8 @@
 #include "../include/pauseMenu.h"
 #include "../include/popup.h"
 
-static Popup savePopup;
-static Popup loadPopup;
+static Popup savePopup("Game Saved!", "OK", 0.7F);
+static Popup loadPopup("Game Loaded!", "OK", 0.7F);
 
 /**
  * @brief Default constructor.
@@ -80,7 +80,7 @@ void PauseMenu::CalculateDimensions()
         int btnWidth = MeasureText(buttonTexts[i], fontSize);
         int btnX = position.x + (width - btnWidth) / 2;
         int btnY = position.y + paddingY + i * (fontSize + buttonSpacing);
-        buttons[i] = buttonTxt(buttonTexts[i], btnX, btnY, fontSize, WHITE, 1.0F);
+        buttons[i] = buttonTxt(buttonTexts[i], btnX, btnY, fontSize, WHITE, 0.7F);
     }
 }
 

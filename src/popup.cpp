@@ -36,6 +36,7 @@ Popup::~Popup()
  */
 void Popup::Show()
 {
+    CalculateDimensions();
     active = true;
 }
 
