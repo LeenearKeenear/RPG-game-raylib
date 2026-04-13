@@ -11,7 +11,6 @@ Popup::Popup(const char* message, const char* buttonText, float hoverAmount)
       position({0, 0}), width(0), height(0)
 {
     CalculateDimensions();
-    okButton = buttonTxt(buttonText, 0, 0, 30, WHITE, hoverAmount);
 }
 
 Popup::~Popup()
@@ -67,8 +66,15 @@ void Popup::CalculateDimensions()
 
     backgroundRect = {position.x, position.y, static_cast<float>(width), static_cast<float>(height)};
 
+    // Calculate button position: centered horizontally, near bottom of popup
     int buttonX = static_cast<int>(position.x + (width - buttonWidth) / 2.0F);
     int buttonY = static_cast<int>(position.y + height - paddingY - fontSize);
+
+    // Debug logging for button position
+    TraceLog(LOG_DEBUG, "Popup Debug: width=%d, height=%d", width, height);
+    TraceLog(LOG_DEBUG, "Popup Debug: position=(%.1f, %.1f)", position.x, position.y);
+    TraceLog(LOG_DEBUG, "Popup Debug: buttonX=%d, buttonY=%d, buttonWidth=%d", buttonX, buttonY, buttonWidth);
+
     okButton = buttonTxt(buttonText, buttonX, buttonY, fontSize, WHITE, hoverAmount);
 }
 
