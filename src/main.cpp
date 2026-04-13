@@ -50,9 +50,12 @@ int main()
         {
             // toggle pause menu dengan P key (not ESC)
             if (IsKeyPressed(KEY_P)) {
+                TraceLog(LOG_INFO, "P key pressed!");
                 if (pauseMenu.IsActive()) {
+                    TraceLog(LOG_INFO, "Hiding pause menu...");
                     pauseMenu.Hide();
                 } else {
+                    TraceLog(LOG_INFO, "Showing pause menu...");
                     pauseMenu.Show();
                 }
             }
