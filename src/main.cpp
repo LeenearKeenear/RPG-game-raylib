@@ -57,6 +57,9 @@ int main()
                 }
             }
 
+            // update scale sebelum rendering (needed for mouse position calculation)
+            UpdateGame(&state);
+
             // capture mouse click before rendering
             bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
@@ -65,8 +68,6 @@ int main()
                 pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
             }
 
-            // update scale kalau window di-resize
-            UpdateGame(&state);
             // update semua logic game (player, enemy, dll)
             UpdateLogicAll();
             // render semua ke layar virtual
