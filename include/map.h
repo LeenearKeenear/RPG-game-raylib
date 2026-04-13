@@ -114,6 +114,19 @@ struct TilesonMapData
 
 extern TilesonMapData *tilesonMap;
 
+// hasil kalkulasi frustum: range index tile yang visible di layar
+struct TileRange
+{
+    int minX; // kolom tile paling kiri yang visible
+    int minY; // baris tile paling atas yang visible
+    int maxX; // kolom tile paling kanan yang visible (exclusive)
+    int maxY; // baris tile paling bawah yang visible (exclusive)
+};
+
+// data yang bisa dibaca oleh sistem debug
+extern int lastTilesRendered;
+extern TileRange currentVisibleRange;
+
 // ================================================================
 // Functions
 // ================================================================
@@ -133,3 +146,5 @@ void InitMap(void);
 // query object dari object layer Tiled
 std::vector<MapObject> TilesonGetObjectsByType(const std::string &type);
 MapObject *TilesonGetObjectByName(const std::string &name);
+
+

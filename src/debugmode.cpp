@@ -4,7 +4,6 @@
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/player.h"
-#include "../include/frustum.h"
 
 // ================================================================
 // Global

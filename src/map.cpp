@@ -18,12 +18,15 @@ static std::unique_ptr<tson::Map> parsedMap = nullptr;
 Texture2D TexturesMap[MAX_TEXTURES];
 Camera2D camera = {0};
 
+int lastTilesRendered = 0;
+TileRange currentVisibleRange = {0, 0, 0, 0};
+
 // ================================================================
 // LoadTileTexture()
 // Load texture PNG ke slot TextureAsset yang ditentuin.
 // Slot ini dipake sama RenderTilePNG() buat milih texture yang bener.
 // ================================================================
-// dawg ini dipindah dawg 
+// dawg ini dipindah dawg
 void LoadTileTexture(TextureAsset Slot, const char *Path)
 {
     Image img = LoadImage(Path);
@@ -40,7 +43,7 @@ void LoadTileTexture(TextureAsset Slot, const char *Path)
 // 2. Hitung Source rectangle dari koordinat itu
 // 3. DrawTexturePro ke posisi Destination di world
 // ================================================================
-// dawg ini dipindah dawg 
+// dawg ini dipindah dawg
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
 {
     // mapping TileType ke koordinat di spritesheet
@@ -230,14 +233,20 @@ void RenderMap(void)
     if (tilesonMap == nullptr || tilesonMap->tilesetTexture.id == 0)
         return;
 
+    // dapatkan range tile yang visible dari inti logic frustum culling di player
+    currentVisibleRange = PlayerInstance.GetVisibleTileRange();
+
+    lastTilesRendered = 0; // reset counter per frame
+
     BeginMode2D(camera);
 
     for (int l = 0; l < tilesonMap->layerCount; l++)
     {
-        for (int y = 0; y < tilesonMap->height; y++)
+        for (int y = currentVisibleRange.minY; y < currentVisibleRange.maxY; y++)
         {
-            for (int x = 0; x < tilesonMap->width; x++)
+            for (int x = currentVisibleRange.minX; x < currentVisibleRange.maxX; x++)
             {
+                lastTilesRendered++; // hitung berapa tile yang diproses loop
                 int tileId = tilesonMap->tiles[l][(y * tilesonMap->width) + x];
                 if (tileId == 0) // tile ID 0 = kosong, skip
                     continue;
