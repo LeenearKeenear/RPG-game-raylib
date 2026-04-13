@@ -18,8 +18,14 @@ extern const int GameScreenHeight;
 // enum state game — tambah state baru di sini kalau perlu
 typedef enum
 {
+    // General States
     MAIN_MENU,
-    PLAY
+    PLAY,
+
+    // TODO Save staes
+
+    // Extras
+    OPTIONS
 } ScreenState;
 
 // struct utama yang nyimpen semua info rendering dan state game

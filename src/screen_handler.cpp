@@ -6,24 +6,25 @@
 #include "../include/frustum.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-// ================================================================
-// Konstanta layar virtual — semua rendering di-scale ke ukuran ini
-// ================================================================
+/**
+ * @brief Konstanta layar virtual — semua rendering di-scale ke ukuran ini 
+ */
 const float ScaleMultiplierMonitor = 0.7F;    // ukuran default window = 70% monitor
 const float ScaleMinMultiplierMonitor = 0.4F; // ukuran minimum window = 40% monitor
 extern const int GameScreenWidth = 1280;
 extern const int GameScreenHeight = 720;
 
-// ================================================================
-// InitAll()
-// Inisialisasi semua entity dan camera di awal game.
-//
-// Cara kerja:
-// 1. Init player — spawn point otomatis dibaca dari object layer Tiled
-// 2. Set camera target ke posisi spawn player
-// ================================================================
+/**
+ * @brief InitAll()
+ * Inisialisasi semua entity dan camera di awal game.
+ * 
+ * Cara kerja:
+ * 1. Init player — spawn point otomatis dibaca dari object layer Tiled
+ * 2. Set camera target ke posisi spawn player
+ */
 void InitAll(void)
 {
     // inisialisasi player — spawn point diambil otomatis dari object layer Tiled
@@ -31,21 +32,21 @@ void InitAll(void)
 
     // set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
-    camera.target = {spawnPos.x + (TILE_SIZE / 2.0f), spawnPos.y + (TILE_SIZE / 2.0f)};
+    camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
     camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
     camera.rotation = 0;
-    camera.zoom = 1.0f;
+    camera.zoom = 1.0F;
 }
 
-// ================================================================
-// InitScreen()
-// Inisialisasi window, audio, dan render texture virtual.
-//
-// Cara kerja:
-// 1. Buat window resizable ukuran 70% monitor
-// 2. Buat render texture 1280x720 sebagai layar virtual
-// 3. Set FPS target ke 60
-// ================================================================
+/**
+ * @brief InitScreen() 
+ * Inisialisasi window, audio, dan render texture virtual.
+ * 
+ * Cara kerja:
+ * 1. Buat window resizable ukuran 70% monitor
+ * 2. Buat render texture 1280x720 sebagai layar virtual
+ * 3. Set FPS target ke 60
+ */
 GameState InitScreen(void)
 {
     GameState state = {{0}};
@@ -160,8 +161,9 @@ void DrawRenderWindows(GameState *state)
 // ================================================================
 void GameShutDown(GameState *state)
 {
-    for (int i = 0; i < MAX_TEXTURES; i++)
+    for (int i = 0; i < MAX_TEXTURES; i++) {
         UnloadTexture(TexturesMap[i]);
+    }
 
     UnloadMap();
     UnloadRenderTexture(state->Dungeon);
