@@ -4,11 +4,11 @@
  "layers":[
         {
          "compression":"",
-         "data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAmwIAAJ0CAACdAgAAnQIAAJ0CAACdAgAAnQIAAJ4CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACbAgAApAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAAKUCAACdAgAAnQIAAJ4CAAAAAAAAAAAAAJsCAACkAgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALYCAAAAAAAAAAAAAKcCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALYCAAAAAAAAAAAAAKcCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAAHoCAAAAAAAAAAAAAKcCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALYCAAAAAAAAAAAAAL8CAACwAgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALYCAAAAAAAAAAAAAAAAAACnAgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALYCAAAAAAAAAAAAAAAAAAC\/AgAAsAIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAAC0AgAAsQIAAMICAAAAAAAAAAAAAAAAAAAAAAAApwIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALQCAACxAgAAwgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAApwIAALQCAAC0AgAAtAIAALQCAAC0AgAAtAIAALECAADCAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAvwIAAMACAACwAgAAtAIAALQCAAC0AgAAsQIAAMICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC\/AgAAwAIAAMACAADBAgAAwgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+         "data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAIAAAAfAAAAAgAAAAIAAAACAAAABAAAAAAAAAAAAAAAAAAAAAEAAAACAAAAAgAAAAIAAAACAAAALAAAABAAAAA+AAAAEAAAABAAAAAQAAAAEgAAAAAAAAAAAAAAAAAAAA8AAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAA9AAAAEAAAABAAAAAQAAAAEgAAAAAAAAAAAAAAAAAAAA8AAAAQAAAAPQAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAAD0AAAAQAAAAEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAAD0AAAAQAAAAEgAAAAAAAAAAAAAAAAAAAAAAAAAPAAAAEAAAABAAAAA9AAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAKwAAAAQAAAAAAAAAAAAAAAAAAAAPAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABIAAAAAAAAAAAAAAAEAAAAsAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABIAAAAAAAAAAAAAAA8AAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAAD0AAAAQAAAAEAAAABIAAAAAAAAAAAAAAA8AAAAQAAAAPQAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAA9AAAAEAAAABIAAAAAAAAAAAAAAAAAAAAuAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABIAAAAAAAAAAAAAAAAAAAAPAAAAEAAAABAAAAAQAAAAEAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
          "encoding":"base64",
          "height":15,
          "id":1,
-         "name":"Ground",
+         "name":"Background",
          "opacity":1,
          "type":"tilelayer",
          "visible":true,
@@ -18,11 +18,25 @@
         }, 
         {
          "compression":"",
-         "data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABNAQAAAAAAAEoBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHAQAAAAAAAGsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB+AAAAfQAAAGsAAAAAAAAAAAAAAAAAAABHAQAASgEAAAAAAAAAAAAARwEAAAAAAAAAAAAAAAAAAHwAAABsAAAAfAAAAEgBAAAAAAAAAAAAAAAAAABNAQAAAAAAAAAAAAAAAAAAAAAAAAAAAABKAQAAAAAAAH4AAAB8AAAAfgAAAH0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABHAQAAAAAAAAAAAABNAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARwEAAAAAAAAAAAAASgEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE0BAAAAAAAAAAAAAEoBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABKAQAAAAAAAOwBAACfAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+         "data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC9AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANAAAAAAAAAAlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
          "encoding":"base64",
          "height":15,
-         "id":5,
-         "name":"Deco",
+         "id":6,
+         "name":"Object",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":15,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "compression":"",
+         "data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB0AAAAuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtAAAAOwAAADwAAAA7AAAAPAAAACAAAAAAAAAAAAAAAAAAAAAdAAAAPAAAADsAAAA8AAAAPAAAADsAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+         "encoding":"base64",
+         "height":15,
+         "id":3,
+         "name":"LowerWalls",
          "opacity":1,
          "type":"tilelayer",
          "visible":true,
@@ -32,281 +46,20 @@
         }, 
         {
          "draworder":"topdown",
-         "id":4,
-         "name":"OffmapBoundary",
+         "id":5,
+         "name":"Spawn",
          "objects":[
                 {
-                 "height":0,
-                 "id":5,
+                 "height":26.8182,
+                 "id":6,
                  "name":"",
                  "opacity":1,
-                 "polygon":[
-                        {
-                         "x":0,
-                         "y":0
-                        }, 
-                        {
-                         "x":-31.875,
-                         "y":0
-                        }, 
-                        {
-                         "x":-32,
-                         "y":-15.875
-                        }, 
-                        {
-                         "x":-35.25,
-                         "y":-16
-                        }, 
-                        {
-                         "x":-35.25,
-                         "y":-107.5
-                        }, 
-                        {
-                         "x":-37.5,
-                         "y":-109.875
-                        }, 
-                        {
-                         "x":-129.125,
-                         "y":-110.125
-                        }, 
-                        {
-                         "x":-131,
-                         "y":-111.625
-                        }, 
-                        {
-                         "x":-131.125,
-                         "y":-139.25
-                        }, 
-                        {
-                         "x":-133.5,
-                         "y":-141.5
-                        }, 
-                        {
-                         "x":-379,
-                         "y":-141.5
-                        }, 
-                        {
-                         "x":-381.125,
-                         "y":-139.25
-                        }, 
-                        {
-                         "x":-381,
-                         "y":-111.875
-                        }, 
-                        {
-                         "x":-382.875,
-                         "y":-110.125
-                        }, 
-                        {
-                         "x":-410.875,
-                         "y":-109.875
-                        },
-                    
-                        {
-                         "x":-413.125,
-                         "y":-106.75
-                        }, 
-                        {
-                         "x":-413,
-                         "y":-80.25
-                        }, 
-                        {
-                         "x":-415,
-                         "y":-78.125
-                        }, 
-                        {
-                         "x":-442.5,
-                         "y":-78
-                        }, 
-                        {
-                         "x":-444.875,
-                         "y":-75.125
-                        }, 
-                        {
-                         "x":-445.25,
-                         "y":74.625
-                        }, 
-                        {
-                         "x":-442.5,
-                         "y":76.25
-                        }, 
-                        {
-                         "x":-416.125,
-                         "y":76.625
-                        }, 
-                        {
-                         "x":-413.125,
-                         "y":79.875
-                        }, 
-                        {
-                         "x":-413,
-                         "y":138.125
-                        }, 
-                        {
-                         "x":-410.375,
-                         "y":140.875
-                        }, 
-                        {
-                         "x":-384.125,
-                         "y":140.875
-                        }, 
-                        {
-                         "x":-381.044,
-                         "y":143.978
-                        }, 
-                        {
-                         "x":-380.938,
-                         "y":234.063
-                        }, 
-                        {
-                         "x":-378.438,
-                         "y":236.875
-                        },
-                    
-                        {
-                         "x":-320,
-                         "y":237
-                        }, 
-                        {
-                         "x":-317.043,
-                         "y":240.043
-                        }, 
-                        {
-                         "x":-317,
-                         "y":265.875
-                        }, 
-                        {
-                         "x":-314.25,
-                         "y":268.875
-                        }, 
-                        {
-                         "x":-224.087,
-                         "y":269
-                        }, 
-                        {
-                         "x":-224,
-                         "y":272
-                        }, 
-                        {
-                         "x":-192,
-                         "y":272
-                        }, 
-                        {
-                         "x":-191.956,
-                         "y":268.933
-                        }, 
-                        {
-                         "x":-165.6,
-                         "y":269
-                        }, 
-                        {
-                         "x":-163.044,
-                         "y":266.133
-                        }, 
-                        {
-                         "x":-163.016,
-                         "y":239.953
-                        }, 
-                        {
-                         "x":-160.047,
-                         "y":236.984
-                        }, 
-                        {
-                         "x":-133.844,
-                         "y":236.906
-                        }, 
-                        {
-                         "x":-131.016,
-                         "y":234.172
-                        }, 
-                        {
-                         "x":-131.031,
-                         "y":208.016
-                        },
-                    
-                        {
-                         "x":-127.969,
-                         "y":204.938
-                        }, 
-                        {
-                         "x":-101.813,
-                         "y":204.953
-                        }, 
-                        {
-                         "x":-99.0781,
-                         "y":202.078
-                        }, 
-                        {
-                         "x":-99.0156,
-                         "y":175.984
-                        }, 
-                        {
-                         "x":-96.0313,
-                         "y":173.063
-                        }, 
-                        {
-                         "x":-70.1406,
-                         "y":172.938
-                        }, 
-                        {
-                         "x":-67.0625,
-                         "y":169.875
-                        }, 
-                        {
-                         "x":-67.0222,
-                         "y":143.978
-                        }, 
-                        {
-                         "x":-64,
-                         "y":141.063
-                        }, 
-                        {
-                         "x":-37.75,
-                         "y":140.875
-                        }, 
-                        {
-                         "x":-35.0625,
-                         "y":137.75
-                        }, 
-                        {
-                         "x":-35.125,
-                         "y":16.0625
-                        }, 
-                        {
-                         "x":-32,
-                         "y":16
-                        }, 
-                        {
-                         "x":-31.875,
-                         "y":0
-                        }, 
-                        {
-                         "x":-0.1875,
-                         "y":0.875
-                        },
-                    
-                        {
-                         "x":0,
-                         "y":304
-                        }, 
-                        {
-                         "x":-480,
-                         "y":304
-                        }, 
-                        {
-                         "x":-480,
-                         "y":-176
-                        }, 
-                        {
-                         "x":0,
-                         "y":-176
-                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":0,
-                 "x":480,
-                 "y":176
+                 "width":27.7273,
+                 "x":194.091,
+                 "y":322.273
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -316,20 +69,20 @@
         }, 
         {
          "draworder":"topdown",
-         "id":6,
-         "name":"GoOutsideDark",
+         "id":4,
+         "name":"GoOutsideLight",
          "objects":[
                 {
-                 "height":31.7391,
-                 "id":6,
+                 "height":7.875,
+                 "id":1,
                  "name":"",
                  "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":5.82609,
-                 "x":442.087,
-                 "y":160.261
+                 "width":32.125,
+                 "x":255.875,
+                 "y":32.0625
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -340,19 +93,19 @@
         {
          "draworder":"topdown",
          "id":7,
-         "name":"GoInside",
+         "name":"Chest",
          "objects":[
                 {
-                 "height":6.18182,
-                 "id":4,
+                 "height":26.2727,
+                 "id":7,
                  "name":"",
                  "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":32.0909,
-                 "x":256,
-                 "y":441.727
+                 "width":26.3636,
+                 "x":98.7273,
+                 "y":98.8182
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -363,42 +116,19 @@
         {
          "draworder":"topdown",
          "id":8,
-         "name":"SpawnOutsideLight",
+         "name":"Furnace",
          "objects":[
                 {
-                 "height":26.375,
-                 "id":10,
+                 "height":25.25,
+                 "id":8,
                  "name":"",
                  "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":26.625,
-                 "x":258.625,
-                 "y":386.75
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":9,
-         "name":"SpawnDarkToLight",
-         "objects":[
-                {
-                 "height":24.3636,
-                 "id":11,
-                 "name":"",
-                 "opacity":1,
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":26,
-                 "x":387.091,
-                 "y":163.636
+                 "width":23.5,
+                 "x":164.125,
+                 "y":99.75
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -406,30 +136,17 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":10,
- "nextobjectid":12,
+ "nextlayerid":9,
+ "nextobjectid":9,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
  "tileheight":32,
  "tilesets":[
         {
-         "columns":17,
-         "firstgid":1,
-         "image":"..\/RPG-game-raylib\/texture\/tiles.png",
-         "imageheight":832,
-         "imagewidth":544,
-         "margin":0,
-         "name":"envtiles",
-         "spacing":0,
-         "tilecount":442,
-         "tileheight":32,
-         "tilewidth":32
-        }, 
-        {
          "columns":14,
-         "firstgid":443,
-         "image":"..\/RPG-game-raylib\/texture\/map.png",
+         "firstgid":1,
+         "image":"..\/texture\/map.png",
          "imageheight":428,
          "imagewidth":500,
          "margin":0,
@@ -942,15 +659,15 @@
          "tilewidth":32
         }, 
         {
-         "columns":12,
-         "firstgid":611,
-         "image":"..\/RPG-game-raylib\/texture\/autotiles.png",
-         "imageheight":256,
-         "imagewidth":384,
+         "columns":17,
+         "firstgid":169,
+         "image":"..\/texture\/tiles.png",
+         "imageheight":832,
+         "imagewidth":544,
          "margin":0,
-         "name":"floor",
+         "name":"envtiles",
          "spacing":0,
-         "tilecount":96,
+         "tilecount":442,
          "tileheight":32,
          "tilewidth":32
         }],

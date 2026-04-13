@@ -10,11 +10,11 @@
 // Texture & Asset
 // ================================================================
 
-// dawg ini dipindah dawg 
+// dawg ini dipindah dawg
 // jumlah maksimum slot texture PNG yang bisa di-load
 #define MAX_TEXTURES 3
 
-// dawg ini dipindah dawg 
+// dawg ini dipindah dawg
 // enum buat milih slot texture — tambah di sini kalau ada asset baru
 typedef enum
 {
@@ -22,7 +22,7 @@ typedef enum
     TEXTURE_KNIGHT
 } TextureAsset;
 
-// dawg ini dipindah dawg 
+// dawg ini dipindah dawg
 extern Texture2D TexturesMap[MAX_TEXTURES];
 
 // camera
@@ -32,7 +32,7 @@ extern Camera2D camera;
 // Tile System
 // ================================================================
 
-// dawg ini dipindah dawg 
+// dawg ini dipindah dawg
 // koordinat universal buat posisi tile di spritesheet atau world
 typedef struct
 {
@@ -40,7 +40,7 @@ typedef struct
     int y;
 } TileCoordinate;
 
-// dawg ini dipindah dawg 
+// dawg ini dipindah dawg
 // enum semua jenis tile yang ada — tambah di sini kalau ada tile baru
 typedef enum
 {
@@ -62,7 +62,7 @@ typedef enum
     TILE_PLAYER_NEW
 } TileType;
 
-// dawg ini dipindah dawg 
+// dawg ini dipindah dawg
 // properti tiap tile: posisi di spritesheet, bisa dilewatin, ada interaksi gak
 typedef struct
 {
@@ -71,7 +71,7 @@ typedef struct
     bool HasInteraction;
 } TileDefinition;
 
-// dawg ini dipindah dawg 
+// dawg ini dipindah dawg
 // ukuran tile dalam pixel + gap antar tile di spritesheet
 #define TILE_SIZE 32
 #define TILE_GAP 4
@@ -98,18 +98,25 @@ struct MapObject
     std::map<std::string, tson::Property> properties;
 };
 
+// info satu tileset — texture + metadata buat render
+struct TilesetInfo
+{
+    Texture2D texture;
+    int cols;
+    int spacing;
+    int firstgid;
+    int lastgid; // firstgid tileset berikutnya - 1, dipake buat cari tileset yang bener pas render
+};
+
 // semua data map yang udah di-parse dari JSON Tiled
 struct TilesonMapData
 {
-    int width;          // lebar map dalam satuan tile
-    int height;         // tinggi map dalam satuan tile
-    int layerCount;     // jumlah tile layer
-    int **tiles;        // array 2D tile per layer: tiles[layer][y*width+x]
-    Texture2D tilesetTexture;
-    int tilesetCols;        // jumlah kolom di spritesheet tileset
-    int tilesetSpacing;     // gap antar tile di spritesheet
-    int tilesetFirstgid;    // ID awal tile (biasanya 1)
-    std::vector<MapObject> Objects; // semua object dari object layer
+    int width;
+    int height;
+    int layerCount;
+    int **tiles;
+    std::vector<TilesetInfo> tilesets; // ganti single texture jadi vector
+    std::vector<MapObject> Objects;
 };
 
 extern TilesonMapData *tilesonMap;
@@ -146,5 +153,3 @@ void InitMap(void);
 // query object dari object layer Tiled
 std::vector<MapObject> TilesonGetObjectsByType(const std::string &type);
 MapObject *TilesonGetObjectByName(const std::string &name);
-
-

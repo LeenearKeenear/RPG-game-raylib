@@ -59,8 +59,8 @@ void Debug::DrawMapPanel(void)
     DrawText("[ MAP DEBUG ]", 15, 10, 18, YELLOW);
     DrawText(TextFormat("Size    : %dx%d tiles", tilesonMap->width, tilesonMap->height), 15, 32, 16, WHITE);
     DrawText(TextFormat("Layers  : %d", tilesonMap->layerCount), 15, 52, 16, WHITE);
-    DrawText(TextFormat("Tileset : %s", tilesonMap->tilesetTexture.id != 0 ? "Loaded" : "Not loaded"),
-             15, 72, 16, tilesonMap->tilesetTexture.id != 0 ? GREEN : RED);
+    DrawText(TextFormat("Tileset : %s", !tilesonMap->tilesets.empty() ? "Loaded" : "Not loaded"),
+             15, 72, 16, !tilesonMap->tilesets.empty() ? GREEN : RED);
 }
 
 // ================================================================
