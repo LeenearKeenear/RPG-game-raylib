@@ -71,7 +71,7 @@ int main()
 
             // update pause menu jika aktif
             if (pauseMenu.IsActive()) {
-                pauseMenu.Update(&state, GetMousePosition(), IsMouseButtonPressed(MOUSE_LEFT_BUTTON));
+                pauseMenu.Update(&state, GetVirtualMousePosition(&state), IsMouseButtonPressed(MOUSE_LEFT_BUTTON));
             }
         }
     }
