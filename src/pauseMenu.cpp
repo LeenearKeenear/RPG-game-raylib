@@ -67,11 +67,7 @@ void PauseMenu::CalculateDimensions()
         }
     }
 
-    width = maxButtonWidth + (paddingX * 2);
-    if (width > maxWidth) {
-        width = maxWidth;
-    }
-
+    width = maxWidth;
     height = (fontSize + buttonSpacing) * 5 + (paddingY * 2);
 
     position.x = 0;
