@@ -176,3 +176,40 @@ void Player::Tick(void)
     Update();
     PlayerCamera();
 }
+
+// ================================================================
+// GetVisibleTileRange()
+// Inti logic frustum culling — hitung range tile yang visible
+// di layar berdasarkan camera viewport saat ini.
+//
+// Cara kerja:
+// 1. Konversi pojok kiri-atas layar ke world space → worldMin
+// 2. Konversi pojok kanan-bawah layar ke world space → worldMax
+// 3. Bagi koordinat world dengan TILE_SIZE → dapat index tile
+// 4. Tambah margin 1 tile di tiap sisi biar gak ada pop-in di tepi
+// 5. Clamp ke batas map yang valid (0 .. width/height)
+//
+// Dipanggil oleh RenderMapCulled() (frustum.cpp) setiap frame.
+// ================================================================
+TileRange Player::GetVisibleTileRange(void)
+{
+    // pojok kiri-atas dan kanan-bawah layar dalam world space
+    Vector2 worldMin = GetScreenToWorld2D({0.0f, 0.0f}, camera);
+    Vector2 worldMax = GetScreenToWorld2D({(float)GameScreenWidth, (float)GameScreenHeight}, camera);
+
+    TileRange range;
+
+    // konversi ke tile index + margin 1 tile biar gak ada pop-in di tepi
+    range.minX = (int)floorf(worldMin.x / TILE_SIZE) - 1;
+    range.minY = (int)floorf(worldMin.y / TILE_SIZE) - 1;
+    range.maxX = (int)ceilf(worldMax.x  / TILE_SIZE) + 1;
+    range.maxY = (int)ceilf(worldMax.y  / TILE_SIZE) + 1;
+
+    // clamp ke batas map yang valid
+    if (range.minX < 0)                       range.minX = 0;
+    if (range.minY < 0)                       range.minY = 0;
+    if (range.maxX > tilesonMap->width)       range.maxX = tilesonMap->width;
+    if (range.maxY > tilesonMap->height)      range.maxY = tilesonMap->height;
+
+    return range;
+}

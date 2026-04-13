@@ -4,6 +4,7 @@
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/player.h"
+#include "../include/frustum.h"
 
 // ================================================================
 // Global
@@ -41,6 +42,7 @@ void Debug::Draw(void)
     DrawCameraPanel();
     DrawPlayerPanel();
     DrawZoomPanel();
+    DrawFrustumPanel();
 }
 
 // ================================================================
@@ -115,6 +117,27 @@ void Debug::DrawZoomPanel(void)
     DrawText("[ ZOOM DEBUG ]", 15, 295, 18, ORANGE);
     DrawText(TextFormat("Zoom    : %.2f", camera.zoom), 15, 315, 16, WHITE);
     DrawText("[Scroll] Zoom In/Out", 15, 335, 16, YELLOW);
+}
+
+// ================================================================
+// DrawFrustumPanel()
+// Panel info frustum culling: jumlah tile yang di-render vs total map,
+// serta jangkauan index tile (min/max) yang terlihat.
+// ================================================================
+void Debug::DrawFrustumPanel(void)
+{
+    if (tilesonMap == nullptr)
+        return;
+
+    int totalMapTiles = tilesonMap->width * tilesonMap->height * tilesonMap->layerCount;
+
+    DrawRectangle(5, 370, 270, 95, Fade(BLACK, 0.7f));
+    DrawRectangleLines(5, 370, 270, 95, VIOLET);
+    DrawText("[ FRUSTUM DEBUG ]", 15, 375, 18, VIOLET);
+    DrawText(TextFormat("Tiles Drawn : %d", lastTilesRendered), 15, 395, 16, WHITE);
+    DrawText(TextFormat("Total Map   : %d", totalMapTiles), 15, 415, 16, GRAY);
+    DrawText(TextFormat("Range X: %d-%d", currentVisibleRange.minX, currentVisibleRange.maxX), 15, 435, 16, WHITE);
+    DrawText(TextFormat("Range Y: %d-%d", currentVisibleRange.minY, currentVisibleRange.maxY), 15, 455, 16, WHITE);
 }
 
 // ================================================================

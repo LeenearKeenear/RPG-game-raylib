@@ -6,7 +6,7 @@
 *.bak
 /Backups/
 .clang-format
-*.txt
+compile_flags.txt
 
 # Personal
 *.Personal.*
