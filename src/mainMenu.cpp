@@ -1,9 +1,11 @@
 #include "../include/mainMenu.h"
+#include "../include/popup.h"
 #include "../lib/raylib/include/raymath.h"
 #include <array>
 #include <cstdint>
 
 static std::array<buttonTxt, 4> buttons;
+static Popup optionsPopup;
 
 enum MenuButton : std::uint8_t {
     BTN_START = 0,
@@ -33,13 +35,15 @@ void InitMainMenu(GameState* state)
     std::array<const char*, 4> texts = {"Start Game", "Load Game", "Options", "Quit"};
     
     int centerX = (GameScreenWidth / 2) - 50;
-    int startY = 300;
+    int startY = (GameScreenHeight / 2) - 100;
     int buttonSpacing = 70;
     int fontSize = 30;
 
     for (int i = 0; i < 4; i++) {
         buttons[i] = buttonTxt(texts[i], centerX, startY + (i * buttonSpacing), fontSize, WHITE, 0.6F);
     }
+
+    optionsPopup = Popup("COMING SOON", "OK", 0.6F);
 }
 
 /**
@@ -58,7 +62,7 @@ void UpdateMainMenu(GameState* state)
                     state->currentScreen = PLAY;
                     break;
                 case BTN_OPTIONS:
-                    state->currentScreen = OPTIONS;
+                    optionsPopup.Show();
                     break;
                 case BTN_QUIT:
                     CloseWindow();
@@ -69,6 +73,7 @@ void UpdateMainMenu(GameState* state)
             }
         }
     }
+
 }
 
 /**
@@ -83,6 +88,10 @@ void RenderMainMenuToVirtualScreen(GameState* state)
     
     for (int i = 0; i < 4; i++) {
         buttons[i].Draw(virtualMouse);
+    }
+
+    if (optionsPopup.IsActive()) {
+        optionsPopup.Draw(virtualMouse);
     }
     
     EndTextureMode();
