@@ -34,7 +34,7 @@ help:
 TMPDIR := tmp
 
 $(TMPDIR):
-	mkdir -p $(TMPDIR)
+	@powershell -Command "if (!(Test-Path $(TMPDIR))) { New-Item -ItemType Directory -Path $(TMPDIR) }"
 
 export TMP := $(CURDIR)/$(TMPDIR)
 export TEMP := $(TMP)
