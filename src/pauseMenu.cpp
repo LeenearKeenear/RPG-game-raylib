@@ -162,8 +162,14 @@ void PauseMenu::Draw(Vector2 mousePosition)
     Color dimColor = {0, 0, 0, static_cast<unsigned char>(255 * 0.2F)};
     DrawRectangleRec(fullScreen, dimColor);
 
-    Color bgColor = {30, 30, 30, 255};
+    Color bgColor = DARKGRAY;
     DrawRectangleRec(backgroundRect, bgColor);
+    DrawRectangleLines(
+        static_cast<int>(backgroundRect.x),
+        static_cast<int>(backgroundRect.y),
+        static_cast<int>(backgroundRect.width),
+        static_cast<int>(backgroundRect.height),
+        WHITE);
 
     for (std::uint8_t i = 0; i < 5; i++) {
         buttons[i].Draw(mousePosition);
