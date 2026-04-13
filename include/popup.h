@@ -14,6 +14,7 @@ public:
     void Hide();
     bool IsActive() const;
 
+    void Update(Vector2 mousePosition, bool mouseClicked);
     void Draw(Vector2 mousePosition);
 
 private:

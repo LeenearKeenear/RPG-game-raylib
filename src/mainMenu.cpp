@@ -49,11 +49,17 @@ void InitMainMenu(GameState* state)
 /**
  * @brief UpdateMainMenu()
  * Tangani input mouse dan klik tombol untuk navigasi menu.
+ * Popup bersifat modal - blokir interaksi menu saat popup aktif.
  */
 void UpdateMainMenu(GameState* state)
 {
     Vector2 mousePosition = GetVirtualMousePosition(state);
     bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+    if (optionsPopup.IsActive()) {
+        optionsPopup.Update(mousePosition, mouseClicked);
+        return;
+    }
 
     for (int i = 0; i < 4; i++) {
         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
@@ -73,7 +79,6 @@ void UpdateMainMenu(GameState* state)
             }
         }
     }
-
 }
 
 /**

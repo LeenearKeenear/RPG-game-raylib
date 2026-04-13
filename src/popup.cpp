@@ -33,6 +33,14 @@ bool Popup::IsActive() const
     return active;
 }
 
+void Popup::Update(Vector2 mousePosition, bool mouseClicked)
+{
+    if (!active) return;
+    if (okButton.isClicked(mousePosition, mouseClicked)) {
+        Hide();
+    }
+}
+
 void Popup::CalculateDimensions()
 {
     const int paddingX = 40;
