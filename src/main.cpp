@@ -48,8 +48,8 @@ int main()
         // state PLAY — gameplay
         else if (state.currentScreen == PLAY)
         {
-            // toggle pause menu dengan ESC
-            if (IsKeyPressed(KEY_ESCAPE)) {
+            // toggle pause menu dengan P key (not ESC)
+            if (IsKeyPressed(KEY_P)) {
                 if (pauseMenu.IsActive()) {
                     pauseMenu.Hide();
                 } else {
@@ -63,8 +63,6 @@ int main()
             UpdateLogicAll();
             // render semua ke layar virtual
             DrawRenderTexture(&state);
-            // render pause menu di atas game jika aktif
-            pauseMenu.Draw(GetMousePosition());
             // scale layar virtual ke window asli
             DrawRenderWindows(&state);
 
