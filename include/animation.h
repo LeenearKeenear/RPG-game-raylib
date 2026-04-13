@@ -43,8 +43,8 @@ enum Direction {
     UP
 };
 
-// --- PLAYER STRUCT ---
-struct Player {
+// --- ANIMATION PLAYER STRUCT ---
+struct AnimationPlayer {
     Vector2 position;
 
     State state;
@@ -64,11 +64,17 @@ struct Player {
 // Get frame rectangle from spritesheet
 Rectangle GetFrame(int frameX, int frameY);
 
-// Update player input and state
-void UpdatePlayer(Player &p);
+// Update player input and state for animation demo purposes
+void UpdatePlayer(AnimationPlayer &p);
 
 // Update animation frames based on state
-void UpdateAnimation(Player &p, float dt);
+void UpdateAnimation(AnimationPlayer &p, float dt);
 
 // Draw player sprite
-void DrawPlayer(Player &p, Texture2D texture);
+void DrawPlayer(AnimationPlayer &p, Texture2D texture);
+
+// Movement helpers for external use (e.g. Player.cpp can call these)
+void MoveUp(Vector2 &position, float amount);
+void MoveDown(Vector2 &position, float amount);
+void MoveLeft(Vector2 &position, float amount);
+void MoveRight(Vector2 &position, float amount);

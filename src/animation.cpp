@@ -33,29 +33,29 @@ Rectangle GetFrame(int frameX, int frameY) {
 }
 
 // --- UPDATE PLAYER INPUT ---
-void UpdatePlayer(Player &p) {
+void UpdatePlayer(AnimationPlayer &p) {
     // Dead = no input at all
     if (p.isDead) return;
 
     bool moving = false;
 
     if (IsKeyDown(KEY_W)) {
-        p.position.y -= 2;
+        MoveUp(p.position, 2.0f);
         p.direction = UP;
         moving = true;
     }
     if (IsKeyDown(KEY_S)) {
-        p.position.y += 2;
+        MoveDown(p.position, 2.0f);
         p.direction = DOWN;
         moving = true;
     }
     if (IsKeyDown(KEY_A)) {
-        p.position.x -= 2;
+        MoveLeft(p.position, 2.0f);
         p.direction = LEFT;
         moving = true;
     }
     if (IsKeyDown(KEY_D)) {
-        p.position.x += 2;
+        MoveRight(p.position, 2.0f);
         p.direction = RIGHT;
         moving = true;
     }
@@ -83,8 +83,24 @@ void UpdatePlayer(Player &p) {
     else p.state = IDLE;
 }
 
+void MoveUp(Vector2 &position, float amount) {
+    position.y -= amount;
+}
+
+void MoveDown(Vector2 &position, float amount) {
+    position.y += amount;
+}
+
+void MoveLeft(Vector2 &position, float amount) {
+    position.x -= amount;
+}
+
+void MoveRight(Vector2 &position, float amount) {
+    position.x += amount;
+}
+
 // --- UPDATE ANIMATION ---
-void UpdateAnimation(Player &p, float dt) {
+void UpdateAnimation(AnimationPlayer &p, float dt) {
     // DEAD = no animation (single frame)
     if (p.state == DEAD) {
         p.frame = 0;
@@ -135,7 +151,7 @@ void UpdateAnimation(Player &p, float dt) {
 }
 
 // --- DRAW PLAYER ---
-void DrawPlayer(Player &p, Texture2D texture) {
+void DrawPlayer(AnimationPlayer &p, Texture2D texture) {
     int row = (int)p.direction;
     int frameX = p.frame;
 
