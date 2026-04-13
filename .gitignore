@@ -5,6 +5,8 @@
 .clangd
 *.bak
 /Backups/
+.clang-format
+*.txt
 
 # Personal
 *.Personal.*

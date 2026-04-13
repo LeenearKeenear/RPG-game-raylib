@@ -5,8 +5,9 @@
 # ==============================================================================
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -std=c++17 -I./lib/raylib/include -I./lib/tileson -I./include -v
-LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -lstdc++fs -v
+CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -std=c++17 -I./lib/raylib/include -I./lib/tileson -I./include
+LDFLAGS = -L./lib/raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -lstdc++fs
+DLL_SOURCE = ./lib/raylib/lib/raylib.dll
 
 ifeq ($(OS),Windows_NT)
 	CORES := $(shell powershell -Command "(Get-CimInstance Win32_Processor).NumberOfLogicalProcessors")
