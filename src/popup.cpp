@@ -86,14 +86,13 @@ void Popup::Draw(Vector2 mousePosition)
         0,
         0,
         0,
-        static_cast<unsigned char>(180 * hoverAmount)
+        static_cast<unsigned char>(255 * 0.75F)
     };
 
     Rectangle fullScreen = {0, 0, static_cast<float>(GameScreenWidth), static_cast<float>(GameScreenHeight)};
     DrawRectangleRec(fullScreen, overlayColor);
 
-    unsigned char bgAlpha = static_cast<unsigned char>(100 * hoverAmount);
-    Color bgColor = {50, 50, 50, bgAlpha};
+    Color bgColor = {20, 20, 20, 255};
     DrawRectangleRec(backgroundRect, bgColor);
 
     int textWidth = MeasureText(message, 30);
