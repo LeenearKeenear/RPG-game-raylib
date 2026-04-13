@@ -60,6 +60,11 @@ int main()
             // capture mouse click before rendering
             bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
+            // update pause menu if active (MUST be before rendering)
+            if (pauseMenu.IsActive()) {
+                pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
+            }
+
             // update scale kalau window di-resize
             UpdateGame(&state);
             // update semua logic game (player, enemy, dll)
@@ -68,11 +73,6 @@ int main()
             DrawRenderTexture(&state);
             // scale layar virtual ke window asli
             DrawRenderWindows(&state);
-
-            // update pause menu jika aktif
-            if (pauseMenu.IsActive()) {
-                pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
-            }
         }
     }
 
