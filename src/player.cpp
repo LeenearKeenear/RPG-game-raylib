@@ -1,6 +1,7 @@
 #include "../include/player.h"
 #include "../include/debug.h"
 #include "../include/map.h"
+#include "../include/animation.h"
 #include <cmath>
 
 // ================================================================
@@ -15,12 +16,13 @@ Player PlayerInstance;
 // Inisialisasi player: load texture, ambil spawn point dari
 // object layer Tiled (nama object: SPAWN_OBJECT_NAME "spawn"),
 // dan load semua collision rectangles dari object layer
-// (type: COLLISION_LAYER_NAME "collision")
+// (layer: COLLISION_LAYER_NAME "collision")
 //
 // Cara kerja:
 // 1. Load texture character dari file png
 // 2. Cari object "spawn" di tilesonMap->Objects → set Position
-// 3. Ambil semua object type "collision" → simpen di CollisionRects
+// 3. Ambil semua object dari layer "collision" → simpen di CollisionRects / CollisionPolygons
+// 4. Ambil custom world boundary polygon dari layer "map_bound"
 // ================================================================
 void Player::Init(void)
 {
@@ -49,7 +51,7 @@ void Player::Init(void)
 
     // ambil semua collision object dari object layer Tiled
     // rectangle disimpan ke CollisionRects, polygon disimpan ke CollisionPolygons
-    std::vector<MapObject> collisionObjs = TilesonGetObjectsByType(COLLISION_LAYER_NAME);
+    std::vector<MapObject> collisionObjs = TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME);
     for (auto &obj : collisionObjs)
     {
         if (obj.hasPolygon)
@@ -58,10 +60,12 @@ void Player::Init(void)
             CollisionRects.push_back(obj.bounds);
     }
 
-    // ambil custom world boundary polygon kalau map punya object boundary
-    for (auto &obj : tilesonMap->Objects)
+    // ambil custom world boundary polygon dari object layer Tiled
+    // kalau ada object polygon di layer MAP_BOUND_LAYER_NAME, pakai polygon pertama yang ketemu
+    std::vector<MapObject> worldBoundaryObjs = TilesonGetObjectsByLayerName(MAP_BOUND_LAYER_NAME);
+    for (auto &obj : worldBoundaryObjs)
     {
-        if (obj.name == "OffmapBoundary" && obj.hasPolygon)
+        if (obj.hasPolygon)
         {
             WorldBoundaryPolygon = obj.polygonPoints;
             break;
@@ -121,10 +125,11 @@ void Player::Render(void)
 // ================================================================
 // CanMove()
 // Cek apakah posisi baru player (NewPos) nabrak salah satu
-// collision rectangle dari object layer Tiled.
+// collision shape dari object layer Tiled, atau keluar dari
+// world boundary.
 //
 // Collision box player diasumsiin 1 tile (TileSize x TileSize).
-// Return false kalau nabrak, true kalau aman.
+// Return false kalau nabrak / keluar bound, true kalau aman.
 // ================================================================
 bool Player::CanMove(Vector2 NewPos)
 {
@@ -163,7 +168,7 @@ bool Player::CanMove(Vector2 NewPos)
 
     // ============================================================
     // 1. collision rectangle biasa dari object layer Tiled
-    // setiap rectangle object di layer "collision" dianggap solid
+    // setiap rectangle object di layer collision dianggap solid
     // ============================================================
     for (auto &rect : CollisionRects)
     {

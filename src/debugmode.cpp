@@ -42,6 +42,7 @@ void Debug::Draw(void)
     DrawPlayerPanel();
     DrawZoomPanel();
     DrawFrustumPanel();
+    DrawCollisionPanel();
 }
 
 // ================================================================
@@ -137,6 +138,53 @@ void Debug::DrawFrustumPanel(void)
     DrawText(TextFormat("Total Map   : %d", totalMapTiles), 15, 415, 16, GRAY);
     DrawText(TextFormat("Range X: %d-%d", currentVisibleRange.minX, currentVisibleRange.maxX), 15, 435, 16, WHITE);
     DrawText(TextFormat("Range Y: %d-%d", currentVisibleRange.minY, currentVisibleRange.maxY), 15, 455, 16, WHITE);
+}
+
+// ================================================================
+// DrawCollisionPanel()
+// Panel info collision & world boundary:
+// - jumlah collision rect
+// - jumlah collision polygon
+// - status custom world boundary
+//
+// Tujuannya buat validasi cepat apakah object dari layer collision
+// dan map_bound sudah kebaca dengan benar pas runtime.
+// ================================================================
+void Debug::DrawCollisionPanel(void)
+{
+    if (tilesonMap == nullptr)
+        return;
+
+    int collisionRectCount = 0;
+    int collisionPolygonCount = 0;
+    int mapBoundPolygonCount = 0;
+
+    // hitung object collision berdasarkan layer name
+    std::vector<MapObject> collisionObjs = TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME);
+    for (auto &obj : collisionObjs)
+    {
+        if (obj.hasPolygon)
+            collisionPolygonCount++;
+        else
+            collisionRectCount++;
+    }
+
+    // hitung object custom boundary berdasarkan layer name
+    std::vector<MapObject> mapBoundObjs = TilesonGetObjectsByLayerName(MAP_BOUND_LAYER_NAME);
+    for (auto &obj : mapBoundObjs)
+    {
+        if (obj.hasPolygon)
+            mapBoundPolygonCount++;
+    }
+
+    DrawRectangle(5, 475, 320, 110, Fade(BLACK, 0.7f));
+    DrawRectangleLines(5, 475, 320, 110, RED);
+    DrawText("[ COLLISION DEBUG ]", 15, 480, 18, RED);
+    DrawText(TextFormat("Rect Count     : %d", collisionRectCount), 15, 502, 16, WHITE);
+    DrawText(TextFormat("Polygon Count  : %d", collisionPolygonCount), 15, 522, 16, WHITE);
+    DrawText(TextFormat("Map Bound Poly : %d", mapBoundPolygonCount), 15, 542, 16, WHITE);
+    DrawText(TextFormat("Boundary Mode  : %s", mapBoundPolygonCount > 0 ? "Custom Polygon" : "Default Rectangle"),
+             15, 562, 16, mapBoundPolygonCount > 0 ? GREEN : YELLOW);
 }
 
 // ================================================================

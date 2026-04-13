@@ -9,17 +9,18 @@
 //
 // Workflow collision:
 // - Collision dibaca dari object layer "collision" di Tiled
-// - Setiap Rectangle di layer itu dianggap solid/blocked
-// - CanMove() ngecek apakah posisi baru player nabrak salah satu rect itu
+// - Setiap Rectangle / Polygon di layer itu dianggap solid/blocked
+// - CanMove() ngecek apakah posisi baru player nabrak salah satu shape itu
+//
+// Workflow world bound:
+// - World boundary custom dibaca dari object layer "map_bound" di Tiled
+// - Kalau layer boundary tidak ada / tidak punya polygon,
+//   CanMove() fallback ke rectangle ukuran map
 //
 // Workflow spawn:
 // - Spawn point dibaca dari object bernama "spawn" di Tiled
 // - Init() otomatis taruh player di posisi spawn
 // ================================================================
-
-// nama layer & object di Tiled — sesuaiin kalau beda
-#define COLLISION_LAYER_NAME "collision"
-#define SPAWN_OBJECT_NAME "spawn"
 
 class Player
 {
@@ -57,12 +58,13 @@ private:
     float Speed = 4.0f;
     Texture2D CharTexture;
 
-    // cek apakah posisi baru player nabrak collision rect
-    // return false kalau nabrak, true kalau aman
+    // cek apakah posisi baru player nabrak collision shape
+    // atau keluar dari world boundary
+    // return false kalau nabrak / keluar bound, true kalau aman
     bool CanMove(Vector2 NewPos);
 
     // collision rectangles dari object layer Tiled
-    // diisi pas Init() dari TilesonGetObjectsByType(COLLISION_LAYER_NAME)
+    // diisi pas Init() dari TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME)
     std::vector<Rectangle> CollisionRects;
 
     // collision polygon dari object layer Tiled
@@ -70,6 +72,7 @@ private:
     std::vector<std::vector<Vector2>> CollisionPolygons;
 
     // custom world boundary polygon dari object layer Tiled
+    // diisi pas Init() dari TilesonGetObjectsByLayerName(MAP_BOUND_LAYER_NAME)
     // kalau kosong, CanMove() fallback ke rectangle ukuran map
     std::vector<Vector2> WorldBoundaryPolygon;
 };
