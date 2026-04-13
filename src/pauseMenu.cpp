@@ -26,6 +26,7 @@ PauseMenu::~PauseMenu()
  */
 void PauseMenu::Show()
 {
+    CalculateDimensions();
     active = true;
 }
 
