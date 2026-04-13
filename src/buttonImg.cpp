@@ -67,7 +67,7 @@ void buttonImage::Draw(Vector2 mousePosition)
         };
     }
 
-    DrawTextureV(texture, position, WHITE);
+    DrawTextureV(texture, position, currentColor);
 }
 
 /**

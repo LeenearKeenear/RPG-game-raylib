@@ -1,10 +1,16 @@
 #include "../include/mainMenu.h"
 #include "../lib/raylib/include/raymath.h"
+#include <array>
+#include <cstdint>
 
-static buttonTxt startButton;
-static buttonTxt loadgameButton;
-static buttonTxt optionsButton;
-static buttonTxt quitButton;
+static std::array<buttonTxt, 4> buttons;
+
+enum MenuButton : std::uint8_t {
+    BTN_START = 0,
+    BTN_LOAD,
+    BTN_OPTIONS,
+    BTN_QUIT
+};
 
 /**
  * Mengonversi koordinat mouse jendela ke koordinat layar virtual.
@@ -19,69 +25,65 @@ static Vector2 GetVirtualMousePosition(GameState* state)
 }
 
 /**
- * Menginisialisasi tombol menu utama.
- * Membuat tombol "Start Game" dan "Quit" yang centered di layar virtual.
+ * @brief InitMainMenu()
+ * Inisialisasi semua tombol menu utama dalam array.
  */
 void InitMainMenu(GameState* state)
 {
+    const char* texts[] = {"Start Game", "Load Game", "Options", "Quit"};
+    
     int centerX = (GameScreenWidth / 2) - 50;
-    int buttonSpacing = 100;
+    int startY = 300;
+    int buttonSpacing = 70;
     int fontSize = 30;
 
-    // Game State
-    startButton = buttonTxt("Start Game", centerX, 300, fontSize, WHITE, 0.6F);
-    quitButton = buttonTxt("Quit", centerX, 300 + buttonSpacing, fontSize, WHITE, 0.6F);
-
-    // Load Game
-    loadgameButton = buttonTxt("Load Game", centerX, 300, fontSize, WHITE, 0.6F);
-
-    // Options menu
-    optionsButton = buttonTxt("Options", centerX, 300 + buttonSpacing, fontSize, WHITE, 0.6F);
-
+    for (int i = 0; i < 4; i++) {
+        buttons[i] = buttonTxt(texts[i], centerX, startY + (i * buttonSpacing), fontSize, WHITE, 0.6F);
+    }
 }
 
 /**
- * Mengupdate state menu utama - menangani input mouse dan pendeteksian klik tombol.
- * Menggunakan koordinat layar virtual untuk mendeteksi klik tombol dengan benar
- * terlepas dari ukuran/skala jendela.
+ * @brief UpdateMainMenu()
+ * Tangani input mouse dan klik tombol untuk navigasi menu.
  */
 void UpdateMainMenu(GameState* state)
 {
     Vector2 mousePosition = GetVirtualMousePosition(state);
     bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
-    // Start Game
-    if (startButton.isClicked(mousePosition, mouseClicked))
-    {
-        state->currentScreen = PLAY;
-    }
-
-    // Close game
-    if (quitButton.isClicked(mousePosition, mouseClicked))
-    {
-        CloseWindow();
-    }
-
-    // TODO Load Game
-
-    // Options
-    if (optionsButton.isClicked(mousePosition, mouseClicked))
-    {
-        state->currentScreen = OPTIONS;
+    for (int i = 0; i < 4; i++) {
+        if (buttons[i].isClicked(mousePosition, mouseClicked)) {
+            switch (i) {
+                case BTN_START:
+                    state->currentScreen = PLAY;
+                    break;
+                case BTN_OPTIONS:
+                    state->currentScreen = OPTIONS;
+                    break;
+                case BTN_QUIT:
+                    CloseWindow();
+                    break;
+                case BTN_LOAD:
+                default:
+                    break;
+            }
+        }
     }
 }
 
 /**
- * Merender menu utama ke layar virtual (RenderTexture2D).
- * Ini menggambar ke buffer off-screen 1280x720 yang kemudian diskalakan
- * untuk menyesuaikan jendela oleh DrawRenderWindows().
+ * @brief RenderMainMenuToVirtualScreen()
+ * Render semua tombol menu ke layar virtual.
  */
 void RenderMainMenuToVirtualScreen(GameState* state)
 {
     Vector2 virtualMouse = GetVirtualMousePosition(state);
     BeginTextureMode(state->Dungeon);
     ClearBackground(DARKGRAY);
-    startButton.Draw(virtualMouse);
-    quitButton.Draw(virtualMouse);
+    
+    for (int i = 0; i < 4; i++) {
+        buttons[i].Draw(virtualMouse);
+    }
+    
     EndTextureMode();
 }

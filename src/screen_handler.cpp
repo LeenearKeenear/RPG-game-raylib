@@ -25,7 +25,7 @@ extern const int GameScreenHeight = 720;
  * 1. Init player — spawn point otomatis dibaca dari object layer Tiled
  * 2. Set camera target ke posisi spawn player
  */
-void InitAll(void)
+void InitAll()
 {
     // inisialisasi player — spawn point diambil otomatis dari object layer Tiled
     PlayerInstance.Init();
@@ -47,7 +47,7 @@ void InitAll(void)
  * 2. Buat render texture 1280x720 sebagai layar virtual
  * 3. Set FPS target ke 60
  */
-GameState InitScreen(void)
+GameState InitScreen()
 {
     GameState state = {{0}};
 
@@ -69,18 +69,21 @@ GameState InitScreen(void)
 
     state.Dungeon = LoadRenderTexture(GameScreenWidth, GameScreenHeight);
     SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_BILINEAR);
-    SetTargetFPS(60);
+    
+    // Pastikan FPS tetap 60
+    const int FPS = 60; 
+    SetTargetFPS(FPS);
 
     state.currentScreen = MAIN_MENU;
 
     return state;
 }
 
-// ================================================================
-// UpdateGame()
-// Update ukuran window dan scale multiplier tiap frame.
-// Dipanggil tiap frame biar scaling tetap bener pas window di-resize.
-// ================================================================
+/** 
+ * @brief UpdateGame()
+ * Update ukuran window dan scale multiplier tiap frame.
+ * Dipanggil tiap frame biar scaling tetap bener pas window di-resize.
+ */
 void UpdateGame(GameState *state)
 {
     state->WindowScreenWidth = GetScreenWidth();
@@ -90,17 +93,17 @@ void UpdateGame(GameState *state)
         (float)state->WindowScreenHeight / GameScreenHeight);
 }
 
-// ================================================================
-// DrawRenderTexture()
-// Entry point render — semua yang keliatan di layar lewat sini.
-//
-// Urutan render:
-// 1. RenderMap() — render tile map dari Tiled
-// 2. RenderEntities() — render semua entity dalam world space (pake camera)
-// 3. DebugInstance — toggle dan draw debug panel kalau aktif
-//
-// Catatan: debug panel di luar BeginMode2D biar posisinya fixed di layar
-// ================================================================
+/**
+ * @brief DrawRenderTexture() 
+ * Entry point render — semua yang keliatan di layar lewat sini.
+ * 
+ * Urutan render:
+ * 1. RenderMap() — render tile map dari Tiled
+ * 2. RenderEntities() — render semua entity dalam world space (pake camera)
+ * 3. DebugInstance — toggle dan draw debug panel kalau aktif
+ * 
+ * Catatan: debug panel di luar BeginMode2D biar posisinya fixed di layar
+ */
 void DrawRenderTexture(GameState *state)
 {
     BeginTextureMode(state->Dungeon);
@@ -119,22 +122,22 @@ void DrawRenderTexture(GameState *state)
     EndTextureMode();
 }
 
-// ================================================================
-// UpdateLogicAll()
-// Entry point update logic — semua logic game lewat sini tiap frame.
-// Tambah logic baru di sini kalau ada entity/system baru.
-// ================================================================
-void UpdateLogicAll(void)
+/**
+ * @brief UpdateLogicAll()
+ * Entry point update logic — semua logic game lewat sini tiap frame.
+ * Tambah logic baru di sini kalau ada entity/system baru.
+ */
+void UpdateLogicAll()
 {
     PlayerInstance.Tick();
 }
 
-// ================================================================
-// DrawRenderWindows()
-// Render layar virtual (1280x720) ke window asli dengan scaling.
-// Layar virtual di-fit ke ukuran window sambil jaga aspect ratio.
-// Sisi yang gak kepakai diisi black bar.
-// ================================================================
+/**
+ * @brief DrawRenderWindows()
+ * Render layar virtual (1280x720) ke window asli dengan scaling.
+ * Layar virtual di-fit ke ukuran window sambil jaga aspect ratio.
+ * Sisi yang gak kepakai diisi black bar.
+ */
 void DrawRenderWindows(GameState *state)
 {
     float offsetX = (state->WindowScreenWidth - ((float)GameScreenWidth * state->ScaleMultiplier)) * 0.5F;
@@ -152,13 +155,13 @@ void DrawRenderWindows(GameState *state)
     EndDrawing();
 }
 
-// ================================================================
-// GameShutDown()
-// Bersihin semua resource sebelum game ditutup.
-//
-// TODO MULTI-MAP: kalau nanti tiap map punya texture sendiri,
-// unload harus per map, bukan cuma loop MAX_TEXTURES global
-// ================================================================
+/**
+ * @brief GameShutDown()
+ * Bersihin semua resource sebelum game ditutup.
+ * 
+ * TODO: Kalau nanti tiap map punya texture sendiri,
+ * unload harus per map, bukan cuma loop MAX_TEXTURES global
+ */
 void GameShutDown(GameState *state)
 {
     for (int i = 0; i < MAX_TEXTURES; i++) {
