@@ -4,8 +4,11 @@
 #include "../include/entities.h"
 #include "../include/debug.h"
 #include "../include/frustum.h"
+#include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
+
+extern PauseMenu pauseMenu;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
@@ -119,7 +122,22 @@ void DrawRenderTexture(GameState *state)
     DebugInstance.Toggle();
     DebugInstance.Draw();
 
+    DrawUIOverlay(state);
+
     EndTextureMode();
+}
+
+/**
+ * @brief DrawUIOverlay()
+ * Render UI elements (pause menu, etc) ke virtual screen.
+ * Dipanggil setelah rendering game, sebelum EndTextureMode().
+ */
+void DrawUIOverlay(GameState* state)
+{
+    if (pauseMenu.IsActive()) {
+        Vector2 mousePos = GetMousePosition();
+        pauseMenu.Draw(mousePos);
+    }
 }
 
 /**
