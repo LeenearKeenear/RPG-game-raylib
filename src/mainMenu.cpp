@@ -7,13 +7,6 @@
 static std::array<buttonTxt, 4> buttons;
 static Popup optionsPopup;
 
-enum MenuButton : std::uint8_t {
-    BTN_START = 0,
-    BTN_LOAD,
-    BTN_OPTIONS,
-    BTN_QUIT
-};
-
 /**
  * Mengonversi koordinat mouse jendela ke koordinat layar virtual.
  */
@@ -66,16 +59,16 @@ void UpdateMainMenu(GameState* state)
     for (int i = 0; i < 4; i++) {
         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
             switch (i) {
-                case BTN_START:
+                case 0:  // Start Game
                     state->currentScreen = PLAY;
                     break;
-                case BTN_OPTIONS:
+                case 2:  // Options
                     optionsPopup.Show();
                     break;
-                case BTN_QUIT:
+                case 3:  // Quit
                     CloseWindow();
                     break;
-                case BTN_LOAD:
+                case 1:  // Load Game
                 default:
                     break;
             }

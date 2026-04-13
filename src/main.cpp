@@ -2,8 +2,11 @@
 #include "../include/map.h"
 #include "../include/player.h"
 #include "../include/mainMenu.h"
+#include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
+
+static PauseMenu pauseMenu;
 
 int main()
 {
@@ -45,14 +48,30 @@ int main()
         // state PLAY — gameplay
         else if (state.currentScreen == PLAY)
         {
+            // toggle pause menu dengan ESC
+            if (IsKeyPressed(KEY_ESCAPE)) {
+                if (pauseMenu.IsActive()) {
+                    pauseMenu.Hide();
+                } else {
+                    pauseMenu.Show();
+                }
+            }
+
             // update scale kalau window di-resize
             UpdateGame(&state);
             // update semua logic game (player, enemy, dll)
             UpdateLogicAll();
             // render semua ke layar virtual
             DrawRenderTexture(&state);
+            // render pause menu di atas game jika aktif
+            pauseMenu.Draw(GetMousePosition());
             // scale layar virtual ke window asli
             DrawRenderWindows(&state);
+
+            // update pause menu jika aktif
+            if (pauseMenu.IsActive()) {
+                pauseMenu.Update(&state, GetMousePosition(), IsMouseButtonPressed(MOUSE_LEFT_BUTTON));
+            }
         }
     }
 
