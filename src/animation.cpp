@@ -34,7 +34,7 @@ Rectangle GetFrame(int frameX, int frameY) {
 
 // --- UPDATE PLAYER INPUT ---
 void UpdatePlayer(Player &p) {
-    // 🚫 Dead = no input at all
+    // Dead = no input at all
     if (p.isDead) return;
 
     bool moving = false;
@@ -139,7 +139,7 @@ void DrawPlayer(Player &p, Texture2D texture) {
     int row = (int)p.direction;
     int frameX = p.frame;
 
-    // 💀 Death uses row 4, frame 0
+    // Death uses row 4, frame 0
     if (p.state == DEAD) {
         row = 4;
         frameX = 0;
