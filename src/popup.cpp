@@ -132,6 +132,13 @@ void Popup::Draw(Vector2 mousePosition)
 
     Color bgColor = {20, 20, 20, 255};
     DrawRectangleRec(backgroundRect, bgColor);
+    DrawRectangleLines(
+        static_cast<int>(backgroundRect.x),
+        static_cast<int>(backgroundRect.y),
+        static_cast<int>(backgroundRect.width),
+        static_cast<int>(backgroundRect.height),
+        WHITE
+    );
 
     int textWidth = MeasureText(message, 30);
     int textX = static_cast<int>(position.x + ((width - textWidth) / 2.0F));
