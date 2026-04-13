@@ -48,17 +48,17 @@ int main()
         // state PLAY — gameplay
         else if (state.currentScreen == PLAY)
         {
-            // toggle pause menu dengan P key (not ESC)
+            // toggle pause menu dengan P key
             if (IsKeyPressed(KEY_P)) {
-                TraceLog(LOG_INFO, "P key pressed!");
                 if (pauseMenu.IsActive()) {
-                    TraceLog(LOG_INFO, "Hiding pause menu...");
                     pauseMenu.Hide();
                 } else {
-                    TraceLog(LOG_INFO, "Showing pause menu...");
                     pauseMenu.Show();
                 }
             }
+
+            // capture mouse click before rendering
+            bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
             // update scale kalau window di-resize
             UpdateGame(&state);
@@ -71,7 +71,7 @@ int main()
 
             // update pause menu jika aktif
             if (pauseMenu.IsActive()) {
-                pauseMenu.Update(&state, GetVirtualMousePosition(&state), IsMouseButtonPressed(MOUSE_LEFT_BUTTON));
+                pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
             }
         }
     }
