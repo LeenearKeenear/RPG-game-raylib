@@ -6,7 +6,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 
-static PauseMenu pauseMenu;
+PauseMenu pauseMenu;
 
 int main()
 {
