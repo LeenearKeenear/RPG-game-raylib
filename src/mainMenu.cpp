@@ -32,6 +32,8 @@ static Vector2 GetVirtualMousePosition(GameState* state)
  */
 void InitMainMenu(GameState* state)
 {
+    (void)state;
+
     std::array<const char*, 4> texts = {"Start Game", "Load Game", "Options", "Quit"};
     
     int centerX = (GameScreenWidth / 2) - 50;
