@@ -50,6 +50,9 @@ void InitAll(void);
 // entry point render — semua rendering ke layar virtual lewat sini
 void DrawRenderTexture(GameState *state);
 
+// UI overlay rendering (pause menu, etc) ke virtual screen
+void DrawUIOverlay(GameState *state);
+
 // entry point logic — semua logic game per frame lewat sini
 void UpdateLogicAll(void);
 
