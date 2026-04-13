@@ -1,23 +1,12 @@
 #include "../include/mainMenu.h"
 #include "../include/popup.h"
+#include "../include/screen.h"
 #include "../lib/raylib/include/raymath.h"
 #include <array>
 #include <cstdint>
 
 static std::array<buttonTxt, 4> buttons;
 static Popup optionsPopup;
-
-/**
- * Mengonversi koordinat mouse jendela ke koordinat layar virtual.
- */
-static Vector2 GetVirtualMousePosition(GameState* state)
-{
-    Vector2 mouse = GetMousePosition();
-    Vector2 virtualMouse = {0, 0};
-    virtualMouse.x = (mouse.x - ((state->WindowScreenWidth - (GameScreenWidth * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
-    virtualMouse.y = (mouse.y - ((state->WindowScreenHeight - (GameScreenHeight * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
-    return Vector2Clamp(virtualMouse, (Vector2){0, 0}, (Vector2){(float)GameScreenWidth, (float)GameScreenHeight});
-}
 
 /**
  * @brief InitMainMenu()

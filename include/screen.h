@@ -53,6 +53,9 @@ void DrawRenderTexture(GameState *state);
 // UI overlay rendering (pause menu, etc) ke virtual screen
 void DrawUIOverlay(GameState *state);
 
+// konversi mouse dari window ke virtual screen coordinates
+Vector2 GetVirtualMousePosition(GameState *state);
+
 // entry point logic — semua logic game per frame lewat sini
 void UpdateLogicAll(void);
 

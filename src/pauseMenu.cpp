@@ -53,7 +53,7 @@ bool PauseMenu::IsActive() const
  */
 void PauseMenu::CalculateDimensions()
 {
-    const int maxWidth = static_cast<int>(GameScreenWidth * 0.25F);
+    const int maxWidth = static_cast<int>(GameScreenWidth * 0.30F);
     const int fontSize = 30;
     const int paddingX = 20;
     const int paddingY = 20;
