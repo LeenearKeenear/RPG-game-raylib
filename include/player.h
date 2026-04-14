@@ -71,6 +71,9 @@ private:
     float frameSpeed = 0.15f;
     int walkFrameIndex = 0;
 
+    bool isAttacking = false;
+    bool isDead = false;
+
     // collision rectangles dari object layer Tiled
     // diisi pas Init() dari TilesonGetObjectsByType(COLLISION_LAYER_NAME)
     std::vector<Rectangle> CollisionRects;

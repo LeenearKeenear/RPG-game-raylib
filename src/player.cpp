@@ -60,40 +60,72 @@ void Player::Init(void)
 // ================================================================
 void Player::Update(void)
 {
-    Velocity = {0, 0};
-
-    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
-        Velocity.y -= 1;
-    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
-        Velocity.y += 1;
-    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
-        Velocity.x -= 1;
-    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
-        Velocity.x += 1;
-
-    // normalisasi biar diagonal gak lebih cepet dari cardinal
-    float Length = sqrtf(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
-    if (Length != 0)
-    {
-        Velocity.x /= Length;
-        Velocity.y /= Length;
+    // --- DETEKSI REVIVE (Hidup Kembali) ---
+    // Tekan R untuk hidup lagi setelah mati (hanya untuk keperluan testing)
+    if (isDead && IsKeyPressed(KEY_R)) {
+        isDead = false;
+        currentState = IDLE;
+        return;
     }
 
-    Vector2 NewPos = {
-        Position.x + Velocity.x * Speed,
-        Position.y + Velocity.y * Speed};
+    // Kalau sudah mati, tidak bisa ngapa-ngapain lagi (semua input jalan/serang diblokir)
+    if (isDead) return;
 
-    if (CanMove(NewPos))
-        Position = NewPos;
+    Velocity = {0, 0};
 
-    // --- ANIMATION STATE LOGIC ---
-    if (Velocity.x < 0) currentDir = LEFT;
-    else if (Velocity.x > 0) currentDir = RIGHT;
-    else if (Velocity.y < 0) currentDir = UP;
-    else if (Velocity.y > 0) currentDir = DOWN;
+    // --- DETEKSI INPUT SERANGAN ---
+    // Gunakan Spasi untuk menyerang
+    if (IsKeyPressed(KEY_SPACE) && !isAttacking) {
+        currentState = ATTACK;
+        frame = 0;
+        frameTime = 0.0f;
+        isAttacking = true;
+    }
 
-    if (Length != 0) currentState = WALK;
-    else currentState = IDLE;
+    // --- DETEKSI MATI (Tombol K untuk test mati) ---
+    if (IsKeyPressed(KEY_K)) {
+        currentState = DEAD;
+        frame = 0;
+        isDead = true;
+        return;
+    }
+
+    // Jika sedang serang, jangan jalankan proses movement
+    if (!isAttacking)
+    {
+        if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
+            Velocity.y -= 1;
+        if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
+            Velocity.y += 1;
+        if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
+            Velocity.x -= 1;
+        if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
+            Velocity.x += 1;
+
+        // normalisasi biar diagonal gak lebih cepet dari cardinal
+        float Length = sqrtf(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
+        if (Length != 0)
+        {
+            Velocity.x /= Length;
+            Velocity.y /= Length;
+        }
+
+        Vector2 NewPos = {
+            Position.x + Velocity.x * Speed,
+            Position.y + Velocity.y * Speed};
+
+        if (CanMove(NewPos))
+            Position = NewPos;
+
+        // --- ANIMATION STATE LOGIC (Walk/Idle) ---
+        if (Velocity.x < 0) currentDir = LEFT;
+        else if (Velocity.x > 0) currentDir = RIGHT;
+        else if (Velocity.y < 0) currentDir = UP;
+        else if (Velocity.y > 0) currentDir = DOWN;
+
+        if (Length != 0) currentState = WALK;
+        else currentState = IDLE;
+    }
 
     // --- FRAME UPDATE LOGIC ---
     frameTime += GetFrameTime();
@@ -114,6 +146,23 @@ void Player::Update(void)
             frameTime = 0;
         }
     }
+    else if (currentState == ATTACK) {
+        frameSpeed = 0.12f; // Animasi serang sedikit lebih cepat biar mulus
+        if (frameTime >= frameSpeed) {
+            frame++;
+            frameTime = 0;
+
+            // Atas/Bawah punya 2 frame (max index 1), Kiri/Kanan punya 4 frame (max index 3)
+            int maxAttackFrames = (currentDir == UP || currentDir == DOWN) ? 1 : 3;
+
+            // Jika animasi serangan selesai
+            if (frame > maxAttackFrames) {
+                isAttacking = false;
+                currentState = IDLE;
+                frame = 0;
+            }
+        }
+    }
 }
 
 // ================================================================
@@ -125,7 +174,29 @@ void Player::Render(void)
 {
     // Ambil source rectangle dari spritesheet Knight.png
     // Row ditentukan oleh arah (Direction enum), Column oleh frame saat ini
-    Rectangle src = GetFrame(frame, (int)currentDir);
+    int row = (int)currentDir;
+    int col = frame;
+
+    // Override khusus jika sedang menyerang
+    if (currentState == ATTACK) {
+        if (currentDir == LEFT || currentDir == RIGHT) {
+            // Kiri/Kanan: Tile 7, 8, 6, 5 (1-based) -> 6, 7, 5, 4 (0-based)
+            int attackFrames[4] = {6, 7, 5, 4};
+            col = attackFrames[frame % 4]; 
+        } else {
+            // Atas/Bawah: Tile 5, 6 (1-based) -> 4, 5 (0-based)
+            int attackFrames[2] = {4, 5};
+            col = attackFrames[frame % 2];
+        }
+    }
+
+    // Override khusus jika sedang dalam status mati
+    if (currentState == DEAD) {
+        row = 4; // Berdasarkan file animation.cpp
+        col = 0;
+    }
+
+    Rectangle src = GetFrame(col, row);
     
     // Gambar player menggunakan texture yang sudah di-load
     DrawTextureRec(CharTexture, src, Position, WHITE);
