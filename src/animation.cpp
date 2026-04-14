@@ -1,26 +1,8 @@
-// ================================================================
-// Animation System
-// Handle semua animasi sprite untuk player, enemy, dan entity lain.
-//
-// Semua logic animasi (frame switching, timing, direction)
-// dipusatin di sini biar gak nyebar ke mana-mana.
-//
-// TODO (pindahan dari map.h / map.cpp):
-// - LoadTileTexture()
-// - RenderTilePNG()
-// - TileDefinition struct
-// - TileType enum
-// - TileCoordinate struct
-// - TextureAsset enum
-// - TexturesMap array
-// - MAX_TEXTURES define
-// - TILE_SIZE, TILE_GAP define
-//
-// Setelah dipindah, update semua include dan pemanggilan
-// di map.cpp, player.cpp, entities.cpp, dll.
-// ================================================================
-
 #include "../include/animation.h"
+
+// --- SPRITESHEET ---
+// Assuming Knight.png has 5 rows (DOWN, RIGHT, LEFT, UP, DEAD) and 4 columns (frames)
+Texture2D knightTexture;
 
 // --- GET FRAME FROM SPRITESHEET ---
 Rectangle GetFrame(int frameX, int frameY) {
@@ -32,71 +14,64 @@ Rectangle GetFrame(int frameX, int frameY) {
     };
 }
 
-// --- UPDATE PLAYER INPUT ---
-void UpdatePlayer(AnimationPlayer &p) {
-    // Dead = no input at all
-    if (p.isDead) return;
+// --- LOAD TEXTURE ---
+void LoadKnightTexture() {
+    knightTexture = LoadTexture("texture/Knight.png");
+}
 
-    bool moving = false;
+// --- UNLOAD TEXTURE ---
+void UnloadKnightTexture() {
+    UnloadTexture(knightTexture);
+}
 
-    if (IsKeyDown(KEY_W)) {
-        MoveUp(p.position, 2.0f);
-        p.direction = UP;
-        moving = true;
-    }
-    if (IsKeyDown(KEY_S)) {
-        MoveDown(p.position, 2.0f);
-        p.direction = DOWN;
-        moving = true;
-    }
-    if (IsKeyDown(KEY_A)) {
-        MoveLeft(p.position, 2.0f);
-        p.direction = LEFT;
-        moving = true;
-    }
-    if (IsKeyDown(KEY_D)) {
-        MoveRight(p.position, 2.0f);
-        p.direction = RIGHT;
-        moving = true;
-    }
+// --- DIRECTION-SPECIFIC UPDATE FUNCTIONS ---
 
-    // Attack input
-    if (IsKeyPressed(KEY_SPACE) && !p.isAttacking) {
+// Update player for walking up
+void UpdatePlayerWalkUp(AnimationPlayer &p) {
+    p.direction = UP;
+    p.state = WALK;
+}
+
+// Update player for walking down
+void UpdatePlayerWalkDown(AnimationPlayer &p) {
+    p.direction = DOWN;
+    p.state = WALK;
+}
+
+// Update player for walking left
+void UpdatePlayerWalkLeft(AnimationPlayer &p) {
+    p.direction = LEFT;
+    p.state = WALK;
+}
+
+// Update player for walking right
+void UpdatePlayerWalkRight(AnimationPlayer &p) {
+    p.direction = RIGHT;
+    p.state = WALK;
+}
+
+// Update player for idle (no movement)
+void UpdatePlayerIdle(AnimationPlayer &p) {
+    p.state = IDLE;
+}
+
+// Update player for attack
+void UpdatePlayerAttack(AnimationPlayer &p) {
+    if (!p.isAttacking) {
         p.state = ATTACK;
         p.frame = 0;
         p.frameTime = 0;
         p.isAttacking = true;
-        return;
     }
+}
 
-    // Example: press K to "die"
-    if (IsKeyPressed(KEY_K)) {
+// Update player for death
+void UpdatePlayerDeath(AnimationPlayer &p) {
+    if (!p.isDead) {
         p.state = DEAD;
         p.isDead = true;
         p.frame = 0;
-        return;
     }
-
-    if (p.isAttacking) return;
-
-    if (moving) p.state = WALK;
-    else p.state = IDLE;
-}
-
-void MoveUp(Vector2 &position, float amount) {
-    position.y -= amount;
-}
-
-void MoveDown(Vector2 &position, float amount) {
-    position.y += amount;
-}
-
-void MoveLeft(Vector2 &position, float amount) {
-    position.x -= amount;
-}
-
-void MoveRight(Vector2 &position, float amount) {
-    position.x += amount;
 }
 
 // --- UPDATE ANIMATION ---
@@ -123,25 +98,30 @@ void UpdateAnimation(AnimationPlayer &p, float dt) {
 
         if (p.frameTime >= p.frameSpeed) {
             p.walkFrameIndex = (p.walkFrameIndex + 1) % 4;
-            int walkFrames[4] = {1, 2, 1, 3};
+            int walkFrames[4] = {0, 2, 0, 3};
             p.frame = walkFrames[p.walkFrameIndex];
             p.frameTime = 0;
         }
     }
 
     else if (p.state == ATTACK) {
-        p.frameSpeed = 0.2f;
+        p.frameSpeed = 0.15f;  // Faster animation for attack
 
         if (p.frameTime >= p.frameSpeed) {
             p.frame++;
             p.frameTime = 0;
 
-            // ⚔️ Hit moment (delay)
-            if (p.frame == 1) {
+            // Different frame counts for different directions
+            int maxFrames = (p.direction == UP || p.direction == DOWN) ? 2 : 4;
+
+            // Hit moment timing differs by direction
+            int hitFrame = (p.direction == UP || p.direction == DOWN) ? 1 : 2;
+            if (p.frame == hitFrame) {
                 TraceLog(LOG_INFO, "HIT!");
             }
 
-            if (p.frame >= 2) {
+            // Reset when reaching max frames
+            if (p.frame >= maxFrames) {
                 p.isAttacking = false;
                 p.state = IDLE;
                 p.frame = 0;
@@ -151,7 +131,7 @@ void UpdateAnimation(AnimationPlayer &p, float dt) {
 }
 
 // --- DRAW PLAYER ---
-void DrawPlayer(AnimationPlayer &p, Texture2D texture) {
+void DrawPlayer(AnimationPlayer &p) {
     int row = (int)p.direction;
     int frameX = p.frame;
 
@@ -160,7 +140,11 @@ void DrawPlayer(AnimationPlayer &p, Texture2D texture) {
         row = 4;
         frameX = 0;
     }
+    // Attack uses frames 4-7 in the current direction row
+    else if (p.state == ATTACK) {
+        frameX += 4;  // Attack frames start at column 4
+    }
 
     Rectangle src = GetFrame(frameX, row);
-    DrawTextureRec(texture, src, p.position, WHITE);
+    DrawTextureRec(knightTexture, src, p.position, WHITE);
 }

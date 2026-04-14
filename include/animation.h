@@ -1,27 +1,4 @@
 #pragma once
-
-// ================================================================
-// Animation System
-// Handle semua animasi sprite untuk player, enemy, dan entity lain.
-//
-// Semua logic animasi (frame switching, timing, direction)
-// dipusatin di sini biar gak nyebar ke mana-mana.
-//
-// TODO (pindahan dari map.h / map.cpp):
-// - LoadTileTexture()
-// - RenderTilePNG()
-// - TileDefinition struct
-// - TileType enum
-// - TileCoordinate struct
-// - TextureAsset enum
-// - TexturesMap array
-// - MAX_TEXTURES define
-// - TILE_SIZE, TILE_GAP define
-//
-// Setelah dipindah, update semua include dan pemanggilan
-// di map.cpp, player.cpp, entities.cpp, dll.
-// ================================================================
-
 #include "raylib.h"
 
 // --- CONFIG ---
@@ -64,14 +41,24 @@ struct AnimationPlayer {
 // Get frame rectangle from spritesheet
 Rectangle GetFrame(int frameX, int frameY);
 
-// Update player input and state for animation demo purposes
-void UpdatePlayer(AnimationPlayer &p);
+// Load/unload knight texture
+void LoadKnightTexture();
+void UnloadKnightTexture();
+
+// Direction-specific update functions
+void UpdatePlayerWalkUp(AnimationPlayer &p);
+void UpdatePlayerWalkDown(AnimationPlayer &p);
+void UpdatePlayerWalkLeft(AnimationPlayer &p);
+void UpdatePlayerWalkRight(AnimationPlayer &p);
+void UpdatePlayerIdle(AnimationPlayer &p);
+void UpdatePlayerAttack(AnimationPlayer &p);
+void UpdatePlayerDeath(AnimationPlayer &p);
 
 // Update animation frames based on state
 void UpdateAnimation(AnimationPlayer &p, float dt);
 
 // Draw player sprite
-void DrawPlayer(AnimationPlayer &p, Texture2D texture);
+void DrawPlayer(AnimationPlayer &p);
 
 // Movement helpers for external use (e.g. Player.cpp can call these)
 void MoveUp(Vector2 &position, float amount);
