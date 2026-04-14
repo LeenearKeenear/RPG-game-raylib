@@ -55,19 +55,13 @@
    gh repo clone COWGRAMMAR/RPG-game-raylib
    ```
 
-2. Jalankan setup script (PowerShell) untuk mengunduh Raylib dan Tileson
-
-   ```powershell
-   .\setup.ps1
-   ```
-
-3. Bangun dengan Cmake dan Ninja
+2. Bangun dengan Cmake dan Ninja
 
    ```powershell
    cmake --preset ninja && cmake --build --preset ninja
    ```
 
-4. Jalankan program
+3. Jalankan program
 
    ```powershell
    # PowerShell
@@ -79,7 +73,7 @@
    ./build/bin/main.exe
    ```
 
-5. Menghapus build artifacts
+4. Menghapus build artifacts (Ekuivalensi dari `make cln`)
 
    ```powershell
    # PowerShell
@@ -100,7 +94,8 @@
 
    1. **Error: No such file or directory** / Game crash.
       - Pastikan file yang dibutuhkan sudah terinstall.
-      - Jalankan `setup.ps1` untuk mengunduh Raylib dan Tileson.
+      - Pastikan menjalankan file (`main.exe`) dari root directory project. Program tidak akan jalan jika dimulai dari subdirectory `build\bin\`.
 
    2. **Build error setelah menambah file**
       - Jalankan perintah build kembali untuk mengkonfigurasi ulang.
+      - Coba untuk hapus build artifacts.

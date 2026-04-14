@@ -1,12 +1,14 @@
 #include "../include/buttonTxt.h"
 
-// default constructor
+// Default constructor
 buttonTxt::buttonTxt() : text(nullptr), posX(0), posY(0), fontSize(0), textColor(BLANK), textWidth(0)
 {
 }
 
-// constructor
-// hoverAmount: 0.0 = black, 1.0 = no darkening, <1.0 = darker on hover
+/** 
+* Constructor
+* @param hoverAmount: 0.0 = black, 1.0 = no darkening, <1.0 = darker on hover
+*/
 buttonTxt::buttonTxt(const char* text, int posX, int posY, int fontSize, Color color, float hoverAmount) {
     this->text = text;
     this->posX = posX;
@@ -17,13 +19,12 @@ buttonTxt::buttonTxt(const char* text, int posX, int posY, int fontSize, Color c
     this->hoverAmount = hoverAmount;
 }
 
-// destructor
-// Fonts don't need to be deleted
+// Deconstructor
 buttonTxt::~buttonTxt()
 {    
 }
 
-// draw
+// Draw
 void buttonTxt::Draw(Vector2 mousePosition) {
     Color currentColor = textColor;
     if (isHovered(mousePosition)) {
@@ -38,7 +39,12 @@ void buttonTxt::Draw(Vector2 mousePosition) {
     DrawText(text, posX, posY, fontSize, currentColor);
 }
 
-// isClicked
+/**
+* Memeriksa apakah tombol diklik oleh mouse.
+* @param mousePosition posisi mouse saat ini
+* @param mouseClicked true jika tombol diklik
+* @return true jika tombol diklik oleh mouse
+*/
 bool buttonTxt::isClicked(Vector2 mousePosition, bool mouseClicked) const
 {
     Rectangle textBounds = {
@@ -51,7 +57,11 @@ bool buttonTxt::isClicked(Vector2 mousePosition, bool mouseClicked) const
     return CheckCollisionPointRec(mousePosition, textBounds) && mouseClicked;
 }
 
-// isHovered
+/**
+* Memeriksa apakah mouse terletak di atas tombol.
+* @param mousePosition posisi mouse saat ini
+* @return true jika mouse terletak di atas tombol
+ */
 bool buttonTxt::isHovered(Vector2 mousePosition) const
 {
     Rectangle textBounds = {
