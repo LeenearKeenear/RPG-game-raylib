@@ -24,8 +24,9 @@ Player PlayerInstance;
 // ================================================================
 void Player::Init(void)
 {
-    // TODO: path texture disesuaiin sama asset yang ada
+    // Load texture knight dari file png untuk animasi
     LoadTileTexture(TEXTURE_KNIGHT, "texture/Knight.png");
+    CharTexture = TexturesMap[TEXTURE_KNIGHT];
 
     // ambil spawn point dari object layer Tiled
     MapObject *spawnObj = TilesonGetObjectByName(SPAWN_OBJECT_NAME);
@@ -84,6 +85,35 @@ void Player::Update(void)
 
     if (CanMove(NewPos))
         Position = NewPos;
+
+    // --- ANIMATION STATE LOGIC ---
+    if (Velocity.x < 0) currentDir = LEFT;
+    else if (Velocity.x > 0) currentDir = RIGHT;
+    else if (Velocity.y < 0) currentDir = UP;
+    else if (Velocity.y > 0) currentDir = DOWN;
+
+    if (Length != 0) currentState = WALK;
+    else currentState = IDLE;
+
+    // --- FRAME UPDATE LOGIC ---
+    frameTime += GetFrameTime();
+    
+    if (currentState == IDLE) {
+        frameSpeed = 0.5f; // Animasi idle lebih lambat
+        if (frameTime >= frameSpeed) {
+            frame = (frame + 1) % 2; // Frame 0 & 1 untuk idle
+            frameTime = 0;
+        }
+    } 
+    else if (currentState == WALK) {
+        frameSpeed = 0.12f; // Animasi jalan lebih cepat
+        if (frameTime >= frameSpeed) {
+            walkFrameIndex = (walkFrameIndex + 1) % 4;
+            int walkFrames[4] = {1, 2, 1, 3}; // Standing -> Left -> Standing -> Right
+            frame = walkFrames[walkFrameIndex];
+            frameTime = 0;
+        }
+    }
 }
 
 // ================================================================
@@ -93,7 +123,12 @@ void Player::Update(void)
 // ================================================================
 void Player::Render(void)
 {
-    RenderTilePNG(Position.x, Position.y, TILE_PLAYER_NEW, 0.0f, TEXTURE_KNIGHT);
+    // Ambil source rectangle dari spritesheet Knight.png
+    // Row ditentukan oleh arah (Direction enum), Column oleh frame saat ini
+    Rectangle src = GetFrame(frame, (int)currentDir);
+    
+    // Gambar player menggunakan texture yang sudah di-load
+    DrawTextureRec(CharTexture, src, Position, WHITE);
 }
 
 // ================================================================
@@ -212,4 +247,4 @@ TileRange Player::GetVisibleTileRange(void)
     if (range.maxY > tilesonMap->height)      range.maxY = tilesonMap->height;
 
     return range;
-}
+}

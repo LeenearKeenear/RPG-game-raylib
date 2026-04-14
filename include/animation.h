@@ -25,8 +25,14 @@
 #include "raylib.h"
 
 // --- CONFIG ---
-const int TILE_SIZE = 32;
-const int TILE_GAP = 4;
+// TILE_SIZE dan TILE_GAP juga didefinisikan di map.h sebagai #define.
+// Pakai #ifndef supaya gak konflik kalau map.h sudah di-include duluan.
+#ifndef TILE_SIZE
+#define TILE_SIZE 32
+#endif
+#ifndef TILE_GAP
+#define TILE_GAP 4
+#endif
 
 // --- ENUMS ---
 enum State {

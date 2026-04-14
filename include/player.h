@@ -2,6 +2,7 @@
 #include <raylib.h>
 #include "map.h"
 #include "screen.h"
+#include "animation.h"
 #include "frustum.h"
 
 // ================================================================
@@ -61,6 +62,14 @@ private:
     // cek apakah posisi baru player nabrak collision rect
     // return false kalau nabrak, true kalau aman
     bool CanMove(Vector2 NewPos);
+
+    // state animasi
+    State currentState = IDLE;
+    Direction currentDir = DOWN;
+    int frame = 0;
+    float frameTime = 0.0f;
+    float frameSpeed = 0.15f;
+    int walkFrameIndex = 0;
 
     // collision rectangles dari object layer Tiled
     // diisi pas Init() dari TilesonGetObjectsByType(COLLISION_LAYER_NAME)
