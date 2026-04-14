@@ -1,28 +1,3 @@
-/build/
-/main.exe
-*.o
-/.vscode/
-.clangd
-*.bak
-/Backups/
-.clang-format
-compile_flags.txt
-
-# Personal
-*.Personal.*
-
-# AI Agents
-AGENTS.md
-
-# Auto-downloaded raylib
-raylib/
-lib/raylib/
-
-# Temp directories
-tmp/
-temp/
-
-
 # ===================================================================
 
 # Created by https://www.toptal.com/developers/gitignore/api/c,c++
@@ -98,3 +73,28 @@ dkms.conf
 # End of https://www.toptal.com/developers/gitignore/api/c,c++
 
 # ===================================================================
+
+
+
+/build/
+/.vscode/
+
+.clangd
+*.bak
+.clang-format
+
+# Personal Files
+*.Personal.*
+
+# AI Agents
+AGENTS.md
+
+# Raylib
+/lib/raylib/CHANGELOG
+/lib/raylib/LICENSE
+/lib/raylib/README.md
+!lib/raylib/lib/raylib.dll
+
+# Temp directories
+tmp/
+temp/

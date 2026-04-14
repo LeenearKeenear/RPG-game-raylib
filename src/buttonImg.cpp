@@ -2,17 +2,19 @@
 #include "../include/buttonImg.h"
 
 /**
- * Konstruktor Button
+ * @brief Konstruktor Button
  *
- * Membuat sebuah objek Button dengan membaca gambar dari file path yang diberikan,
+ * @brief Membuat sebuah objek Button dengan membaca gambar dari file path yang diberikan,
  * lalu mengubah ukuran gambar sesuai dengan skala yang diberikan.
  * Setelah itu, gambar akan di-load ke dalam texture dan posisi akan di-set.
  *
  * @param texturePath path file gambar yang akan di-load
  * @param imagePosition posisi awal gambar yang akan di-set
  * @param scale skala untuk mengubah ukuran gambar
+ * @param hoverAmount nilai hoverAmount
+ *
  */
-buttonImage::buttonImage(const char* texturePath, Vector2 imagePosition, float scale)
+buttonImage::buttonImage(const char* texturePath, Vector2 imagePosition, float scale, float hoverAmount)
 {
     // Instant texture
     // texture = LoadTexture(texturePath);
@@ -26,7 +28,12 @@ buttonImage::buttonImage(const char* texturePath, Vector2 imagePosition, float s
     int newHeight = static_cast<int>(originalHeight * scale);
 
     ImageResize(&image, newWidth, newHeight);
+
+    // Set hover amount
+    this->hoverAmount = hoverAmount;
+
     texture = LoadTextureFromImage(image);
+    
     // Unload image from memory
     UnloadImage(image);
 
@@ -48,18 +55,40 @@ buttonImage::~buttonImage()
  * Menggambar tombol pada layar di posisi saat ini.
  * @remarks Tombol digambar dengan warna WHITE.
  */
-void buttonImage::Draw() 
+void buttonImage::Draw(Vector2 mousePosition) 
 {
-    DrawTextureV(texture, position, WHITE);
+    Color currentColor = WHITE;
+    if (isHovered(mousePosition)) {
+        currentColor = (Color) {
+            static_cast<unsigned char>(currentColor.r * hoverAmount),
+            static_cast<unsigned char>(currentColor.g * hoverAmount),
+            static_cast<unsigned char>(currentColor.b * hoverAmount),
+            currentColor.a
+        };
+    }
+
+    DrawTextureV(texture, position, currentColor);
 }
 
 /**
- * Memeriksa apakah tombol diklik oleh mouse.
+ * @brief Memeriksa apakah tombol diklik oleh mouse.
+ *
  * @param mousePosition posisi mouse saat ini
  * @param mouseClicked true jika tombol diklik
  * @return true jika tombol diklik oleh mouse
  */
-bool buttonImage::isClicked(Vector2 mousePosition, bool mouseClicked)
+bool buttonImage::isClicked(Vector2 mousePosition, bool mouseClicked) const
 {
     return CheckCollisionPointRec(mousePosition, {position.x, position.y, static_cast<float>(texture.width), static_cast<float>(texture.height)}) && mouseClicked; 
+}
+
+/**
+ * @brief Memeriksa apakah cursor berada di atas tombol.
+ *
+ * @param mousePosition posisi mouse saat ini
+ * @return true jika tombol diklik oleh mouse
+ */
+bool buttonImage::isHovered(Vector2 mousePosition) const
+{
+    return CheckCollisionPointRec(mousePosition, {position.x, position.y, static_cast<float>(texture.width), static_cast<float>(texture.height)}); 
 }
