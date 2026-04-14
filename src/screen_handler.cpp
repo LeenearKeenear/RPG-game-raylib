@@ -4,7 +4,6 @@
 #include "../include/player.h"
 #include "../include/entities.h"
 #include "../include/debug.h"
-#include "../include/frustum.h"
 #include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
