@@ -2,6 +2,7 @@
 #include <raylib.h>
 #include "map.h"
 #include "screen.h"
+#include "frustum.h"
 
 // ================================================================
 // Player Class
@@ -45,6 +46,10 @@ public:
 
     // getter speed player — dipake debug panel
     float GetSpeed() { return Speed; }
+
+    // hitung range tile yang visible di layar berdasarkan camera viewport
+    // ini adalah inti logic frustum culling — dipake oleh RenderMapCulled()
+    TileRange GetVisibleTileRange(void);
 
 private:
     Vector2 Position;

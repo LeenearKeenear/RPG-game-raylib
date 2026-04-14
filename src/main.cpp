@@ -2,10 +2,18 @@
 #include "../include/map.h"
 #include "../include/player.h"
 #include "../include/mainMenu.h"
+<<<<<<< HEAD
 #include "../include/enemy.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 
+=======
+#include "../include/pauseMenu.h"
+#include "../lib/raylib/include/raylib.h"
+#include "../lib/raylib/include/raymath.h"
+
+PauseMenu pauseMenu;
+>>>>>>> ed566672fef6c48fd5aac57fac0126a3648037c9
 
 int main()
 {
@@ -50,8 +58,26 @@ int main()
         // state PLAY — gameplay
         else if (state.currentScreen == PLAY)
         {
-            // update scale kalau window di-resize
+            // toggle pause menu dengan P key
+            if (IsKeyPressed(KEY_P)) {
+                if (pauseMenu.IsActive()) {
+                    pauseMenu.Hide();
+                } else {
+                    pauseMenu.Show();
+                }
+            }
+
+            // update scale sebelum rendering (needed for mouse position calculation)
             UpdateGame(&state);
+
+            // capture mouse click before rendering
+            bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+            // update pause menu if active (MUST be before rendering)
+            if (pauseMenu.IsActive()) {
+                pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
+            }
+
             // update semua logic game (player, enemy, dll)
             UpdateLogicAll();
             // render semua ke layar virtual
