@@ -11,7 +11,7 @@
          "name":"ground",
          "opacity":1,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":40,
          "x":0,
          "y":0
@@ -25,7 +25,7 @@
          "name":"deco",
          "opacity":1,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":40,
          "x":0,
          "y":0
@@ -33,7 +33,7 @@
         {
          "draworder":"topdown",
          "id":2,
-         "name":"map_bound",
+         "name":"obstacle",
          "objects":[
                 {
                  "height":0,
@@ -344,41 +344,7 @@
                  "width":0,
                  "x":1280,
                  "y":0
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":10,
-         "name":"sign",
-         "objects":[
-                {
-                 "height":28.0625,
-                 "id":10,
-                 "name":"sign",
-                 "opacity":1,
-                 "rotation":0,
-                 "type":"interact",
-                 "visible":true,
-                 "width":23.9375,
-                 "x":580.0625,
-                 "y":932.125
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":7,
-         "name":"obstacle",
-         "objects":[
+                }, 
                 {
                  "height":0,
                  "id":9,
@@ -416,6 +382,29 @@
         }, 
         {
          "draworder":"topdown",
+         "id":10,
+         "name":"sign",
+         "objects":[
+                {
+                 "height":28.0625,
+                 "id":10,
+                 "name":"sign",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"interact",
+                 "visible":true,
+                 "width":23.9375,
+                 "x":580.0625,
+                 "y":932.125
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":false,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":8,
          "name":"doorToInside",
          "objects":[
@@ -433,7 +422,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":true,
+         "visible":false,
          "x":0,
          "y":0
         }, 
@@ -456,7 +445,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":true,
+         "visible":false,
          "x":0,
          "y":0
         }],

@@ -34,6 +34,14 @@ void Player::Init(void)
     CollisionPolygons.clear();
     WorldBoundaryPolygon.clear();
 
+    // safety check kalau map belum keload
+    if (tilesonMap == nullptr)
+    {
+        Position = {0.0f, 0.0f};
+        TraceLog(LOG_ERROR, "Player: tilesonMap is null during Init()");
+        return;
+    }
+
     // ambil spawn point dari object layer Tiled
     MapObject *spawnObj = TilesonGetObjectByName(SPAWN_OBJECT_NAME);
     if (spawnObj != nullptr)
@@ -45,11 +53,14 @@ void Player::Init(void)
     else
     {
         // fallback kalau object spawn belum ada di Tiled
-        Position = {160.0f, 160.0f};
+        // posisi fallback dipusatkan ke tengah map dalam pixel
+        Position = {
+            (((float)tilesonMap->width * TILE_SIZE) / 2.0f) + TILE_SIZE * 3,
+            ((float)tilesonMap->height * TILE_SIZE) / 2.0f};
         TraceLog(LOG_WARNING, "Player: Spawn object '%s' not found, using default position", SPAWN_OBJECT_NAME);
     }
 
-    // ambil semua collision object dari object layer Tiled
+    /// ambil semua collision object dari object layer Tiled
     // rectangle disimpan ke CollisionRects, polygon disimpan ke CollisionPolygons
     std::vector<MapObject> collisionObjs = TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME);
     for (auto &obj : collisionObjs)
@@ -58,18 +69,6 @@ void Player::Init(void)
             CollisionPolygons.push_back(obj.polygonPoints);
         else
             CollisionRects.push_back(obj.bounds);
-    }
-
-    // ambil custom world boundary polygon dari object layer Tiled
-    // kalau ada object polygon di layer MAP_BOUND_LAYER_NAME, pakai polygon pertama yang ketemu
-    std::vector<MapObject> worldBoundaryObjs = TilesonGetObjectsByLayerName(MAP_BOUND_LAYER_NAME);
-    for (auto &obj : worldBoundaryObjs)
-    {
-        if (obj.hasPolygon)
-        {
-            WorldBoundaryPolygon = obj.polygonPoints;
-            break;
-        }
     }
 
     TraceLog(LOG_INFO, "Player: Loaded %d collision rects", (int)CollisionRects.size());
@@ -133,9 +132,13 @@ void Player::Render(void)
 // ================================================================
 bool Player::CanMove(Vector2 NewPos)
 {
-    Rectangle playerBox = {NewPos.x, NewPos.y, (float)TileSize, (float)TileSize};
+    Rectangle playerBox = {
+        NewPos.x + HitboxOffsetX,
+        NewPos.y + HitboxOffsetY,
+        HitboxWidth,
+        HitboxHeight};
 
-    // titik-titik penting player box buat cek boundary / polygon collision
+    // titik-titik penting player box buat cek polygon collision
     Vector2 playerPoints[4] = {
         {playerBox.x, playerBox.y},
         {playerBox.x + playerBox.width, playerBox.y},
@@ -165,7 +168,6 @@ bool Player::CanMove(Vector2 NewPos)
 
         return inside;
     };
-
     // ============================================================
     // 1. collision rectangle biasa dari object layer Tiled
     // setiap rectangle object di layer collision dianggap solid
@@ -191,24 +193,14 @@ bool Player::CanMove(Vector2 NewPos)
     }
 
     // ============================================================
-    // 3. world bound custom polygon
-    // kalau ada custom boundary polygon, semua titik player
-    // harus tetap berada di dalam polygon itu
-    // ============================================================
-    if (!WorldBoundaryPolygon.empty())
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            if (!IsPointInsidePolygon(playerPoints[i], WorldBoundaryPolygon))
-                return false;
-        }
-
-        return true;
-    }
-
-    // ============================================================
-    // 4. fallback world bound rectangle dari ukuran map
-    // dipakai kalau map tidak punya custom boundary polygon
+    // 3. world bound rectangle dari ukuran map
+    // custom world boundary polygon sementara tidak dipakai,
+    // karena hasil runtime nunjukin polygon seperti OffmapBoundary
+    // lebih cocok diperlakukan sebagai collision polygon.
+    //
+    // Jadi rule batas dunia sekarang disederhanakan:
+    // - area terlarang/non-playable ditangani collision object
+    // - batas luar map ditangani rectangle ukuran map
     // ============================================================
     float MapW = (float)tilesonMap->width * TILE_SIZE;
     float MapH = (float)tilesonMap->height * TILE_SIZE;

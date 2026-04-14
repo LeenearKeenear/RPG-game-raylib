@@ -63,8 +63,8 @@ extern int lastTilesRendered;
 extern TileRange currentVisibleRange;
 
 // nama layer & object di Tiled — sesuaiin kalau beda
-#define COLLISION_LAYER_NAME "OffmapBoundary" // penulisan define untuk layer
-#define MAP_BOUND_LAYER_NAME "map_bound"
+// #define COLLISION_LAYER_NAME "map_bound"
+#define COLLISION_LAYER_NAME "obstacle" // penulisan define untuk layer
 #define SPAWN_OBJECT_NAME "spawn" // penulisan define untuk object name
 #define DOOR_TYPE_OBJECT_NAME "door" // penulisan define untuk type object name
 

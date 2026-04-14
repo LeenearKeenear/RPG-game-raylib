@@ -186,10 +186,14 @@ void InitMap(void)
 {
     // LoadMap("world_json/exampleworldmap_2.json");
     // LoadMap("world_json/exampleworldmap.json");
-    // LoadMap("world_json/inside.json");
-    LoadMap("world_json/outsideDark.json");
+    
     // LoadMap("world_json/outsideLight.json");
     // LoadMap("world_json/testermap.tmj");
+
+
+    // LoadMap("world_json/cave.json");
+    LoadMap("world_json/inside.json");
+    // LoadMap("world_json/light.json");
 }
 
 // ================================================================

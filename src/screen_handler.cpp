@@ -117,6 +117,7 @@ void DrawRenderTexture(GameState *state)
 
     BeginMode2D(camera);
     RenderEntities();
+    DebugInstance.DrawWorldOverlay();
     EndMode2D();
 
     DebugInstance.Toggle();

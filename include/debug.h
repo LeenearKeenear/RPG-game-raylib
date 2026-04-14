@@ -1,5 +1,7 @@
 #pragma once
-#include <raylib.h>
+#include "../lib/raylib/include/raylib.h"
+#include <string>
+#include <vector>
 
 // ================================================================
 // Debug Class
@@ -16,14 +18,27 @@ class Debug
 public:
     void Toggle(void); // handle TAB toggle + tracelog
     void Draw(void);   // wrapper semua panel
+    void DrawWorldOverlay(void); // overlay debug di world-space: hitbox + collision + map bounds
 
 private:
-    void DrawMapPanel(void);    // panel info map
-    void DrawCameraPanel(void); // panel info camera
-    void DrawPlayerPanel(void); // panel info player position
-    void DrawZoomPanel(void);   // panel zoom debug + handle zoom input
-    void DrawFrustumPanel(void); // panel info frustum culling
-    void DrawCollisionPanel(void); // panel info collision & world boundary
+ struct DebugPanelEntry
+    {
+        std::string name;
+        void (Debug::*drawFn)(Rectangle bounds);
+        bool enabled;
+    };
+
+    // helper layout panel debug
+    Rectangle GetPanelBounds(int index, float panelWidth, float panelHeight) const;
+    std::vector<DebugPanelEntry> BuildActivePanels(void) const;
+    void DrawPanelFrame(Rectangle bounds, const char *title, Color borderColor) const;
+
+    void DrawMapPanel(Rectangle bounds);       // panel info map
+    void DrawCameraPanel(Rectangle bounds);    // panel info camera
+    void DrawPlayerPanel(Rectangle bounds);    // panel info player position
+    void DrawZoomPanel(Rectangle bounds);      // panel zoom debug + handle zoom input
+    void DrawFrustumPanel(Rectangle bounds);   // panel info frustum culling
+    void DrawCollisionPanel(Rectangle bounds); // panel info collision & world boundary
     // void DebugMouse(GameState *state); // handle mouse position
 };
 

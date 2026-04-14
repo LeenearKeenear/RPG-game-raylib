@@ -47,6 +47,12 @@ public:
     // getter speed player — dipake debug panel
     float GetSpeed() { return Speed; }
 
+    // getter hitbox player — dipake collision dan debug panel
+    float GetHitboxWidth() { return HitboxWidth; }
+    float GetHitboxHeight() { return HitboxHeight; }
+    float GetHitboxOffsetX() { return HitboxOffsetX; }
+    float GetHitboxOffsetY() { return HitboxOffsetY; }
+
     // hitung range tile yang visible di layar berdasarkan camera viewport
     // ini adalah inti logic frustum culling — dipake oleh RenderMapCulled()
     TileRange GetVisibleTileRange(void);
@@ -57,6 +63,13 @@ private:
     int TileSize = 32;
     float Speed = 4.0f;
     Texture2D CharTexture;
+
+    // ukuran hitbox player bisa diperkecil dari sprite biar movement
+    // terasa lebih enak dan gak gampang nyangkut di sudut/object.
+    float HitboxWidth = 20.0f;
+    float HitboxHeight = 16.0f;
+    float HitboxOffsetX = 6.0f;
+    float HitboxOffsetY = 14.0f;
 
     // cek apakah posisi baru player nabrak collision shape
     // atau keluar dari world boundary
