@@ -353,6 +353,29 @@
         }, 
         {
          "draworder":"topdown",
+         "id":10,
+         "name":"sign",
+         "objects":[
+                {
+                 "height":28.0625,
+                 "id":10,
+                 "name":"sign",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"interact",
+                 "visible":true,
+                 "width":23.9375,
+                 "x":580.0625,
+                 "y":932.125
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":7,
          "name":"obstacle",
          "objects":[
@@ -437,8 +460,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":10,
- "nextobjectid":10,
+ "nextlayerid":11,
+ "nextobjectid":11,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

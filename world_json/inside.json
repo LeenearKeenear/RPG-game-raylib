@@ -1,65 +1,147 @@
 { "compressionlevel":-1,
- "height":15,
+ "height":20,
  "infinite":false,
  "layers":[
         {
          "compression":"",
-         "data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAIAAAAfAAAAAgAAAAIAAAACAAAABAAAAAAAAAAAAAAAAAAAAAEAAAACAAAAAgAAAAIAAAACAAAALAAAABAAAAA+AAAAEAAAABAAAAAQAAAAEgAAAAAAAAAAAAAAAAAAAA8AAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAA9AAAAEAAAABAAAAAQAAAAEgAAAAAAAAAAAAAAAAAAAA8AAAAQAAAAPQAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAAD0AAAAQAAAAEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAAD0AAAAQAAAAEgAAAAAAAAAAAAAAAAAAAAAAAAAPAAAAEAAAABAAAAA9AAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAKwAAAAQAAAAAAAAAAAAAAAAAAAAPAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABIAAAAAAAAAAAAAAAEAAAAsAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABIAAAAAAAAAAAAAAA8AAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAAD0AAAAQAAAAEAAAABIAAAAAAAAAAAAAAA8AAAAQAAAAPQAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAA9AAAAEAAAABIAAAAAAAAAAAAAAAAAAAAuAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABIAAAAAAAAAAAAAAAAAAAAPAAAAEAAAABAAAAAQAAAAEAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+         "data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAgAAAAIAAAACAAAAIQAAAAIAAAACAAAAAgAAAAIAAAACAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAASAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAA9AAAAEAAAABIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPAAAAPQAAABAAAAAQAAAAEAAAAD0AAAAQAAAAEAAAABAAAAAQAAAAEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAQAAAAPQAAABAAAAAQAAAAPQAAABAAAAAQAAAAEAAAABAAAAASAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAABAAAAA9AAAAPQAAABAAAAAQAAAAPQAAABAAAAAQAAAAEAAAABIAAAABAAAAAgAAAAIAAAACAAAAAgAAAAIAAAACAAAAAgAAAAIAAAAsAAAAEAAAABAAAAAQAAAAEAAAABAAAAA9AAAAEAAAABAAAAAQAAAAEgAAAA8AAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAAD0AAAASAAAADwAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABIAAAAPAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAAD0AAAA9AAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEgAAAA8AAAAQAAAAEAAAAD0AAAA9AAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAA9AAAAEAAAABAAAAASAAAADwAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAA9AAAAPQAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABIAAAAPAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEgAAAB0AAAA8AAAAPAAAADwAAAA8AAAAPAAAADsAAAA8AAAAOwAAADsAAAA8AAAAPAAAADsAAAA8AAAAOwAAADwAAAA8AAAAPAAAADsAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
          "encoding":"base64",
-         "height":15,
+         "height":20,
          "id":1,
-         "name":"Background",
+         "name":"ground",
          "opacity":1,
          "type":"tilelayer",
          "visible":true,
-         "width":15,
+         "width":20,
          "x":0,
          "y":0
         }, 
         {
          "compression":"",
-         "data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC9AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANAAAAAAAAAAlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+         "data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADKAQAAzgEAANABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
          "encoding":"base64",
-         "height":15,
-         "id":6,
-         "name":"Object",
+         "height":20,
+         "id":2,
+         "name":"deco",
          "opacity":1,
          "type":"tilelayer",
          "visible":true,
-         "width":15,
+         "width":20,
          "x":0,
          "y":0
         }, 
         {
-         "compression":"",
-         "data":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB0AAAAuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtAAAAOwAAADwAAAA7AAAAPAAAACAAAAAAAAAAAAAAAAAAAAAdAAAAPAAAADsAAAA8AAAAPAAAADsAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-         "encoding":"base64",
-         "height":15,
+         "draworder":"topdown",
          "id":3,
-         "name":"LowerWalls",
+         "name":"map_bound",
+         "objects":[
+                {
+                 "height":0,
+                 "id":2,
+                 "name":"map_bound",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":0,
+                         "y":0
+                        }, 
+                        {
+                         "x":623.818181818182,
+                         "y":-0.363636363636374
+                        }, 
+                        {
+                         "x":620,
+                         "y":-407.818181818182
+                        }, 
+                        {
+                         "x":439.977777777778,
+                         "y":-407.955555555556
+                        }, 
+                        {
+                         "x":439.977777777778,
+                         "y":-412.088888888889
+                        }, 
+                        {
+                         "x":407.96875,
+                         "y":-412
+                        }, 
+                        {
+                         "x":407.96875,
+                         "y":-408.03125
+                        }, 
+                        {
+                         "x":288.0625,
+                         "y":-407.875
+                        }, 
+                        {
+                         "x":288.125,
+                         "y":-223.875
+                        }, 
+                        {
+                         "x":280.25,
+                         "y":-216
+                        }, 
+                        {
+                         "x":-0.125,
+                         "y":-216.125
+                        }, 
+                        {
+                         "x":0,
+                         "y":-0.046875
+                        }, 
+                        {
+                         "x":-8,
+                         "y":0
+                        }, 
+                        {
+                         "x":-8,
+                         "y":-544
+                        }, 
+                        {
+                         "x":632,
+                         "y":-544
+                        }, 
+                        {
+                         "x":632,
+                         "y":96
+                        }, 
+                        {
+                         "x":-8,
+                         "y":96
+                        }, 
+                        {
+                         "x":-8,
+                         "y":0
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":8,
+                 "y":544
+                }],
          "opacity":1,
-         "type":"tilelayer",
+         "type":"objectgroup",
          "visible":true,
-         "width":15,
          "x":0,
          "y":0
         }, 
         {
          "draworder":"topdown",
          "id":5,
-         "name":"Spawn",
+         "name":"obstacle",
          "objects":[
                 {
-                 "height":26.8182,
-                 "id":6,
-                 "name":"",
+                 "height":28.5454545454546,
+                 "id":4,
+                 "name":"obstacle",
                  "opacity":1,
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":27.7273,
-                 "x":194.091,
-                 "y":322.273
+                 "width":54.9090909090909,
+                 "x":165.818181818182,
+                 "y":354
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -70,19 +152,19 @@
         {
          "draworder":"topdown",
          "id":4,
-         "name":"GoOutsideLight",
+         "name":"chest",
          "objects":[
                 {
-                 "height":7.875,
-                 "id":1,
-                 "name":"",
+                 "height":19.0625,
+                 "id":3,
+                 "name":"chestInside",
                  "opacity":1,
                  "rotation":0,
-                 "type":"",
+                 "type":"interact",
                  "visible":true,
-                 "width":32.125,
-                 "x":255.875,
-                 "y":32.0625
+                 "width":23,
+                 "x":132,
+                 "y":357.875
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -92,43 +174,20 @@
         }, 
         {
          "draworder":"topdown",
-         "id":7,
-         "name":"Chest",
+         "id":6,
+         "name":"goOutside",
          "objects":[
                 {
-                 "height":26.2727,
-                 "id":7,
-                 "name":"",
+                 "height":26.625,
+                 "id":5,
+                 "name":"goOutside",
                  "opacity":1,
                  "rotation":0,
-                 "type":"",
+                 "type":"pass",
                  "visible":true,
-                 "width":26.3636,
-                 "x":98.7273,
-                 "y":98.8182
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":8,
-         "name":"Furnace",
-         "objects":[
-                {
-                 "height":25.25,
-                 "id":8,
-                 "name":"",
-                 "opacity":1,
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":23.5,
-                 "x":164.125,
-                 "y":99.75
+                 "width":30.375,
+                 "x":416.5,
+                 "y":132.8125
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -136,8 +195,8 @@
          "x":0,
          "y":0
         }],
- "nextlayerid":9,
- "nextobjectid":9,
+ "nextlayerid":7,
+ "nextobjectid":6,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
@@ -146,526 +205,24 @@
         {
          "columns":14,
          "firstgid":1,
-         "image":"..\/RPG-game-raylib\/texture\/map.png",
+         "image":"..\/texture\/map.png",
          "imageheight":428,
          "imagewidth":500,
          "margin":0,
-         "name":"tilesetmap",
+         "name":"map",
          "spacing":4,
          "tilecount":168,
          "tileheight":32,
-         "tiles":[
-                {
-                 "id":0,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":0,
-                             "id":4,
-                             "name":"",
-                             "opacity":1,
-                             "polygon":[
-                                    {
-                                     "x":0.0898438,
-                                     "y":0
-                                    }, 
-                                    {
-                                     "x":-23.9091,
-                                     "y":-0.00284091
-                                    }, 
-                                    {
-                                     "x":-23.9052,
-                                     "y":24.0028
-                                    }, 
-                                    {
-                                     "x":-31.9158,
-                                     "y":24.0028
-                                    }, 
-                                    {
-                                     "x":-31.9158,
-                                     "y":-8.00107
-                                    }, 
-                                    {
-                                     "x":0.0898438,
-                                     "y":-8.00391
-                                    }],
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":0,
-                             "x":31.9091,
-                             "y":8
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":1,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":7.90909,
-                             "id":2,
-                             "name":"",
-                             "opacity":1,
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":31.8182,
-                             "x":0.0909091,
-                             "y":0.0909091
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":3,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":0,
-                             "id":2,
-                             "name":"",
-                             "opacity":1,
-                             "polygon":[
-                                    {
-                                     "x":0,
-                                     "y":3.72727
-                                    }, 
-                                    {
-                                     "x":-0.0948153,
-                                     "y":27.902
-                                    }, 
-                                    {
-                                     "x":7.89631,
-                                     "y":27.907
-                                    }, 
-                                    {
-                                     "x":7.90909,
-                                     "y":-4.09979
-                                    }, 
-                                    {
-                                     "x":-24.0909,
-                                     "y":-4.08807
-                                    }, 
-                                    {
-                                     "x":-24.0938,
-                                     "y":3.90589
-                                    }],
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":0,
-                             "x":24.0909,
-                             "y":4.09091
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":14,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":31.8182,
-                             "id":1,
-                             "name":"",
-                             "opacity":1,
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":8,
-                             "x":0,
-                             "y":0.0909091
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":17,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":31.8182,
-                             "id":1,
-                             "name":"",
-                             "opacity":1,
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":8,
-                             "x":23.9091,
-                             "y":0.0909091
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":28,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":0,
-                             "id":2,
-                             "name":"",
-                             "opacity":1,
-                             "polygon":[
-                                    {
-                                     "x":0,
-                                     "y":0
-                                    }, 
-                                    {
-                                     "x":24.1818,
-                                     "y":0
-                                    }, 
-                                    {
-                                     "x":24.0909,
-                                     "y":8
-                                    }, 
-                                    {
-                                     "x":-7.81818,
-                                     "y":8
-                                    }, 
-                                    {
-                                     "x":-7.72727,
-                                     "y":-24
-                                    }, 
-                                    {
-                                     "x":0.020202,
-                                     "y":-24
-                                    }],
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":0,
-                             "x":7.81818,
-                             "y":24
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":31,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":0,
-                             "id":2,
-                             "name":"",
-                             "opacity":1,
-                             "polygon":[
-                                    {
-                                     "x":0,
-                                     "y":0
-                                    }, 
-                                    {
-                                     "x":-23.8182,
-                                     "y":0
-                                    }, 
-                                    {
-                                     "x":-23.8182,
-                                     "y":7.90909
-                                    }, 
-                                    {
-                                     "x":8.09091,
-                                     "y":7.81818
-                                    }, 
-                                    {
-                                     "x":8.18182,
-                                     "y":-24
-                                    }, 
-                                    {
-                                     "x":0.083004,
-                                     "y":-24
-                                    }],
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":0,
-                             "x":23.9091,
-                             "y":24.0909
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":42,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":0,
-                             "id":3,
-                             "name":"",
-                             "opacity":1,
-                             "polygon":[
-                                    {
-                                     "x":0,
-                                     "y":0
-                                    }, 
-                                    {
-                                     "x":0,
-                                     "y":3.97778
-                                    }, 
-                                    {
-                                     "x":3.95556,
-                                     "y":3.97778
-                                    }, 
-                                    {
-                                     "x":4,
-                                     "y":7.91111
-                                    }, 
-                                    {
-                                     "x":7.93333,
-                                     "y":7.97778
-                                    }, 
-                                    {
-                                     "x":8,
-                                     "y":0
-                                    }],
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":0,
-                             "x":24,
-                             "y":0
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":43,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":0,
-                             "id":3,
-                             "name":"",
-                             "opacity":1,
-                             "polygon":[
-                                    {
-                                     "x":0,
-                                     "y":0
-                                    }, 
-                                    {
-                                     "x":7.97778,
-                                     "y":0.0222222
-                                    }, 
-                                    {
-                                     "x":8,
-                                     "y":4.04444
-                                    }, 
-                                    {
-                                     "x":3.97778,
-                                     "y":4.02222
-                                    }, 
-                                    {
-                                     "x":3.97778,
-                                     "y":8
-                                    }, 
-                                    {
-                                     "x":0,
-                                     "y":8
-                                    }],
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":0,
-                             "x":0,
-                             "y":0
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":44,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":8,
-                             "id":2,
-                             "name":"",
-                             "opacity":1,
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":8,
-                             "x":24,
-                             "y":24.087
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":45,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":7.95652,
-                             "id":1,
-                             "name":"",
-                             "opacity":1,
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":7.95652,
-                             "x":0.0434783,
-                             "y":24.2609
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":58,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":7.81818,
-                             "id":1,
-                             "name":"",
-                             "opacity":1,
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":31.9091,
-                             "x":0.0752841,
-                             "y":24.1222
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }, 
-                {
-                 "id":59,
-                 "objectgroup":
-                    {
-                     "draworder":"index",
-                     "id":2,
-                     "name":"",
-                     "objects":[
-                            {
-                             "height":7.81818,
-                             "id":1,
-                             "name":"",
-                             "opacity":1,
-                             "rotation":0,
-                             "type":"",
-                             "visible":true,
-                             "width":31.8182,
-                             "x":0.0909091,
-                             "y":24.1406
-                            }],
-                     "opacity":1,
-                     "type":"objectgroup",
-                     "visible":true,
-                     "x":0,
-                     "y":0
-                    }
-                }],
          "tilewidth":32
         }, 
         {
          "columns":17,
          "firstgid":169,
-         "image":"..\/RPG-game-raylib\/texture\/tiles.png",
+         "image":"..\/texture\/tiles.png",
          "imageheight":832,
          "imagewidth":544,
          "margin":0,
-         "name":"envtiles",
+         "name":"tiles",
          "spacing":0,
          "tilecount":442,
          "tileheight":32,
@@ -674,5 +231,5 @@
  "tilewidth":32,
  "type":"map",
  "version":"1.10",
- "width":15
+ "width":20
 }

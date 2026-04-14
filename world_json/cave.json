@@ -61,7 +61,7 @@
                 {
                  "height":19.125,
                  "id":5,
-                 "name":"chest",
+                 "name":"chestCave",
                  "opacity":1,
                  "rotation":0,
                  "type":"interact",
