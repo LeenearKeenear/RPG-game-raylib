@@ -1,3 +1,4 @@
+#include "../include/mapLogic.h"
 #include "../include/player.h"
 #include "../include/debug.h"
 #include "../include/map.h"
@@ -32,7 +33,6 @@ void Player::Init(void)
     // reset collision cache biar aman kalau nanti map di-reload
     CollisionRects.clear();
     CollisionPolygons.clear();
-    WorldBoundaryPolygon.clear();
 
     // safety check kalau map belum keload
     if (tilesonMap == nullptr)
@@ -42,12 +42,14 @@ void Player::Init(void)
         return;
     }
 
+    // ================================================================
     // ambil spawn point dari object layer Tiled
-    MapObject *spawnObj = TilesonGetObjectByName(SPAWN_OBJECT_NAME);
-    if (spawnObj != nullptr)
+    // pakai TiledHelperFunction.TryGetObjectPositionByName
+    // ================================================================
+    Vector2 spawnPos;
+    if (TiledHelperFunction.TryGetObjectPositionByName(SPAWN_OBJECT_NAME, spawnPos))
     {
-        // bounds.x dan bounds.y itu posisi object di Tiled (dalam pixel)
-        Position = {spawnObj->bounds.x, spawnObj->bounds.y};
+        Position = spawnPos;
         TraceLog(LOG_INFO, "Player: Spawn point found at (%.1f, %.1f)", Position.x, Position.y);
     }
     else
@@ -60,15 +62,14 @@ void Player::Init(void)
         TraceLog(LOG_WARNING, "Player: Spawn object '%s' not found, using default position", SPAWN_OBJECT_NAME);
     }
 
-    /// ambil semua collision object dari object layer Tiled
+    
+    // ambil semua collision object dari object layer Tiled
     // rectangle disimpan ke CollisionRects, polygon disimpan ke CollisionPolygons
-    std::vector<MapObject> collisionObjs = TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME);
-    for (auto &obj : collisionObjs)
+    TiledHelper::CollisionResult collision;
+    if (TiledHelperFunction.TryGetCollisionByLayerName(COLLISION_LAYER_NAME, collision))
     {
-        if (obj.hasPolygon)
-            CollisionPolygons.push_back(obj.polygonPoints);
-        else
-            CollisionRects.push_back(obj.bounds);
+        CollisionRects = collision.rects;
+        CollisionPolygons = collision.polygons;
     }
 
     TraceLog(LOG_INFO, "Player: Loaded %d collision rects", (int)CollisionRects.size());
