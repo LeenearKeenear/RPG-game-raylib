@@ -110,6 +110,9 @@ void DrawRenderTexture(GameState *state)
     RenderEntities();
     EndMode2D();
 
+    // render HUD (hotbar, state, overlay UI) di screen space
+    PlayerInstance.RenderHUD();
+
     DebugInstance.Toggle();
     DebugInstance.Draw();
 

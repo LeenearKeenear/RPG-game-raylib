@@ -81,11 +81,25 @@ void Debug::DrawCameraPanel(void)
 // ================================================================
 void Debug::DrawPlayerPanel(void)
 {
-    DrawRectangle(5, 210, 270, 70, Fade(BLACK, 0.7f));
-    DrawRectangleLines(5, 210, 270, 70, GREEN);
+    // state name mapping
+    const char *stateNames[] = {"IDLE", "MOVING", "ATTACKING", "DRINKING_POTION", "INTERACTING", "DEAD"};
+    PlayerState state = PlayerInstance.GetState();
+    const char *stateName = (state >= 0 && state <= 5) ? stateNames[state] : "UNKNOWN";
+
+    DrawRectangle(5, 210, 270, 150, Fade(BLACK, 0.7f));
+    DrawRectangleLines(5, 210, 270, 150, GREEN);
     DrawText("[ PLAYER DEBUG ]", 15, 215, 18, GREEN);
     DrawText(TextFormat("Position: (%.1f, %.1f)", PlayerInstance.GetPosition().x, PlayerInstance.GetPosition().y), 15, 235, 16, WHITE);
     DrawText(TextFormat("Speed   : %.1f", PlayerInstance.GetSpeed()), 15, 255, 16, WHITE);
+    DrawText(TextFormat("State   : %s", stateName), 15, 275, 16,
+             state == PLAYER_DEAD ? RED : (state == PLAYER_ATTACKING ? ORANGE : WHITE));
+    DrawText(TextFormat("Alive   : %s", PlayerInstance.IsAlive() ? "YES" : "NO"), 15, 295, 16,
+             PlayerInstance.IsAlive() ? GREEN : RED);
+    DrawText(TextFormat("Slot    : %d (%s)", PlayerInstance.GetSelectedSlot() + 1,
+             PlayerInstance.GetHotbarSlot(PlayerInstance.GetSelectedSlot()).name), 15, 315, 16, GOLD);
+    DrawText(TextFormat("Inv/Map : %s / %s",
+             PlayerInstance.IsInventoryOpen() ? "OPEN" : "closed",
+             PlayerInstance.IsMapOpen() ? "OPEN" : "closed"), 15, 335, 16, SKYBLUE);
 }
 
 // ================================================================
@@ -110,12 +124,33 @@ void Debug::DrawZoomPanel(void)
             camera.zoom = MIN_ZOOM;
     }
 
-    DrawRectangle(5, 290, 270, 70, Fade(BLACK, 0.7f));
-    DrawRectangleLines(5, 290, 270, 70, ORANGE);
-    DrawText("[ ZOOM DEBUG ]", 15, 295, 18, ORANGE);
-    DrawText(TextFormat("Zoom    : %.2f", camera.zoom), 15, 315, 16, WHITE);
-    DrawText("[Scroll] Zoom In/Out", 15, 335, 16, YELLOW);
+    DrawRectangle(5, 370, 270, 70, Fade(BLACK, 0.7f));
+    DrawRectangleLines(5, 370, 270, 70, ORANGE);
+    DrawText("[ ZOOM DEBUG ]", 15, 375, 18, ORANGE);
+    DrawText(TextFormat("Zoom    : %.2f", camera.zoom), 15, 395, 16, WHITE);
+    DrawText("[Scroll] Zoom In/Out", 15, 415, 16, YELLOW);
 }
+
+// ================================================================
+// DrawFrustumPanel()
+// Panel info frustum culling: jumlah tile yang di-render vs total map,
+// serta jangkauan index tile (min/max) yang terlihat.
+// ================================================================
+// void Debug::DrawFrustumPanel(void)
+// {
+//     if (tilesonMap == nullptr)
+//         return;
+
+//     int totalMapTiles = tilesonMap->width * tilesonMap->height * tilesonMap->layerCount;
+
+//     DrawRectangle(5, 450, 270, 95, Fade(BLACK, 0.7f));
+//     DrawRectangleLines(5, 450, 270, 95, VIOLET);
+//     DrawText("[ FRUSTUM DEBUG ]", 15, 455, 18, VIOLET);
+//     DrawText(TextFormat("Tiles Drawn : %d", lastTilesRendered), 15, 475, 16, WHITE);
+//     DrawText(TextFormat("Total Map   : %d", totalMapTiles), 15, 495, 16, GRAY);
+//     DrawText(TextFormat("Range X: %d-%d", currentVisibleRange.minX, currentVisibleRange.maxX), 15, 515, 16, WHITE);
+//     DrawText(TextFormat("Range Y: %d-%d", currentVisibleRange.minY, currentVisibleRange.maxY), 15, 535, 16, WHITE);
+// }
 
 // ================================================================
 // DebugMouse() — di-comment, sapa tau butuh nanti
