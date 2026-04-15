@@ -1,7 +1,6 @@
 #include "../include/animation.h"
 
 // --- SPRITESHEET ---
-// Assuming Knight.png has 5 rows (DOWN, RIGHT, LEFT, UP, DEAD) and 4 columns (frames)
 Texture2D knightTexture;
 
 // --- GET FRAME FROM SPRITESHEET ---

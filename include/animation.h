@@ -60,7 +60,7 @@ void UpdateAnimation(AnimationPlayer &p, float dt);
 // Draw player sprite
 void DrawPlayer(AnimationPlayer &p);
 
-// Movement helpers for external use (e.g. Player.cpp can call these)
+// Buat dipanggil biar gerak
 void MoveUp(Vector2 &position, float amount);
 void MoveDown(Vector2 &position, float amount);
 void MoveLeft(Vector2 &position, float amount);
