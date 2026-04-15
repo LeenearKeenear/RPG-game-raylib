@@ -19,6 +19,10 @@ void PlayerInput::HandleInput(Player* player)
         if (player->ActionTimer <= 0.0f)
         {
             player->State = PLAYER_IDLE;
+            player->currentState = IDLE;
+            player->frame = 0;
+            player->frameTime = 0.0f;
+            player->isAttacking = false;
             player->ActionTimer = 0.0f;
             TraceLog(LOG_INFO, "Player: Action finished, back to IDLE");
         }
@@ -63,13 +67,28 @@ void PlayerInput::HandleMovement(Player* player)
     {
         player->Velocity.x /= Length;
         player->Velocity.y /= Length;
+        if (player->currentState != WALK) {
+            player->currentState = WALK;
+            player->frame = 0;
+            player->frameTime = 0.0f;
+        }
         player->State = PLAYER_MOVING;
     }
     else
     {
+        if (player->currentState != IDLE) {
+            player->currentState = IDLE;
+            player->frame = 0;
+            player->frameTime = 0.0f;
+        }
         if (player->State == PLAYER_MOVING)
             player->State = PLAYER_IDLE;
     }
+
+    if (player->Velocity.x < 0) player->currentDir = LEFT;
+    else if (player->Velocity.x > 0) player->currentDir = RIGHT;
+    else if (player->Velocity.y < 0) player->currentDir = UP;
+    else if (player->Velocity.y > 0) player->currentDir = DOWN;
 }
 
 void PlayerInput::HandleHotbar(Player* player)
@@ -115,7 +134,13 @@ void PlayerInput::HandleActionKey(Player* player)
     if (currentSlot.type == SLOT_WEAPON)
     {
         player->State = PLAYER_ATTACKING;
-        player->ActionTimer = player->ActionDuration;
+        player->ActionTimer = 0.25f; // Durasi attack disesuaikan 2 frame x 0.12f
+
+        player->currentState = ATTACK;
+        player->frame = 0;
+        player->frameTime = 0.0f;
+        player->isAttacking = true;
+
         TraceLog(LOG_INFO, "Player: [SPACE] ATTACK with %s!", currentSlot.name);
         return;
     }
@@ -185,6 +210,11 @@ void PlayerInput::HandleTestDeath(Player* player)
 
     player->bIsAlive = false;
     player->State = PLAYER_DEAD;
+    
+    player->currentState = DEAD;
+    player->frame = 0;
+    player->isDead = true;
+
     player->bInventoryOpen = false;
     player->bMapOpen = false;
     TraceLog(LOG_INFO, "Player: [K] TEST DEATH — Player is now DEAD!");
@@ -200,5 +230,9 @@ void PlayerInput::HandleTestRevive(Player* player)
 
     player->bIsAlive = true;
     player->State = PLAYER_IDLE;
+
+    player->currentState = IDLE;
+    player->isDead = false;
+
     TraceLog(LOG_INFO, "Player: [R] TEST REVIVE — Player is now ALIVE!");
 }

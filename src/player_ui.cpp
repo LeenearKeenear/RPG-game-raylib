@@ -45,7 +45,7 @@ void PlayerUI::RenderHUD(Player* player)
         RenderDeathOverlay(player);
 }
 
-void PlayerUI::RenderInventoryUI(Player* player)
+void PlayerUI::RenderInventoryUI(Player* /*player*/)
 {
     const int panelW = 400;
     const int panelH = 350;
@@ -128,7 +128,7 @@ void PlayerUI::RenderMapUI(Player* player)
     DrawText("[M] Close", panelX + 15, panelY + panelH - 28, 14, GRAY);
 }
 
-void PlayerUI::RenderDeathOverlay(Player* player)
+void PlayerUI::RenderDeathOverlay(Player* /*player*/)
 {
     DrawRectangle(0, 0, GameScreenWidth, GameScreenHeight, Fade(BLACK, 0.7f));
     const char *deadText = "YOU DIED";

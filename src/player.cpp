@@ -2,7 +2,6 @@
 #include "../include/player_input.h"
 #include "../include/player_ui.h"
 #include "../include/player_camera.h"
-#include "../include/debug.h"
 #include "../include/map.h"
 
 // ================================================================
@@ -88,7 +87,7 @@ void Player::Update(void)
     else if (currentState == ATTACK) {
         frameSpeed = 0.12f; // Animasi serang
         if (frameTime >= frameSpeed) {
-            frame++;
+            if (frame < 1) frame++;
             frameTime = 0;
             int maxAttackFrames = 1;
 
@@ -112,19 +111,26 @@ void Player::Update(void)
 
 void Player::Render(void)
 {
-    if (bIsAlive)
-    {
-        RenderTilePNG(Position.x, Position.y, TILE_PLAYER_NEW, 0.0f, TEXTURE_KNIGHT);
+    int row = (int)currentDir;
+    int col = frame;
+
+    if (currentState == ATTACK) {
+        if (currentDir == LEFT || currentDir == RIGHT) {
+            int attackFrames[2] = {6, 7};
+            col = attackFrames[frame % 2]; 
+        } else {
+            int attackFrames[2] = {4, 5};
+            col = attackFrames[frame % 2];
+        }
     }
-    else
-    {
-        RenderTilePNG(Position.x, Position.y, TILE_PLAYER_NEW, 0.0f, TEXTURE_KNIGHT);
+
+    if (currentState == DEAD) {
+        row = 4;
+        col = 0;
     }
 
     Rectangle src = GetFrame(col, row);
     
-    // Gambar player (HEAD uses DrawTextureRec, feat-key-bind uses RenderTilePNG)
-    // Di sini kita pakai DrawTextureRec karena lebih fleksibel buat animasi custom
     DrawTextureRec(CharTexture, src, Position, bIsAlive ? WHITE : MAROON);
 }
 

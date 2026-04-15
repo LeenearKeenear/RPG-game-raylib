@@ -4,6 +4,7 @@
 #include "map.h"
 #include "screen.h"
 #include "animation.h"
+#include "frustum.h"
 
 // ================================================================
 // Player Class
@@ -82,6 +83,16 @@ private:
     bool bIsAlive = true;
     bool bInventoryOpen = false;
     bool bMapOpen = false;
+    
+    // ---- Animation State ----
+    float frameTime = 0.0f;
+    float frameSpeed = 0.0f;
+    int frame = 0;
+    int walkFrameIndex = 0;
+    enum State currentState = IDLE;
+    Direction currentDir = DOWN;
+    bool isAttacking = false;
+    bool isDead = false;
 
     // ---- Hotbar (slot 1-4) ----
     int SelectedHotbarSlot = 0; 
