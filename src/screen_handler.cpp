@@ -3,7 +3,6 @@
 #include "../include/player.h"
 #include "../include/entities.h"
 #include "../include/debug.h"
-#include "../include/frustum.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -105,8 +104,7 @@ void DrawRenderTexture(GameState *state)
     BeginTextureMode(state->Dungeon);
     ClearBackground(RAYWHITE);
 
-    // RenderMap();
-    RenderMapCulled();
+    RenderMap();
 
     BeginMode2D(camera);
     RenderEntities();

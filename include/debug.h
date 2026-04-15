@@ -22,7 +22,6 @@ private:
     void DrawCameraPanel(void); // panel info camera
     void DrawPlayerPanel(void); // panel info player position
     void DrawZoomPanel(void);   // panel zoom debug + handle zoom input
-    void DrawFrustumPanel(void); // panel info frustum culling
     // void DebugMouse(GameState *state); // handle mouse position
 };
 
