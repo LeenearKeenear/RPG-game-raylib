@@ -1,8 +1,10 @@
 #include "../include/screen.h"
 #include "../include/map.h"
+#include "../include/animation.h"
 #include "../include/player.h"
 #include "../include/entities.h"
 #include "../include/debug.h"
+#include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -54,7 +56,7 @@ GameState InitScreen(void)
     InitAudioDevice();
 
     state.WindowScreenWidth = (int)(GetMonitorWidth(0) * ScaleMultiplierMonitor);
-    state.WindowScreenHeight = (int)(GetMonitorHeight(0) * ScaleMultiplierMonitor);
+    state.WindowScreenHeight = (int)(GetMonitorHeight(0) * ScaleMinMultiplierMonitor);
     state.ScaleMultiplier = MIN(
         (float)state.WindowScreenWidth / GameScreenWidth,
         (float)state.WindowScreenHeight / GameScreenHeight);
@@ -108,6 +110,7 @@ void DrawRenderTexture(GameState *state)
 
     BeginMode2D(camera);
     RenderEntities();
+    DebugInstance.DrawWorldOverlay();
     EndMode2D();
 
     // render HUD (hotbar, state, overlay UI) di screen space

@@ -1,52 +1,26 @@
 #pragma once
-#include <raylib.h>
-#include <vector>
+#include "../lib/raylib/include/raylib.h"
 #include "map.h"
 #include "screen.h"
-#include "animation.h"
-#include "frustum.h"
 
 // ================================================================
 // Player Class
-// Handle semua behavior player: movement, collision, render,
-// key binding, state management, inventory, dan hotbar.
-// Logic dipecah dan ditangani oleh Component:
-// - PlayerInput
-// - PlayerUI
-// - PlayerCameraManager
+// Handle semua behavior player: movement, collision, render
+//
+// Workflow collision:
+// - Collision dibaca dari object layer "collision" di Tiled
+// - Setiap Rectangle / Polygon di layer itu dianggap solid/blocked
+// - CanMove() ngecek apakah posisi baru player nabrak salah satu shape itu
+//
+// Workflow world bound:
+// - World boundary custom dibaca dari object layer "map_bound" di Tiled
+// - Kalau layer boundary tidak ada / tidak punya polygon,
+//   CanMove() fallback ke rectangle ukuran map
+//
+// Workflow spawn:
+// - Spawn point dibaca dari object bernama "spawn" di Tiled
+// - Init() otomatis taruh player di posisi spawn
 // ================================================================
-
-#define COLLISION_LAYER_NAME "collision"
-#define SPAWN_OBJECT_NAME "spawn"
-
-typedef enum
-{
-    PLAYER_IDLE,
-    PLAYER_MOVING,
-    PLAYER_ATTACKING,
-    PLAYER_DRINKING_POTION,
-    PLAYER_INTERACTING,
-    PLAYER_DEAD
-} PlayerState;
-
-typedef enum
-{
-    SLOT_WEAPON,
-    SLOT_POTION
-} HotbarSlotType;
-
-struct HotbarSlot
-{
-    HotbarSlotType type;       
-    const char *name;          
-    bool isEmpty;              
-};
-
-// Deklarasi Handlers
-class PlayerInput;
-class PlayerUI;
-class PlayerCameraManager;
-
 class Player
 {
 public:
@@ -58,53 +32,50 @@ public:
 
     Vector2 GetPosition() { return Position; }
     float GetSpeed() { return Speed; }
-    PlayerState GetState() { return State; }
-    bool IsAlive() { return bIsAlive; }
-    bool IsInventoryOpen() { return bInventoryOpen; }
-    bool IsMapOpen() { return bMapOpen; }
-    int GetSelectedSlot() { return SelectedHotbarSlot; }
-    HotbarSlot GetHotbarSlot(int index);
+
+    // getter hitbox player — dipake collision dan debug panel
+    float GetHitboxWidth() { return HitboxWidth; }
+    float GetHitboxHeight() { return HitboxHeight; }
+    float GetHitboxOffsetX() { return HitboxOffsetX; }
+    float GetHitboxOffsetY() { return HitboxOffsetY; }
+
+    // hitung range tile yang visible di layar berdasarkan camera viewport
+    // ini adalah inti logic frustum culling — dipake oleh RenderMapCulled()
     TileRange GetVisibleTileRange(void);
     void RenderHUD(void);
 
 private:
-    friend class PlayerInput;
-    friend class PlayerUI;
-    friend class PlayerCameraManager;
-
     Vector2 Position;
     Vector2 Velocity;
     int TileSize = 32;
     float Speed = 4.0f;
     Texture2D CharTexture;
 
-    // ---- State ----
-    PlayerState State = PLAYER_IDLE;
-    bool bIsAlive = true;
-    bool bInventoryOpen = false;
-    bool bMapOpen = false;
-    
-    // ---- Animation State ----
-    float frameTime = 0.0f;
-    float frameSpeed = 0.0f;
-    int frame = 0;
-    int walkFrameIndex = 0;
-    enum State currentState = IDLE;
-    Direction currentDir = DOWN;
-    bool isAttacking = false;
-    bool isDead = false;
+    // ukuran hitbox player bisa diperkecil dari sprite biar movement
+    // terasa lebih enak dan gak gampang nyangkut di sudut/object.
+    float HitboxWidth = 18.0f;
+    float HitboxHeight = 13.0f;
+    float HitboxOffsetX = 6.0f;
+    float HitboxOffsetY = 18.2f;
 
-    // ---- Hotbar (slot 1-4) ----
-    int SelectedHotbarSlot = 0; 
-    HotbarSlot Hotbar[4];
-
-    // ---- Action Timers ----
-    float ActionTimer = 0.0f;        
-    float ActionDuration = 0.5f;     
-
-    // ---- Collision ----
+    // cek apakah posisi baru player nabrak collision shape
+    // atau keluar dari world boundary
+    // return false kalau nabrak / keluar bound, true kalau aman
     bool CanMove(Vector2 NewPos);
+
+    // collision rectangles dari object layer Tiled
+    // diisi pas Init() dari TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME)
     std::vector<Rectangle> CollisionRects;
+
+    // collision polygon dari object layer Tiled
+    // diisi pas Init() dari object collision yang punya polygon
+    std::vector<std::vector<Vector2>> CollisionPolygons;
+
+    // custom world boundary polygon dari object layer Tiled
+    // diisi pas Init() dari TilesonGetObjectsByLayerName(MAP_BOUND_LAYER_NAME)
+    // kalau kosong, CanMove() fallback ke rectangle ukuran map
+    std::vector<Vector2> WorldBoundaryPolygon;
 };
 
+// global instance — bisa diakses file lain via extern
 extern Player PlayerInstance;

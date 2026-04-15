@@ -11,7 +11,7 @@
          "name":"ground",
          "opacity":1,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":20,
          "x":0,
          "y":0
@@ -25,7 +25,7 @@
          "name":"deco",
          "opacity":1,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":20,
          "x":0,
          "y":0
@@ -33,7 +33,7 @@
         {
          "draworder":"topdown",
          "id":3,
-         "name":"map_bound",
+         "name":"obstacle",
          "objects":[
                 {
                  "height":0,
@@ -119,18 +119,7 @@
                  "width":0,
                  "x":8,
                  "y":544
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":5,
-         "name":"obstacle",
-         "objects":[
+                }, 
                 {
                  "height":28.5454545454546,
                  "id":4,
@@ -168,7 +157,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":true,
+         "visible":false,
          "x":0,
          "y":0
         }, 
@@ -191,7 +180,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":true,
+         "visible":false,
          "x":0,
          "y":0
         }],

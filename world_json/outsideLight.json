@@ -416,7 +416,7 @@
         {
          "columns":17,
          "firstgid":1,
-         "image":"..\/RPG-game-raylib\/texture\/tiles.png",
+         "image":"..\/texture\/tiles.png",
          "imageheight":832,
          "imagewidth":544,
          "margin":0,
@@ -429,7 +429,7 @@
         {
          "columns":14,
          "firstgid":443,
-         "image":"..\/RPG-game-raylib\/texture\/map.png",
+         "image":"..\/texture\/map.png",
          "imageheight":428,
          "imagewidth":500,
          "margin":0,

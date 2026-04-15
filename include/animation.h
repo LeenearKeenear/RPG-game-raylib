@@ -1,73 +1,133 @@
 #pragma once
+
+// ================================================================
+// Animation System
+// Handle semua animasi sprite untuk player, enemy, dan entity lain.
+//
+// Semua logic animasi (frame switching, timing, direction)
+// dipusatin di sini biar gak nyebar ke mana-mana.
+//
+// ================================================================
+
 #include "raylib.h"
 
-// --- CONFIG ---
-// TILE_SIZE dan TILE_GAP juga didefinisikan di map.h sebagai #define.
-// Pakai #ifndef supaya gak konflik kalau map.h sudah di-include duluan.
-#ifndef TILE_SIZE
+// ================================================================
+// Texture & Asset
+// ================================================================
+
+// dawg ini dipindah dawg
+// jumlah maksimum slot texture PNG yang bisa di-load
+#define MAX_TEXTURES 3
+
+// dawg ini dipindah dawg
+// enum buat milih slot texture — tambah di sini kalau ada asset baru
+typedef enum
+{
+    TEXTURE_TILEMAP = 0,
+    TEXTURE_KNIGHT
+} TextureAsset;
+
+// dawg ini dipindah dawg
+extern Texture2D TexturesMap[MAX_TEXTURES];
+
+// ================================================================
+// Tile System
+// ================================================================
+
+// dawg ini dipindah dawg
+// koordinat universal buat posisi tile di spritesheet atau world
+typedef struct
+{
+    int x;
+    int y;
+} TileCoordinate;
+
+// dawg ini dipindah dawg
+// enum semua jenis tile yang ada — tambah di sini kalau ada tile baru
+typedef enum
+{
+    TILE_CLU_WALL,
+    TILE_CMU_WALL,
+    TILE_CRU_WALL,
+    TILE_CML_WALL,
+    TILE_M_WALL,
+    TILE_CMR_WALL,
+    TILE_CLD_WALL,
+    TILE_CMD_WALL,
+    TILE_CRD_WALL,
+    TILE_POOL,
+    TILE_BIGMAN,
+    TILE_GRASS1,
+    TILE_GRASS2,
+    TILE_DOOR_OPEN,
+    TILE_DOOR_CLOSE,
+    TILE_PLAYER_NEW
+} TileType;
+
+// dawg ini dipindah dawg
+// properti tiap tile: posisi di spritesheet, bisa dilewatin, ada interaksi gak
+typedef struct
+{
+    TileCoordinate CoordID;
+    bool IsWalkable;
+    bool HasInteraction;
+} TileDefinition;
+
+// dawg ini dipindah dawg
+// ukuran tile dalam pixel + gap antar tile di spritesheet
 #define TILE_SIZE 32
-#endif
-#ifndef TILE_GAP
 #define TILE_GAP 4
-#endif
 
-// --- ENUMS ---
-enum State {
-    IDLE,
-    WALK,
-    ATTACK,
-    DEAD
-};
+// load texture PNG ke slot yang ditentuin
+void LoadTileTexture(TextureAsset Slot, const char *Path);
 
-enum Direction {
-    LEFT,
-    RIGHT,
-    DOWN,
-    UP
-};
+// render satu tile dari spritesheet ke posisi world
+void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
 
-// --- ANIMATION PLAYER STRUCT ---
-struct AnimationPlayer {
-    Vector2 position;
+// // --- ENUMS ---
+// enum State
+// {
+//     IDLE,
+//     WALK,
+//     ATTACK,
+//     DEAD
+// };
 
-    State state;
-    Direction direction;
+// enum Direction
+// {
+//     LEFT,
+//     RIGHT,
+//     DOWN,
+//     UP
+// };
 
-    int frame;
-    float frameTime;
-    float frameSpeed;
+// // --- PLAYER STRUCT ---
+// struct Player
+// {
+//     Vector2 position;
 
-    int walkFrameIndex;
+//     State state;
+//     Direction direction;
 
-    bool isAttacking;
-    bool isDead;
-};
+//     int frame;
+//     float frameTime;
+//     float frameSpeed;
 
-// --- FUNCTION DECLARATIONS ---
-// Get frame rectangle from spritesheet
-Rectangle GetFrame(int frameX, int frameY);
+//     int walkFrameIndex;
 
-// Load/unload knight texture
-void LoadKnightTexture();
-void UnloadKnightTexture();
+//     bool isAttacking;
+//     bool isDead;
+// };
 
-// Direction-specific update functions
-void UpdatePlayerWalkUp(AnimationPlayer &p);
-void UpdatePlayerWalkDown(AnimationPlayer &p);
-void UpdatePlayerWalkLeft(AnimationPlayer &p);
-void UpdatePlayerWalkRight(AnimationPlayer &p);
-void UpdatePlayerIdle(AnimationPlayer &p);
-void UpdatePlayerAttack(AnimationPlayer &p);
-void UpdatePlayerDeath(AnimationPlayer &p);
+// // --- FUNCTION DECLARATIONS ---
+// // Get frame rectangle from spritesheet
+// Rectangle GetFrame(int frameX, int frameY);
 
-// Update animation frames based on state
-void UpdateAnimation(AnimationPlayer &p, float dt);
+// // Update player input and state
+// void UpdatePlayer(Player &p);
 
-// Draw player sprite
-void DrawPlayer(AnimationPlayer &p);
+// // Update animation frames based on state
+// void UpdateAnimation(Player &p, float dt);
 
-// Buat dipanggil biar gerak
-void MoveUp(Vector2 &position, float amount);
-void MoveDown(Vector2 &position, float amount);
-void MoveLeft(Vector2 &position, float amount);
-void MoveRight(Vector2 &position, float amount);
+// // Draw player sprite
+// void DrawPlayer(Player &p, Texture2D texture);
