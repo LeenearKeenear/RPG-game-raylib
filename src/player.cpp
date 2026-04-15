@@ -151,9 +151,7 @@ void Player::Update(void)
         if (frameTime >= frameSpeed) {
             frame++;
             frameTime = 0;
-
-            // Atas/Bawah punya 2 frame (max index 1), Kiri/Kanan punya 4 frame (max index 3)
-            int maxAttackFrames = (currentDir == UP || currentDir == DOWN) ? 1 : 3;
+            int maxAttackFrames = 1;
 
             // Jika animasi serangan selesai
             if (frame > maxAttackFrames) {
@@ -181,7 +179,7 @@ void Player::Render(void)
     if (currentState == ATTACK) {
         if (currentDir == LEFT || currentDir == RIGHT) {
             // Kiri/Kanan: Tile 7, 8, 6, 5 (1-based) -> 6, 7, 5, 4 (0-based)
-            int attackFrames[4] = {6, 7, 5, 4};
+            int attackFrames[4] = {6, 7};
             col = attackFrames[frame % 4]; 
         } else {
             // Atas/Bawah: Tile 5, 6 (1-based) -> 4, 5 (0-based)
