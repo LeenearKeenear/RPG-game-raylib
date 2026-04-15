@@ -62,7 +62,6 @@ void Player::Init(void)
         TraceLog(LOG_WARNING, "Player: Spawn object '%s' not found, using default position", SPAWN_OBJECT_NAME);
     }
 
-    
     // ambil semua collision object dari object layer Tiled
     // rectangle disimpan ke CollisionRects, polygon disimpan ke CollisionPolygons
     TiledHelper::CollisionResult collision;
@@ -131,88 +130,22 @@ void Player::Render(void)
 // Collision box player diasumsiin 1 tile (TileSize x TileSize).
 // Return false kalau nabrak / keluar bound, true kalau aman.
 // ================================================================
-bool Player::CanMove(Vector2 NewPos)
+bool Player::CanMove(Vector2 newPosition)
 {
-    Rectangle playerBox = {
-        NewPos.x + HitboxOffsetX,
-        NewPos.y + HitboxOffsetY,
-        HitboxWidth,
-        HitboxHeight};
+    // --- Build hitbox at new position ---
+    Rectangle hitbox = BuildHitbox(newPosition, HitboxOffsetX, HitboxOffsetY,
+                                   HitboxWidth, HitboxHeight);
 
-    // titik-titik penting player box buat cek polygon collision
-    Vector2 playerPoints[4] = {
-        {playerBox.x, playerBox.y},
-        {playerBox.x + playerBox.width, playerBox.y},
-        {playerBox.x, playerBox.y + playerBox.height},
-        {playerBox.x + playerBox.width, playerBox.y + playerBox.height}};
-
-    // helper point-in-polygon sederhana (ray casting)
-    auto IsPointInsidePolygon = [](Vector2 point, const std::vector<Vector2> &polygonPoints) -> bool
-    {
-        bool inside = false;
-        int pointCount = (int)polygonPoints.size();
-
-        if (pointCount < 3)
-            return false;
-
-        for (int i = 0, j = pointCount - 1; i < pointCount; j = i++)
-        {
-            const Vector2 &pi = polygonPoints[i];
-            const Vector2 &pj = polygonPoints[j];
-
-            bool intersect = ((pi.y > point.y) != (pj.y > point.y)) &&
-                             (point.x < (pj.x - pi.x) * (point.y - pi.y) / ((pj.y - pi.y) + 0.00001f) + pi.x);
-
-            if (intersect)
-                inside = !inside;
-        }
-
-        return inside;
-    };
-    // ============================================================
-    // 1. collision rectangle biasa dari object layer Tiled
-    // setiap rectangle object di layer collision dianggap solid
-    // ============================================================
-    for (auto &rect : CollisionRects)
-    {
-        if (CheckCollisionRecs(playerBox, rect))
-            return false;
-    }
-
-    // ============================================================
-    // 2. collision polygon dari object layer Tiled
-    // kalau salah satu titik player masuk ke polygon collision,
-    // gerakan diblok
-    // ============================================================
-    for (auto &polygon : CollisionPolygons)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            if (IsPointInsidePolygon(playerPoints[i], polygon))
-                return false;
-        }
-    }
-
-    // ============================================================
-    // 3. world bound rectangle dari ukuran map
-    // custom world boundary polygon sementara tidak dipakai,
-    // karena hasil runtime nunjukin polygon seperti OffmapBoundary
-    // lebih cocok diperlakukan sebagai collision polygon.
-    //
-    // Jadi rule batas dunia sekarang disederhanakan:
-    // - area terlarang/non-playable ditangani collision object
-    // - batas luar map ditangani rectangle ukuran map
-    // ============================================================
-    float MapW = (float)tilesonMap->width * TILE_SIZE;
-    float MapH = (float)tilesonMap->height * TILE_SIZE;
-
-    if (playerBox.x < 0.0f)
+    // --- World bounds check ---
+    if (!IsWithinWorldBounds(hitbox, tilesonMap->width * TILE_SIZE, tilesonMap->height * TILE_SIZE))
         return false;
-    if (playerBox.y < 0.0f)
+
+    // --- Check rect collisions ---
+    if (CheckCollisionAgainstRects(hitbox, CollisionRects))
         return false;
-    if (playerBox.x + playerBox.width > MapW)
-        return false;
-    if (playerBox.y + playerBox.height > MapH)
+
+    // --- Check polygon collisions ---
+    if (CheckCollisionAgainstPolygons(hitbox, CollisionPolygons))
         return false;
 
     return true;

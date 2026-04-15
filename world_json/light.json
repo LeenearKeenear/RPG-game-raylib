@@ -394,19 +394,19 @@
                  "type":"interact",
                  "visible":true,
                  "width":23.9375,
-                 "x":580.0625,
-                 "y":932.125
+                 "x":578.729166666667,
+                 "y":936.125
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
         {
          "draworder":"topdown",
          "id":8,
-         "name":"doorToInside",
+         "name":"pass",
          "objects":[
                 {
                  "height":27.875,
@@ -419,18 +419,7 @@
                  "width":28.75,
                  "x":609.5,
                  "y":993.875
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":false,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":9,
-         "name":"passToCave",
-         "objects":[
+                }, 
                 {
                  "height":30.6875,
                  "id":8,
@@ -442,15 +431,27 @@
                  "width":30.8125,
                  "x":1216.625,
                  "y":512.75
+                }, 
+                {
+                 "height":140,
+                 "id":11,
+                 "name":"spawn",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"spawn",
+                 "visible":true,
+                 "width":146.666666666667,
+                 "x":72,
+                 "y":256
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }],
  "nextlayerid":11,
- "nextobjectid":11,
+ "nextobjectid":12,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

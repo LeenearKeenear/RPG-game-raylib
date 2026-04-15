@@ -19,16 +19,6 @@ bool TiledHelper::TryGetObjectPositionByName(const std::string &objectName, Vect
     return true;
 }
 
-bool TiledHelper::TryGetObjectPositionByLayerName(const std::string &layerName, Vector2 &outPosition)
-{
-    std::vector<MapObject> objs = TilesonGetObjectsByLayerName(layerName.c_str());
-    if (objs.empty())
-        return false;
-
-    outPosition = {objs[0].bounds.x, objs[0].bounds.y};
-    return true;
-}
-
 bool TiledHelper::TryGetObjectPositionByType(const std::string &objectType, Vector2 &outPosition)
 {
     std::vector<MapObject> objs = TilesonGetObjectsByType(objectType.c_str());
@@ -43,26 +33,6 @@ bool TiledHelper::TryGetObjectPositionByType(const std::string &objectType, Vect
 // BOUNDS HELPERS
 // =============================================
 
-bool TiledHelper::TryGetObjectBoundsByName(const std::string &objectName, Rectangle &outBounds)
-{
-    MapObject *obj = TilesonGetObjectByName(objectName.c_str());
-    if (obj == nullptr)
-        return false;
-
-    outBounds = obj->bounds;
-    return true;
-}
-
-bool TiledHelper::TryGetObjectBoundsByLayerName(const std::string &layerName, Rectangle &outBounds)
-{
-    std::vector<MapObject> objs = TilesonGetObjectsByLayerName(layerName.c_str());
-    if (objs.empty())
-        return false;
-
-    outBounds = objs[0].bounds;
-    return true;
-}
-
 bool TiledHelper::TryGetObjectBoundsByType(const std::string &objectType, Rectangle &outBounds)
 {
     std::vector<MapObject> objs = TilesonGetObjectsByType(objectType.c_str());
@@ -76,20 +46,6 @@ bool TiledHelper::TryGetObjectBoundsByType(const std::string &objectType, Rectan
 // =============================================
 // COLLISION HELPERS
 // =============================================
-
-bool TiledHelper::TryGetCollisionByName(const std::string &objectName, CollisionResult &outCollision)
-{
-    MapObject *obj = TilesonGetObjectByName(objectName.c_str());
-    if (obj == nullptr)
-        return false;
-
-    if (obj->hasPolygon)
-        outCollision.polygons.push_back(obj->polygonPoints);
-    else
-        outCollision.rects.push_back(obj->bounds);
-
-    return true;
-}
 
 bool TiledHelper::TryGetCollisionByLayerName(const std::string &layerName, CollisionResult &outCollision)
 {

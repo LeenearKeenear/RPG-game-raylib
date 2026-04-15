@@ -42,10 +42,10 @@ std::vector<Debug::DebugPanelEntry> Debug::BuildActivePanels(void) const
     // daftar panel aktif
     // urutan di vector = urutan layout di grid
     panels.push_back({"Map", &Debug::DrawMapPanel, true});
-    panels.push_back({"Camera", &Debug::DrawCameraPanel, true});
-    panels.push_back({"Player", &Debug::DrawPlayerPanel, true});
+    // panels.push_back({"Camera", &Debug::DrawCameraPanel, true});
+    // panels.push_back({"Player", &Debug::DrawPlayerPanel, true});
     panels.push_back({"Zoom", &Debug::DrawZoomPanel, true});
-    panels.push_back({"Frustum", &Debug::DrawFrustumPanel, true});
+    // panels.push_back({"Frustum", &Debug::DrawFrustumPanel, true});
     panels.push_back({"Collision", &Debug::DrawCollisionPanel, true});
 
     return panels;

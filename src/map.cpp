@@ -192,8 +192,8 @@ void InitMap(void)
 
 
     // LoadMap("world_json/cave.json");
-    LoadMap("world_json/inside.json");
-    // LoadMap("world_json/light.json");
+    // LoadMap("world_json/inside.json");
+    LoadMap("world_json/light.json");
 }
 
 // ================================================================

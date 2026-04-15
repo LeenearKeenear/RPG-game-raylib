@@ -66,10 +66,10 @@ private:
 
     // ukuran hitbox player bisa diperkecil dari sprite biar movement
     // terasa lebih enak dan gak gampang nyangkut di sudut/object.
-    float HitboxWidth = 20.0f;
-    float HitboxHeight = 16.0f;
+    float HitboxWidth = 18.0f;
+    float HitboxHeight = 13.0f;
     float HitboxOffsetX = 6.0f;
-    float HitboxOffsetY = 14.0f;
+    float HitboxOffsetY = 18.2f;
 
     // cek apakah posisi baru player nabrak collision shape
     // atau keluar dari world boundary
