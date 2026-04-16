@@ -98,6 +98,12 @@ void Player::Init(void)
     TraceLog(LOG_INFO, "Player: Loaded %d collision rects", (int)CollisionRects.size());
     TraceLog(LOG_INFO, "Player: Loaded %d collision polygons", (int)CollisionPolygons.size());
     TraceLog(LOG_INFO, "Player: Custom world boundary %s", WorldBoundaryPolygon.empty() ? "not found" : "loaded");
+
+    // Initialize default hotbar items
+    Hotbar[0] = {ITEM_WEAPON, "Iron Sword", 1, 10, 0};
+    Hotbar[1] = {ITEM_WEAPON, "Wooden Bow", 1, 5, 0};
+    Hotbar[2] = {ITEM_POTION, "Health Potion", 3, 0, 20};
+    Hotbar[3] = {ITEM_POTION, "Mana Potion", 2, 0, 15};
 }
 
 // ================================================================
@@ -239,9 +245,18 @@ void Player::HandleSpaceAction(void)
         break;
 
     case ACTION_DRINK_POTION:
-        // TODO: implementasi efek potion (heal, buff, dll)
-        TraceLog(LOG_INFO, "PLAYER: Drink potion! (slot %d)", (int)InputInstance.GetActiveSlot());
+    {
+        int slotIdx = (int)InputInstance.GetActiveSlot() - 1;
+        if (slotIdx >= 0 && slotIdx < 4) {
+            if (Hotbar[slotIdx].type == ITEM_POTION && Hotbar[slotIdx].amount > 0) {
+                UsePotion(slotIdx);
+                TraceLog(LOG_INFO, "PLAYER: Drink potion! %s (slot %d)", Hotbar[slotIdx].name.c_str(), (int)InputInstance.GetActiveSlot());
+            } else {
+                TraceLog(LOG_INFO, "PLAYER: No potion in slot %d!", (int)InputInstance.GetActiveSlot());
+            }
+        }
         break;
+    }
 
     case ACTION_EQUIP_UNEQUIP:
         // TODO: implementasi equip/unequip dari inventori
@@ -251,6 +266,29 @@ void Player::HandleSpaceAction(void)
     case ACTION_NONE:
     default:
         break;
+    }
+}
+
+// ================================================================
+// UsePotion()
+// Terapkan efek potion dan kurangi jumlahnya.
+// ================================================================
+void Player::UsePotion(int slotIndex)
+{
+    if (Hotbar[slotIndex].type != ITEM_POTION || Hotbar[slotIndex].amount <= 0)
+        return;
+
+    // Apply heal
+    Health += Hotbar[slotIndex].healValue;
+    if (Health > MaxHealth) Health = MaxHealth;
+
+    // TODO: if Mana potion, apply mana heal
+
+    // Consume item
+    Hotbar[slotIndex].amount--;
+    if (Hotbar[slotIndex].amount <= 0) {
+        // Option: Clear slot or keep empty potion? Let's clear for now if it was a basic consumable
+        // Hotbar[slotIndex] = {ITEM_NONE, "", 0, 0, 0};
     }
 }
 

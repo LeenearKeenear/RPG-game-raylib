@@ -125,7 +125,7 @@ public:
 
 private:
     InputState Current = {};
-    ItemSlot ActiveSlot = SLOT_NONE;
+    ItemSlot ActiveSlot = SLOT_WEAPON_1;
     bool InventoryOpen = false;
     bool MapOpen = false;
 };

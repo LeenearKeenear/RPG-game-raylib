@@ -27,6 +27,65 @@ static void DrawStatBar(Vector2 pos, float width, float height, float ratio, Col
     DrawText(buffer, (int)(pos.x + width + 15), (int)pos.y + 1, 18, WHITE);
 }
 
+void DrawHotbar()
+{
+    extern const int GameScreenWidth;
+    extern const int GameScreenHeight;
+
+    const float slotSize = 65.0f; // Kotak diperbesar
+    const float padding = 12.0f;
+    const float screenPadding = 30.0f; // Menyamakan dengan padding HP bar
+    const float totalWidth = (slotSize * 4) + (padding * 3);
+    
+    // Taruh di kanan bawah
+    const float startX = (float)GameScreenWidth - screenPadding - totalWidth;
+    const float startY = (float)GameScreenHeight - screenPadding - slotSize;
+
+    ItemSlot activeSlot = InputInstance.GetActiveSlot();
+
+    for (int i = 0; i < 4; i++)
+    {
+        Rectangle slotRect = {startX + (i * (slotSize + padding)), startY, slotSize, slotSize};
+        bool isActive = (activeSlot == (int)(i + 1));
+
+        // 1. Shadow
+        DrawRectangleRounded((Rectangle){slotRect.x + 2, slotRect.y + 2, slotRect.width, slotRect.height}, 0.2f, 8, ColorAlpha(BLACK, 0.4f));
+
+        // 2. Background
+        Color bgColor = isActive ? ColorAlpha(GOLD, 0.3f) : ColorAlpha(DARKGRAY, 0.6f);
+        DrawRectangleRounded(slotRect, 0.2f, 8, bgColor);
+
+        // 3. Border
+        Color borderColor = isActive ? GOLD : ColorAlpha(WHITE, 0.3f);
+        DrawRectangleRoundedLines(slotRect, 0.2f, 8, borderColor);
+
+        // 4. Item Info
+        InventoryItem item = PlayerInstance.GetHotbarItem(i);
+        if (item.type != ITEM_NONE)
+        {
+            // Draw item name abbreviation or icon-like text
+            const char* label = (item.type == ITEM_WEAPON) ? "W" : "P";
+            Color labelColor = (item.type == ITEM_WEAPON) ? LIGHTGRAY : SKYBLUE;
+            
+            DrawText(label, (int)slotRect.x + 8, (int)slotRect.y + 8, 15, labelColor);
+
+            // Draw amount if > 1 or it's a potion
+            if (item.amount > 0)
+            {
+                char amtBuf[12];
+                sprintf(amtBuf, "%d", item.amount);
+                int textW = MeasureText(amtBuf, 12);
+                DrawText(amtBuf, (int)(slotRect.x + slotRect.width - textW - 5), (int)(slotRect.y + slotRect.height - 15), 12, WHITE);
+            }
+        }
+
+        // 5. Slot Number (Key bind)
+        char keyBuf[4];
+        sprintf(keyBuf, "%d", i + 1);
+        DrawText(keyBuf, (int)slotRect.x + 2, (int)slotRect.y - 12, 10, GRAY);
+    }
+}
+
 void DrawPlayerHUD()
 {
     // Data stats
@@ -43,8 +102,7 @@ void DrawPlayerHUD()
     if (healthRatio < 0.25f) healthColor = RED;
     else if (healthRatio < 0.5f) healthColor = ORANGE;
 
-    // Konfigurasi layout (menggunakan konstanta dari screen_handler jika perlu, 
-    // tapi sementara hardcoded sesuai desain sebelumnya)
+    // Konfigurasi layout
     extern const int GameScreenHeight; 
     const float barWidth = 200.0f;
     const float barHeight = 22.0f;
@@ -60,4 +118,7 @@ void DrawPlayerHUD()
     // Draw Bars
     DrawStatBar(healthPos, barWidth, barHeight, healthRatio, healthColor, "HP", (int)health, (int)maxHealth);
     DrawStatBar(manaPos, barWidth, barHeight, manaRatio, SKYBLUE, "MP", (int)mana, (int)maxMana);
+
+    // Draw Hotbar
+    DrawHotbar();
 }

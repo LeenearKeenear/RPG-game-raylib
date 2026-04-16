@@ -4,6 +4,8 @@
 #include "screen.h"
 #include "animation.h"
 #include "input.h"
+#include "inventory.h"
+
 
 // ================================================================
 // Player Class
@@ -75,13 +77,19 @@ public:
     // info getters
     const char* GetName() { return Name; }
 
+    // Hotbar management
+    InventoryItem GetHotbarItem(int index) { return Hotbar[index]; }
+    void SetHotbarItem(int index, InventoryItem item) { Hotbar[index] = item; }
+    void UsePotion(int slotIndex);
+
+
 private:
     Vector2 Position;
     Vector2 Velocity;
     int TileSize = 32;
     float Speed = 4.0f;
     Texture2D CharTexture;
-    const char* Name = "Knight";
+    const char* Name = "Knight Character";
 
     // health player
     float Health = 100.0f;
@@ -120,11 +128,15 @@ private:
     // diisi pas Init() dari object collision yang punya polygon
     std::vector<std::vector<Vector2>> CollisionPolygons;
 
-    // custom world boundary polygon dari object layer Tiled
+    // custom world boundary polygon from object layer Tiled
     // diisi pas Init() dari TilesonGetObjectsByLayerName(MAP_BOUND_LAYER_NAME)
     // kalau kosong, CanMove() fallback ke rectangle ukuran map
     std::vector<Vector2> WorldBoundaryPolygon;
+
+    // Hotbar slots (1-4)
+    InventoryItem Hotbar[4];
 };
+
 
 // global instance — bisa diakses file lain via extern
 extern Player PlayerInstance;
