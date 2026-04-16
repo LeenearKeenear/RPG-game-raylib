@@ -8,15 +8,28 @@
  */
 static void DrawTextHUD(const char* text, int x, int y, int fontSize, Color color)
 {
-    DrawText(text, x + 2, y + 2, fontSize, ColorAlpha(BLACK, 0.6f)); // Shadow
-    DrawText(text, x, y, fontSize, color);                       // Main Text
+    // 1. Hitung lebar teks
+    int textWidth = MeasureText(text, fontSize);
+    
+    // 2. Padding background proporsional terhadap ukuran font
+    float padX = (float)fontSize * 0.8f;
+    float padY = (float)fontSize * 0.5f;
+    
+    // 3. Gambar background hitam semi-transparan
+    DrawRectangleRounded(
+        (Rectangle){ (float)x - padX/2.0f, (float)y - padY/2.0f, (float)textWidth + padX, (float)fontSize + padY }, 
+        0.3f, 8, ColorAlpha(BLACK, 0.8f)
+    );
+
+    // 4. Gambar teks utama
+    DrawText(text, x, y, fontSize, color);
 }
 
 /**
  * @brief Helper untuk menggambar bar statistik (HP/MP) dengan teks di kanannya.
  * Dibuat internal di file ini saja.
  */
-static void DrawStatBar(Vector2 pos, float width, float height, float ratio, Color color, const char* label, int current, int max)
+static void DrawStatBar(Vector2 pos, float width, float height, float ratio, Color color, int current)
 {
     // 1. Shadow & Background
     DrawRectangleRounded((Rectangle){ pos.x + 2, pos.y + 2, width, height }, 0.4f, 8, ColorAlpha(BLACK, 0.3f));
@@ -31,10 +44,17 @@ static void DrawStatBar(Vector2 pos, float width, float height, float ratio, Col
     // 3. Border
     DrawRectangleRoundedLines((Rectangle){ pos.x, pos.y, width, height }, 0.4f, 8, ColorAlpha(WHITE, 0.2f));
 
-    // 4. Text (Kanan Bar)
+    // 4. Text (Samping Bar)
     char buffer[32];
-    sprintf(buffer, "%s: %d/%d", label, current, max);
-    DrawTextHUD(buffer, (int)(pos.x + width + 15), (int)pos.y + 1, 18, WHITE);
+    sprintf(buffer, "%d", current);
+    
+    int fontSize = 18; // Ukuran disesuaikan dengan tinggi bar (22)
+    
+    // Posisikan di kanan bar
+    int textX = (int)(pos.x + width + 15);
+    int textY = (int)(pos.y + (height - fontSize) / 2.0f); // Rata tengah vertikal
+    
+    DrawTextHUD(buffer, textX, textY, fontSize, WHITE);
 }
 
 void DrawHotbar()
@@ -158,11 +178,11 @@ void DrawPlayerHUD()
     Vector2 manaPos = { barsX, (float)GameScreenHeight - padding - barHeight };
 
     // Draw Name (Di atas HP bar) dengan Shadow dan warna putih agar premium
-    DrawTextHUD(PlayerInstance.GetName(), (int)healthPos.x, (int)healthPos.y - 25, 20, WHITE);
+    DrawTextHUD(PlayerInstance.GetName(), (int)healthPos.x + 7, (int)healthPos.y - 35, 20, WHITE);
 
     // Draw Bars
-    DrawStatBar(healthPos, barWidth, barHeight, healthRatio, healthColor, "HP", (int)health, (int)maxHealth);
-    DrawStatBar(manaPos, barWidth, barHeight, manaRatio, SKYBLUE, "MP", (int)mana, (int)maxMana);
+    DrawStatBar(healthPos, barWidth, barHeight, healthRatio, healthColor, (int)health);
+    DrawStatBar(manaPos, barWidth, barHeight, manaRatio, SKYBLUE, (int)mana);
 
     // Draw Hotbar
     DrawHotbar();
