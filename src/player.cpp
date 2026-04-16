@@ -1,6 +1,8 @@
+#include "../include/mapLogic.h"
 #include "../include/player.h"
 #include "../include/debug.h"
 #include "../include/map.h"
+#include "../include/animation.h"
 #include <cmath>
 
 // ================================================================
@@ -15,40 +17,64 @@ Player PlayerInstance;
 // Inisialisasi player: load texture, ambil spawn point dari
 // object layer Tiled (nama object: SPAWN_OBJECT_NAME "spawn"),
 // dan load semua collision rectangles dari object layer
-// (type: COLLISION_LAYER_NAME "collision")
+// (layer: COLLISION_LAYER_NAME "collision")
 //
 // Cara kerja:
 // 1. Load texture character dari file png
 // 2. Cari object "spawn" di tilesonMap->Objects → set Position
-// 3. Ambil semua object type "collision" → simpen di CollisionRects
+// 3. Ambil semua object dari layer "collision" → simpen di CollisionRects / CollisionPolygons
+// 4. Ambil custom world boundary polygon dari layer "map_bound"
 // ================================================================
 void Player::Init(void)
 {
     // TODO: path texture disesuaiin sama asset yang ada
     LoadTileTexture(TEXTURE_KNIGHT, "texture/Knight.png");
 
-    // ambil spawn point dari object layer Tiled
-    MapObject *spawnObj = TilesonGetObjectByName(SPAWN_OBJECT_NAME);
-    if (spawnObj != nullptr)
+    // reset collision cache biar aman kalau nanti map di-reload
+    CollisionRects.clear();
+    CollisionPolygons.clear();
+
+    // safety check kalau map belum keload
+    if (tilesonMap == nullptr)
     {
-        // bounds.x dan bounds.y itu posisi object di Tiled (dalam pixel)
-        Position = {spawnObj->bounds.x, spawnObj->bounds.y};
+        Position = {0.0f, 0.0f};
+        TraceLog(LOG_ERROR, "Player: tilesonMap is null during Init()");
+        return;
+    }
+
+    // ================================================================
+    // ambil spawn point dari object layer Tiled
+    // pakai TiledHelperFunction.TryGetObjectPositionByName
+    // ================================================================
+    Vector2 spawnPos;
+    if (TiledHelperFunction.TryGetObjectPositionByName(SPAWN_OBJECT_NAME, spawnPos))
+    {
+        Position = spawnPos;
         TraceLog(LOG_INFO, "Player: Spawn point found at (%.1f, %.1f)", Position.x, Position.y);
     }
     else
     {
         // fallback kalau object spawn belum ada di Tiled
-        Position = {160.0f, 160.0f};
+        // posisi fallback dipusatkan ke tengah map dalam pixel
+        Position = {
+            (((float)tilesonMap->width * TILE_SIZE) / 2.0f) + TILE_SIZE * 3,
+            ((float)tilesonMap->height * TILE_SIZE) / 2.0f};
         TraceLog(LOG_WARNING, "Player: Spawn object '%s' not found, using default position", SPAWN_OBJECT_NAME);
     }
 
-    // ambil semua collision rectangles dari object layer Tiled
-    // setiap rectangle object di layer "collision" dianggap solid/blocked
-    std::vector<MapObject> collisionObjs = TilesonGetObjectsByType(COLLISION_LAYER_NAME);
-    for (auto &obj : collisionObjs)
-        CollisionRects.push_back(obj.bounds);
+    
+    // ambil semua collision object dari object layer Tiled
+    // rectangle disimpan ke CollisionRects, polygon disimpan ke CollisionPolygons
+    TiledHelper::CollisionResult collision;
+    if (TiledHelperFunction.TryGetCollisionByLayerName(COLLISION_LAYER_NAME, collision))
+    {
+        CollisionRects = collision.rects;
+        CollisionPolygons = collision.polygons;
+    }
 
     TraceLog(LOG_INFO, "Player: Loaded %d collision rects", (int)CollisionRects.size());
+    TraceLog(LOG_INFO, "Player: Loaded %d collision polygons", (int)CollisionPolygons.size());
+    TraceLog(LOG_INFO, "Player: Custom world boundary %s", WorldBoundaryPolygon.empty() ? "not found" : "loaded");
 }
 
 // ================================================================
@@ -99,20 +125,95 @@ void Player::Render(void)
 // ================================================================
 // CanMove()
 // Cek apakah posisi baru player (NewPos) nabrak salah satu
-// collision rectangle dari object layer Tiled.
+// collision shape dari object layer Tiled, atau keluar dari
+// world boundary.
 //
 // Collision box player diasumsiin 1 tile (TileSize x TileSize).
-// Return false kalau nabrak, true kalau aman.
+// Return false kalau nabrak / keluar bound, true kalau aman.
 // ================================================================
 bool Player::CanMove(Vector2 NewPos)
 {
-    Rectangle playerBox = {NewPos.x, NewPos.y, (float)TileSize, (float)TileSize};
+    Rectangle playerBox = {
+        NewPos.x + HitboxOffsetX,
+        NewPos.y + HitboxOffsetY,
+        HitboxWidth,
+        HitboxHeight};
 
+    // titik-titik penting player box buat cek polygon collision
+    Vector2 playerPoints[4] = {
+        {playerBox.x, playerBox.y},
+        {playerBox.x + playerBox.width, playerBox.y},
+        {playerBox.x, playerBox.y + playerBox.height},
+        {playerBox.x + playerBox.width, playerBox.y + playerBox.height}};
+
+    // helper point-in-polygon sederhana (ray casting)
+    auto IsPointInsidePolygon = [](Vector2 point, const std::vector<Vector2> &polygonPoints) -> bool
+    {
+        bool inside = false;
+        int pointCount = (int)polygonPoints.size();
+
+        if (pointCount < 3)
+            return false;
+
+        for (int i = 0, j = pointCount - 1; i < pointCount; j = i++)
+        {
+            const Vector2 &pi = polygonPoints[i];
+            const Vector2 &pj = polygonPoints[j];
+
+            bool intersect = ((pi.y > point.y) != (pj.y > point.y)) &&
+                             (point.x < (pj.x - pi.x) * (point.y - pi.y) / ((pj.y - pi.y) + 0.00001f) + pi.x);
+
+            if (intersect)
+                inside = !inside;
+        }
+
+        return inside;
+    };
+    // ============================================================
+    // 1. collision rectangle biasa dari object layer Tiled
+    // setiap rectangle object di layer collision dianggap solid
+    // ============================================================
     for (auto &rect : CollisionRects)
     {
         if (CheckCollisionRecs(playerBox, rect))
             return false;
     }
+
+    // ============================================================
+    // 2. collision polygon dari object layer Tiled
+    // kalau salah satu titik player masuk ke polygon collision,
+    // gerakan diblok
+    // ============================================================
+    for (auto &polygon : CollisionPolygons)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            if (IsPointInsidePolygon(playerPoints[i], polygon))
+                return false;
+        }
+    }
+
+    // ============================================================
+    // 3. world bound rectangle dari ukuran map
+    // custom world boundary polygon sementara tidak dipakai,
+    // karena hasil runtime nunjukin polygon seperti OffmapBoundary
+    // lebih cocok diperlakukan sebagai collision polygon.
+    //
+    // Jadi rule batas dunia sekarang disederhanakan:
+    // - area terlarang/non-playable ditangani collision object
+    // - batas luar map ditangani rectangle ukuran map
+    // ============================================================
+    float MapW = (float)tilesonMap->width * TILE_SIZE;
+    float MapH = (float)tilesonMap->height * TILE_SIZE;
+
+    if (playerBox.x < 0.0f)
+        return false;
+    if (playerBox.y < 0.0f)
+        return false;
+    if (playerBox.x + playerBox.width > MapW)
+        return false;
+    if (playerBox.y + playerBox.height > MapH)
+        return false;
 
     return true;
 }
@@ -156,14 +257,25 @@ void Player::PlayerCamera(void)
 
     // clamp camera target ke world bounds
     // camera berhenti ngikutin player kalau udah di tepi map
-    if (camera.target.x < halfW)
-        camera.target.x = halfW;
-    if (camera.target.y < halfH)
-        camera.target.y = halfH;
-    if (camera.target.x > MapW - halfW)
-        camera.target.x = MapW - halfW;
-    if (camera.target.y > MapH - halfH)
-        camera.target.y = MapH - halfH;
+    if (MapW <= halfW * 2.0f)
+        camera.target.x = MapW / 2.0f;
+    else
+    {
+        if (camera.target.x < halfW)
+            camera.target.x = halfW;
+        if (camera.target.x > MapW - halfW)
+            camera.target.x = MapW - halfW;
+    }
+
+    if (MapH <= halfH * 2.0f)
+        camera.target.y = MapH / 2.0f;
+    else
+    {
+        if (camera.target.y < halfH)
+            camera.target.y = halfH;
+        if (camera.target.y > MapH - halfH)
+            camera.target.y = MapH - halfH;
+    }
 }
 
 // ================================================================
@@ -202,14 +314,18 @@ TileRange Player::GetVisibleTileRange(void)
     // konversi ke tile index + margin 1 tile biar gak ada pop-in di tepi
     range.minX = (int)floorf(worldMin.x / TILE_SIZE) - 1;
     range.minY = (int)floorf(worldMin.y / TILE_SIZE) - 1;
-    range.maxX = (int)ceilf(worldMax.x  / TILE_SIZE) + 1;
-    range.maxY = (int)ceilf(worldMax.y  / TILE_SIZE) + 1;
+    range.maxX = (int)ceilf(worldMax.x / TILE_SIZE) + 1;
+    range.maxY = (int)ceilf(worldMax.y / TILE_SIZE) + 1;
 
     // clamp ke batas map yang valid
-    if (range.minX < 0)                       range.minX = 0;
-    if (range.minY < 0)                       range.minY = 0;
-    if (range.maxX > tilesonMap->width)       range.maxX = tilesonMap->width;
-    if (range.maxY > tilesonMap->height)      range.maxY = tilesonMap->height;
+    if (range.minX < 0)
+        range.minX = 0;
+    if (range.minY < 0)
+        range.minY = 0;
+    if (range.maxX > tilesonMap->width)
+        range.maxX = tilesonMap->width;
+    if (range.maxY > tilesonMap->height)
+        range.maxY = tilesonMap->height;
 
     return range;
-}
+}

@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 
+<<<<<<< HEAD
 // ================================================================
 // Texture & Asset
 // ================================================================
@@ -28,10 +29,13 @@ typedef enum
 // dawg ini dipindah dawg 
 extern Texture2D TexturesMap[MAX_TEXTURES];
 
+=======
+>>>>>>> e799af3f0a50656c282fcf81504179372f5fb8ac
 // camera
 extern Camera2D camera;
 
 // ================================================================
+<<<<<<< HEAD
 // Tile System
 // ================================================================
 
@@ -89,6 +93,8 @@ typedef struct
 // ================================================================
 
 // ================================================================
+=======
+>>>>>>> e799af3f0a50656c282fcf81504179372f5fb8ac
 // Tileson Map System
 // ================================================================
 
@@ -98,35 +104,58 @@ struct MapObject
 {
     std::string name;
     std::string type;
+    std::string layerName;              // nama object layer asal di Tiled
     Rectangle bounds;
+    std::vector<Vector2> polygonPoints; // titik polygon/polyline dalam world space
+    bool hasPolygon = false;            // true kalau object ini punya polygon custom
     std::map<std::string, tson::Property> properties;
+};
+
+// info satu tileset — texture + metadata buat render
+struct TilesetInfo
+{
+    Texture2D texture;
+    int cols;
+    int spacing;
+    int firstgid;
+    int lastgid; // firstgid tileset berikutnya - 1, dipake buat cari tileset yang bener pas render
 };
 
 // semua data map yang udah di-parse dari JSON Tiled
 struct TilesonMapData
 {
-    int width;          // lebar map dalam satuan tile
-    int height;         // tinggi map dalam satuan tile
-    int layerCount;     // jumlah tile layer
-    int **tiles;        // array 2D tile per layer: tiles[layer][y*width+x]
-    Texture2D tilesetTexture;
-    int tilesetCols;        // jumlah kolom di spritesheet tileset
-    int tilesetSpacing;     // gap antar tile di spritesheet
-    int tilesetFirstgid;    // ID awal tile (biasanya 1)
-    std::vector<MapObject> Objects; // semua object dari object layer
+    int width;
+    int height;
+    int layerCount;
+    int **tiles;
+    std::vector<TilesetInfo> tilesets; // ganti single texture jadi vector
+    std::vector<MapObject> Objects;
 };
 
 extern TilesonMapData *tilesonMap;
 
+// hasil kalkulasi frustum: range index tile yang visible di layar
+struct TileRange
+{
+    int minX; // kolom tile paling kiri yang visible
+    int minY; // baris tile paling atas yang visible
+    int maxX; // kolom tile paling kanan yang visible (exclusive)
+    int maxY; // baris tile paling bawah yang visible (exclusive)
+};
+
+// data yang bisa dibaca oleh sistem debug
+extern int lastTilesRendered;
+extern TileRange currentVisibleRange;
+
+// nama layer & object di Tiled — sesuaiin kalau beda
+// #define COLLISION_LAYER_NAME "map_bound"
+#define COLLISION_LAYER_NAME "obstacle" // penulisan define untuk layer
+#define SPAWN_OBJECT_NAME "spawn" // penulisan define untuk object name
+#define DOOR_TYPE_OBJECT_NAME "door" // penulisan define untuk type object name
+
 // ================================================================
 // Functions
 // ================================================================
-
-// load texture PNG ke slot yang ditentuin
-void LoadTileTexture(TextureAsset Slot, const char *Path);
-
-// render satu tile dari spritesheet ke posisi world
-void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
 
 // load, render, unload map dari JSON Tiled
 void LoadMap(const char *mapPath);
@@ -135,5 +164,6 @@ void UnloadMap(void);
 void InitMap(void);
 
 // query object dari object layer Tiled
+std::vector<MapObject> TilesonGetObjectsByLayerName(const std::string &layerName);
 std::vector<MapObject> TilesonGetObjectsByType(const std::string &type);
 MapObject *TilesonGetObjectByName(const std::string &name);

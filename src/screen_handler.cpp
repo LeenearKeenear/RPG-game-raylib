@@ -1,9 +1,9 @@
 #include "../include/screen.h"
 #include "../include/map.h"
+#include "../include/animation.h"
 #include "../include/player.h"
 #include "../include/entities.h"
 #include "../include/debug.h"
-#include "../include/frustum.h"
 #include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
@@ -113,10 +113,11 @@ void DrawRenderTexture(GameState *state)
     ClearBackground(RAYWHITE);
 
     // RenderMap();
-    RenderMapCulled();
+    RenderMap();
 
     BeginMode2D(camera);
     RenderEntities();
+    DebugInstance.DrawWorldOverlay();
     EndMode2D();
 
     DebugInstance.Toggle();

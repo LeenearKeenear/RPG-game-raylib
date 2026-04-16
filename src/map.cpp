@@ -2,6 +2,7 @@
 #include "../lib/raylib/include/raymath.h"
 #include "../include/screen.h"
 #include "../include/map.h"
+#include "../include/animation.h"
 #include "../include/player.h"
 #include <memory>
 #include <string>
@@ -12,12 +13,9 @@
 
 TilesonMapData *tilesonMap = nullptr;
 static std::unique_ptr<tson::Map> parsedMap = nullptr;
-
-// MapDataDefinition *CurrentMap dihapus — udah gak dipake setelah pindah ke Tileson
-
-Texture2D TexturesMap[MAX_TEXTURES];
 Camera2D camera = {0};
 
+<<<<<<< HEAD
 // ================================================================
 // LoadTileTexture()
 // Load texture PNG ke slot TextureAsset yang ditentuin.
@@ -74,6 +72,10 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
     Vector2 origin = {0, 0};
     DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
 }
+=======
+int lastTilesRendered = 0;
+TileRange currentVisibleRange = {0, 0, 0, 0};
+>>>>>>> e799af3f0a50656c282fcf81504179372f5fb8ac
 
 // ================================================================
 // LoadMap()
@@ -126,12 +128,18 @@ void LoadMap(const char *mapPath)
                 int x = std::get<0>(pos);
                 int y = std::get<1>(pos);
                 if (tile != nullptr && x < tilesonMap->width && y < tilesonMap->height)
-                    // konversi posisi 2D ke index 1D
-                    tilesonMap->tiles[layerIndex][(y * tilesonMap->width) + x] = (int)tile->getId();
+                    // konversi posisi 2D ke index 1D — pakai getGid() bukan getId()
+                    tilesonMap->tiles[layerIndex][(y * tilesonMap->width) + x] = (int)tile->getGid();
             }
             layerIndex++;
         }
     }
+
+    // setelah layerIndex++;
+    TraceLog(LOG_INFO, "Layer %d: sample tileId[0]=%d tileId[1]=%d",
+             layerIndex - 1,
+             tilesonMap->tiles[layerIndex - 1][0],
+             tilesonMap->tiles[layerIndex - 1][1]);
 
     // baca semua object dari ObjectGroup layer
     for (auto &layer : parsedMap->getLayers())
@@ -143,10 +151,24 @@ void LoadMap(const char *mapPath)
                 MapObject mapObj;
                 mapObj.name = obj.getName();
                 mapObj.type = obj.getType();
+                mapObj.layerName = layer.getName();
 
                 tson::Vector2i pos = obj.getPosition();
                 tson::Vector2i size = obj.getSize();
                 mapObj.bounds = {(float)pos.x, (float)pos.y, (float)size.x, (float)size.y};
+
+                // kalau object punya polygon, simpan semua titiknya dalam world space
+                const std::vector<tson::Vector2i> &polygon = obj.getPolygons();
+                if (!polygon.empty())
+                {
+                    mapObj.hasPolygon = true;
+
+                    for (const auto &point : polygon)
+                    {
+                        mapObj.polygonPoints.push_back({(float)pos.x + (float)point.x,
+                                                        (float)pos.y + (float)point.y});
+                    }
+                }
 
                 // ambil semua custom properties dari object
                 for (auto &[key, prop] : obj.getProperties().getProperties())
@@ -158,25 +180,27 @@ void LoadMap(const char *mapPath)
     }
 
     // load texture tileset — nama file diambil dari JSON, di-prefix texture/
-    auto &tilesets = parsedMap->getTilesets();
-    if (!tilesets.empty())
+    auto &tilesetList = parsedMap->getTilesets();
+    for (int i = 0; i < (int)tilesetList.size(); i++)
     {
-        tson::Tileset *tileset = &tilesets[0];
+        tson::Tileset *tileset = &tilesetList[i];
         std::string imagePath = "texture/" + tileset->getImagePath().filename().u8string();
         TraceLog(LOG_INFO, "Tileson: Loading tileset: %s", imagePath.c_str());
 
         Image img = LoadImage(imagePath.c_str());
-        tilesonMap->tilesetTexture = LoadTextureFromImage(img);
-        tilesonMap->tilesetCols = tileset->getColumns();
-        tilesonMap->tilesetSpacing = tileset->getSpacing();
-        tilesonMap->tilesetFirstgid = tileset->getFirstgid();
+        TilesetInfo info;
+        info.texture = LoadTextureFromImage(img);
+        info.cols = tileset->getColumns();
+        info.spacing = tileset->getSpacing();
+        info.firstgid = tileset->getFirstgid();
+        // lastgid = firstgid tileset berikutnya - 1, tileset terakhir pakai INT_MAX
+        info.lastgid = (i + 1 < (int)tilesetList.size())
+                           ? tilesetList[i + 1].getFirstgid() - 1
+                           : INT_MAX;
         UnloadImage(img);
 
-        TraceLog(LOG_INFO, "Tileson: Tileset loaded: %s", imagePath.c_str());
-    }
-    else
-    {
-        TraceLog(LOG_WARNING, "Tileson: No tileset found in map");
+        tilesonMap->tilesets.push_back(info);
+        TraceLog(LOG_INFO, "Tileson: Loaded tileset %s (gid %d-%d)", imagePath.c_str(), info.firstgid, info.lastgid);
     }
 
     TraceLog(LOG_INFO, "Tileson: Map loaded - %dx%d tiles", tilesonMap->width, tilesonMap->height);
@@ -199,8 +223,10 @@ void UnloadMap(void)
         tilesonMap->Objects.clear();
 
         // unload texture dari GPU
-        if (tilesonMap->tilesetTexture.id != 0)
-            UnloadTexture(tilesonMap->tilesetTexture);
+        for (auto &ts : tilesonMap->tilesets)
+            if (ts.texture.id != 0)
+                UnloadTexture(ts.texture);
+        tilesonMap->tilesets.clear();
 
         delete tilesonMap;
         tilesonMap = nullptr;
@@ -217,7 +243,16 @@ void UnloadMap(void)
 // ================================================================
 void InitMap(void)
 {
-    LoadMap("world_json/exampleworldmap_2.json");
+    // LoadMap("world_json/exampleworldmap_2.json");
+    // LoadMap("world_json/exampleworldmap.json");
+    
+    // LoadMap("world_json/outsideLight.json");
+    // LoadMap("world_json/testermap.tmj");
+
+
+    // LoadMap("world_json/cave.json");
+    LoadMap("world_json/inside.json");
+    // LoadMap("world_json/light.json");
 }
 
 // ================================================================
@@ -227,40 +262,92 @@ void InitMap(void)
 // ================================================================
 void RenderMap(void)
 {
-    // skip kalau map atau texture belum siap
-    if (tilesonMap == nullptr || tilesonMap->tilesetTexture.id == 0)
+    // skip kalau map atau tilesets belum siap
+    if (tilesonMap == nullptr || tilesonMap->tilesets.empty())
         return;
+
+    // dapatkan range tile yang visible dari inti logic frustum culling di player
+    currentVisibleRange = PlayerInstance.GetVisibleTileRange();
+
+    lastTilesRendered = 0; // reset counter per frame
+
+    static bool logged = false;
+    if (!logged)
+    {
+        TraceLog(LOG_INFO, "layerCount=%d", tilesonMap->layerCount);
+        logged = true;
+    }
 
     BeginMode2D(camera);
 
     for (int l = 0; l < tilesonMap->layerCount; l++)
     {
-        for (int y = 0; y < tilesonMap->height; y++)
+        for (int y = currentVisibleRange.minY; y < currentVisibleRange.maxY; y++)
         {
-            for (int x = 0; x < tilesonMap->width; x++)
+            for (int x = currentVisibleRange.minX; x < currentVisibleRange.maxX; x++)
             {
+                lastTilesRendered++;
                 int tileId = tilesonMap->tiles[l][(y * tilesonMap->width) + x];
-                if (tileId == 0) // tile ID 0 = kosong, skip
+                if (tileId == 0)
                     continue;
 
-                int spacing = tilesonMap->tilesetSpacing;
-                int firstgid = tilesonMap->tilesetFirstgid;
-                int adjustedId = tileId - firstgid; // ID relatif ke tileset
-                int tilesetCols = tilesonMap->tilesetCols;
+                // cari tileset yang sesuai berdasarkan tileId
+                TilesetInfo *ts = nullptr;
+                for (auto &t : tilesonMap->tilesets)
+                    if (tileId >= t.firstgid && tileId <= t.lastgid)
+                    {
+                        ts = &t;
+                        break;
+                    }
 
-                // hitung posisi potongan tile di spritesheet
-                int srcX = (adjustedId % tilesetCols) * (TILE_SIZE + spacing);
-                int srcY = (adjustedId / tilesetCols) * (TILE_SIZE + spacing);
+                static bool logged = false;
+                if (!logged)
+                {
+                    TraceLog(LOG_INFO, "FIRST: tileId=%d", tileId);
+                    logged = true;
+                }
+
+                if (ts == nullptr)
+                    continue;
+
+                // taruh di sini
+                if (!logged)
+                {
+                    TraceLog(LOG_INFO, "FIRST: tileId=%d firstgid=%d lastgid=%d adjustedId=%d",
+                             tileId, ts->firstgid, ts->lastgid, tileId - ts->firstgid);
+                    logged = true;
+                }
+
+                int adjustedId = tileId - ts->firstgid;
+                int srcX = (adjustedId % ts->cols) * (TILE_SIZE + ts->spacing);
+                int srcY = (adjustedId / ts->cols) * (TILE_SIZE + ts->spacing);
 
                 Rectangle srcRec = {(float)srcX, (float)srcY, (float)TILE_SIZE, (float)TILE_SIZE};
                 Rectangle dstRec = {(float)(x * TILE_SIZE), (float)(y * TILE_SIZE), (float)TILE_SIZE, (float)TILE_SIZE};
 
-                DrawTexturePro(tilesonMap->tilesetTexture, srcRec, dstRec, (Vector2){0, 0}, 0.0F, WHITE);
+                DrawTexturePro(ts->texture, srcRec, dstRec, (Vector2){0, 0}, 0.0F, WHITE);
             }
         }
     }
 
     EndMode2D();
+}
+
+// ================================================================
+// TilesonGetObjectsByLayerName()
+// Ambil semua object dari tilesonMap->Objects yang berasal dari
+// object layer dengan nama yang cocok.
+//
+// Dipake buat sistem yang identitasnya berbasis layer name,
+// misalnya collision dan custom world boundary.
+// ================================================================
+std::vector<MapObject> TilesonGetObjectsByLayerName(const std::string &layerName)
+{
+    std::vector<MapObject> result;
+    for (auto &obj : tilesonMap->Objects)
+        if (obj.layerName == layerName)
+            result.push_back(obj);
+    return result;
 }
 
 // ================================================================
