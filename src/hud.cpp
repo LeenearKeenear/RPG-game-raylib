@@ -4,6 +4,15 @@
 #include <cstdio>
 
 /**
+ * @brief Helper untuk menggambar teks dengan shadow (bayangan) agar terbaca di background terang/gelap.
+ */
+static void DrawTextHUD(const char* text, int x, int y, int fontSize, Color color)
+{
+    DrawText(text, x + 2, y + 2, fontSize, ColorAlpha(BLACK, 0.6f)); // Shadow
+    DrawText(text, x, y, fontSize, color);                       // Main Text
+}
+
+/**
  * @brief Helper untuk menggambar bar statistik (HP/MP) dengan teks di kanannya.
  * Dibuat internal di file ini saja.
  */
@@ -25,7 +34,7 @@ static void DrawStatBar(Vector2 pos, float width, float height, float ratio, Col
     // 4. Text (Kanan Bar)
     char buffer[32];
     sprintf(buffer, "%s: %d/%d", label, current, max);
-    DrawText(buffer, (int)(pos.x + width + 15), (int)pos.y + 1, 18, WHITE);
+    DrawTextHUD(buffer, (int)(pos.x + width + 15), (int)pos.y + 1, 18, WHITE);
 }
 
 void DrawHotbar()
@@ -84,14 +93,14 @@ void DrawHotbar()
                 char amtBuf[12];
                 sprintf(amtBuf, "%d", item.amount);
                 int textW = MeasureText(amtBuf, 12);
-                DrawText(amtBuf, (int)(slotRect.x + slotRect.width - textW - 5), (int)(slotRect.y + slotRect.height - 15), 12, WHITE);
+                DrawTextHUD(amtBuf, (int)(slotRect.x + slotRect.width - textW - 5), (int)(slotRect.y + slotRect.height - 15), 12, WHITE);
             }
         }
 
         // 5. Slot Number (Key bind)
         char keyBuf[4];
         sprintf(keyBuf, "%d", i + 1);
-        DrawText(keyBuf, (int)slotRect.x + 2, (int)slotRect.y - 12, 10, GRAY);
+        DrawTextHUD(keyBuf, (int)slotRect.x + 2, (int)slotRect.y - 12, 10, GRAY);
     }
 }
 
@@ -113,16 +122,43 @@ void DrawPlayerHUD()
 
     // Konfigurasi layout
     extern const int GameScreenHeight; 
-    const float barWidth = 200.0f;
+    const float barWidth = 220.0f;
     const float barHeight = 22.0f;
     const float padding = 30.0f;
-    const float gap = 12.0f;
+    const float gap = 8.0f;
+    const float avatarSize = 80.0f;
+    const float avatarPadding = 18.0f;
 
-    Vector2 healthPos = { padding, (float)GameScreenHeight - padding - (barHeight * 2) - gap };
-    Vector2 manaPos = { padding, (float)GameScreenHeight - padding - barHeight };
+    // Posisi Avatar
+    Vector2 avatarPos = { padding + avatarSize/2.0f, (float)GameScreenHeight - padding - avatarSize/2.0f };
+    float radius = avatarSize / 2.0f;
+    
+    // Background & Circle Avatar (Premium Glow & Circle)
+    DrawCircleV({ avatarPos.x + 2, avatarPos.y + 2 }, radius + 2, ColorAlpha(BLACK, 0.4f)); // Shadow
+    DrawCircleV(avatarPos, radius, DARKGRAY);
+    
+    // Knight Sprite (Down Idle) - Dibuat sesuai ukuran frame yang lebih besar
+    Rectangle knightSrc = GetFrame(0, 2);
+    float spriteSize = avatarSize - 10.0f; 
+    Rectangle knightDest = { 
+        (avatarPos.x - spriteSize/2.0f) + 1.0f, 
+        avatarPos.y - spriteSize/2.0f, 
+        spriteSize, 
+        spriteSize 
+    };
+    DrawTexturePro(TexturesMap[TEXTURE_KNIGHT], knightSrc, knightDest, { 0, 0 }, 0.0f, WHITE);
+    
+    // Border Avatar (Circular)
+    DrawCircleLinesV(avatarPos, radius, ColorAlpha(GOLD, 0.6f));
+    DrawCircleLinesV(avatarPos, radius + 1, ColorAlpha(GOLD, 0.3f)); // Subtle outer glow
 
-    // Draw Name
-    DrawText(PlayerInstance.GetName(), (int)healthPos.x, (int)healthPos.y - 25, 20, GOLD);
+    // Posisi Bars (Geser ke kanan avatar)
+    float barsX = padding + avatarSize + avatarPadding;
+    Vector2 healthPos = { barsX, (float)GameScreenHeight - padding - (barHeight * 2) - gap };
+    Vector2 manaPos = { barsX, (float)GameScreenHeight - padding - barHeight };
+
+    // Draw Name (Di atas HP bar) dengan Shadow dan warna putih agar premium
+    DrawTextHUD(PlayerInstance.GetName(), (int)healthPos.x, (int)healthPos.y - 25, 20, WHITE);
 
     // Draw Bars
     DrawStatBar(healthPos, barWidth, barHeight, healthRatio, healthColor, "HP", (int)health, (int)maxHealth);
