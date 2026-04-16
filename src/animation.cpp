@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 // ================================================================
 // Animation System
 // Handle semua animasi sprite untuk player, enemy, dan entity lain.
@@ -12,8 +10,6 @@
 // - Player animation state machine (walk, idle, attack, dead)
 // - Sprite frame management (GetFrame)
 // ================================================================
-
->>>>>>> main
 #include "../include/animation.h"
 
 // ================================================================
