@@ -28,7 +28,9 @@ public:
     /**
      * @brief Constructor default - bikin tombol kosong
      */
-    buttonTxt();
+    buttonTxt() : text(nullptr), posX(0), posY(0), fontSize(0), textColor(BLANK), textWidth(0)
+    {
+    }
 
     /**
      * @brief Constructor dengan parameter lengkap
@@ -42,10 +44,21 @@ public:
      *                    - 1.0 = gak ada perubahan
      *                    - <1.0 = makin gelap pas hover (contoh 0.7 = 30% lebih gelap)
      */
-    buttonTxt(const char *text, int posX, int posY, int fontSize, Color color, float hoverAmount = 1.0F);
+    buttonTxt(const char *text, int posX, int posY, int fontSize, Color color, float hoverAmount = 1.0F)
+    {
+        this->text = text;
+        this->posX = posX;
+        this->posY = posY;
+        this->fontSize = fontSize;
+        this->textColor = color;
+        this->textWidth = MeasureText(text, fontSize);
+        this->hoverAmount = hoverAmount;
+    }
 
     /** @brief Destructor */
-    ~buttonTxt();
+    ~buttonTxt()
+    {
+    }
 
     /**
      * @brief Render tombol teks ke layar
@@ -53,7 +66,19 @@ public:
      * @note Otomatis ngasih efek hover gelap kalo mouse di atas teks
      *       Efek hover dilakukan dengan mengurangi komponen warna RGB
      */
-    void Draw(Vector2 mousePosition);
+    void Draw(Vector2 mousePosition)
+    {
+        Color currentColor = textColor;
+        if (isHovered(mousePosition))
+        {
+            currentColor = (Color){
+                static_cast<unsigned char>(textColor.r * hoverAmount),
+                static_cast<unsigned char>(textColor.g * hoverAmount),
+                static_cast<unsigned char>(textColor.b * hoverAmount),
+                textColor.a};
+        }
+        DrawText(text, posX, posY, fontSize, currentColor);
+    }
 
     /*==========================================================================
      * State Checks
@@ -65,7 +90,16 @@ public:
      * @param mouseClicked Apakah tombol mouse lagi diteken
      * @return true kalo mouse di area teks tombol DAN mouseClicked true
      */
-    [[nodiscard]] bool isClicked(Vector2 mousePosition, bool mouseClicked) const;
+    [[nodiscard]] bool isClicked(Vector2 mousePosition, bool mouseClicked) const
+    {
+        Rectangle textBounds = {
+            static_cast<float>(posX),
+            static_cast<float>(posY),
+            static_cast<float>(textWidth),
+            static_cast<float>(fontSize),
+        };
+        return CheckCollisionPointRec(mousePosition, textBounds) && mouseClicked;
+    }
 
     /**
      * @brief Cek apakah mouse lagi hover di atas tombol
@@ -73,7 +107,16 @@ public:
      * @return true kalo posisi mouse ada di dalam area teks tombol
      * @note Area deteksi diitung berdasarkan lebar teks yang udah diukur
      */
-    [[nodiscard]] bool isHovered(Vector2 mousePosition) const;
+    [[nodiscard]] bool isHovered(Vector2 mousePosition) const
+    {
+        Rectangle textBounds = {
+            static_cast<float>(posX),
+            static_cast<float>(posY),
+            static_cast<float>(textWidth),
+            static_cast<float>(fontSize),
+        };
+        return CheckCollisionPointRec(mousePosition, textBounds);
+    }
 
 private:
     /*==========================================================================
