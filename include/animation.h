@@ -24,7 +24,8 @@
 typedef enum
 {
     TEXTURE_TILEMAP = 0,
-    TEXTURE_KNIGHT
+    TEXTURE_KNIGHT,
+    TEXTURE_ITEMS // test menambahkan texture untuk player slot
 } TextureAsset;
 
 // global texture array — diakses dari file lain via extern

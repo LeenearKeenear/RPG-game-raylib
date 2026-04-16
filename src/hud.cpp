@@ -1,5 +1,6 @@
 #include "../include/hud.h"
 #include "../include/player.h"
+#include "../include/animation.h"
 #include <cstdio>
 
 /**
@@ -59,17 +60,25 @@ void DrawHotbar()
         Color borderColor = isActive ? GOLD : ColorAlpha(WHITE, 0.3f);
         DrawRectangleRoundedLines(slotRect, 0.2f, 8, borderColor);
 
-        // 4. Item Info
+        // 4. Item Info (Icon)
         InventoryItem item = PlayerInstance.GetHotbarItem(i);
         if (item.type != ITEM_NONE)
         {
-            // Draw item name abbreviation or icon-like text
-            const char* label = (item.type == ITEM_WEAPON) ? "W" : "P";
-            Color labelColor = (item.type == ITEM_WEAPON) ? LIGHTGRAY : SKYBLUE;
+            // Ambil source rect dari test.png
+            Rectangle src = GetFrame(item.iconX, item.iconY);
             
-            DrawText(label, (int)slotRect.x + 8, (int)slotRect.y + 8, 15, labelColor);
+            // Render icon ditengah slot, sedikit diperbesar (misal 50x50)
+            float iconDrawSize = 50.0f;
+            Rectangle dest = {
+                slotRect.x + (slotRect.width - iconDrawSize) / 2.0f,
+                slotRect.y + (slotRect.height - iconDrawSize) / 2.0f,
+                iconDrawSize,
+                iconDrawSize
+            };
+            
+            DrawTexturePro(TexturesMap[TEXTURE_ITEMS], src, dest, {0, 0}, 0.0f, WHITE);
 
-            // Draw amount if > 1 or it's a potion
+            // Draw amount if > 1 or it's a potion/food
             if (item.amount > 0)
             {
                 char amtBuf[12];

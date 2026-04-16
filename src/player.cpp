@@ -30,6 +30,7 @@ void Player::Init(void)
 {
     // TODO: path texture disesuaiin sama asset yang ada
     LoadTileTexture(TEXTURE_KNIGHT, "texture/Knight.png");
+    LoadTileTexture(TEXTURE_ITEMS,  "texture/test.png");
 
     // inisialisasi state animasi player
     Anim.position = {0.0f, 0.0f};
@@ -100,10 +101,10 @@ void Player::Init(void)
     TraceLog(LOG_INFO, "Player: Custom world boundary %s", WorldBoundaryPolygon.empty() ? "not found" : "loaded");
 
     // Initialize default hotbar items
-    Hotbar[0] = {ITEM_WEAPON, "Iron Sword", 1, 10, 0};
-    Hotbar[1] = {ITEM_WEAPON, "Wooden Bow", 1, 5, 0};
-    Hotbar[2] = {ITEM_POTION, "Health Potion", 3, 0, 20};
-    Hotbar[3] = {ITEM_POTION, "Mana Potion", 2, 0, 15};
+    Hotbar[0] = {ITEM_WEAPON, "Iron Sword", 1, 10, 0, 6, 4};
+    Hotbar[1] = {ITEM_WEAPON, "Wooden Bow", 1, 5, 0, 8, 4};
+    Hotbar[2] = {ITEM_POTION, "Health Potion", 3, 0, 20, 7, 8};
+    Hotbar[3] = {ITEM_POTION, "Bread", 5, 0, 10, 10, 8}; // Diubah ke Makanan (Bread)
 }
 
 // ================================================================
