@@ -1,3 +1,11 @@
+/**
+ * @file input.cpp
+ * @brief Implementasi dari Input System & Key Binding Module
+ * 
+ * Implementasi dari class PlayerInput yang dideklarasikan di input.h
+ * Handle polling input, state management, dan resolusi aksi left click.
+ */
+
 // ================================================================
 // Input System — Implementation
 // Centralized input polling dan state management.
@@ -8,12 +16,20 @@
 
 #include "../include/input.h"
 
+/*==============================================================================
+ * Global Variables
+ *==============================================================================*/
+
 // ================================================================
 // Global
 // ================================================================
 
-// global instance input — diakses file lain via extern
+/** Global instance input — diakses file lain via extern */
 PlayerInput InputInstance;
+
+/*==============================================================================
+ * Public Methods - Polling & Update
+ *==============================================================================*/
 
 // ================================================================
 // PollInput()
@@ -35,10 +51,10 @@ void PlayerInput::PollInput(void)
     Current.moveLeft  = IsKeyDown(KEY_LEFT)  || IsKeyDown(KEY_A);
     Current.moveRight = IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D);
 
-    // --- Actions (KeyPressed — tap sekali) ---
+    // --- Actions (KeyPressed — tap sekali / baru diteken) ---
     Current.interact        = IsKeyPressed(KEY_E);
-    Current.kill            = IsKeyPressed(KEY_K);
-    Current.revive          = IsKeyPressed(KEY_R);
+    Current.kill            = IsKeyPressed(KEY_K);        // debug: langsung matiin player
+    Current.revive          = IsKeyPressed(KEY_R);        // debug: revive player
     Current.toggleInventory = IsKeyPressed(KEY_I);
     Current.toggleMap       = IsKeyPressed(KEY_M);
     
@@ -49,10 +65,10 @@ void PlayerInput::PollInput(void)
     mouseWasDown = mouseIsDown;
 
     // --- Slot Selection (KeyPressed — tap sekali) ---
-    Current.selectSlot1 = IsKeyPressed(KEY_ONE);
-    Current.selectSlot2 = IsKeyPressed(KEY_TWO);
-    Current.selectSlot3 = IsKeyPressed(KEY_THREE);
-    Current.selectSlot4 = IsKeyPressed(KEY_FOUR);
+    Current.selectSlot1 = IsKeyPressed(KEY_ONE);   // key 1
+    Current.selectSlot2 = IsKeyPressed(KEY_TWO);   // key 2
+    Current.selectSlot3 = IsKeyPressed(KEY_THREE); // key 3
+    Current.selectSlot4 = IsKeyPressed(KEY_FOUR);  // key 4
 }
 
 // ================================================================
@@ -67,7 +83,7 @@ void PlayerInput::UpdateState(void)
     if (Current.toggleInventory)
     {
         InventoryOpen = !InventoryOpen;
-        // kalau buka inventori, tutup map
+        // kalau buka inventori, tutup map (biar gak bentrok)
         if (InventoryOpen)
             MapOpen = false;
 
@@ -78,7 +94,7 @@ void PlayerInput::UpdateState(void)
     if (Current.toggleMap)
     {
         MapOpen = !MapOpen;
-        // kalau buka map, tutup inventori
+        // kalau buka map, tutup inventori (biar gak bentrok)
         if (MapOpen)
             InventoryOpen = false;
 
@@ -86,6 +102,7 @@ void PlayerInput::UpdateState(void)
     }
 
     // --- Slot Selection ---
+    // Update active slot berdasarkan key yang ditekan
     if (Current.selectSlot1)
     {
         ActiveSlot = SLOT_WEAPON_1;
@@ -107,12 +124,16 @@ void PlayerInput::UpdateState(void)
         TraceLog(LOG_INFO, "INPUT: Selected SLOT 4 (Potion 2)");
     }
 
-    // --- Interact ---
+    // --- Interact (logging buat debugging) ---
     if (Current.interact)
     {
         TraceLog(LOG_INFO, "INPUT: Interact (E) pressed");
     }
 }
+
+/*==============================================================================
+ * Public Methods - Action Resolution
+ *==============================================================================*/
 
 // ================================================================
 // ResolveSpaceAction()
@@ -133,11 +154,11 @@ SpaceAction PlayerInput::ResolveSpaceAction() const
     {
     case SLOT_WEAPON_1:
     case SLOT_WEAPON_2:
-        return ACTION_ATTACK;
+        return ACTION_ATTACK;       // slot senjata → attack
 
     case SLOT_POTION_1:
     case SLOT_POTION_2:
-        return ACTION_DRINK_POTION;
+        return ACTION_DRINK_POTION; // slot potion → minum potion
 
     case SLOT_NONE:
     default:

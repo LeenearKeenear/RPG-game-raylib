@@ -1,3 +1,11 @@
+/**
+ * @file animation.cpp
+ * @brief Implementasi dari Animation System & Tile Rendering
+ *
+ * Handle semua animasi sprite untuk player, enemy, dan entity lain.
+ * Implementasi dari fungsi-fungsi yang dideklarasikan di animation.h
+ */
+
 // ================================================================
 // Animation System
 // Handle semua animasi sprite untuk player, enemy, dan entity lain.
@@ -13,11 +21,16 @@
 
 #include "../include/animation.h"
 
-// ================================================================
-// Global
-// ================================================================
+/*==============================================================================
+ * Global Variables
+ *==============================================================================*/
 
+/** Global texture array - index sesuai TextureAsset enum */
 Texture2D TexturesMap[MAX_TEXTURES];
+
+/*==============================================================================
+ * Texture Loading
+ *==============================================================================*/
 
 // ================================================================
 // LoadTileTexture()
@@ -31,6 +44,10 @@ void LoadTileTexture(TextureAsset Slot, const char *Path)
     UnloadImage(img);
 }
 
+/*==============================================================================
+ * Tile Rendering
+ *==============================================================================*/
+
 // ================================================================
 // RenderTilePNG()
 // Render satu tile dari spritesheet ke posisi world.
@@ -43,6 +60,7 @@ void LoadTileTexture(TextureAsset Slot, const char *Path)
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
 {
     // mapping TileType ke koordinat di spritesheet
+    // NOTE: Koordinat ini berdasarkan layout spritesheet tileset
     TileDefinition TileProperty[] = {
         [TILE_CLU_WALL] = {{0, 0}, false, false},
         [TILE_CMU_WALL] = {{1, 0}, false, false},
@@ -62,6 +80,7 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
         [TILE_PLAYER_NEW] = {{3, 2}, false, false}};
 
     // hitung posisi source di spritesheet pake koordinat + ukuran tile + gap
+    // Formula: X = (kolom * (TILE_SIZE + TILE_GAP))
     Rectangle Source = {
         (float)(TileProperty[Type].CoordID.x * (TILE_SIZE + TILE_GAP)),
         (float)(TileProperty[Type].CoordID.y * (TILE_SIZE + TILE_GAP)),
@@ -78,14 +97,18 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
 // Ambil source rectangle dari spritesheet berdasarkan frame koordinat.
 // Dipakai oleh DrawPlayer() buat milih frame yang bener.
 // ================================================================
-Rectangle GetFrame(int frameX, int frameY) {
+Rectangle GetFrame(int frameX, int frameY)
+{
     return {
         (float)(frameX * (TILE_SIZE + TILE_GAP)),
         (float)(frameY * (TILE_SIZE + TILE_GAP)),
         (float)TILE_SIZE,
-        (float)TILE_SIZE
-    };
+        (float)TILE_SIZE};
 }
+
+/*==============================================================================
+ * State Setters
+ *==============================================================================*/
 
 // ================================================================
 // State Setters
@@ -93,14 +116,32 @@ Rectangle GetFrame(int frameX, int frameY) {
 // Dipanggil dari input handler / AI controller.
 // ================================================================
 
-void UpdatePlayerWalkUp(AnimationPlayer &p) { p.direction = UP; p.state = WALK; }
-void UpdatePlayerWalkDown(AnimationPlayer &p) { p.direction = DOWN; p.state = WALK; }
-void UpdatePlayerWalkLeft(AnimationPlayer &p) { p.direction = LEFT; p.state = WALK; }
-void UpdatePlayerWalkRight(AnimationPlayer &p) { p.direction = RIGHT; p.state = WALK; }
+void UpdatePlayerWalkUp(AnimationPlayer &p)
+{
+    p.direction = UP;
+    p.state = WALK;
+}
+void UpdatePlayerWalkDown(AnimationPlayer &p)
+{
+    p.direction = DOWN;
+    p.state = WALK;
+}
+void UpdatePlayerWalkLeft(AnimationPlayer &p)
+{
+    p.direction = LEFT;
+    p.state = WALK;
+}
+void UpdatePlayerWalkRight(AnimationPlayer &p)
+{
+    p.direction = RIGHT;
+    p.state = WALK;
+}
 void UpdatePlayerIdle(AnimationPlayer &p) { p.state = IDLE; }
 
-void UpdatePlayerAttack(AnimationPlayer &p) {
-    if (!p.isAttacking) {
+void UpdatePlayerAttack(AnimationPlayer &p)
+{
+    if (!p.isAttacking)
+    {
         p.state = ATTACK;
         p.frame = 0;
         p.frameTime = 0;
@@ -108,14 +149,20 @@ void UpdatePlayerAttack(AnimationPlayer &p) {
     }
 }
 
-void UpdatePlayerDeath(AnimationPlayer &p) {
-    if (!p.isDead) {
+void UpdatePlayerDeath(AnimationPlayer &p)
+{
+    if (!p.isDead)
+    {
         p.state = DEAD;
         p.isDead = true;
         p.frame = 0;
         p.isAttacking = false; // reset attack logic if dying during attack
     }
 }
+
+/*==============================================================================
+ * Animation Update Logic
+ *==============================================================================*/
 
 // ================================================================
 // UpdateAnimation()
@@ -129,44 +176,58 @@ void UpdatePlayerDeath(AnimationPlayer &p) {
 // ================================================================
 void UpdateAnimation(AnimationPlayer &p, float dt)
 {
-    if (p.state == DEAD) {
+    // DEAD state: gak ada animasi, frame tetap di 0
+    if (p.state == DEAD)
+    {
         p.frame = 0;
         return;
     }
 
     p.frameTime += dt;
 
-    if (p.state == IDLE) {
+    // IDLE state: 2 frame bolak-balik (0 -> 1 -> 0 -> 1 ...)
+    if (p.state == IDLE)
+    {
         p.frameSpeed = 0.5f;
-        if (p.frameTime >= p.frameSpeed) {
+        if (p.frameTime >= p.frameSpeed)
+        {
             p.frame = (p.frame + 1) % 2;
             p.frameTime = 0;
         }
     }
-    else if (p.state == WALK) {
+    // WALK state: 4 frame dengan pola 0 -> 2 -> 0 -> 3
+    else if (p.state == WALK)
+    {
         p.frameSpeed = 0.15f;
-        if (p.frameTime >= p.frameSpeed) {
+        if (p.frameTime >= p.frameSpeed)
+        {
             p.walkFrameIndex = (p.walkFrameIndex + 1) % 4;
-            int walkFrames[4] = {0, 2, 0, 3};
+            int walkFrames[4] = {0, 2, 0, 3}; // pola frame buat animasi jalan
             p.frame = walkFrames[p.walkFrameIndex];
             p.frameTime = 0;
         }
     }
-    else if (p.state == ATTACK) {
+    // ATTACK state: 2 frame sequential, pas frame ke-1 trigger "HIT!"
+    else if (p.state == ATTACK)
+    {
         p.frameSpeed = 0.15f;
 
-        if (p.frameTime >= p.frameSpeed) {
+        if (p.frameTime >= p.frameSpeed)
+        {
             p.frame++;
             p.frameTime = 0;
 
             int maxFrames = 2;
-            int hitFrame = 1;
+            int hitFrame = 1; // frame dimana damage di-trigger
 
-            if (p.frame == hitFrame) {
+            if (p.frame == hitFrame)
+            {
                 TraceLog(LOG_INFO, "HIT!");
             }
 
-            if (p.frame >= maxFrames) {
+            // attack selesai, balik ke IDLE
+            if (p.frame >= maxFrames)
+            {
                 p.isAttacking = false;
                 p.state = IDLE;
                 p.frame = 0;
@@ -174,6 +235,10 @@ void UpdateAnimation(AnimationPlayer &p, float dt)
         }
     }
 }
+
+/*==============================================================================
+ * Player Rendering
+ *==============================================================================*/
 
 // ================================================================
 // DrawPlayer()
@@ -187,15 +252,21 @@ void UpdateAnimation(AnimationPlayer &p, float dt)
 // ================================================================
 void DrawPlayer(AnimationPlayer &p)
 {
+    // tentuin row berdasarkan direction atau state DEAD
     int row = (int)p.direction;
     int frameX = p.frame;
 
-    if (p.state == DEAD) {
+    // DEAD state: pake row 4 (khusus mati)
+    if (p.state == DEAD)
+    {
         row = 4;
         frameX = 0;
     }
-    else if (p.state == ATTACK) {
+    // ATTACK state: geser frameX ke kolom attack (offset 4 atau 6)
+    else if (p.state == ATTACK)
+    {
         // UP/DOWN attack mulai dari kolom 4, LEFT/RIGHT dari kolom 6
+        // (karena layout spritesheet punya attack frames di posisi berbeda)
         int attackOffset = (p.direction == UP || p.direction == DOWN) ? 4 : 6;
         frameX += attackOffset;
     }
