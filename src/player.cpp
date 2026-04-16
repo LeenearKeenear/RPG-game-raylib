@@ -3,6 +3,7 @@
 #include "../include/debug.h"
 #include "../include/map.h"
 #include "../include/animation.h"
+#include "../include/input.h"
 #include <cmath>
 
 // ================================================================
@@ -35,6 +36,17 @@ void Player::Init(const char *spawnObjectName)
     // TODO: path texture disesuaiin sama asset yang ada
     LoadTileTexture(TEXTURE_KNIGHT, "texture/Knight.png");
 
+    // inisialisasi state animasi player
+    Anim.position = {0.0f, 0.0f};
+    Anim.state = IDLE;
+    Anim.direction = DOWN;
+    Anim.frame = 0;
+    Anim.frameTime = 0.0f;
+    Anim.frameSpeed = 0.5f;
+    Anim.walkFrameIndex = 0;
+    Anim.isAttacking = false;
+    Anim.isDead = false;
+
     // reset collision cache biar aman kalau nanti map di-reload
     CollisionRects.clear();
     CollisionPolygons.clear();
@@ -43,6 +55,7 @@ void Player::Init(const char *spawnObjectName)
     if (tilesonMap == nullptr)
     {
         Position = {0.0f, 0.0f};
+        Anim.position = Position;
         TraceLog(LOG_ERROR, "Player: tilesonMap is null during Init()");
         return;
     }
@@ -75,6 +88,9 @@ void Player::Init(const char *spawnObjectName)
                  (spawnObjectName != nullptr && spawnObjectName[0] != '\0') ? spawnObjectName : SPAWN_OBJECT_NAME);
     }
 
+    // sync posisi animasi dengan posisi player
+    Anim.position = Position;
+
     // ambil semua collision object dari object layer Tiled
     // rectangle disimpan ke CollisionRects, polygon disimpan ke CollisionPolygons
     TiledHelper::CollisionResult collision;
@@ -97,16 +113,79 @@ void Player::Init(const char *spawnObjectName)
 // ================================================================
 void Player::Update(void)
 {
-    Velocity = {0, 0};
+    // poll input di awal frame
+    InputInstance.PollInput();
+    InputInstance.UpdateState();
 
-    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
+    // --- Revive (R) — bisa dipanggil kapan saja, bahkan saat dead ---
+    if (InputInstance.IsRevive())
+    {
+        HandleRevive();
+        return;
+    }
+
+    // kalau player dead, skip semua input selain revive
+    if (Anim.isDead) return;
+
+    // --- Kill (K) — debug: player langsung mati ---
+    if (InputInstance.IsKill())
+    {
+        UpdatePlayerDeath(Anim);
+        return;
+    }
+
+    // --- Left Click — context action (attack / potion / equip) ---
+    if (InputInstance.IsLeftClickPressed() && !Anim.isAttacking)
+    {
+        HandleSpaceAction();
+        // kalau jadi attack, skip movement frame ini
+        if (Anim.isAttacking) return;
+    }
+
+    // kalau lagi attack, skip movement
+    if (Anim.isAttacking) return;
+
+    // --- Interact (E) ---
+    if (InputInstance.IsInteract())
+    {
+        // TODO: implementasi interact dengan object/NPC di depan player
+        TraceLog(LOG_INFO, "PLAYER: Interact triggered");
+    }
+
+    // --- Movement (Arrow/WASD) ---
+    Velocity = {0, 0};
+    bool moving = false;
+
+    if (InputInstance.IsMoveUp())
+    {
         Velocity.y -= 1;
-    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
+        Anim.direction = UP;
+        moving = true;
+    }
+    if (InputInstance.IsMoveDown())
+    {
         Velocity.y += 1;
-    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
+        Anim.direction = DOWN;
+        moving = true;
+    }
+    if (InputInstance.IsMoveLeft())
+    {
         Velocity.x -= 1;
-    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
+        Anim.direction = LEFT;
+        moving = true;
+    }
+    if (InputInstance.IsMoveRight())
+    {
         Velocity.x += 1;
+        Anim.direction = RIGHT;
+        moving = true;
+    }
+
+    // set animation state berdasarkan movement
+    if (moving)
+        Anim.state = WALK;
+    else
+        Anim.state = IDLE;
 
     // normalisasi biar diagonal gak lebih cepet dari cardinal
     float Length = sqrtf(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
@@ -123,6 +202,9 @@ void Player::Update(void)
     if (CanMove(NewPos))
         Position = NewPos;
 
+    // sync posisi animasi dengan posisi player
+    Anim.position = Position;
+
     if (IsKeyPressed(KEY_O))
         SwitchMap("world_json/cave.json", "goOutsideCave");
 
@@ -131,12 +213,65 @@ void Player::Update(void)
 
 // ================================================================
 // Render()
-// Render sprite player di posisi world saat ini.
+// Render sprite player dengan animasi di posisi world saat ini.
+// Menggunakan DrawPlayer() dari animation system.
 // Dipanggil dari RenderEntities() setelah RenderMap().
 // ================================================================
 void Player::Render(void)
 {
-    RenderTilePNG(Position.x, Position.y, TILE_PLAYER_NEW, 0.0f, TEXTURE_KNIGHT);
+    DrawPlayer(Anim);
+}
+
+// ================================================================
+// HandleSpaceAction()
+// Resolve apa yang terjadi saat SPACE ditekan berdasarkan context:
+// - Inventori terbuka → equip/unequip item
+// - Slot senjata (1/2) → attack
+// - Slot potion (3/4) → minum potion
+// ================================================================
+void Player::HandleSpaceAction(void)
+{
+    SpaceAction action = InputInstance.ResolveSpaceAction();
+
+    switch (action)
+    {
+    case ACTION_ATTACK:
+        UpdatePlayerAttack(Anim);
+        TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d)", (int)InputInstance.GetActiveSlot());
+        break;
+
+    case ACTION_DRINK_POTION:
+        // TODO: implementasi efek potion (heal, buff, dll)
+        TraceLog(LOG_INFO, "PLAYER: Drink potion! (slot %d)", (int)InputInstance.GetActiveSlot());
+        break;
+
+    case ACTION_EQUIP_UNEQUIP:
+        // TODO: implementasi equip/unequip dari inventori
+        TraceLog(LOG_INFO, "PLAYER: Equip/Unequip from inventory!");
+        break;
+
+    case ACTION_NONE:
+    default:
+        break;
+    }
+}
+
+// ================================================================
+// HandleRevive()
+// Reset player dari state DEAD ke IDLE.
+// Dipanggil saat R ditekan (debug/testing).
+// ================================================================
+void Player::HandleRevive(void)
+{
+    if (Anim.isDead)
+    {
+        Anim.isDead = false;
+        Anim.isAttacking = false;
+        Anim.state = IDLE;
+        Anim.frame = 0;
+        Anim.frameTime = 0.0f;
+        TraceLog(LOG_INFO, "PLAYER: Revived!");
+    }
 }
 
 // ================================================================
@@ -267,11 +402,12 @@ void Player::PlayerCamera(void)
 // ================================================================
 // Tick()
 // Wrapper logic player per frame — dipanggil dari UpdateLogicAll().
-// Urutan: update input/movement → update camera
+// Urutan: update input/movement → update animasi → update camera
 // ================================================================
 void Player::Tick(void)
 {
     Update();
+    UpdateAnimation(Anim, GetFrameTime());
     PlayerCamera();
 }
 
