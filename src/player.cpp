@@ -1,3 +1,11 @@
+/**
+ * @file player.cpp
+ * @brief Implementasi dari Player System Module
+ *
+ * Implementasi dari class Player yang dideklarasikan di player.h
+ * Handle movement, collision detection, animasi, camera follow, dan interaksi.
+ */
+
 #include "../include/mapLogic.h"
 #include "../include/player.h"
 #include "../include/debug.h"
@@ -6,17 +14,30 @@
 #include "../include/input.h"
 #include <cmath>
 
-// ================================================================
-// Global
-// ================================================================
+/*==============================================================================
+ * Global Variables
+ *==============================================================================*/
 
-// global instance player — diakses file lain via extern
+/** Global instance player — diakses file lain via extern */
 Player PlayerInstance;
 
+/*==============================================================================
+ * Private Helper Methods
+ *==============================================================================*/
+
+/**
+ * @brief Dapetin hitbox player di posisi tertentu
+ * @param position Posisi yang mau dicek
+ * @return Rectangle hitbox dengan offset yang udah di-apply
+ */
 Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
 {
     return BuildHitbox(position, HitboxOffsetX, HitboxOffsetY, HitboxWidth, HitboxHeight);
 }
+
+/*==============================================================================
+ * Initialization
+ *==============================================================================*/
 
 // ================================================================
 // Init()
@@ -33,10 +54,10 @@ Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
 // ================================================================
 void Player::Init(const char *spawnObjectName)
 {
-    // TODO: path texture disesuaiin sama asset yang ada
+    // Step 1: Load texture karakter
     LoadTileTexture(TEXTURE_KNIGHT, "texture/Knight.png");
 
-    // inisialisasi state animasi player
+    // Step 2: Inisialisasi state animasi player
     Anim.position = {0.0f, 0.0f};
     Anim.state = IDLE;
     Anim.direction = DOWN;
@@ -47,11 +68,11 @@ void Player::Init(const char *spawnObjectName)
     Anim.isAttacking = false;
     Anim.isDead = false;
 
-    // reset collision cache biar aman kalau nanti map di-reload
+    // Reset collision cache biar aman kalau nanti map di-reload
     CollisionRects.clear();
     CollisionPolygons.clear();
 
-    // safety check kalau map belum keload
+    // Safety check kalau map belum keload
     if (tilesonMap == nullptr)
     {
         Position = {0.0f, 0.0f};
@@ -61,7 +82,7 @@ void Player::Init(const char *spawnObjectName)
     }
 
     // ================================================================
-    // ambil spawn point dari object layer Tiled
+    // Step 3: ambil spawn point dari object layer Tiled
     // pakai TiledHelperFunction.TryGetObjectPositionByName
     // ================================================================
     Vector2 spawnPos;
@@ -79,8 +100,8 @@ void Player::Init(const char *spawnObjectName)
     }
     else
     {
-        // fallback kalau object spawn belum ada di Tiled
-        // posisi fallback dipusatkan ke tengah map dalam pixel
+        // Fallback kalau object spawn belum ada di Tiled
+        // Posisi fallback dipusatkan ke tengah map dalam pixel
         Position = {
             ((float)tilesonMap->width * TILE_SIZE) / 2.0f,
             ((float)tilesonMap->height * TILE_SIZE) / 2.0f};
@@ -88,10 +109,10 @@ void Player::Init(const char *spawnObjectName)
                  (spawnObjectName != nullptr && spawnObjectName[0] != '\0') ? spawnObjectName : SPAWN_OBJECT_NAME);
     }
 
-    // sync posisi animasi dengan posisi player
+    // Sync posisi animasi dengan posisi player
     Anim.position = Position;
 
-    // ambil semua collision object dari object layer Tiled
+    // Step 4: ambil semua collision object dari object layer Tiled
     // rectangle disimpan ke CollisionRects, polygon disimpan ke CollisionPolygons
     TiledHelper::CollisionResult collision;
     if (TiledHelperFunction.TryGetCollisionByLayerName(COLLISION_LAYER_NAME, collision))
@@ -105,6 +126,10 @@ void Player::Init(const char *spawnObjectName)
     TraceLog(LOG_INFO, "Player: Custom world boundary %s", WorldBoundaryPolygon.empty() ? "not found" : "loaded");
 }
 
+/*==============================================================================
+ * Update & Input Handling
+ *==============================================================================*/
+
 // ================================================================
 // Update()
 // Handle input keyboard dan movement player per frame.
@@ -113,58 +138,57 @@ void Player::Init(const char *spawnObjectName)
 // ================================================================
 void Player::Update(void)
 {
-    // poll input di awal frame
+    // Poll input di awal frame
     InputInstance.PollInput();
     InputInstance.UpdateState();
 
-    // --- Revive (R) — bisa dipanggil kapan saja, bahkan saat dead ---
+    // ===== Revive (R) — bisa dipanggil kapan saja, bahkan saat dead =====
     if (InputInstance.IsRevive())
     {
         HandleRevive();
         return;
     }
 
-    // kalau player dead, skip semua input selain revive
+    // Kalau player dead, skip semua input selain revive
     if (Anim.isDead)
         return;
 
-    // --- Kill (K) — debug: player langsung mati ---
+    // ===== Kill (K) — debug: player langsung mati =====
     if (InputInstance.IsKill())
     {
         UpdatePlayerDeath(Anim);
         return;
     }
 
-    // --- Left Click — context action (attack / potion / equip) ---
+    // ===== Left Click — context action (attack / potion / equip) =====
     if (InputInstance.IsLeftClickPressed() && !Anim.isAttacking)
     {
         HandleSpaceAction();
-        // kalau jadi attack, skip movement frame ini
+        // Kalau jadi attack, skip movement frame ini
         if (Anim.isAttacking)
             return;
     }
 
-    // --- Go Back (B) — kembali ke map sebelumnya ---
+    // ===== Go Back (B) — kembali ke map sebelumnya =====
     if (InputInstance.IsGoBack())
     {
-        pendingSwitchMap = false; // cancel kalau ada pending
-        // GoBack dipanggil via pending juga biar aman
-        pendingGoBack = true;
+        pendingSwitchMap = false; // cancel kalau ada pending switch map
+        pendingGoBack = true;     // trigger go back di Tick()
         return;
     }
 
-    // kalau lagi attack, skip movement
+    // Kalau lagi attack, skip movement
     if (Anim.isAttacking)
         return;
 
-    // --- Interact (E) ---
+    // ===== Interact (E) =====
     if (InputInstance.IsInteract())
     {
         // TODO: implementasi interact dengan object/NPC di depan player
         TraceLog(LOG_INFO, "PLAYER: Interact triggered");
     }
 
-    // --- Movement (Arrow/WASD) ---
+    // ===== Movement (Arrow/WASD) =====
     Velocity = {0, 0};
     bool moving = false;
 
@@ -193,13 +217,13 @@ void Player::Update(void)
         moving = true;
     }
 
-    // set animation state berdasarkan movement
+    // Set animation state berdasarkan movement
     if (moving)
         Anim.state = WALK;
     else
         Anim.state = IDLE;
 
-    // normalisasi biar diagonal gak lebih cepet dari cardinal
+    // Normalisasi biar diagonal gak lebih cepet dari cardinal
     float Length = sqrtf(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
     if (Length != 0)
     {
@@ -207,6 +231,7 @@ void Player::Update(void)
         Velocity.y /= Length;
     }
 
+    // Apply movement dengan collision check
     Vector2 NewPos = {
         Position.x + Velocity.x * Speed,
         Position.y + Velocity.y * Speed};
@@ -214,9 +239,10 @@ void Player::Update(void)
     if (CanMove(NewPos))
         Position = NewPos;
 
-    // sync posisi animasi dengan posisi player
+    // Sync posisi animasi dengan posisi player
     Anim.position = Position;
 
+    // Cek interaksi dengan pintu
     CheckDoorInteraction();
 }
 
@@ -230,6 +256,10 @@ void Player::Render(void)
 {
     DrawPlayer(Anim);
 }
+
+/*==============================================================================
+ * Action Handlers
+ *==============================================================================*/
 
 // ================================================================
 // HandleSpaceAction()
@@ -283,6 +313,10 @@ void Player::HandleRevive(void)
     }
 }
 
+/*==============================================================================
+ * Collision & Movement
+ *==============================================================================*/
+
 // ================================================================
 // CanMove()
 // Cek apakah posisi baru player (NewPos) nabrak salah satu
@@ -294,38 +328,50 @@ void Player::HandleRevive(void)
 // ================================================================
 bool Player::CanMove(Vector2 newPosition)
 {
-    // --- Build hitbox at new position ---
+    // Step 1: Build hitbox di posisi baru
     Rectangle hitbox = GetPlayerHitboxAtPosition(newPosition);
 
-    // --- World bounds check ---
+    // Step 2: Cek world bounds (batas luar map)
     if (!IsWithinWorldBounds(hitbox, tilesonMap->width * TILE_SIZE, tilesonMap->height * TILE_SIZE))
         return false;
 
-    // --- Check rect collisions ---
+    // Step 3: Cek collision dengan rectangle obstacles
     if (CheckCollisionAgainstRects(hitbox, CollisionRects))
         return false;
 
-    // --- Check polygon collisions ---
+    // Step 4: Cek collision dengan polygon obstacles
     if (CheckCollisionAgainstPolygons(hitbox, CollisionPolygons))
         return false;
 
-    return true;
+    return true; // Aman, gak nabrak apa-apa
 }
 
+/*==============================================================================
+ * Door Interaction
+ *==============================================================================*/
+
+/**
+ * @brief Cek interaksi dengan pintu dan trigger switch map
+ * @note Dipanggil tiap frame, kalo player nabrak pintu dan tekan E
+ */
 void Player::CheckDoorInteraction(void)
 {
     Rectangle playerHitbox = GetPlayerHitboxAtPosition(Position);
 
+    // Ambil semua object dengan type "pass" (pintu)
     std::vector<MapObject> doors = TiledHelperFunction.GetObjectsByType(DOOR_TYPE_OBJECT_NAME);
 
     for (const auto &door : doors)
     {
+        // Cek apakah player nabrak pintu
         if (!CheckCollisionRecs(playerHitbox, door.bounds))
             continue;
 
+        // Kalo nabrak tapi gak tekan E, gak terjadi apa-apa
         if (!IsKeyPressed(KEY_E))
             return;
 
+        // Cek properti "target_map" (map tujuan)
         auto mapIt = door.properties.find("target_map");
         if (mapIt == door.properties.end())
         {
@@ -333,6 +379,7 @@ void Player::CheckDoorInteraction(void)
             return;
         }
 
+        // Cek properti "target_door" (spawn point di map tujuan)
         auto doorIt = door.properties.find("target_door");
         if (doorIt == door.properties.end())
         {
@@ -340,6 +387,7 @@ void Player::CheckDoorInteraction(void)
             return;
         }
 
+        // Set pending switch map (dieksekusi di Tick())
         std::string targetMap = mapIt->second.getValue<std::string>();
         std::string targetDoor = doorIt->second.getValue<std::string>();
 
@@ -349,6 +397,10 @@ void Player::CheckDoorInteraction(void)
         return;
     }
 }
+
+/*==============================================================================
+ * Camera System
+ *==============================================================================*/
 
 // ================================================================
 // PlayerCamera()
@@ -366,8 +418,8 @@ void Player::PlayerCamera(void)
     float MapW = (float)tilesonMap->width * TILE_SIZE;
     float MapH = (float)tilesonMap->height * TILE_SIZE;
 
-    // zoom otomatis kalau map <= MinMapTileZoom biar map ngisi viewport
-    // kalau map lebih gede, pake FixedZoom — ubah nilai ini buat adjust
+    // Zoom otomatis kalau map <= MinMapTileZoom biar map ngisi viewport
+    // Kalau map lebih gede, pake FixedZoom — ubah nilai ini buat adjust
     const int MinMapTileZoom = 15;
     float AutoZoom = (float)GameScreenWidth / (MinMapTileZoom * TILE_SIZE);
     float FixedZoom = 2.0f;
@@ -375,20 +427,20 @@ void Player::PlayerCamera(void)
                                  ? AutoZoom
                                  : FixedZoom;
 
-    // kalau debug mode off, pakai zoom yang udah dihitung
+    // Kalau debug mode off, pakai zoom yang udah dihitung
     if (!isDebugMode)
         camera.zoom = CameraZoom;
 
-    // camera target = tengah player
+    // Camera target = tengah player
     camera.target.x = PlayerInstance.GetPosition().x + (TILE_SIZE / 2.0f);
     camera.target.y = PlayerInstance.GetPosition().y + (TILE_SIZE / 2.0f);
 
-    // hitung half viewport dalam world space
+    // Hitung half viewport dalam world space
     float halfW = (GameScreenWidth / 2.0f) / camera.zoom;
     float halfH = (GameScreenHeight / 2.0f) / camera.zoom;
 
-    // clamp camera target ke world bounds
-    // camera berhenti ngikutin player kalau udah di tepi map
+    // Clamp camera target ke world bounds
+    // Camera berhenti ngikutin player kalau udah di tepi map
     if (MapW <= halfW * 2.0f)
         camera.target.x = MapW / 2.0f;
     else
@@ -410,6 +462,10 @@ void Player::PlayerCamera(void)
     }
 }
 
+/*==============================================================================
+ * Main Update Loop & Frustum Culling
+ *==============================================================================*/
+
 // ================================================================
 // Tick()
 // Wrapper logic player per frame — dipanggil dari UpdateLogicAll().
@@ -417,7 +473,10 @@ void Player::PlayerCamera(void)
 // ================================================================
 void Player::Tick(void)
 {
+    // Step 1: Update movement dan input
     Update();
+
+    // Step 2: Handle pending go back (kembali ke map sebelumnya)
     if (PlayerInstance.pendingGoBack)
     {
         PlayerInstance.pendingGoBack = false;
@@ -425,13 +484,17 @@ void Player::Tick(void)
         return;
     }
 
+    // Step 3: Handle pending switch map (pindah map lewat pintu)
     if (PlayerInstance.pendingSwitchMap)
     {
         PlayerInstance.pendingSwitchMap = false;
         SwitchMap(PlayerInstance.pendingMapPath.c_str(), PlayerInstance.pendingDoorName.c_str());
     }
 
+    // Step 4: Update animasi berdasarkan delta time
     UpdateAnimation(Anim, GetFrameTime());
+
+    // Step 5: Update camera follow player
     PlayerCamera();
 }
 
@@ -447,23 +510,23 @@ void Player::Tick(void)
 // 4. Tambah margin 1 tile di tiap sisi biar gak ada pop-in di tepi
 // 5. Clamp ke batas map yang valid (0 .. width/height)
 //
-// Dipanggil oleh RenderMapCulled() (frustum.cpp) setiap frame.
+// Dipanggil oleh RenderMap() setiap frame.
 // ================================================================
 TileRange Player::GetVisibleTileRange(void)
 {
-    // pojok kiri-atas dan kanan-bawah layar dalam world space
+    // Pojok kiri-atas dan kanan-bawah layar dalam world space
     Vector2 worldMin = GetScreenToWorld2D({0.0f, 0.0f}, camera);
     Vector2 worldMax = GetScreenToWorld2D({(float)GameScreenWidth, (float)GameScreenHeight}, camera);
 
     TileRange range;
 
-    // konversi ke tile index + margin 1 tile biar gak ada pop-in di tepi
+    // Konversi ke tile index + margin 1 tile biar gak ada pop-in di tepi
     range.minX = (int)floorf(worldMin.x / TILE_SIZE) - 1;
     range.minY = (int)floorf(worldMin.y / TILE_SIZE) - 1;
     range.maxX = (int)ceilf(worldMax.x / TILE_SIZE) + 1;
     range.maxY = (int)ceilf(worldMax.y / TILE_SIZE) + 1;
 
-    // clamp ke batas map yang valid
+    // Clamp ke batas map yang valid (0 .. width/height)
     if (range.minX < 0)
         range.minX = 0;
     if (range.minY < 0)

@@ -1,3 +1,11 @@
+/**
+ * @file debugmode.cpp
+ * @brief Implementasi dari Debug System Module
+ * 
+ * Implementasi dari class Debug yang dideklarasikan di debug.h
+ * Handle semua debug panel, overlay, dan zoom debug.
+ */
+
 #include "../include/debug.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
@@ -6,25 +14,43 @@
 #include "../include/animation.h"
 #include "../include/player.h"
 
+/*==============================================================================
+ * Global Variables
+ *==============================================================================*/
+
 // ================================================================
 // Global
 // ================================================================
 
-// global instance debug — diakses file lain via extern
+/** Global instance debug — diakses file lain via extern */
 Debug DebugInstance;
+
+/** Flag debug mode — nentuin apakah panel debug ditampilin */
 bool isDebugMode = false;
 
+/*==============================================================================
+ * Private Helper Methods
+ *==============================================================================*/
+
+/**
+ * @brief Hitung bounds (posisi & ukuran) panel berdasarkan index
+ * @param index Urutan panel (0, 1, 2, ...)
+ * @param panelWidth Lebar panel dalam pixel
+ * @param panelHeight Tinggi panel dalam pixel
+ * @return Rectangle posisi dan ukuran panel di layar
+ * @note Layout grid 2 kolom, mulai dari pojok kiri atas (5,5)
+ */
 Rectangle Debug::GetPanelBounds(int index, float panelWidth, float panelHeight) const
 {
     // konfigurasi grid debug panel
-    const int ColumnCount = 2;
-    const float StartX = 5.0f;
-    const float StartY = 5.0f;
-    const float GapX = 10.0f;
-    const float GapY = 10.0f;
+    const int ColumnCount = 2;      // jumlah kolom grid
+    const float StartX = 5.0f;      // posisi X awal panel pertama
+    const float StartY = 5.0f;      // posisi Y awal panel pertama
+    const float GapX = 10.0f;       // jarak antar kolom
+    const float GapY = 10.0f;       // jarak antar baris
 
-    int column = index % ColumnCount;
-    int row = index / ColumnCount;
+    int column = index % ColumnCount;   // kolom ke berapa (0 atau 1)
+    int row = index / ColumnCount;      // baris ke berapa
 
     Rectangle bounds = {
         StartX + column * (panelWidth + GapX),
@@ -35,6 +61,11 @@ Rectangle Debug::GetPanelBounds(int index, float panelWidth, float panelHeight) 
     return bounds;
 }
 
+/**
+ * @brief Bikin daftar panel yang aktif
+ * @return Vector berisi DebugPanelEntry yang enabled = true
+ * @note Urutan di vector = urutan layout di grid
+ */
 std::vector<Debug::DebugPanelEntry> Debug::BuildActivePanels(void) const
 {
     std::vector<DebugPanelEntry> panels;
@@ -42,15 +73,22 @@ std::vector<Debug::DebugPanelEntry> Debug::BuildActivePanels(void) const
     // daftar panel aktif
     // urutan di vector = urutan layout di grid
     panels.push_back({"Map", &Debug::DrawMapPanel, true});
-    // panels.push_back({"Camera", &Debug::DrawCameraPanel, true});
-    // panels.push_back({"Player", &Debug::DrawPlayerPanel, true});
+    panels.push_back({"Camera", &Debug::DrawCameraPanel, true});
+    panels.push_back({"Player", &Debug::DrawPlayerPanel, true});
     panels.push_back({"Zoom", &Debug::DrawZoomPanel, true});
-    // panels.push_back({"Frustum", &Debug::DrawFrustumPanel, true});
+    panels.push_back({"Frustum", &Debug::DrawFrustumPanel, true});
     panels.push_back({"Collision", &Debug::DrawCollisionPanel, true});
 
     return panels;
 }
 
+/**
+ * @brief Gambar frame/border panel debug
+ * @param bounds Area panel
+ * @param title Judul panel (ditampilin di atas)
+ * @param borderColor Warna border panel
+ * @note Background panel semi-transparan (hitam 70%)
+ */
 void Debug::DrawPanelFrame(Rectangle bounds, const char *title, Color borderColor) const
 {
     DrawRectangle((int)bounds.x, (int)bounds.y, (int)bounds.width, (int)bounds.height, Fade(BLACK, 0.7f));
@@ -58,6 +96,14 @@ void Debug::DrawPanelFrame(Rectangle bounds, const char *title, Color borderColo
     DrawText(title, (int)bounds.x + 10, (int)bounds.y + 5, 18, borderColor);
 }
 
+/**
+ * @brief Gambar overlay collision buat layer tertentu
+ * @param layerName Nama layer collision yang mau digambar
+ * @param rectColor Warna buat rectangle collision
+ * @param polygonColor Warna buat polygon collision
+ * @param pointColor Warna buat titik-titik polygon
+ * @note Rectangle digambar pake DrawRectangleLinesEx, polygon pake DrawLineEx
+ */
 void Debug::DrawCollisionOverlay(const std::string& layerName, Color rectColor, Color polygonColor, Color pointColor)
 {
     std::vector<MapObject> objs = TilesonGetObjectsByLayerName(layerName.c_str());
@@ -66,6 +112,7 @@ void Debug::DrawCollisionOverlay(const std::string& layerName, Color rectColor, 
     {
         if (obj.hasPolygon)
         {
+            // Gambar polygon: loop setiap edge dan titik sudutnya
             int pointCount = (int)obj.polygonPoints.size();
             if (pointCount >= 2)
             {
@@ -79,10 +126,15 @@ void Debug::DrawCollisionOverlay(const std::string& layerName, Color rectColor, 
         }
         else
         {
+            // Gambar rectangle collision
             DrawRectangleLinesEx(obj.bounds, 2.0f, rectColor);
         }
     }
 }
+
+/*==============================================================================
+ * Public Methods - Toggle & Draw
+ *==============================================================================*/
 
 // ================================================================
 // Toggle()
@@ -124,6 +176,10 @@ void Debug::Draw(void)
         visibleIndex++;
     }
 }
+
+/*==============================================================================
+ * Debug Panels
+ *==============================================================================*/
 
 // ================================================================
 // DrawMapPanel()
@@ -266,6 +322,15 @@ void Debug::DrawCollisionPanel(Rectangle bounds)
              (int)bounds.x + 10, (int)bounds.y + 87, 16, mapBoundPolygonCount > 0 ? GREEN : YELLOW);
 }
 
+/*==============================================================================
+ * World Overlay
+ *==============================================================================*/
+
+/**
+ * @brief Render overlay debug di world-space
+ * @note Nampilin hitbox player, collision objects, dan map bounds
+ *       Langsung di-render ke world (bukan UI)
+ */
 void Debug::DrawWorldOverlay(void)
 {
     if (!isDebugMode)
@@ -322,18 +387,3 @@ void Debug::DrawWorldOverlay(void)
     DrawText("Hitbox", (int)playerHitbox.x, (int)playerHitbox.y - 14, 14, LIME);
 }
 
-// ================================================================
-// DebugMouse() — di-comment, sapa tau butuh nanti
-// Nampilin posisi mouse di screen asli dan layar virtual.
-// ================================================================
-// void Debug::DebugMouse(GameState *state)
-// {
-//     Vector2 Mouse = GetMousePosition();
-//     Vector2 virtualMouse = {0, 0};
-//     virtualMouse.x = (Mouse.x - ((state->WindowScreenWidth - (GameScreenWidth * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
-//     virtualMouse.y = (Mouse.y - ((state->WindowScreenHeight - (GameScreenHeight * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
-//     virtualMouse = Vector2Clamp(virtualMouse, (Vector2){0, 0}, (Vector2){(float)GameScreenWidth, (float)GameScreenHeight});
-//
-//     DrawText(TextFormat("Default Mouse: [%i , %i]", (int)Mouse.x, (int)Mouse.y), 5, 240, 25, GREEN);
-//     DrawText(TextFormat("Virtual Mouse: [%i , %i]", (int)virtualMouse.x, (int)virtualMouse.y), 5, 265, 25, YELLOW);
-// }

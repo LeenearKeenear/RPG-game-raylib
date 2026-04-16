@@ -1,147 +1,191 @@
 #pragma once
 
-// ================================================================
-// Animation System
-// Handle semua animasi sprite untuk player, enemy, dan entity lain.
-//
-// Semua logic animasi (frame switching, timing, direction)
-// dipusatin di sini biar gak nyebar ke mana-mana.
-//
-// Module ini juga contain tile rendering system yang dipakai
-// buat render spritesheet-based tiles dan character sprites.
-// ================================================================
+/**
+ * @file animation.h
+ * @brief Animation System & Tile Rendering Module
+ *
+ * Handle semua animasi sprite untuk player, enemy, dan entity lain.
+ * Semua logic animasi (frame switching, timing, direction) dipusatin di sini.
+ * Module ini juga contain tile rendering system buat render spritesheet-based tiles.
+ */
 
 #include "raylib.h"
 
-// ================================================================
-// Texture & Asset
-// ================================================================
+/*==============================================================================
+ * Texture & Asset Management
+ *==============================================================================*/
 
-// jumlah maksimum slot texture PNG yang bisa di-load
+/** Jumlah maksimum slot texture PNG yang bisa di-load */
 #define MAX_TEXTURES 3
 
-// enum buat milih slot texture — tambah di sini kalau ada asset baru
+/**
+ * @brief Enum buat milih slot texture
+ * @note TEXTURE_KNIGHT nanti bakal direfaktor jadi lebih general
+ */
 typedef enum
 {
-    TEXTURE_TILEMAP = 0,
-    TEXTURE_KNIGHT
+    TEXTURE_TILEMAP = 0, /**< Slot buat tileset/spritesheet environment */
+    TEXTURE_KNIGHT       /**< Slot buat sprite karakter knight (akan direfaktor) */
 } TextureAsset;
 
-// global texture array — diakses dari file lain via extern
+/** Global texture array - diakses dari file lain pake extern */
 extern Texture2D TexturesMap[MAX_TEXTURES];
 
-// ================================================================
-// Tile System
-// ================================================================
+/*==============================================================================
+ * Tile System
+ *==============================================================================*/
 
-// koordinat universal buat posisi tile di spritesheet atau world
+/**
+ * @brief Koordinat universal buat posisi tile di spritesheet atau world
+ */
 typedef struct
 {
-    int x;
-    int y;
+    int x; /**< Koordinat X */
+    int y; /**< Koordinat Y */
 } TileCoordinate;
 
-// enum semua jenis tile yang ada — tambah di sini kalau ada tile baru
+/**
+ * @brief Semua jenis tile yang ada
+ * @note keknya ini gak kepake
+ */
 typedef enum
 {
-    TILE_CLU_WALL,
-    TILE_CMU_WALL,
-    TILE_CRU_WALL,
-    TILE_CML_WALL,
-    TILE_M_WALL,
-    TILE_CMR_WALL,
-    TILE_CLD_WALL,
-    TILE_CMD_WALL,
-    TILE_CRD_WALL,
-    TILE_POOL,
-    TILE_BIGMAN,
-    TILE_GRASS1,
-    TILE_GRASS2,
-    TILE_DOOR_OPEN,
-    TILE_DOOR_CLOSE,
-    TILE_PLAYER_NEW
+    TILE_CLU_WALL,   /**< Dinding kiri atas (corner left up) */
+    TILE_CMU_WALL,   /**< Dinding tengah atas (corner middle up) */
+    TILE_CRU_WALL,   /**< Dinding kanan atas (corner right up) */
+    TILE_CML_WALL,   /**< Dinding kiri tengah (corner middle left) */
+    TILE_M_WALL,     /**< Dinding tengah */
+    TILE_CMR_WALL,   /**< Dinding kanan tengah (corner middle right) */
+    TILE_CLD_WALL,   /**< Dinding kiri bawah (corner left down) */
+    TILE_CMD_WALL,   /**< Dinding tengah bawah (corner middle down) */
+    TILE_CRD_WALL,   /**< Dinding kanan bawah (corner right down) */
+    TILE_POOL,       /**< Kolam air */
+    TILE_BIGMAN,     /**< Tile buat karakter besar */
+    TILE_GRASS1,     /**< Rumput varian 1 */
+    TILE_GRASS2,     /**< Rumput varian 2 */
+    TILE_DOOR_OPEN,  /**< Pintu kebuka */
+    TILE_DOOR_CLOSE, /**< Pintu ketutup */
+    TILE_PLAYER_NEW  /**< @deprecated Cuma placeholder, gak dipake */
 } TileType;
 
-// properti tiap tile: posisi di spritesheet, bisa dilewatin, ada interaksi gak
+/**
+ * @brief Properti tiap tile
+ * @note gak kepake
+ */
 typedef struct
 {
-    TileCoordinate CoordID;
-    bool IsWalkable;
-    bool HasInteraction;
+    TileCoordinate CoordID; /**< Posisi tile di spritesheet */
+    bool IsWalkable;        /**< True kalo player/enemy bisa lewat */
+    bool HasInteraction;    /**< True kalo tile punya event interaksi */
 } TileDefinition;
 
-// ukuran tile dalam pixel + gap antar tile di spritesheet
+/** Ukuran tile dalam pixel */
 #define TILE_SIZE 32
+
+/** Jarak antar tile di spritesheet (padding) */
 #define TILE_GAP 4
 
-// ================================================================
-// Tile Rendering Functions
-// ================================================================
+/*==============================================================================
+ * Tile Rendering Functions
+ *==============================================================================*/
 
-// load texture PNG ke slot yang ditentuin
+/**
+ * @brief Load texture PNG ke slot yang ditentuin
+ * @param Slot Slot texture (dari enum TextureAsset)
+ * @param Path File path ke gambar PNG
+ */
 void LoadTileTexture(TextureAsset Slot, const char *Path);
 
-// render satu tile dari spritesheet ke posisi world
+/**
+ * @brief Render satu tile dari spritesheet ke posisi world
+ * @param pos_x Posisi world X (pixel)
+ * @param pos_y Posisi world Y (pixel)
+ * @param Type Jenis tile (dari enum TileType)
+ * @param Rotation Rotasi dalam derajat
+ * @param Slot Texture asset yang dipake
+ */
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
 
-// ambil source rectangle dari spritesheet berdasarkan frame koordinat
+/**
+ * @brief Ambil source rectangle dari spritesheet berdasarkan frame koordinat
+ * @param frameX Koordinat X frame (dalam satuan tile)
+ * @param frameY Koordinat Y frame (dalam satuan tile)
+ * @return Rectangle buat raylib DrawTextureRec()
+ */
 Rectangle GetFrame(int frameX, int frameY);
 
-// ================================================================
-// Animation State & Direction
-// ================================================================
+/*==============================================================================
+ * Animation State & Direction
+ *==============================================================================*/
 
+/** State animasi buat entity (player, enemy, dll) */
 enum State
 {
-    IDLE,
-    WALK,
-    ATTACK,
-    DEAD
+    IDLE,   /**< Diam/standby */
+    WALK,   /**< Jalan */
+    ATTACK, /**< Nyerrang */
+    DEAD    /**< Mati */
 };
 
+/** Arah hadap entity buat nentuin sprite mana yang dipake */
 enum Direction
 {
-    LEFT,
-    RIGHT,
-    DOWN,
-    UP
+    LEFT,  /**< Ngadep kiri */
+    RIGHT, /**< Ngadep kanan */
+    DOWN,  /**< Ngadep bawah */
+    UP     /**< Ngadep atas */
 };
 
-// ================================================================
-// AnimationPlayer Struct
-// Data animasi untuk satu entity (player, enemy, dll)
-// ================================================================
-struct AnimationPlayer {
-    Vector2 position;
+/*==============================================================================
+ * AnimationPlayer Struct
+ *==============================================================================*/
 
-    State state;
-    Direction direction;
+/**
+ * @brief Data animasi buat satu entity (player, enemy, dll)
+ */
+struct AnimationPlayer
+{
+    Vector2 position; /**< Posisi entity di world (pixel) */
 
-    int frame;
-    float frameTime;
-    float frameSpeed;
+    State state;         /**< State animasi saat ini (IDLE/WALK/ATTACK/DEAD) */
+    Direction direction; /**< Arah hadap entity saat ini */
 
-    int walkFrameIndex;
+    int frame;        /**< Index frame animasi yang ditampilin (wrapper dari walkFrameIndex) */
+    float frameTime;  /**< Akumulator waktu buat timing animasi (dalam detik) */
+    float frameSpeed; /**< Kecepatan ganti frame (durasi per frame, misal 0.1 = 10 FPS) */
 
-    bool isAttacking;
-    bool isDead;
+    int walkFrameIndex; /**< Index frame buat mapping gambar dari texture pack */
+
+    bool isAttacking; /**< Flag ngecek apakah entity sedang attack */
+    bool isDead;      /**< Flag ngecek apakah entity udah mati */
 };
 
-// ================================================================
-// Animation Functions
-// ================================================================
+/*==============================================================================
+ * Animation Functions
+ *==============================================================================*/
 
-// state setters — set direction dan state animasi
-void UpdatePlayerWalkUp(AnimationPlayer &p);
-void UpdatePlayerWalkDown(AnimationPlayer &p);
-void UpdatePlayerWalkLeft(AnimationPlayer &p);
-void UpdatePlayerWalkRight(AnimationPlayer &p);
-void UpdatePlayerIdle(AnimationPlayer &p);
-void UpdatePlayerAttack(AnimationPlayer &p);
-void UpdatePlayerDeath(AnimationPlayer &p);
+/** @name State Setters
+ *  @brief Set direction dan state animasi
+ *  @{
+ */
+void UpdatePlayerWalkUp(AnimationPlayer &p);    /**< Set animasi jalan ke atas */
+void UpdatePlayerWalkDown(AnimationPlayer &p);  /**< Set animasi jalan ke bawah */
+void UpdatePlayerWalkLeft(AnimationPlayer &p);  /**< Set animasi jalan ke kiri */
+void UpdatePlayerWalkRight(AnimationPlayer &p); /**< Set animasi jalan ke kanan */
+void UpdatePlayerIdle(AnimationPlayer &p);      /**< Set animasi idle/diam */
+void UpdatePlayerAttack(AnimationPlayer &p);    /**< Set animasi attack */
+void UpdatePlayerDeath(AnimationPlayer &p);     /**< Set animasi death/mati */
+/** @} */
 
-// update frame animasi berdasarkan delta time
+/**
+ * @brief Update frame animasi berdasarkan delta time
+ * @param p AnimationPlayer yang bakal diupdate
+ * @param dt Delta time dalam detik (buat nambahin frameTime)
+ */
 void UpdateAnimation(AnimationPlayer &p, float dt);
 
-// render player sprite ke layar
+/**
+ * @brief Render player sprite ke layar berdasarkan state dan direction
+ * @param p AnimationPlayer dengan state animasi saat ini
+ */
 void DrawPlayer(AnimationPlayer &p);

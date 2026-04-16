@@ -1,4 +1,13 @@
 #pragma once
+
+/**
+ * @file player.h
+ * @brief Player System Module
+ *
+ * Handle semua behavior player: movement, collision, render, camera.
+ * Ini inti dari gameplay player character.
+ */
+
 #include "../lib/raylib/include/raylib.h"
 #include "map.h"
 #include "screen.h"
@@ -24,94 +33,169 @@
 // - Init() otomatis taruh player di posisi spawn
 // ================================================================
 
+/*==============================================================================
+ * Player Class
+ *==============================================================================*/
+
+/**
+ * @brief Class utama buat handle player character
+ *
+ * Nyediain semua fungsi yang berhubungan sama player:
+ * - Movement & collision detection
+ * - Animasi (jalan, idle, attack, mati)
+ * - Camera follow
+ * - Interaksi dengan object (door, dll)
+ * - Handle input dari PlayerInput
+ */
 class Player
 {
 public:
-    // inisialisasi player — load texture, baca spawn & collision dari Tiled
+    // ================================================================
+    // Initialization
+    // ================================================================
+
+    /**
+     * @brief Inisialisasi player
+     * @param spawnObjectName Nama object spawn point di Tiled (default: SPAWN_OBJECT_NAME)
+     * @note Load texture, baca spawn & collision dari Tiled, setup animasi awal
+     */
     void Init(const char *spawnObjectName = SPAWN_OBJECT_NAME);
 
-    // handle input dan movement per frame, cek collision sebelum apply posisi
+    // ================================================================
+    // Update & Render
+    // ================================================================
+
+    /**
+     * @brief Handle input dan movement per frame
+     * @note Cek collision sebelum apply posisi baru
+     *       Juga handle attack, death, revive, dll
+     */
     void Update(void);
 
-    // render sprite player di posisi world saat ini
+    /**
+     * @brief Render sprite player di posisi world saat ini
+     * @note Panggil DrawPlayer() dari animation system
+     */
     void Render(void);
 
-    // handle camera follow player dengan clamp ke world bounds
+    /**
+     * @brief Handle camera follow player dengan clamp ke world bounds
+     * @note Camera bakal ngikutin player tapi gak bakal keluar dari batas map
+     */
     void PlayerCamera(void);
 
-    // wrapper per frame — dipanggil dari UpdateLogicAll()
-    // urutan: Update() → PlayerCamera()
+    /**
+     * @brief Wrapper per frame — dipanggil dari UpdateLogicAll()
+     * @note Urutan: Update() → PlayerCamera()
+     */
     void Tick(void);
 
-    // getter posisi player dalam pixel
+    // ================================================================
+    // Getters
+    // ================================================================
+
+    /** @return Posisi player dalam pixel */
     Vector2 GetPosition() { return Position; }
 
-    // getter speed player — dipake debug panel
+    /** @return Speed player — dipake debug panel */
     float GetSpeed() { return Speed; }
 
-    // getter apakah player masih hidup
+    /** @return true kalo player masih hidup, false kalo udah mati */
     bool IsAlive() { return !Anim.isDead; }
 
-    // getter hitbox player — dipake collision dan debug panel
+    // hitbox getters — dipake collision dan debug panel
     float GetHitboxWidth() { return HitboxWidth; }
     float GetHitboxHeight() { return HitboxHeight; }
     float GetHitboxOffsetX() { return HitboxOffsetX; }
     float GetHitboxOffsetY() { return HitboxOffsetY; }
 
-    // hitung range tile yang visible di layar berdasarkan camera viewport
-    // ini adalah inti logic frustum culling — dipake oleh RenderMapCulled()
+    // ================================================================
+    // Frustum Culling
+    // ================================================================
+
+    /**
+     * @brief Hitung range tile yang visible di layar berdasarkan camera viewport
+     * @return TileRange berisi minX, minY, maxX, maxY
+     * @note Ini adalah inti logic frustum culling — dipake oleh RenderMap()
+     */
     TileRange GetVisibleTileRange(void);
 
-    AnimationPlayer Anim;
+    // ================================================================
+    // Public Members
+    // ================================================================
 
-    bool pendingSwitchMap = false;
-    std::string pendingMapPath;
-    std::string pendingDoorName;
-    bool pendingGoBack = false;
+    AnimationPlayer Anim; /**< Data animasi player (state, frame, dll) */
+
+    bool pendingSwitchMap = false; /**< Flag nunggu ganti map */
+    std::string pendingMapPath;    /**< Path map tujuan */
+    std::string pendingDoorName;   /**< Nama pintu tujuan di map baru */
+    bool pendingGoBack = false;    /**< Flag nunggu aksi go back ke map sebelumnya */
 
 private:
-    Vector2 Position;
-    Vector2 Velocity;
-    int TileSize = 32;
-    float Speed = 4.0f;
-    Texture2D CharTexture;
+    // ================================================================
+    // Private Methods
+    // ================================================================
 
-    // data animasi player — state machine (idle, walk, attack, dead)
+    /**
+     * @brief Dapetin hitbox player di posisi tertentu
+     * @param position Posisi yang mau dicek (biasanya posisi baru sebelum movement)
+     * @return Rectangle hitbox dengan offset yang udah di-apply
+     */
+    Rectangle GetPlayerHitboxAtPosition(Vector2 position);
+
+    /**
+     * @brief Cek apakah posisi baru player valid (gak nabrak collision & masih di dalam map)
+     * @param NewPos Posisi baru yang mau dicek
+     * @return false kalo nabrak collision / keluar bound, true kalo aman
+     */
+    bool CanMove(Vector2 NewPos);
+
+    /**
+     * @brief Cek interaksi dengan door/pintu dan trigger switch map kalo perlu
+     */
+    void CheckDoorInteraction(void);
+
+    /**
+     * @brief Handle aksi left click berdasarkan context (slot aktif / inventori)
+     * @note Panggil ResolveSpaceAction() dari PlayerInput
+     */
+    void HandleSpaceAction(void);
+
+    /**
+     * @brief Revive player — reset state dari DEAD ke IDLE
+     * @note Dipanggil pas tekan tombol R (debug)
+     */
+    void HandleRevive(void);
+
+    // ================================================================
+    // Private Members
+    // ================================================================
+
+    Vector2 Position;      /**< Posisi player di world (pixel) */
+    Vector2 Velocity;      /**< Kecepatan player (belum dipake maksimal) */
+    int TileSize = 32;     /**< Ukuran tile dalam pixel */
+    float Speed = 4.0f;    /**< Kecepatan gerak player (pixel per frame) */
+    Texture2D CharTexture; /**< Texture sprite player */
 
     // ukuran hitbox player bisa diperkecil dari sprite biar movement
     // terasa lebih enak dan gak gampang nyangkut di sudut/object.
-    float HitboxWidth = 16.0f;
-    float HitboxHeight = 12.0f;
-    float HitboxOffsetX = 8.0f;  // makin tinggi makin ke kanan
-    float HitboxOffsetY = 14.0f; // makin tinggin makin kebawah
+    float HitboxWidth = 16.0f;   /**< Lebar hitbox player */
+    float HitboxHeight = 12.0f;  /**< Tinggi hitbox player */
+    float HitboxOffsetX = 8.0f;  /**< Offset X hitbox dari posisi (makin besar makin ke kanan) */
+    float HitboxOffsetY = 14.0f; /**< Offset Y hitbox dari posisi (makin besar makin ke bawah) */
 
-    Rectangle GetPlayerHitboxAtPosition(Vector2 position);
+    // collision data dari Tiled — diisi pas Init()
+    std::vector<Rectangle> CollisionRects;               /**< Rectangle collision dari object layer */
+    std::vector<std::vector<Vector2>> CollisionPolygons; /**< Polygon collision dari object layer */
 
-    // cek apakah posisi baru player nabrak collision shape
-    // atau keluar dari world boundary
-    // return false kalau nabrak / keluar bound, true kalau aman
-    bool CanMove(Vector2 NewPos);
-    void CheckDoorInteraction(void);
-
-    // handle SPACE berdasarkan context (slot aktif / inventori)
-    void HandleSpaceAction(void);
-
-    // revive player — reset state dari DEAD ke IDLE
-    void HandleRevive(void);
-
-    // collision rectangles dari object layer Tiled
-    // diisi pas Init() dari TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME)
-    std::vector<Rectangle> CollisionRects;
-
-    // collision polygon dari object layer Tiled
-    // diisi pas Init() dari object collision yang punya polygon
-    std::vector<std::vector<Vector2>> CollisionPolygons;
-
-    // custom world boundary polygon dari object layer Tiled
-    // diisi pas Init() dari TilesonGetObjectsByLayerName(MAP_BOUND_LAYER_NAME)
-    // kalau kosong, CanMove() fallback ke rectangle ukuran map
-    std::vector<Vector2> WorldBoundaryPolygon;
+    // custom world boundary polygon dari Tiled — diisi pas Init()
+    // kalo kosong, CanMove() fallback ke rectangle ukuran map
+    std::vector<Vector2> WorldBoundaryPolygon; /**< Boundary polygon custom */
 };
 
-// global instance — bisa diakses file lain via extern
+/*==============================================================================
+ * Global Player Instance
+ *==============================================================================*/
+
+/** Global instance player — bisa diakses file lain via extern */
 extern Player PlayerInstance;
