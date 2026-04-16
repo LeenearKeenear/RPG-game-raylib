@@ -105,7 +105,7 @@ void Player::Init(void)
     Hotbar[0] = {ITEM_WEAPON, "Iron Sword", 1, 10, 0, 6, 4};
     Hotbar[1] = {ITEM_WEAPON, "Wooden Bow", 1, 5, 0, 8, 4};
     Hotbar[2] = {ITEM_POTION, "Health Potion", 3, 0, 20, 7, 8};
-    Hotbar[3] = {ITEM_POTION, "Bread", 5, 0, 10, 10, 8}; // Diubah ke Makanan (Bread)
+    Hotbar[3] = {ITEM_POTION, "Mana Bread", 5, 0, 15, 10, 8}; // Digunakan untuk test heal mana
 }
 
 // ================================================================
@@ -306,11 +306,18 @@ void Player::UsePotion(int slotIndex)
     if (Hotbar[slotIndex].type != ITEM_POTION || Hotbar[slotIndex].amount <= 0)
         return;
 
-    // Apply heal
-    Health += Hotbar[slotIndex].healValue;
-    if (Health > MaxHealth) Health = MaxHealth;
-
-    // TODO: if Mana potion, apply mana heal
+    // Cek apakah item mengandung kata "Mana" untuk mendeteksi tipe heal
+    if (Hotbar[slotIndex].name.find("Mana") != std::string::npos) {
+        // Apply mana heal
+        Mana += Hotbar[slotIndex].healValue;
+        if (Mana > MaxMana) Mana = MaxMana;
+        TraceLog(LOG_INFO, "PLAYER: Healed Mana by %d! Current: %.1f", Hotbar[slotIndex].healValue, Mana);
+    } else {
+        // Apply health heal
+        Health += Hotbar[slotIndex].healValue;
+        if (Health > MaxHealth) Health = MaxHealth;
+        TraceLog(LOG_INFO, "PLAYER: Healed Health by %d! Current: %.1f", Hotbar[slotIndex].healValue, Health);
+    }
 
     // Consume item
     Hotbar[slotIndex].amount--;

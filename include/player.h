@@ -89,7 +89,7 @@ private:
     int TileSize = 32;
     float Speed = 4.0f;
     Texture2D CharTexture;
-    const char* Name = "Light Knight";
+    const char* Name = "Player Name";
 
     // health player
     float Health = 100.0f;

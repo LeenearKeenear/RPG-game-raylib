@@ -62,14 +62,14 @@ void DrawHotbar()
     extern const int GameScreenWidth;
     extern const int GameScreenHeight;
 
-    const float slotSize = 65.0f; // Kotak diperbesar
-    const float padding = 12.0f;
+    const float slotSize = 55.0f; // Ukuran kotak dikurangi
+    const float padding = 10.0f;
     const float screenPadding = 30.0f; // Menyamakan dengan padding HP bar
     const float totalWidth = (slotSize * 4) + (padding * 3);
     
-    // Taruh di kanan bawah
+    // Taruh di kanan bawah, sejajar dengan bagian bawah mana bar (GameScreenHeight - 30)
     const float startX = (float)GameScreenWidth - screenPadding - totalWidth;
-    const float startY = (float)GameScreenHeight - screenPadding - slotSize;
+    const float startY = (float)GameScreenHeight - 30.0f - slotSize;
 
     ItemSlot activeSlot = InputInstance.GetActiveSlot();
 
@@ -83,11 +83,11 @@ void DrawHotbar()
 
         // 2. Background
         Color bgColor = isActive ? ColorAlpha(GOLD, 0.3f) : ColorAlpha(DARKGRAY, 0.6f);
-        DrawRectangleRounded(slotRect, 0.2f, 8, bgColor);
+        DrawRectangleRounded(slotRect, 0.4f, 8, bgColor);
 
         // 3. Border
         Color borderColor = isActive ? GOLD : ColorAlpha(WHITE, 0.3f);
-        DrawRectangleRoundedLines(slotRect, 0.2f, 8, borderColor);
+        DrawRectangleRoundedLines(slotRect, 0.4f, 8, borderColor);
 
         // 4. Item Info (Icon)
         InventoryItem item = PlayerInstance.GetHotbarItem(i);
@@ -96,8 +96,8 @@ void DrawHotbar()
             // Ambil source rect dari test.png
             Rectangle src = GetFrame(item.iconX, item.iconY);
             
-            // Render icon ditengah slot, sedikit diperbesar (misal 50x50)
-            float iconDrawSize = 50.0f;
+            // Render icon ditengah slot, sedikit diperbesar (misal 42x42)
+            float iconDrawSize = 42.0f;
             Rectangle dest = {
                 slotRect.x + (slotRect.width - iconDrawSize) / 2.0f,
                 slotRect.y + (slotRect.height - iconDrawSize) / 2.0f,
@@ -112,15 +112,12 @@ void DrawHotbar()
             {
                 char amtBuf[12];
                 sprintf(amtBuf, "%d", item.amount);
-                int textW = MeasureText(amtBuf, 12);
-                DrawTextHUD(amtBuf, (int)(slotRect.x + slotRect.width - textW - 5), (int)(slotRect.y + slotRect.height - 15), 12, WHITE);
+                int fontSize = 12; // Tetap besar sesuai permintaan
+                int textW = MeasureText(amtBuf, fontSize);
+                // Sesuaikan posisi Y untuk slotSize 55 (menggunakan offset -22 agar terlihat pas di pojok)
+                DrawTextHUD(amtBuf, (int)(slotRect.x + slotRect.width - textW - 4), (int)(slotRect.y + slotRect.height - 13.5), fontSize, WHITE);
             }
         }
-
-        // 5. Slot Number (Key bind)
-        char keyBuf[4];
-        sprintf(keyBuf, "%d", i + 1);
-        DrawTextHUD(keyBuf, (int)slotRect.x + 2, (int)slotRect.y - 12, 10, GRAY);
     }
 }
 
