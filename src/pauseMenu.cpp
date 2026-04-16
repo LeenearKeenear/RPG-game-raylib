@@ -3,7 +3,7 @@
 
 static Popup savePopup("Game Saved!", "OK", 0.7F);
 static Popup loadPopup("Game Loaded!", "OK", 0.7F);
-static Popup optionsPopup("Coming Soon!", "OK", 0.7F);
+static Popup pauseOptionsPopup("Coming Soon!", "OK", 0.7F);
 
 /**
  * @brief Default constructor.
@@ -117,7 +117,7 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             loadPopup.Show();
             break;
         case 3:  // Options
-            optionsPopup.Show();
+            pauseOptionsPopup.Show();
             break;
         case 4:  // Return to Main Menu
             state->currentScreen = MAIN_MENU;
@@ -154,8 +154,8 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
         return;
     }
 
-    if (optionsPopup.IsActive()) {
-        optionsPopup.Update(mousePosition, mouseClicked);
+    if (pauseOptionsPopup.IsActive()) {
+        pauseOptionsPopup.Update(mousePosition, mouseClicked);
         return;
     }
 
@@ -202,7 +202,7 @@ void PauseMenu::Draw(Vector2 mousePosition)
         loadPopup.Draw(mousePosition);
     }
 
-    if (optionsPopup.IsActive()) {
-        optionsPopup.Draw(mousePosition);
+    if (pauseOptionsPopup.IsActive()) {
+        pauseOptionsPopup.Draw(mousePosition);
     }
 }

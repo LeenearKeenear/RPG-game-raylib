@@ -6,7 +6,7 @@
 #include <cstdint>
 
 static std::array<buttonTxt, 4> buttons;
-static Popup optionsPopup;
+static Popup menuOptionsPopup;
 
 /**
  * @brief InitMainMenu()
@@ -27,7 +27,7 @@ void InitMainMenu(GameState* state)
         buttons[i] = buttonTxt(texts[i], centerX, startY + (i * buttonSpacing), fontSize, WHITE, 0.6F);
     }
 
-    optionsPopup = Popup("COMING SOON", "OK", 0.6F);
+    menuOptionsPopup = Popup("COMING SOON", "OK", 0.6F);
 }
 
 /**
@@ -40,8 +40,8 @@ void UpdateMainMenu(GameState* state)
     Vector2 mousePosition = GetVirtualMousePosition(state);
     bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
-    if (optionsPopup.IsActive()) {
-        optionsPopup.Update(mousePosition, mouseClicked);
+    if (menuOptionsPopup.IsActive()) {
+        menuOptionsPopup.Update(mousePosition, mouseClicked);
         return;
     }
 
@@ -52,7 +52,7 @@ void UpdateMainMenu(GameState* state)
                     state->currentScreen = PLAY;
                     break;
                 case 2:  // Options
-                    optionsPopup.Show();
+                    menuOptionsPopup.Show();
                     break;
                 case 3:  // Quit
                     CloseWindow();
@@ -79,8 +79,8 @@ void RenderMainMenuToVirtualScreen(GameState* state)
         buttons[i].Draw(virtualMouse);
     }
 
-    if (optionsPopup.IsActive()) {
-        optionsPopup.Draw(virtualMouse);
+    if (menuOptionsPopup.IsActive()) {
+        menuOptionsPopup.Draw(virtualMouse);
     }
     
     EndTextureMode();
