@@ -22,6 +22,13 @@ PlayerInput InputInstance;
 // ================================================================
 void PlayerInput::PollInput(void)
 {
+    // kalau window tidak focused, clear input biar gak nyangkut
+    if (!IsWindowFocused())
+    {
+        Current = {};
+        return;
+    }
+
     // --- Movement (KeyDown — hold) ---
     Current.moveUp    = IsKeyDown(KEY_UP)    || IsKeyDown(KEY_W);
     Current.moveDown  = IsKeyDown(KEY_DOWN)  || IsKeyDown(KEY_S);
@@ -34,7 +41,12 @@ void PlayerInput::PollInput(void)
     Current.revive          = IsKeyPressed(KEY_R);
     Current.toggleInventory = IsKeyPressed(KEY_I);
     Current.toggleMap       = IsKeyPressed(KEY_M);
-    Current.leftClickPressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    
+    // Gunakan deteksi manual karena IsMouseButtonPressed mungkin 'dicuri' by main.cpp/pauseMenu.cpp
+    static bool mouseWasDown = false;
+    bool mouseIsDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    Current.leftClickPressed = mouseIsDown && !mouseWasDown;
+    mouseWasDown = mouseIsDown;
 
     // --- Slot Selection (KeyPressed — tap sekali) ---
     Current.selectSlot1 = IsKeyPressed(KEY_ONE);
