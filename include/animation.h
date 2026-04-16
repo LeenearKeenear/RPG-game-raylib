@@ -7,6 +7,8 @@
 // Semua logic animasi (frame switching, timing, direction)
 // dipusatin di sini biar gak nyebar ke mana-mana.
 //
+// Module ini juga contain tile rendering system yang dipakai
+// buat render spritesheet-based tiles dan character sprites.
 // ================================================================
 
 #include "raylib.h"
@@ -15,11 +17,9 @@
 // Texture & Asset
 // ================================================================
 
-// dawg ini dipindah dawg
 // jumlah maksimum slot texture PNG yang bisa di-load
 #define MAX_TEXTURES 3
 
-// dawg ini dipindah dawg
 // enum buat milih slot texture — tambah di sini kalau ada asset baru
 typedef enum
 {
@@ -27,14 +27,13 @@ typedef enum
     TEXTURE_KNIGHT
 } TextureAsset;
 
-// dawg ini dipindah dawg
+// global texture array — diakses dari file lain via extern
 extern Texture2D TexturesMap[MAX_TEXTURES];
 
 // ================================================================
 // Tile System
 // ================================================================
 
-// dawg ini dipindah dawg
 // koordinat universal buat posisi tile di spritesheet atau world
 typedef struct
 {
@@ -42,7 +41,6 @@ typedef struct
     int y;
 } TileCoordinate;
 
-// dawg ini dipindah dawg
 // enum semua jenis tile yang ada — tambah di sini kalau ada tile baru
 typedef enum
 {
@@ -64,7 +62,6 @@ typedef enum
     TILE_PLAYER_NEW
 } TileType;
 
-// dawg ini dipindah dawg
 // properti tiap tile: posisi di spritesheet, bisa dilewatin, ada interaksi gak
 typedef struct
 {
@@ -73,10 +70,13 @@ typedef struct
     bool HasInteraction;
 } TileDefinition;
 
-// dawg ini dipindah dawg
 // ukuran tile dalam pixel + gap antar tile di spritesheet
 #define TILE_SIZE 32
 #define TILE_GAP 4
+
+// ================================================================
+// Tile Rendering Functions
+// ================================================================
 
 // load texture PNG ke slot yang ditentuin
 void LoadTileTexture(TextureAsset Slot, const char *Path);
@@ -84,50 +84,64 @@ void LoadTileTexture(TextureAsset Slot, const char *Path);
 // render satu tile dari spritesheet ke posisi world
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
 
-// // --- ENUMS ---
-// enum State
-// {
-//     IDLE,
-//     WALK,
-//     ATTACK,
-//     DEAD
-// };
+// ambil source rectangle dari spritesheet berdasarkan frame koordinat
+Rectangle GetFrame(int frameX, int frameY);
 
-// enum Direction
-// {
-//     LEFT,
-//     RIGHT,
-//     DOWN,
-//     UP
-// };
+// ================================================================
+// Animation State & Direction
+// ================================================================
 
-// // --- PLAYER STRUCT ---
-// struct Player
-// {
-//     Vector2 position;
+enum State
+{
+    IDLE,
+    WALK,
+    ATTACK,
+    DEAD
+};
 
-//     State state;
-//     Direction direction;
+enum Direction
+{
+    LEFT,
+    RIGHT,
+    DOWN,
+    UP
+};
 
-//     int frame;
-//     float frameTime;
-//     float frameSpeed;
+// ================================================================
+// AnimationPlayer Struct
+// Data animasi untuk satu entity (player, enemy, dll)
+// ================================================================
+struct AnimationPlayer {
+    Vector2 position;
 
-//     int walkFrameIndex;
+    State state;
+    Direction direction;
 
-//     bool isAttacking;
-//     bool isDead;
-// };
+    int frame;
+    float frameTime;
+    float frameSpeed;
 
-// // --- FUNCTION DECLARATIONS ---
-// // Get frame rectangle from spritesheet
-// Rectangle GetFrame(int frameX, int frameY);
+    int walkFrameIndex;
 
-// // Update player input and state
-// void UpdatePlayer(Player &p);
+    bool isAttacking;
+    bool isDead;
+};
 
-// // Update animation frames based on state
-// void UpdateAnimation(Player &p, float dt);
+// ================================================================
+// Animation Functions
+// ================================================================
 
-// // Draw player sprite
-// void DrawPlayer(Player &p, Texture2D texture);
+// state setters — set direction dan state animasi
+void UpdatePlayerWalkUp(AnimationPlayer &p);
+void UpdatePlayerWalkDown(AnimationPlayer &p);
+void UpdatePlayerWalkLeft(AnimationPlayer &p);
+void UpdatePlayerWalkRight(AnimationPlayer &p);
+void UpdatePlayerIdle(AnimationPlayer &p);
+void UpdatePlayerAttack(AnimationPlayer &p);
+void UpdatePlayerDeath(AnimationPlayer &p);
+
+// update frame animasi berdasarkan delta time
+void UpdateAnimation(AnimationPlayer &p, float dt);
+
+// render player sprite ke layar
+void DrawPlayer(AnimationPlayer &p);

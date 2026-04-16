@@ -2,6 +2,8 @@
 #include "../lib/raylib/include/raylib.h"
 #include "map.h"
 #include "screen.h"
+#include "animation.h"
+#include "input.h"
 
 // ================================================================
 // Player Class
@@ -33,6 +35,9 @@ public:
     Vector2 GetPosition() { return Position; }
     float GetSpeed() { return Speed; }
 
+    // getter apakah player masih hidup
+    bool IsAlive() { return !Anim.isDead; }
+
     // getter hitbox player — dipake collision dan debug panel
     float GetHitboxWidth() { return HitboxWidth; }
     float GetHitboxHeight() { return HitboxHeight; }
@@ -51,6 +56,9 @@ private:
     float Speed = 4.0f;
     Texture2D CharTexture;
 
+    // data animasi player — state machine (idle, walk, attack, dead)
+    AnimationPlayer Anim;
+
     // ukuran hitbox player bisa diperkecil dari sprite biar movement
     // terasa lebih enak dan gak gampang nyangkut di sudut/object.
     float HitboxWidth = 18.0f;
@@ -62,6 +70,12 @@ private:
     // atau keluar dari world boundary
     // return false kalau nabrak / keluar bound, true kalau aman
     bool CanMove(Vector2 NewPos);
+
+    // handle SPACE berdasarkan context (slot aktif / inventori)
+    void HandleSpaceAction(void);
+
+    // revive player — reset state dari DEAD ke IDLE
+    void HandleRevive(void);
 
     // collision rectangles dari object layer Tiled
     // diisi pas Init() dari TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME)

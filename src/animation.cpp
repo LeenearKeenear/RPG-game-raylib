@@ -1,4 +1,24 @@
+<<<<<<< HEAD
+=======
+// ================================================================
+// Animation System
+// Handle semua animasi sprite untuk player, enemy, dan entity lain.
+//
+// Semua logic animasi (frame switching, timing, direction)
+// dipusatin di sini biar gak nyebar ke mana-mana.
+//
+// Module ini juga contain:
+// - Tile texture loading & rendering (LoadTileTexture, RenderTilePNG)
+// - Player animation state machine (walk, idle, attack, dead)
+// - Sprite frame management (GetFrame)
+// ================================================================
+
+>>>>>>> main
 #include "../include/animation.h"
+
+// ================================================================
+// Global
+// ================================================================
 
 Texture2D TexturesMap[MAX_TEXTURES];
 
@@ -7,7 +27,6 @@ Texture2D TexturesMap[MAX_TEXTURES];
 // Load texture PNG ke slot TextureAsset yang ditentuin.
 // Slot ini dipake sama RenderTilePNG() buat milih texture yang bener.
 // ================================================================
-// dawg ini dipindah dawg
 void LoadTileTexture(TextureAsset Slot, const char *Path)
 {
     Image img = LoadImage(Path);
@@ -24,7 +43,6 @@ void LoadTileTexture(TextureAsset Slot, const char *Path)
 // 2. Hitung Source rectangle dari koordinat itu
 // 3. DrawTexturePro ke posisi Destination di world
 // ================================================================
-// dawg ini dipindah dawg
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
 {
     // mapping TileType ke koordinat di spritesheet
@@ -58,129 +76,135 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
     DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
 }
 
-// // --- GET FRAME FROM SPRITESHEET ---
-// Rectangle GetFrame(int frameX, int frameY) {
-//     return {
-//         (float)(frameX * (TILE_SIZE + TILE_GAP)),
-//         (float)(frameY * (TILE_SIZE + TILE_GAP)),
-//         (float)TILE_SIZE,
-//         (float)TILE_SIZE
-//     };
-// }
+// ================================================================
+// GetFrame()
+// Ambil source rectangle dari spritesheet berdasarkan frame koordinat.
+// Dipakai oleh DrawPlayer() buat milih frame yang bener.
+// ================================================================
+Rectangle GetFrame(int frameX, int frameY) {
+    return {
+        (float)(frameX * (TILE_SIZE + TILE_GAP)),
+        (float)(frameY * (TILE_SIZE + TILE_GAP)),
+        (float)TILE_SIZE,
+        (float)TILE_SIZE
+    };
+}
 
-// // --- UPDATE PLAYER INPUT ---
-// void UpdatePlayer(Player &p) {
-//     // Dead = no input at all
-//     if (p.isDead) return;
+// ================================================================
+// State Setters
+// Set direction dan state animasi player.
+// Dipanggil dari input handler / AI controller.
+// ================================================================
 
-//     bool moving = false;
+void UpdatePlayerWalkUp(AnimationPlayer &p) { p.direction = UP; p.state = WALK; }
+void UpdatePlayerWalkDown(AnimationPlayer &p) { p.direction = DOWN; p.state = WALK; }
+void UpdatePlayerWalkLeft(AnimationPlayer &p) { p.direction = LEFT; p.state = WALK; }
+void UpdatePlayerWalkRight(AnimationPlayer &p) { p.direction = RIGHT; p.state = WALK; }
+void UpdatePlayerIdle(AnimationPlayer &p) { p.state = IDLE; }
 
-//     if (IsKeyDown(KEY_W)) {
-//         p.position.y -= 2;
-//         p.direction = UP;
-//         moving = true;
-//     }
-//     if (IsKeyDown(KEY_S)) {
-//         p.position.y += 2;
-//         p.direction = DOWN;
-//         moving = true;
-//     }
-//     if (IsKeyDown(KEY_A)) {
-//         p.position.x -= 2;
-//         p.direction = LEFT;
-//         moving = true;
-//     }
-//     if (IsKeyDown(KEY_D)) {
-//         p.position.x += 2;
-//         p.direction = RIGHT;
-//         moving = true;
-//     }
+void UpdatePlayerAttack(AnimationPlayer &p) {
+    if (!p.isAttacking) {
+        p.state = ATTACK;
+        p.frame = 0;
+        p.frameTime = 0;
+        p.isAttacking = true;
+    }
+}
 
-//     // Attack input
-//     if (IsKeyPressed(KEY_SPACE) && !p.isAttacking) {
-//         p.state = ATTACK;
-//         p.frame = 0;
-//         p.frameTime = 0;
-//         p.isAttacking = true;
-//         return;
-//     }
+void UpdatePlayerDeath(AnimationPlayer &p) {
+    if (!p.isDead) {
+        p.state = DEAD;
+        p.isDead = true;
+        p.frame = 0;
+    }
+}
 
-//     // Example: press K to "die"
-//     if (IsKeyPressed(KEY_K)) {
-//         p.state = DEAD;
-//         p.isDead = true;
-//         p.frame = 0;
-//         return;
-//     }
+// ================================================================
+// UpdateAnimation()
+// Update frame animasi berdasarkan delta time dan current state.
+//
+// State machine:
+// - DEAD: frame tetap 0, tidak ada animasi
+// - IDLE: 2 frame, speed lambat (0.5s)
+// - WALK: 4 frame cycle (0-2-0-3), speed sedang (0.15s)
+// - ATTACK: jumlahnya 2 frame sequential frames
+// ================================================================
+void UpdateAnimation(AnimationPlayer &p, float dt)
+{
+    if (p.state == DEAD) {
+        p.frame = 0;
+        return;
+    }
 
-//     if (p.isAttacking) return;
+    p.frameTime += dt;
 
-//     if (moving) p.state = WALK;
-//     else p.state = IDLE;
-// }
+    if (p.state == IDLE) {
+        p.frameSpeed = 0.5f;
+        if (p.frameTime >= p.frameSpeed) {
+            p.frame = (p.frame + 1) % 2;
+            p.frameTime = 0;
+        }
+    }
+    else if (p.state == WALK) {
+        p.frameSpeed = 0.15f;
+        if (p.frameTime >= p.frameSpeed) {
+            p.walkFrameIndex = (p.walkFrameIndex + 1) % 4;
+            int walkFrames[4] = {0, 2, 0, 3};
+            p.frame = walkFrames[p.walkFrameIndex];
+            p.frameTime = 0;
+        }
+    }
+    else if (p.state == ATTACK) {
+        p.frameSpeed = 0.15f;
 
-// // --- UPDATE ANIMATION ---
-// void UpdateAnimation(Player &p, float dt) {
-//     // DEAD = no animation (single frame)
-//     if (p.state == DEAD) {
-//         p.frame = 0;
-//         return;
-//     }
+        if (p.frameTime >= p.frameSpeed) {
+            p.frame++;
+            p.frameTime = 0;
 
-//     p.frameTime += dt;
+            int maxFrames = 2;
+            int hitFrame = 1;
 
-//     if (p.state == IDLE) {
-//         p.frameSpeed = 0.5f;
+            if (p.frame == hitFrame) {
+                TraceLog(LOG_INFO, "HIT!");
+            }
 
-//         if (p.frameTime >= p.frameSpeed) {
-//             p.frame = (p.frame + 1) % 2;
-//             p.frameTime = 0;
-//         }
-//     }
+            if (p.frame >= maxFrames) {
+                p.isAttacking = false;
+                p.state = IDLE;
+                p.frame = 0;
+            }
+        }
+    }
+}
 
-//     else if (p.state == WALK) {
-//         p.frameSpeed = 0.15f;
+// ================================================================
+// DrawPlayer()
+// Render player sprite berdasarkan current state dan direction.
+//
+// Layout spritesheet knight.png:
+// - Row 0-3: direction (LEFT, RIGHT, DOWN, UP)
+// - Col 0-3: idle/walk frames
+// - Col 4+:  attack frames
+// - Row 4:   death frame (col 0)
+// ================================================================
+void DrawPlayer(AnimationPlayer &p)
+{
+    int row = (int)p.direction;
+    int frameX = p.frame;
 
-//         if (p.frameTime >= p.frameSpeed) {
-//             p.walkFrameIndex = (p.walkFrameIndex + 1) % 4;
-//             int walkFrames[4] = {1, 2, 1, 3};
-//             p.frame = walkFrames[p.walkFrameIndex];
-//             p.frameTime = 0;
-//         }
-//     }
+    if (p.state == DEAD) {
+        row = 4;
+        frameX = 0;
+    }
+    else if (p.state == ATTACK) {
+        // UP/DOWN attack mulai dari kolom 4, LEFT/RIGHT dari kolom 6
+        int attackOffset = (p.direction == UP || p.direction == DOWN) ? 4 : 6;
+        frameX += attackOffset;
+    }
 
-//     else if (p.state == ATTACK) {
-//         p.frameSpeed = 0.2f;
+    Rectangle src = GetFrame(frameX, row);
 
-//         if (p.frameTime >= p.frameSpeed) {
-//             p.frame++;
-//             p.frameTime = 0;
-
-//             // ⚔️ Hit moment (delay)
-//             if (p.frame == 1) {
-//                 TraceLog(LOG_INFO, "HIT!");
-//             }
-
-//             if (p.frame >= 2) {
-//                 p.isAttacking = false;
-//                 p.state = IDLE;
-//                 p.frame = 0;
-//             }
-//         }
-//     }
-// }
-
-// // --- DRAW PLAYER ---
-// void DrawPlayer(Player &p, Texture2D texture) {
-//     int row = (int)p.direction;
-//     int frameX = p.frame;
-
-//     // Death uses row 4, frame 0
-//     if (p.state == DEAD) {
-//         row = 4;
-//         frameX = 0;
-//     }
-
-//     Rectangle src = GetFrame(frameX, row);
-//     DrawTextureRec(texture, src, p.position, WHITE);
-// }
+    // render pake TexturesMap[TEXTURE_KNIGHT] supaya konsisten
+    // dengan LoadTileTexture yang dipake di Player::Init()
+    DrawTextureRec(TexturesMap[TEXTURE_KNIGHT], src, p.position, WHITE);
+}
