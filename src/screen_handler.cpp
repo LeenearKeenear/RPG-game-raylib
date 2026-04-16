@@ -7,6 +7,7 @@
 #include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
+#include "../include/hud.h"
 
 extern PauseMenu pauseMenu;
 
@@ -130,11 +131,15 @@ void DrawRenderTexture(GameState *state)
 
 /**
  * @brief DrawUIOverlay()
- * Render UI elements (pause menu, etc) ke virtual screen.
+ * Render UI elements (HUD, pause menu, etc) ke virtual screen.
  * Dipanggil setelah rendering game, sebelum EndTextureMode().
  */
 void DrawUIOverlay(GameState* state)
 {
+    // 1. HUD Player (Stats, Name)
+    DrawPlayerHUD();
+
+    // 2. Menus
     if (pauseMenu.IsActive()) {
         Vector2 mousePos = GetVirtualMousePosition(state);
         pauseMenu.Draw(mousePos);

@@ -62,12 +62,34 @@ public:
     // ini adalah inti logic frustum culling — dipake oleh RenderMapCulled()
     TileRange GetVisibleTileRange(void);
 
+    // health getters
+    float GetHealth() { return Health; }
+    float GetMaxHealth() { return MaxHealth; }
+    void SetHealth(float h) { Health = h; }
+
+    // mana getters
+    float GetMana() { return Mana; }
+    float GetMaxMana() { return MaxMana; }
+    void SetMana(float m) { Mana = m; }
+
+    // info getters
+    const char* GetName() { return Name; }
+
 private:
     Vector2 Position;
     Vector2 Velocity;
     int TileSize = 32;
     float Speed = 4.0f;
     Texture2D CharTexture;
+    const char* Name = "Knight";
+
+    // health player
+    float Health = 100.0f;
+    float MaxHealth = 100.0f;
+
+    // mana/energy player
+    float Mana = 100.0f;
+    float MaxMana = 100.0f;
 
     // data animasi player — state machine (idle, walk, attack, dead)
     AnimationPlayer Anim;

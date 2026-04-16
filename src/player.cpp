@@ -42,6 +42,14 @@ void Player::Init(void)
     Anim.isAttacking = false;
     Anim.isDead = false;
 
+    // init health
+    MaxHealth = 100.0f;
+    Health = MaxHealth;
+
+    // init mana
+    MaxMana = 100.0f;
+    Mana = MaxMana;
+
     // reset collision cache biar aman kalau nanti map di-reload
     CollisionRects.clear();
     CollisionPolygons.clear();
@@ -113,6 +121,14 @@ void Player::Update(void)
 
     // kalau player dead, skip semua input selain revive
     if (Anim.isDead) return;
+
+    // cek kalau HP habis
+    if (Health <= 0)
+    {
+        Health = 0;
+        UpdatePlayerDeath(Anim);
+        return;
+    }
 
     // --- Kill (K) — debug: player langsung mati ---
     if (InputInstance.IsKill())
@@ -252,6 +268,8 @@ void Player::HandleRevive(void)
         Anim.state = IDLE;
         Anim.frame = 0;
         Anim.frameTime = 0.0f;
+        Health = MaxHealth; // Reset health
+        Mana = MaxMana;     // Reset mana
         TraceLog(LOG_INFO, "PLAYER: Revived!");
     }
 }
