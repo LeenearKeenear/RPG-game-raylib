@@ -11,7 +11,7 @@
          "name":"ground",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":40,
          "x":0,
          "y":0
@@ -25,7 +25,7 @@
          "name":"deco",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":40,
          "x":0,
          "y":0
@@ -406,7 +406,7 @@
         {
          "draworder":"topdown",
          "id":8,
-         "name":"pass",
+         "name":"object",
          "objects":[
                 {
                  "height":27.875,
@@ -425,6 +425,17 @@
                  "id":8,
                  "name":"goToCave",
                  "opacity":1,
+                 "properties":[
+                        {
+                         "name":"target_door",
+                         "type":"string",
+                         "value":"goOutsideCave"
+                        }, 
+                        {
+                         "name":"target_map",
+                         "type":"string",
+                         "value":"cave.json"
+                        }],
                  "rotation":0,
                  "type":"pass",
                  "visible":true,
@@ -451,7 +462,7 @@
          "y":0
         }],
  "nextlayerid":11,
- "nextobjectid":12,
+ "nextobjectid":14,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

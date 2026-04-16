@@ -58,6 +58,32 @@ void Debug::DrawPanelFrame(Rectangle bounds, const char *title, Color borderColo
     DrawText(title, (int)bounds.x + 10, (int)bounds.y + 5, 18, borderColor);
 }
 
+void Debug::DrawCollisionOverlay(const std::string& layerName, Color rectColor, Color polygonColor, Color pointColor)
+{
+    std::vector<MapObject> objs = TilesonGetObjectsByLayerName(layerName.c_str());
+
+    for (auto& obj : objs)
+    {
+        if (obj.hasPolygon)
+        {
+            int pointCount = (int)obj.polygonPoints.size();
+            if (pointCount >= 2)
+            {
+                for (int i = 0; i < pointCount; i++)
+                {
+                    int nextIndex = (i + 1) % pointCount;
+                    DrawLineEx(obj.polygonPoints[i], obj.polygonPoints[nextIndex], 2.0f, polygonColor);
+                    DrawCircleV(obj.polygonPoints[i], 3.0f, pointColor);
+                }
+            }
+        }
+        else
+        {
+            DrawRectangleLinesEx(obj.bounds, 2.0f, rectColor);
+        }
+    }
+}
+
 // ================================================================
 // Toggle()
 // Handle input TAB buat nyalain/matiin debug mode.
@@ -274,28 +300,9 @@ void Debug::DrawWorldOverlay(void)
     // rectangle digambar merah, polygon digambar oranye.
     // semua data diambil langsung dari map helper berdasarkan define layer.
     // ============================================================
-    std::vector<MapObject> collisionObjs = TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME);
 
-    for (auto &obj : collisionObjs)
-    {
-        if (obj.hasPolygon)
-        {
-            int pointCount = (int)obj.polygonPoints.size();
-            if (pointCount >= 2)
-            {
-                for (int i = 0; i < pointCount; i++)
-                {
-                    int nextIndex = (i + 1) % pointCount;
-                    DrawLineEx(obj.polygonPoints[i], obj.polygonPoints[nextIndex], 2.0f, ORANGE);
-                    DrawCircleV(obj.polygonPoints[i], 3.0f, GOLD);
-                }
-            }
-        }
-        else
-        {
-            DrawRectangleLinesEx(obj.bounds, 2.0f, RED);
-        }
-    }
+    DrawCollisionOverlay(COLLISION_LAYER_NAME, RED, GOLD, GOLD);
+    DrawCollisionOverlay(OBJECT_LAYER_NAME, BLUE, BLUE, BLUE);
 
     // ============================================================
     // batas luar map rectangle

@@ -141,7 +141,7 @@
         {
          "draworder":"topdown",
          "id":4,
-         "name":"chest",
+         "name":"object",
          "objects":[
                 {
                  "height":19.0625,
@@ -154,18 +154,7 @@
                  "width":23,
                  "x":132,
                  "y":357.875
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":false,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":6,
-         "name":"goOutside",
-         "objects":[
+                }, 
                 {
                  "height":26.625,
                  "id":5,
@@ -177,15 +166,27 @@
                  "width":30.375,
                  "x":416.5,
                  "y":132.8125
+                }, 
+                {
+                 "height":132,
+                 "id":7,
+                 "name":"spawn",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"spawn",
+                 "visible":true,
+                 "width":136,
+                 "x":393.333333333333,
+                 "y":320
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }],
  "nextlayerid":7,
- "nextobjectid":6,
+ "nextobjectid":9,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

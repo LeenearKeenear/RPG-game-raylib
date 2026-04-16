@@ -81,6 +81,12 @@ bool TiledHelper::TryGetCollisionByType(const std::string &objectType, Collision
     return true;
 }
 
+// buat ngambil properti
+std::vector<MapObject> TiledHelper::GetObjectsByType(const std::string &objectType)
+{
+    return TilesonGetObjectsByType(objectType.c_str());
+}
+
 // ================================================================
 // Hitbox Helpers
 // ================================================================

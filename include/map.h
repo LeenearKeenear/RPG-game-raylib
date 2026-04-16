@@ -65,6 +65,7 @@ extern TileRange currentVisibleRange;
 // nama layer & object di Tiled — sesuaiin kalau beda
 // #define COLLISION_LAYER_NAME "map_bound"
 #define COLLISION_LAYER_NAME "obstacle" // penulisan define untuk layer
+#define OBJECT_LAYER_NAME "object"
 #define SPAWN_OBJECT_NAME "spawn" // penulisan define untuk object name
 #define DOOR_TYPE_OBJECT_NAME "pass" // penulisan define untuk type object name
 
@@ -77,6 +78,9 @@ void LoadMap(const char *mapPath);
 void RenderMap(void);
 void UnloadMap(void);
 void InitMap(void);
+void SwitchMap(const char *newMapPath, const char *targetSpawnName);
+
+
 
 // query object dari object layer Tiled
 std::vector<MapObject> TilesonGetObjectsByLayerName(const std::string &layerName);

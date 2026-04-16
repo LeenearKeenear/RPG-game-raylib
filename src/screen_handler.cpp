@@ -31,7 +31,7 @@ extern const int GameScreenHeight = 720;
 void InitAll()
 {
     // inisialisasi player — spawn point diambil otomatis dari object layer Tiled
-    PlayerInstance.Init();
+    PlayerInstance.Init(SPAWN_OBJECT_NAME);
 
     // set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();

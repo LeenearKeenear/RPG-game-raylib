@@ -16,12 +16,12 @@
 class Debug
 {
 public:
-    void Toggle(void); // handle TAB toggle + tracelog
-    void Draw(void);   // wrapper semua panel
+    void Toggle(void);           // handle TAB toggle + tracelog
+    void Draw(void);             // wrapper semua panel
     void DrawWorldOverlay(void); // overlay debug di world-space: hitbox + collision + map bounds
 
 private:
- struct DebugPanelEntry
+    struct DebugPanelEntry
     {
         std::string name;
         void (Debug::*drawFn)(Rectangle bounds);
@@ -31,6 +31,10 @@ private:
     // helper layout panel debug
     Rectangle GetPanelBounds(int index, float panelWidth, float panelHeight) const;
     std::vector<DebugPanelEntry> BuildActivePanels(void) const;
+    
+    // helper buat bikin collision box
+    void DrawCollisionOverlay(const std::string &layerName, Color rectColor, Color polygonColor, Color pointColor);
+
     void DrawPanelFrame(Rectangle bounds, const char *title, Color borderColor) const;
 
     void DrawMapPanel(Rectangle bounds);       // panel info map

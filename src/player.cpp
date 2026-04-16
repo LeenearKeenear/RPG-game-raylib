@@ -12,6 +12,11 @@
 // global instance player — diakses file lain via extern
 Player PlayerInstance;
 
+Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
+{
+    return BuildHitbox(position, HitboxOffsetX, HitboxOffsetY, HitboxWidth, HitboxHeight);
+}
+
 // ================================================================
 // Init()
 // Inisialisasi player: load texture, ambil spawn point dari
@@ -25,7 +30,7 @@ Player PlayerInstance;
 // 3. Ambil semua object dari layer "collision" → simpen di CollisionRects / CollisionPolygons
 // 4. Ambil custom world boundary polygon dari layer "map_bound"
 // ================================================================
-void Player::Init(void)
+void Player::Init(const char *spawnObjectName)
 {
     // TODO: path texture disesuaiin sama asset yang ada
     LoadTileTexture(TEXTURE_KNIGHT, "texture/Knight.png");
@@ -47,10 +52,17 @@ void Player::Init(void)
     // pakai TiledHelperFunction.TryGetObjectPositionByName
     // ================================================================
     Vector2 spawnPos;
-    if (TiledHelperFunction.TryGetObjectPositionByName(SPAWN_OBJECT_NAME, spawnPos))
+    if (spawnObjectName != nullptr &&
+        spawnObjectName[0] != '\0' &&
+        TiledHelperFunction.TryGetObjectPositionByName(spawnObjectName, spawnPos))
     {
         Position = spawnPos;
-        TraceLog(LOG_INFO, "Player: Spawn point found at (%.1f, %.1f)", Position.x, Position.y);
+        TraceLog(LOG_INFO, "Player: Spawn point '%s' found at (%.1f, %.1f)", spawnObjectName, Position.x, Position.y);
+    }
+    else if (TiledHelperFunction.TryGetObjectPositionByName(SPAWN_OBJECT_NAME, spawnPos))
+    {
+        Position = spawnPos;
+        TraceLog(LOG_INFO, "Player: Default spawn point found at (%.1f, %.1f)", Position.x, Position.y);
     }
     else
     {
@@ -59,7 +71,8 @@ void Player::Init(void)
         Position = {
             (((float)tilesonMap->width * TILE_SIZE) / 2.0f) + TILE_SIZE * 3,
             ((float)tilesonMap->height * TILE_SIZE) / 2.0f};
-        TraceLog(LOG_WARNING, "Player: Spawn object '%s' not found, using default position", SPAWN_OBJECT_NAME);
+        TraceLog(LOG_WARNING, "Player: Spawn object '%s' not found, using default position",
+                 (spawnObjectName != nullptr && spawnObjectName[0] != '\0') ? spawnObjectName : SPAWN_OBJECT_NAME);
     }
 
     // ambil semua collision object dari object layer Tiled
@@ -109,6 +122,11 @@ void Player::Update(void)
 
     if (CanMove(NewPos))
         Position = NewPos;
+
+    if (IsKeyPressed(KEY_O))
+        SwitchMap("world_json/cave.json", "goOutsideCave");
+
+    CheckDoorInteraction();
 }
 
 // ================================================================
@@ -133,8 +151,7 @@ void Player::Render(void)
 bool Player::CanMove(Vector2 newPosition)
 {
     // --- Build hitbox at new position ---
-    Rectangle hitbox = BuildHitbox(newPosition, HitboxOffsetX, HitboxOffsetY,
-                                   HitboxWidth, HitboxHeight);
+    Rectangle hitbox = GetPlayerHitboxAtPosition(newPosition);
 
     // --- World bounds check ---
     if (!IsWithinWorldBounds(hitbox, tilesonMap->width * TILE_SIZE, tilesonMap->height * TILE_SIZE))
@@ -149,6 +166,42 @@ bool Player::CanMove(Vector2 newPosition)
         return false;
 
     return true;
+}
+
+void Player::CheckDoorInteraction(void)
+{
+    Rectangle playerHitbox = GetPlayerHitboxAtPosition(Position);
+
+    std::vector<MapObject> doors = TiledHelperFunction.GetObjectsByType(DOOR_TYPE_OBJECT_NAME);
+
+    for (const auto &door : doors)
+    {
+        if (!CheckCollisionRecs(playerHitbox, door.bounds))
+            continue;
+
+        if (!IsKeyPressed(KEY_E))
+            return;
+
+        auto mapIt = door.properties.find("target_map");
+        if (mapIt == door.properties.end())
+        {
+            TraceLog(LOG_WARNING, "Door '%s' has no target_map property", door.name.c_str());
+            return;
+        }
+
+        auto doorIt = door.properties.find("target_door");
+        if (doorIt == door.properties.end())
+        {
+            TraceLog(LOG_WARNING, "Door '%s' has no target_door property", door.name.c_str());
+            return;
+        }
+
+        std::string targetMap = mapIt->second.getValue<std::string>();
+        std::string targetDoor = doorIt->second.getValue<std::string>();
+
+        SwitchMap(targetMap.c_str(), targetDoor.c_str());
+        return;
+    }
 }
 
 // ================================================================

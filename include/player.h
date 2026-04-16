@@ -26,7 +26,7 @@ class Player
 {
 public:
     // inisialisasi player — load texture, baca spawn & collision dari Tiled
-    void Init(void);
+    void Init(const char *spawnObjectName = SPAWN_OBJECT_NAME);
 
     // handle input dan movement per frame, cek collision sebelum apply posisi
     void Update(void);
@@ -71,10 +71,13 @@ private:
     float HitboxOffsetX = 6.0f;
     float HitboxOffsetY = 18.2f;
 
+    Rectangle GetPlayerHitboxAtPosition(Vector2 position);
+
     // cek apakah posisi baru player nabrak collision shape
     // atau keluar dari world boundary
     // return false kalau nabrak / keluar bound, true kalau aman
     bool CanMove(Vector2 NewPos);
+    void CheckDoorInteraction(void);
 
     // collision rectangles dari object layer Tiled
     // diisi pas Init() dari TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME)

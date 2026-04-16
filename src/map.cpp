@@ -318,3 +318,44 @@ MapObject *TilesonGetObjectByName(const std::string &name)
             return &obj;
     return nullptr;
 }
+
+void SwitchMap(const char *newMapPath, const char *targetDoorName)
+{
+    // safety check biar gak load path kosong
+    if (newMapPath == nullptr || newMapPath[0] == '\0')
+    {
+        TraceLog(LOG_ERROR, "SwitchMap: newMapPath is null or empty");
+        return;
+    }
+
+    // unload map lama dulu kalau ada
+    UnloadMap();
+
+    // load map baru
+    LoadMap(newMapPath);
+
+    // kalau gagal load, jangan lanjut init player/camera
+    if (tilesonMap == nullptr)
+    {
+        TraceLog(LOG_ERROR, "SwitchMap: failed to load map: %s", newMapPath);
+        return;
+    }
+
+    // re-init player berdasarkan target door di map baru
+    PlayerInstance.Init(targetDoorName);
+
+    // set camera ke tengah spawn player
+    Vector2 spawnPos = PlayerInstance.GetPosition();
+    camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
+    camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
+    camera.rotation = 0;
+    camera.zoom = 1.0F;
+
+    TraceLog(LOG_INFO, "SwitchMap: switched to map: %s via door: %s",
+             newMapPath,
+             (targetDoorName != nullptr && targetDoorName[0] != '\0') ? targetDoorName : SPAWN_OBJECT_NAME);
+}
+
+
+
+// Project game dungeon 2D C++ pakai Raylib + Tileson, multi-map dari Tiled JSON. Sistem SwitchMap basic sudah ada: door pakai interact `E`, property object door adalah `target_map` dan `target_door`, lalu `SwitchMap(newMapPath, targetDoorName)` reload map dan spawn player ke object tujuan. `InitAll()` untuk start awal game pakai `PlayerInstance.Init(SPAWN_OBJECT_NAME)`. Sekarang issue terakhir: setelah switch map berhasil, player spawn tapi stuck/tidak bisa gerak. Tolong fokus debug penyebab player stuck setelah pindah map, dengan aturan: jangan tulis ke workspace tanpa izin, tampilkan full source function kalau mengusulkan perubahan, pertahankan comment lama, dan refaktor bertahap.
