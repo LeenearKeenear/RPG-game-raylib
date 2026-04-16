@@ -288,8 +288,7 @@ void Player::UsePotion(int slotIndex)
     // Consume item
     Hotbar[slotIndex].amount--;
     if (Hotbar[slotIndex].amount <= 0) {
-        // Option: Clear slot or keep empty potion? Let's clear for now if it was a basic consumable
-        // Hotbar[slotIndex] = {ITEM_NONE, "", 0, 0, 0};
+        Hotbar[slotIndex] = {ITEM_NONE, "", 0, 0, 0, 0, 0};
     }
 }
 
