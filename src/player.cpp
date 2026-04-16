@@ -137,11 +137,19 @@ void Player::Update(void)
         return;
     }
 
-    // --- Kill (K) — debug: player langsung mati ---
-    if (InputInstance.IsKill())
+
+    // --- Health/Mana Test (DEBUG) ---
+    if (InputInstance.IsTestLoseHP())
     {
-        UpdatePlayerDeath(Anim);
-        return;
+        Health -= 10.0f;
+        if (Health < 0) Health = 0;
+        TraceLog(LOG_INFO, "PLAYER: Test Health Decrease (%.1f)", Health);
+    }
+    if (InputInstance.IsTestLoseMP())
+    {
+        Mana -= 10.0f;
+        if (Mana < 0) Mana = 0;
+        TraceLog(LOG_INFO, "PLAYER: Test Mana Decrease (%.1f)", Mana);
     }
 
     // --- Left Click — context action (attack / potion / equip) ---
@@ -241,8 +249,15 @@ void Player::HandleSpaceAction(void)
     switch (action)
     {
     case ACTION_ATTACK:
-        UpdatePlayerAttack(Anim);
-        TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d)", (int)InputInstance.GetActiveSlot());
+        if (Mana > 0)
+        {
+            UpdatePlayerAttack(Anim);
+            TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d)", (int)InputInstance.GetActiveSlot());
+        }
+        else
+        {
+            TraceLog(LOG_WARNING, "PLAYER: Attack failed! Out of energy.");
+        }
         break;
 
     case ACTION_DRINK_POTION:

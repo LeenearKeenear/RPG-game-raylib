@@ -59,7 +59,6 @@ struct InputState
 
     // --- Actions (pressed sekali) ---
     bool interact;       // E
-    bool kill;           // K — debug: player mati
     bool revive;         // R — debug: player hidup kembali
     bool toggleInventory;// I — toggle inventori
     bool toggleMap;      // M — toggle map
@@ -70,6 +69,10 @@ struct InputState
     bool selectSlot2;    // key 2
     bool selectSlot3;    // key 3
     bool selectSlot4;    // key 4
+
+    // --- Debug / Test (pressed sekali) ---
+    bool testLoseHP;     // K
+    bool testLoseMP;     // J
 };
 
 // ================================================================
@@ -98,7 +101,6 @@ public:
 
     // getter actions — true hanya saat key baru ditekan (KeyPressed)
     bool IsInteract()        const { return Current.interact; }
-    bool IsKill()            const { return Current.kill; }
     bool IsRevive()          const { return Current.revive; }
     bool IsToggleInventory() const { return Current.toggleInventory; }
     bool IsToggleMap()       const { return Current.toggleMap; }
@@ -109,6 +111,10 @@ public:
     bool IsSelectSlot2() const { return Current.selectSlot2; }
     bool IsSelectSlot3() const { return Current.selectSlot3; }
     bool IsSelectSlot4() const { return Current.selectSlot4; }
+
+    // getter test / debug
+    bool IsTestLoseHP() const { return Current.testLoseHP; }
+    bool IsTestLoseMP() const { return Current.testLoseMP; }
 
     // getter active slot & UI state
     ItemSlot GetActiveSlot()    const { return ActiveSlot; }

@@ -37,7 +37,6 @@ void PlayerInput::PollInput(void)
 
     // --- Actions (KeyPressed — tap sekali) ---
     Current.interact        = IsKeyPressed(KEY_E);
-    Current.kill            = IsKeyPressed(KEY_K);
     Current.revive          = IsKeyPressed(KEY_R);
     Current.toggleInventory = IsKeyPressed(KEY_I);
     Current.toggleMap       = IsKeyPressed(KEY_M);
@@ -53,6 +52,10 @@ void PlayerInput::PollInput(void)
     Current.selectSlot2 = IsKeyPressed(KEY_TWO);
     Current.selectSlot3 = IsKeyPressed(KEY_THREE);
     Current.selectSlot4 = IsKeyPressed(KEY_FOUR);
+
+    // --- Test / Debug (KeyPressed — tap sekali) ---
+    Current.testLoseHP = IsKeyPressed(KEY_K);
+    Current.testLoseMP = IsKeyPressed(KEY_J);
 }
 
 // ================================================================
