@@ -82,7 +82,7 @@ void Player::Init(const char *spawnObjectName)
         // fallback kalau object spawn belum ada di Tiled
         // posisi fallback dipusatkan ke tengah map dalam pixel
         Position = {
-            (((float)tilesonMap->width * TILE_SIZE) / 2.0f) + TILE_SIZE * 3,
+            ((float)tilesonMap->width * TILE_SIZE) / 2.0f,
             ((float)tilesonMap->height * TILE_SIZE) / 2.0f};
         TraceLog(LOG_WARNING, "Player: Spawn object '%s' not found, using default position",
                  (spawnObjectName != nullptr && spawnObjectName[0] != '\0') ? spawnObjectName : SPAWN_OBJECT_NAME);
@@ -125,7 +125,8 @@ void Player::Update(void)
     }
 
     // kalau player dead, skip semua input selain revive
-    if (Anim.isDead) return;
+    if (Anim.isDead)
+        return;
 
     // --- Kill (K) — debug: player langsung mati ---
     if (InputInstance.IsKill())
@@ -139,11 +140,22 @@ void Player::Update(void)
     {
         HandleSpaceAction();
         // kalau jadi attack, skip movement frame ini
-        if (Anim.isAttacking) return;
+        if (Anim.isAttacking)
+            return;
+    }
+
+    // --- Go Back (B) — kembali ke map sebelumnya ---
+    if (InputInstance.IsGoBack())
+    {
+        pendingSwitchMap = false; // cancel kalau ada pending
+        // GoBack dipanggil via pending juga biar aman
+        pendingGoBack = true;
+        return;
     }
 
     // kalau lagi attack, skip movement
-    if (Anim.isAttacking) return;
+    if (Anim.isAttacking)
+        return;
 
     // --- Interact (E) ---
     if (InputInstance.IsInteract())
@@ -204,9 +216,6 @@ void Player::Update(void)
 
     // sync posisi animasi dengan posisi player
     Anim.position = Position;
-
-    if (IsKeyPressed(KEY_O))
-        SwitchMap("world_json/cave.json", "goOutsideCave");
 
     CheckDoorInteraction();
 }
@@ -334,7 +343,9 @@ void Player::CheckDoorInteraction(void)
         std::string targetMap = mapIt->second.getValue<std::string>();
         std::string targetDoor = doorIt->second.getValue<std::string>();
 
-        SwitchMap(targetMap.c_str(), targetDoor.c_str());
+        pendingSwitchMap = true;
+        pendingMapPath = targetMap;
+        pendingDoorName = targetDoor;
         return;
     }
 }
@@ -407,6 +418,19 @@ void Player::PlayerCamera(void)
 void Player::Tick(void)
 {
     Update();
+    if (PlayerInstance.pendingGoBack)
+    {
+        PlayerInstance.pendingGoBack = false;
+        GoBack();
+        return;
+    }
+
+    if (PlayerInstance.pendingSwitchMap)
+    {
+        PlayerInstance.pendingSwitchMap = false;
+        SwitchMap(PlayerInstance.pendingMapPath.c_str(), PlayerInstance.pendingDoorName.c_str());
+    }
+
     UpdateAnimation(Anim, GetFrameTime());
     PlayerCamera();
 }

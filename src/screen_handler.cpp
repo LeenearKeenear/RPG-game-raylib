@@ -13,7 +13,7 @@ extern PauseMenu pauseMenu;
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 /**
- * @brief Konstanta layar virtual — semua rendering di-scale ke ukuran ini 
+ * @brief Konstanta layar virtual — semua rendering di-scale ke ukuran ini
  */
 const float ScaleMultiplierMonitor = 0.7F;    // ukuran default window = 70% monitor
 const float ScaleMinMultiplierMonitor = 0.4F; // ukuran minimum window = 40% monitor
@@ -23,7 +23,7 @@ extern const int GameScreenHeight = 720;
 /**
  * @brief InitAll()
  * Inisialisasi semua entity dan camera di awal game.
- * 
+ *
  * Cara kerja:
  * 1. Init player — spawn point otomatis dibaca dari object layer Tiled
  * 2. Set camera target ke posisi spawn player
@@ -42,9 +42,9 @@ void InitAll()
 }
 
 /**
- * @brief InitScreen() 
+ * @brief InitScreen()
  * Inisialisasi window, audio, dan render texture virtual.
- * 
+ *
  * Cara kerja:
  * 1. Buat window resizable ukuran 70% monitor
  * 2. Buat render texture 1280x720 sebagai layar virtual
@@ -72,9 +72,9 @@ GameState InitScreen()
 
     state.Dungeon = LoadRenderTexture(GameScreenWidth, GameScreenHeight);
     SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_BILINEAR);
-    
+
     // Pastikan FPS tetap 60
-    const int FPS = 60; 
+    const int FPS = 60;
     SetTargetFPS(FPS);
 
     state.currentScreen = MAIN_MENU;
@@ -82,7 +82,7 @@ GameState InitScreen()
     return state;
 }
 
-/** 
+/**
  * @brief UpdateGame()
  * Update ukuran window dan scale multiplier tiap frame.
  * Dipanggil tiap frame biar scaling tetap bener pas window di-resize.
@@ -97,14 +97,14 @@ void UpdateGame(GameState *state)
 }
 
 /**
- * @brief DrawRenderTexture() 
+ * @brief DrawRenderTexture()
  * Entry point render — semua yang keliatan di layar lewat sini.
- * 
+ *
  * Urutan render:
  * 1. RenderMap() — render tile map dari Tiled
  * 2. RenderEntities() — render semua entity dalam world space (pake camera)
  * 3. DebugInstance — toggle dan draw debug panel kalau aktif
- * 
+ *
  * Catatan: debug panel di luar BeginMode2D biar posisinya fixed di layar
  */
 void DrawRenderTexture(GameState *state)
@@ -133,9 +133,10 @@ void DrawRenderTexture(GameState *state)
  * Render UI elements (pause menu, etc) ke virtual screen.
  * Dipanggil setelah rendering game, sebelum EndTextureMode().
  */
-void DrawUIOverlay(GameState* state)
+void DrawUIOverlay(GameState *state)
 {
-    if (pauseMenu.IsActive()) {
+    if (pauseMenu.IsActive())
+    {
         Vector2 mousePos = GetVirtualMousePosition(state);
         pauseMenu.Draw(mousePos);
     }
@@ -145,7 +146,7 @@ void DrawUIOverlay(GameState* state)
  * @brief GetVirtualMousePosition()
  * Konversi koordinat mouse dari window ke virtual screen.
  */
-Vector2 GetVirtualMousePosition(GameState* state)
+Vector2 GetVirtualMousePosition(GameState *state)
 {
     Vector2 mouse = GetMousePosition();
     Vector2 virtualMouse = {0, 0};
@@ -161,7 +162,7 @@ Vector2 GetVirtualMousePosition(GameState* state)
  */
 void UpdateLogicAll()
 {
-    PlayerInstance.Tick();
+   PlayerInstance.Tick();
 }
 
 /**
@@ -190,13 +191,14 @@ void DrawRenderWindows(GameState *state)
 /**
  * @brief GameShutDown()
  * Bersihin semua resource sebelum game ditutup.
- * 
+ *
  * TODO: Kalau nanti tiap map punya texture sendiri,
  * unload harus per map, bukan cuma loop MAX_TEXTURES global
  */
 void GameShutDown(GameState *state)
 {
-    for (int i = 0; i < MAX_TEXTURES; i++) {
+    for (int i = 0; i < MAX_TEXTURES; i++)
+    {
         UnloadTexture(TexturesMap[i]);
     }
 

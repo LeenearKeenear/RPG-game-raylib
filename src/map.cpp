@@ -4,6 +4,7 @@
 #include "../include/map.h"
 #include "../include/animation.h"
 #include "../include/player.h"
+#include "../include/MapStack.h"
 #include <memory>
 #include <string>
 
@@ -17,6 +18,12 @@ Camera2D camera = {0};
 
 int lastTilesRendered = 0;
 TileRange currentVisibleRange = {0, 0, 0, 0};
+
+// map history stack buat nyimpen riwayat perpindahan map
+static MapSystem::MapStack mapHistoryStack;
+
+// path map yang sedang aktif
+static std::string currentMapPath = "";
 
 // ================================================================
 // LoadMap()
@@ -186,10 +193,9 @@ void InitMap(void)
 {
     // LoadMap("world_json/exampleworldmap_2.json");
     // LoadMap("world_json/exampleworldmap.json");
-    
+
     // LoadMap("world_json/outsideLight.json");
     // LoadMap("world_json/testermap.tmj");
-
 
     // LoadMap("world_json/cave.json");
     // LoadMap("world_json/inside.json");
@@ -328,6 +334,14 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         return;
     }
 
+    // push map sekarang ke stack sebelum pindah
+    // skip kalau currentMapPath kosong (berarti ini load pertama kali)
+    if (!currentMapPath.empty())
+        mapHistoryStack.Push(currentMapPath, "");
+
+    // update currentMapPath ke map baru
+    currentMapPath = newMapPath;
+
     // unload map lama dulu kalau ada
     UnloadMap();
 
@@ -356,6 +370,33 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
              (targetDoorName != nullptr && targetDoorName[0] != '\0') ? targetDoorName : SPAWN_OBJECT_NAME);
 }
 
+void GoBack(void)
+{
+    if (mapHistoryStack.IsEmpty())
+    {
+        TraceLog(LOG_WARNING, "GoBack: no map history to go back to");
+        return;
+    }
 
+    MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();
+    currentMapPath = prev.mapPath;
 
-// Project game dungeon 2D C++ pakai Raylib + Tileson, multi-map dari Tiled JSON. Sistem SwitchMap basic sudah ada: door pakai interact `E`, property object door adalah `target_map` dan `target_door`, lalu `SwitchMap(newMapPath, targetDoorName)` reload map dan spawn player ke object tujuan. `InitAll()` untuk start awal game pakai `PlayerInstance.Init(SPAWN_OBJECT_NAME)`. Sekarang issue terakhir: setelah switch map berhasil, player spawn tapi stuck/tidak bisa gerak. Tolong fokus debug penyebab player stuck setelah pindah map, dengan aturan: jangan tulis ke workspace tanpa izin, tampilkan full source function kalau mengusulkan perubahan, pertahankan comment lama, dan refaktor bertahap.
+    UnloadMap();
+    LoadMap(prev.mapPath.c_str());
+
+    if (tilesonMap == nullptr)
+    {
+        TraceLog(LOG_ERROR, "GoBack: failed to load map: %s", prev.mapPath.c_str());
+        return;
+    }
+
+    PlayerInstance.Init(prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
+
+    Vector2 spawnPos = PlayerInstance.GetPosition();
+    camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
+    camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
+    camera.rotation = 0;
+    camera.zoom = 1.0F;
+
+    TraceLog(LOG_INFO, "GoBack: returned to map: %s", prev.mapPath.c_str());
+}

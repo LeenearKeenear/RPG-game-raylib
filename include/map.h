@@ -79,7 +79,7 @@ void RenderMap(void);
 void UnloadMap(void);
 void InitMap(void);
 void SwitchMap(const char *newMapPath, const char *targetSpawnName);
-
+void GoBack(void);
 
 
 // query object dari object layer Tiled

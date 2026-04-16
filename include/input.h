@@ -27,10 +27,10 @@
 enum ItemSlot
 {
     SLOT_NONE = 0,
-    SLOT_WEAPON_1 = 1,  // key 1
-    SLOT_WEAPON_2 = 2,  // key 2
-    SLOT_POTION_1 = 3,  // key 3
-    SLOT_POTION_2 = 4   // key 4
+    SLOT_WEAPON_1 = 1, // key 1
+    SLOT_WEAPON_2 = 2, // key 2
+    SLOT_POTION_1 = 3, // key 3
+    SLOT_POTION_2 = 4  // key 4
 };
 
 // ================================================================
@@ -58,18 +58,19 @@ struct InputState
     bool moveRight;
 
     // --- Actions (pressed sekali) ---
-    bool interact;       // E
-    bool kill;           // K — debug: player mati
-    bool revive;         // R — debug: player hidup kembali
-    bool toggleInventory;// I — toggle inventori
-    bool toggleMap;      // M — toggle map
+    bool interact;         // E
+    bool kill;             // K — debug: player mati
+    bool revive;           // R — debug: player hidup kembali
+    bool toggleInventory;  // I — toggle inventori
+    bool toggleMap;        // M — toggle map
     bool leftClickPressed; // Left Mouse — context action
+    bool goBack;           // buat kembali ke tempat awal
 
     // --- Slot Selection (pressed sekali) ---
-    bool selectSlot1;    // key 1
-    bool selectSlot2;    // key 2
-    bool selectSlot3;    // key 3
-    bool selectSlot4;    // key 4
+    bool selectSlot1; // key 1
+    bool selectSlot2; // key 2
+    bool selectSlot3; // key 3
+    bool selectSlot4; // key 4
 };
 
 // ================================================================
@@ -87,22 +88,23 @@ public:
     void PollInput(void);
 
     // --- Getters ---
-    const InputState& GetState() const { return Current; }
+    const InputState &GetState() const { return Current; }
 
     // getter movement — true selama key ditekan (KeyDown)
-    bool IsMoveUp()    const { return Current.moveUp; }
-    bool IsMoveDown()  const { return Current.moveDown; }
-    bool IsMoveLeft()  const { return Current.moveLeft; }
+    bool IsMoveUp() const { return Current.moveUp; }
+    bool IsMoveDown() const { return Current.moveDown; }
+    bool IsMoveLeft() const { return Current.moveLeft; }
     bool IsMoveRight() const { return Current.moveRight; }
-    bool IsMoving()    const { return Current.moveUp || Current.moveDown || Current.moveLeft || Current.moveRight; }
+    bool IsMoving() const { return Current.moveUp || Current.moveDown || Current.moveLeft || Current.moveRight; }
 
     // getter actions — true hanya saat key baru ditekan (KeyPressed)
-    bool IsInteract()        const { return Current.interact; }
-    bool IsKill()            const { return Current.kill; }
-    bool IsRevive()          const { return Current.revive; }
+    bool IsInteract() const { return Current.interact; }
+    bool IsKill() const { return Current.kill; }
+    bool IsRevive() const { return Current.revive; }
     bool IsToggleInventory() const { return Current.toggleInventory; }
-    bool IsToggleMap()       const { return Current.toggleMap; }
+    bool IsToggleMap() const { return Current.toggleMap; }
     bool IsLeftClickPressed() const { return Current.leftClickPressed; }
+    bool IsGoBack() const { return Current.goBack; }
 
     // getter slot selection
     bool IsSelectSlot1() const { return Current.selectSlot1; }
@@ -111,9 +113,9 @@ public:
     bool IsSelectSlot4() const { return Current.selectSlot4; }
 
     // getter active slot & UI state
-    ItemSlot GetActiveSlot()    const { return ActiveSlot; }
-    bool IsInventoryOpen()      const { return InventoryOpen; }
-    bool IsMapOpen()            const { return MapOpen; }
+    ItemSlot GetActiveSlot() const { return ActiveSlot; }
+    bool IsInventoryOpen() const { return InventoryOpen; }
+    bool IsMapOpen() const { return MapOpen; }
 
     // tentukan aksi left click berdasarkan context saat ini
     // return: ACTION_ATTACK / ACTION_DRINK_POTION / ACTION_EQUIP_UNEQUIP / ACTION_NONE

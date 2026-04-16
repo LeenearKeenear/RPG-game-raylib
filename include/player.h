@@ -62,6 +62,13 @@ public:
     // ini adalah inti logic frustum culling — dipake oleh RenderMapCulled()
     TileRange GetVisibleTileRange(void);
 
+    AnimationPlayer Anim;
+
+    bool pendingSwitchMap = false;
+    std::string pendingMapPath;
+    std::string pendingDoorName;
+    bool pendingGoBack = false;
+
 private:
     Vector2 Position;
     Vector2 Velocity;
@@ -70,14 +77,13 @@ private:
     Texture2D CharTexture;
 
     // data animasi player — state machine (idle, walk, attack, dead)
-    AnimationPlayer Anim;
 
     // ukuran hitbox player bisa diperkecil dari sprite biar movement
     // terasa lebih enak dan gak gampang nyangkut di sudut/object.
-    float HitboxWidth = 18.0f;
-    float HitboxHeight = 13.0f;
-    float HitboxOffsetX = 6.0f;
-    float HitboxOffsetY = 18.2f;
+    float HitboxWidth = 16.0f;
+    float HitboxHeight = 12.0f;
+    float HitboxOffsetX = 8.0f;  // makin tinggi makin ke kanan
+    float HitboxOffsetY = 14.0f; // makin tinggin makin kebawah
 
     Rectangle GetPlayerHitboxAtPosition(Vector2 position);
 

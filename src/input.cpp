@@ -35,6 +35,7 @@ void PlayerInput::PollInput(void)
     Current.toggleInventory = IsKeyPressed(KEY_I);
     Current.toggleMap       = IsKeyPressed(KEY_M);
     Current.leftClickPressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    Current.goBack = IsKeyPressed(KEY_B); // buat kembali
 
     // --- Slot Selection (KeyPressed — tap sekali) ---
     Current.selectSlot1 = IsKeyPressed(KEY_ONE);
