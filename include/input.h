@@ -33,11 +33,10 @@ enum ItemSlot
     SLOT_POTION_2 = 4   // key 4
 };
 
+// PlayerAction — tipe aksi yang ditentukan berdasarkan context
+// (slot aktif / inventori terbuka)
 // ================================================================
-// SpaceAction — tipe aksi yang dilakukan saat SPACE ditekan
-// Ditentukan berdasarkan context (slot aktif / inventori terbuka)
-// ================================================================
-enum SpaceAction
+enum PlayerAction
 {
     ACTION_NONE,
     ACTION_ATTACK,
@@ -80,7 +79,7 @@ struct InputState
 // Cara pakai:
 // 1. Panggil PollInput() sekali di awal frame
 // 2. Cek state via getter functions
-// 3. Panggil ResolveSpaceAction() untuk tahu aksi SPACE
+// 3. Panggil ResolveAction() untuk tahu aksi yang harus dilakukan (contextual)
 // ================================================================
 class PlayerInput
 {
@@ -121,7 +120,7 @@ public:
 
     // tentukan aksi left click berdasarkan context saat ini
     // return: ACTION_ATTACK / ACTION_DRINK_POTION / ACTION_EQUIP_UNEQUIP / ACTION_NONE
-    SpaceAction ResolveSpaceAction() const;
+    PlayerAction ResolveAction() const;
 
     // update internal state (slot selection, toggle UI)
     // panggil setelah PollInput() di player Update()

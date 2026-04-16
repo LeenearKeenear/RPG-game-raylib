@@ -117,14 +117,14 @@ void PlayerInput::UpdateState(void)
 }
 
 // ================================================================
-// ResolveSpaceAction()
+// ResolveAction()
 // Tentukan apa yang terjadi saat left click berdasarkan context:
 // 1. Inventori terbuka → equip/unequip
 // 2. Slot senjata aktif (1/2) → attack
 // 3. Slot potion aktif (3/4) → minum potion
 // 4. Selain itu → none (atau default attack)
 // ================================================================
-SpaceAction PlayerInput::ResolveSpaceAction() const
+PlayerAction PlayerInput::ResolveAction() const
 {
     // prioritas 1: kalau inventori terbuka → equip/unequip
     if (InventoryOpen)

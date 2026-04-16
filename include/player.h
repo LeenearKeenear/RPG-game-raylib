@@ -118,8 +118,8 @@ private:
     // return false kalau nabrak / keluar bound, true kalau aman
     bool CanMove(Vector2 NewPos);
 
-    // handle SPACE berdasarkan context (slot aktif / inventori)
-    void HandleSpaceAction(void);
+    // handle action berdasarkan context (slot aktif / inventori)
+    void HandleAction(void);
 
     // revive player — reset state dari DEAD ke IDLE
     void HandleRevive(void);

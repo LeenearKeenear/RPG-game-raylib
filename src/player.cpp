@@ -150,7 +150,7 @@ void Player::Update(void)
     // --- Left Click — context action (attack / potion / equip) ---
     if (InputInstance.IsLeftClickPressed() && !Anim.isAttacking)
     {
-        HandleSpaceAction();
+        HandleAction();
         // kalau jadi attack, skip movement frame ini
         if (Anim.isAttacking) return;
     }
@@ -246,15 +246,16 @@ void Player::Render(void)
 }
 
 // ================================================================
-// HandleSpaceAction()
-// Resolve apa yang terjadi saat SPACE ditekan berdasarkan context:
+// HandleAction()
+// Resolve apa yang terjadi saat input aksi (misal: Left Click)
+// dilakukan berdasarkan context:
 // - Inventori terbuka → equip/unequip item
 // - Slot senjata (1/2) → attack
 // - Slot potion (3/4) → minum potion
 // ================================================================
-void Player::HandleSpaceAction(void)
+void Player::HandleAction(void)
 {
-    SpaceAction action = InputInstance.ResolveSpaceAction();
+    PlayerAction action = InputInstance.ResolveAction();
 
     switch (action)
     {
