@@ -50,6 +50,7 @@ void Player::Init(void)
     // init mana
     MaxMana = 100.0f;
     Mana = MaxMana;
+    ManaRegenTimer = 0.0f;
 
     // reset collision cache biar aman kalau nanti map di-reload
     CollisionRects.clear();
@@ -138,18 +139,12 @@ void Player::Update(void)
     }
 
 
-    // --- Health/Mana Test (DEBUG) ---
+    // --- Health Test (DEBUG) ---
     if (InputInstance.IsTestLoseHP())
     {
         Health -= 10.0f;
         if (Health < 0) Health = 0;
         TraceLog(LOG_INFO, "PLAYER: Test Health Decrease (%.1f)", Health);
-    }
-    if (InputInstance.IsTestLoseMP())
-    {
-        Mana -= 10.0f;
-        if (Mana < 0) Mana = 0;
-        TraceLog(LOG_INFO, "PLAYER: Test Mana Decrease (%.1f)", Mana);
     }
 
     // --- Left Click — context action (attack / potion / equip) ---
@@ -222,6 +217,21 @@ void Player::Update(void)
 
     // sync posisi animasi dengan posisi player
     Anim.position = Position;
+
+    // --- Mana Regeneration ---
+    // Regenerasi mana aktif jika timer sudah 0 (3 detik setelah attack terakhir)
+    if (ManaRegenTimer > 0)
+    {
+        ManaRegenTimer -= GetFrameTime();
+    }
+    else
+    {
+        if (Mana < MaxMana)
+        {
+            Mana += ManaRegenRate * GetFrameTime();
+            if (Mana > MaxMana) Mana = MaxMana;
+        }
+    }
 }
 
 // ================================================================
@@ -249,10 +259,12 @@ void Player::HandleSpaceAction(void)
     switch (action)
     {
     case ACTION_ATTACK:
-        if (Mana > 0)
+        if (Mana >= AttackManaCost)
         {
             UpdatePlayerAttack(Anim);
-            TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d)", (int)InputInstance.GetActiveSlot());
+            Mana -= AttackManaCost;
+            ManaRegenTimer = ManaRegenDelay; // Reset timer ke 3 detik
+            TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d) - Mana: %.1f", (int)InputInstance.GetActiveSlot(), Mana);
         }
         else
         {

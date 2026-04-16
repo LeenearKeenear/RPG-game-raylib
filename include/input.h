@@ -72,7 +72,6 @@ struct InputState
 
     // --- Debug / Test (pressed sekali) ---
     bool testLoseHP;     // K
-    bool testLoseMP;     // J
 };
 
 // ================================================================
@@ -114,7 +113,6 @@ public:
 
     // getter test / debug
     bool IsTestLoseHP() const { return Current.testLoseHP; }
-    bool IsTestLoseMP() const { return Current.testLoseMP; }
 
     // getter active slot & UI state
     ItemSlot GetActiveSlot()    const { return ActiveSlot; }

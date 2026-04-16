@@ -55,7 +55,6 @@ void PlayerInput::PollInput(void)
 
     // --- Test / Debug (KeyPressed — tap sekali) ---
     Current.testLoseHP = IsKeyPressed(KEY_K);
-    Current.testLoseMP = IsKeyPressed(KEY_J);
 }
 
 // ================================================================
