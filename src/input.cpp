@@ -53,22 +53,21 @@ void PlayerInput::PollInput(void)
 
     // --- Actions (KeyPressed — tap sekali / baru diteken) ---
     Current.interact        = IsKeyPressed(KEY_E);
-    Current.kill            = IsKeyPressed(KEY_K);        // debug: langsung matiin player
-    Current.revive          = IsKeyPressed(KEY_R);        // debug: revive player
+    Current.revive          = IsKeyPressed(KEY_R);
     Current.toggleInventory = IsKeyPressed(KEY_I);
     Current.toggleMap       = IsKeyPressed(KEY_M);
     
-    // Gunakan deteksi manual karena IsMouseButtonPressed mungkin 'dicuri' by main.cpp/pauseMenu.cpp
-    static bool mouseWasDown = false;
-    bool mouseIsDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-    Current.leftClickPressed = mouseIsDown && !mouseWasDown;
-    mouseWasDown = mouseIsDown;
+    // gunakan fungsi bawaan Raylib agar state mouse tetap sinkron antar layar/state
+    Current.leftClickPressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
     // --- Slot Selection (KeyPressed — tap sekali) ---
-    Current.selectSlot1 = IsKeyPressed(KEY_ONE);   // key 1
-    Current.selectSlot2 = IsKeyPressed(KEY_TWO);   // key 2
-    Current.selectSlot3 = IsKeyPressed(KEY_THREE); // key 3
-    Current.selectSlot4 = IsKeyPressed(KEY_FOUR);  // key 4
+    Current.selectSlot1 = IsKeyPressed(KEY_ONE);
+    Current.selectSlot2 = IsKeyPressed(KEY_TWO);
+    Current.selectSlot3 = IsKeyPressed(KEY_THREE);
+    Current.selectSlot4 = IsKeyPressed(KEY_FOUR);
+
+    // --- Test / Debug (KeyPressed — tap sekali) ---
+    Current.testLoseHP = IsKeyPressed(KEY_K);
 }
 
 // ================================================================
@@ -136,14 +135,14 @@ void PlayerInput::UpdateState(void)
  *==============================================================================*/
 
 // ================================================================
-// ResolveSpaceAction()
+// ResolveAction()
 // Tentukan apa yang terjadi saat left click berdasarkan context:
 // 1. Inventori terbuka → equip/unequip
 // 2. Slot senjata aktif (1/2) → attack
 // 3. Slot potion aktif (3/4) → minum potion
 // 4. Selain itu → none (atau default attack)
 // ================================================================
-SpaceAction PlayerInput::ResolveSpaceAction() const
+PlayerAction PlayerInput::ResolveAction() const
 {
     // prioritas 1: kalau inventori terbuka → equip/unequip
     if (InventoryOpen)
