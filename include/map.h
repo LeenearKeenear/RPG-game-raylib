@@ -24,66 +24,6 @@
 extern Camera2D camera;
 
 // ================================================================
-<<<<<<< HEAD
-// Tile System
-// ================================================================
-
-// dawg ini dipindah dawg 
-// koordinat universal buat posisi tile di spritesheet atau world
-typedef struct
-{
-    int x;
-    int y;
-} TileCoordinate;
-
-// dawg ini dipindah dawg 
-// enum semua jenis tile yang ada — tambah di sini kalau ada tile baru
-typedef enum
-{
-    TILE_CLU_WALL,
-    TILE_CMU_WALL,
-    TILE_CRU_WALL,
-    TILE_CML_WALL,
-    TILE_M_WALL,
-    TILE_CMR_WALL,
-    TILE_CLD_WALL,
-    TILE_CMD_WALL,
-    TILE_CRD_WALL,
-    TILE_POOL,
-    TILE_BIGMAN,
-    TILE_GRASS1,
-    TILE_GRASS2,
-    TILE_DOOR_OPEN,
-    TILE_DOOR_CLOSE,
-    TILE_PLAYER_NEW,
-    TILE_ENEMY_TEST
-} TileType;
-
-// dawg ini dipindah dawg 
-// properti tiap tile: posisi di spritesheet, bisa dilewatin, ada interaksi gak
-typedef struct
-{
-    TileCoordinate CoordID;
-    bool IsWalkable;
-    bool HasInteraction;
-} TileDefinition;
-
-// dawg ini dipindah dawg 
-// ukuran tile dalam pixel + gap antar tile di spritesheet
-#define TILE_SIZE 32
-#define TILE_GAP 4
-
-// ================================================================
-// Struct yang dihapus (map system lama, digantiin Tileson)
-//
-// sTile — tile dengan koordinat + type, digantiin TilesonMapData
-// MapDataDefinition — struct map lama pake sTile**, digantiin TilesonMapData
-// CurrentMap (extern MapDataDefinition*) — gak relevan setelah pindah ke Tileson
-// ================================================================
-
-// ================================================================
-=======
->>>>>>> e799af3f0a50656c282fcf81504179372f5fb8ac
 // Tileson Map System
 // ================================================================
 
