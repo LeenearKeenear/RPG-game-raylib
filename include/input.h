@@ -55,7 +55,7 @@ enum ItemSlot
  * @brief Tipe aksi yang dilakukan saat SPACE diteken
  * @note Ditentukan berdasarkan context (slot aktif / inventori terbuka)
  */
-enum SpaceAction
+enum PlayerAction
 {
     ACTION_NONE,         /**< Gak ada aksi */
     ACTION_ATTACK,       /**< Aksi attack (pake senjata) */
@@ -93,20 +93,19 @@ struct InputState
     bool selectSlot2; /**< Key 2 - pilih slot senjata 2 */
     bool selectSlot3; /**< Key 3 - pilih slot potion 1 */
     bool selectSlot4; /**< Key 4 - pilih slot potion 2 */
+
+    // --- Debug / Test (pressed sekali) ---
+    bool testLoseHP;     // K
 };
 
-/*==============================================================================
- * PlayerInput Class
- *==============================================================================*/
-
-/**
- * @brief Class utama input system
- *
- * Cara pake:
- * 1. Panggil PollInput() sekali di awal frame
- * 2. Cek state via getter functions
- * 3. Panggil ResolveSpaceAction() buat tau aksi left click
- */
+// ================================================================
+// PlayerInput — class utama input system
+//
+// Cara pakai:
+// 1. Panggil PollInput() sekali di awal frame
+// 2. Cek state via getter functions
+// 3. Panggil ResolveAction() untuk tahu aksi yang harus dilakukan (contextual)
+// ================================================================
 class PlayerInput
 {
 public:
@@ -131,10 +130,9 @@ public:
     bool IsMoveRight() const { return Current.moveRight; }
     bool IsMoving() const { return Current.moveUp || Current.moveDown || Current.moveLeft || Current.moveRight; }
 
-    // getter actions — true hanya saat key baru diteken (KeyPressed)
-    bool IsInteract() const { return Current.interact; }
-    bool IsKill() const { return Current.kill; }
-    bool IsRevive() const { return Current.revive; }
+    // getter actions — true hanya saat key baru ditekan (KeyPressed)
+    bool IsInteract()        const { return Current.interact; }
+    bool IsRevive()          const { return Current.revive; }
     bool IsToggleInventory() const { return Current.toggleInventory; }
     bool IsToggleMap() const { return Current.toggleMap; }
     bool IsLeftClickPressed() const { return Current.leftClickPressed; }
@@ -146,6 +144,9 @@ public:
     bool IsSelectSlot3() const { return Current.selectSlot3; }
     bool IsSelectSlot4() const { return Current.selectSlot4; }
 
+    // getter test / debug
+    bool IsTestLoseHP() const { return Current.testLoseHP; }
+
     // getter active slot & UI state
     ItemSlot GetActiveSlot() const { return ActiveSlot; }
     bool IsInventoryOpen() const { return InventoryOpen; }
@@ -155,7 +156,7 @@ public:
      * @brief Tentukan aksi left click berdasarkan context saat ini
      * @return ACTION_ATTACK / ACTION_DRINK_POTION / ACTION_EQUIP_UNEQUIP / ACTION_NONE
      */
-    SpaceAction ResolveSpaceAction() const;
+    PlayerAction ResolveAction() const;
 
     /**
      * @brief Update internal state (slot selection, toggle UI)
@@ -165,7 +166,7 @@ public:
 
 private:
     InputState Current = {};         /**< State input current frame */
-    ItemSlot ActiveSlot = SLOT_NONE; /**< Slot yang lagi aktif (1-4) */
+    ItemSlot ActiveSlot = SLOT_WEAPON_1; /**< Slot yang lagi aktif (1-4) */
     bool InventoryOpen = false;      /**< Flag apakah inventori kebuka */
     bool MapOpen = false;            /**< Flag apakah map kebuka */
 };

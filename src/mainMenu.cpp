@@ -19,9 +19,7 @@
 
 /** Array tombol menu utama (Start, Load, Options, Quit) */
 static std::array<buttonTxt, 4> buttons;
-
-/** Popup buat fitur "Coming Soon" (Options & Load sementara) */
-static Popup optionsPopup;
+static Popup menuOptionsPopup;
 
 /*==============================================================================
  * Public Functions
@@ -51,8 +49,7 @@ void InitMainMenu(GameState *state)
         buttons[i] = buttonTxt(texts[i], centerX, startY + (i * buttonSpacing), fontSize, WHITE, 0.6F);
     }
 
-    // Inisialisasi popup "Coming Soon" buat fitur yang belum diimplementasi
-    optionsPopup = Popup("COMING SOON", "OK", 0.6F);
+    menuOptionsPopup = Popup("COMING SOON", "OK", 0.6F);
 }
 
 /**
@@ -66,32 +63,26 @@ void UpdateMainMenu(GameState *state)
     Vector2 mousePosition = GetVirtualMousePosition(state);
     bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
-    // Kalo popup lagi aktif, handle popup dulu, menu gak bisa diklik
-    if (optionsPopup.IsActive())
-    {
-        optionsPopup.Update(mousePosition, mouseClicked);
+    if (menuOptionsPopup.IsActive()) {
+        menuOptionsPopup.Update(mousePosition, mouseClicked);
         return;
     }
 
-    // Loop semua tombol, cek mana yang diklik
-    for (int i = 0; i < 4; i++)
-    {
-        if (buttons[i].isClicked(mousePosition, mouseClicked))
-        {
-            switch (i)
-            {
-            case 0: // BTN_START - mulai game baru
-                state->currentScreen = PLAY;
-                break;
-            case 2: // BTN_OPTIONS - tampilin popup "Coming Soon"
-                optionsPopup.Show();
-                break;
-            case 3: // BTN_QUIT - keluar dari game
-                CloseWindow();
-                break;
-            case 1: // BTN_LOAD - (belum diimplementasi)
-            default:
-                break;
+    for (int i = 0; i < 4; i++) {
+        if (buttons[i].isClicked(mousePosition, mouseClicked)) {
+            switch (i) {
+                case 0:  // Start Game
+                    state->currentScreen = PLAY;
+                    break;
+                case 2:  // Options
+                    menuOptionsPopup.Show();
+                    break;
+                case 3:  // Quit
+                    CloseWindow();
+                    break;
+                case 1:  // Load Game
+                default:
+                    break;
             }
         }
     }
@@ -116,10 +107,8 @@ void RenderMainMenuToVirtualScreen(GameState *state)
         buttons[i].Draw(virtualMouse);
     }
 
-    // Kalo popup aktif, render di atas menu
-    if (optionsPopup.IsActive())
-    {
-        optionsPopup.Draw(virtualMouse);
+    if (menuOptionsPopup.IsActive()) {
+        menuOptionsPopup.Draw(virtualMouse);
     }
 
     EndTextureMode();

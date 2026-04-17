@@ -13,6 +13,8 @@
 #include "screen.h"
 #include "animation.h"
 #include "input.h"
+#include "inventory.h"
+
 
 // ================================================================
 // Player Class
@@ -120,6 +122,19 @@ public:
      */
     TileRange GetVisibleTileRange(void);
 
+    // health getters
+    float GetHealth() { return Health; }
+    float GetMaxHealth() { return MaxHealth; }
+    void SetHealth(float h) { Health = h; }
+
+    // mana getters
+    float GetMana() { return Mana; }
+    float GetMaxMana() { return MaxMana; }
+    void SetMana(float m) { Mana = m; }
+
+    // info getters
+    const char* GetName() { return Name; }
+
     // ================================================================
     // Public Members
     // ================================================================
@@ -130,6 +145,11 @@ public:
     std::string pendingMapPath;    /**< Path map tujuan */
     std::string pendingDoorName;   /**< Nama pintu tujuan di map baru */
     bool pendingGoBack = false;    /**< Flag nunggu aksi go back ke map sebelumnya */
+
+    // Hotbar management
+    InventoryItem GetHotbarItem(int index) { return Hotbar[index]; }
+    void SetHotbarItem(int index, InventoryItem item) { Hotbar[index] = item; }
+    void UsePotion(int slotIndex);
 
 private:
     // ================================================================
@@ -176,6 +196,7 @@ private:
     int TileSize = 32;     /**< Ukuran tile dalam pixel */
     float Speed = 4.0f;    /**< Kecepatan gerak player (pixel per frame) */
     Texture2D CharTexture; /**< Texture sprite player */
+    const char* Name = "Player Name";
 
     // ukuran hitbox player bisa diperkecil dari sprite biar movement
     // terasa lebih enak dan gak gampang nyangkut di sudut/object.
@@ -191,7 +212,26 @@ private:
     // custom world boundary polygon dari Tiled — diisi pas Init()
     // kalo kosong, CanMove() fallback ke rectangle ukuran map
     std::vector<Vector2> WorldBoundaryPolygon; /**< Boundary polygon custom */
+
+    // health player
+    float Health = 100.0f;
+    float MaxHealth = 100.0f;
+
+    // mana/energy player
+    float Mana = 100.0f;
+    float MaxMana = 100.0f;
+    float ManaRegenTimer = 0.0f;
+    const float ManaRegenDelay = 2.0f;
+    const float ManaRegenRate = 10.0f; // per second
+    const float AttackManaCost = 10.0f;
+
+    // handle action berdasarkan context (slot aktif / inventori)
+    void HandleAction(void);
+
+    // Hotbar slots (1-4)
+    InventoryItem Hotbar[4];
 };
+
 
 /*==============================================================================
  * Global Player Instance
