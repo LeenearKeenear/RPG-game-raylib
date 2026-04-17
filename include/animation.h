@@ -121,10 +121,6 @@ typedef struct
     bool HasInteraction;
 } TileDefinition;
 
-<<<<<<< HEAD
-=======
-// dawg ini dipindah dawg
->>>>>>> e799af3f0a50656c282fcf81504179372f5fb8ac
 // ukuran tile dalam pixel + gap antar tile di spritesheet
 #define TILE_SIZE 32
 #define TILE_GAP 4
@@ -133,9 +129,6 @@ typedef struct
 void LoadTileTexture(TextureAsset Slot, const char *Path);
 
 // render satu tile dari spritesheet ke posisi world
-<<<<<<< HEAD
-void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
-=======
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
 
 // // --- ENUMS ---
