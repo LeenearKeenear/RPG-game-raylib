@@ -1,81 +1,49 @@
+/**
+ * @file map.cpp
+ * @brief Implementasi dari Map System & Tileson Integration Module
+ *
+ * Implementasi dari fungsi-fungsi map yang dideklarasikan di map.h
+ * Handle loading, rendering, dan management map dari JSON Tiled.
+ */
+
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/animation.h"
 #include "../include/player.h"
+#include "../include/MapStack.h"
 #include <memory>
 #include <string>
 
-// ================================================================
-// Global Variables
-// ================================================================
+/*==============================================================================
+ * Global Variables
+ *==============================================================================*/
 
+/** Global pointer ke data map yang lagi aktif */
 TilesonMapData *tilesonMap = nullptr;
+
+/** Hasil parse Tileson - unique_ptr buat auto cleanup */
 static std::unique_ptr<tson::Map> parsedMap = nullptr;
+
+/** Camera2D global untuk rendering world */
 Camera2D camera = {0};
 
-<<<<<<< HEAD
-// ================================================================
-// LoadTileTexture()
-// Load texture PNG ke slot TextureAsset yang ditentuin.
-// Slot ini dipake sama RenderTilePNG() buat milih texture yang bener.
-// ================================================================
-// dawg ini dipindah dawg 
-void LoadTileTexture(TextureAsset Slot, const char *Path)
-{
-    Image img = LoadImage(Path);
-    TexturesMap[Slot] = LoadTextureFromImage(img);
-    UnloadImage(img);
-}
-
-// ================================================================
-// RenderTilePNG()
-// Render satu tile dari spritesheet ke posisi world.
-//
-// Cara kerja:
-// 1. Lookup TileProperty berdasarkan Type — dapet koordinat di spritesheet
-// 2. Hitung Source rectangle dari koordinat itu
-// 3. DrawTexturePro ke posisi Destination di world
-// ================================================================
-// dawg ini dipindah dawg 
-void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
-{
-    // mapping TileType ke koordinat di spritesheet
-    TileDefinition TileProperty[] = {
-        [TILE_CLU_WALL] = {{0, 0}, false, false},
-        [TILE_CMU_WALL] = {{1, 0}, false, false},
-        [TILE_CRU_WALL] = {{3, 0}, false, false},
-        [TILE_CML_WALL] = {{0, 1}, false, false},
-        [TILE_M_WALL] = {{1, 1}, false, false},
-        [TILE_CMR_WALL] = {{3, 1}, false, false},
-        [TILE_CLD_WALL] = {{0, 2}, false, false},
-        [TILE_CMD_WALL] = {{1, 2}, false, false},
-        [TILE_CRD_WALL] = {{3, 2}, false, false},
-        [TILE_POOL] = {{12, 8}, false, false},
-        [TILE_BIGMAN] = {{7, 0}, false, false},
-        [TILE_GRASS1] = {{4, 4}, true, false},
-        [TILE_GRASS2] = {{5, 4}, true, false},
-        [TILE_DOOR_OPEN] = {{4, 2}, true, true},
-        [TILE_DOOR_CLOSE] = {{5, 2}, false, true},
-        [TILE_PLAYER_NEW] = {{3, 2}, false, false},
-        [TILE_ENEMY_TEST] = {{0, 0}, false, false}};
-
-    // hitung posisi source di spritesheet pake koordinat + ukuran tile + gap
-    Rectangle Source = {
-        (float)(TileProperty[Type].CoordID.x * (TILE_SIZE + TILE_GAP)),
-        (float)(TileProperty[Type].CoordID.y * (TILE_SIZE + TILE_GAP)),
-        (float)TILE_SIZE,
-        (float)TILE_SIZE};
-
-    Rectangle Destination = {(float)pos_x, (float)pos_y, (float)TILE_SIZE, (float)TILE_SIZE};
-    Vector2 origin = {0, 0};
-    DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
-}
-=======
+/** Jumlah tile yang dirender di frame terakhir (buat debug) */
 int lastTilesRendered = 0;
+
+/** Range tile visible di frame terakhir (buat debug) */
 TileRange currentVisibleRange = {0, 0, 0, 0};
->>>>>>> e799af3f0a50656c282fcf81504179372f5fb8ac
+
+/** Stack buat nyimpen riwayat perpindahan map (fitur go back) */
+static MapSystem::MapStack mapHistoryStack;
+
+/** Path file map yang sedang aktif */
+static std::string currentMapPath = "";
+
+/*==============================================================================
+ * Map Loading & Unloading
+ *==============================================================================*/
 
 // ================================================================
 // LoadMap()
@@ -89,6 +57,7 @@ TileRange currentVisibleRange = {0, 0, 0, 0};
 // ================================================================
 void LoadMap(const char *mapPath)
 {
+    // Step 1: Parse file JSON dengan Tileson
     tson::Tileson t;
     parsedMap = t.parse(mapPath);
 
@@ -98,24 +67,25 @@ void LoadMap(const char *mapPath)
         return;
     }
 
+    // Step 2: Alokasi struktur data map
     tilesonMap = new TilesonMapData();
     tson::Vector2i mapSize = parsedMap->getSize();
     tilesonMap->width = mapSize.x;
     tilesonMap->height = mapSize.y;
 
-    // hitung jumlah TileLayer dulu sebelum alokasi
+    // Hitung jumlah TileLayer dulu sebelum alokasi array
     int layerCount = 0;
     for (auto &layer : parsedMap->getLayers())
         if (layer.getType() == tson::LayerType::TileLayer)
             layerCount++;
 
-    // alokasi array 2D — satu slot per layer
+    // Alokasi array 2D — satu slot per layer
     tilesonMap->layerCount = layerCount;
     tilesonMap->tiles = new int *[layerCount];
     for (int i = 0; i < layerCount; i++)
         tilesonMap->tiles[i] = new int[tilesonMap->width * tilesonMap->height]();
 
-    // isi data tile tiap layer
+    // Step 3: Isi data tile tiap layer
     int layerIndex = 0;
     for (auto &layer : parsedMap->getLayers())
     {
@@ -135,13 +105,13 @@ void LoadMap(const char *mapPath)
         }
     }
 
-    // setelah layerIndex++;
+    // Debug log buat ngecek sample tile (layer pertama)
     TraceLog(LOG_INFO, "Layer %d: sample tileId[0]=%d tileId[1]=%d",
              layerIndex - 1,
              tilesonMap->tiles[layerIndex - 1][0],
              tilesonMap->tiles[layerIndex - 1][1]);
 
-    // baca semua object dari ObjectGroup layer
+    // Step 4: Baca semua object dari ObjectGroup layer
     for (auto &layer : parsedMap->getLayers())
     {
         if (layer.getType() == tson::LayerType::ObjectGroup)
@@ -157,7 +127,7 @@ void LoadMap(const char *mapPath)
                 tson::Vector2i size = obj.getSize();
                 mapObj.bounds = {(float)pos.x, (float)pos.y, (float)size.x, (float)size.y};
 
-                // kalau object punya polygon, simpan semua titiknya dalam world space
+                // Kalo object punya polygon, simpan semua titiknya dalam world space
                 const std::vector<tson::Vector2i> &polygon = obj.getPolygons();
                 if (!polygon.empty())
                 {
@@ -170,7 +140,7 @@ void LoadMap(const char *mapPath)
                     }
                 }
 
-                // ambil semua custom properties dari object
+                // Ambil semua custom properties dari object
                 for (auto &[key, prop] : obj.getProperties().getProperties())
                     mapObj.properties[key] = prop;
 
@@ -179,7 +149,7 @@ void LoadMap(const char *mapPath)
         }
     }
 
-    // load texture tileset — nama file diambil dari JSON, di-prefix texture/
+    // Step 5: Load texture tileset — nama file diambil dari JSON, di-prefix texture/
     auto &tilesetList = parsedMap->getTilesets();
     for (int i = 0; i < (int)tilesetList.size(); i++)
     {
@@ -215,14 +185,14 @@ void UnloadMap(void)
 {
     if (tilesonMap != nullptr)
     {
-        // hapus tiap array tile per layer dulu sebelum hapus array utamanya
+        // Hapus tiap array tile per layer dulu sebelum hapus array utamanya
         for (int i = 0; i < tilesonMap->layerCount; i++)
             delete[] tilesonMap->tiles[i];
         delete[] tilesonMap->tiles;
 
         tilesonMap->Objects.clear();
 
-        // unload texture dari GPU
+        // Unload texture dari GPU
         for (auto &ts : tilesonMap->tilesets)
             if (ts.texture.id != 0)
                 UnloadTexture(ts.texture);
@@ -238,22 +208,25 @@ void UnloadMap(void)
 // ================================================================
 // InitMap()
 // Entry point load map — path map di-hardcode di sini.
-// TODO MULTI-MAP: nanti path-nya bisa dioper sebagai parameter
-// atau dibaca dari save data buat support pindah antar map.
+//
 // ================================================================
 void InitMap(void)
 {
+    // Beberapa pilihan map yang tersedia (sementara di-comment)
     // LoadMap("world_json/exampleworldmap_2.json");
     // LoadMap("world_json/exampleworldmap.json");
-    
     // LoadMap("world_json/outsideLight.json");
     // LoadMap("world_json/testermap.tmj");
-
-
     // LoadMap("world_json/cave.json");
-    LoadMap("world_json/inside.json");
-    // LoadMap("world_json/light.json");
+    // LoadMap("world_json/inside.json");
+
+    // Map yang aktif saat ini
+    LoadMap("world_json/light.json");
 }
+
+/*==============================================================================
+ * Map Rendering
+ *==============================================================================*/
 
 // ================================================================
 // RenderMap()
@@ -262,11 +235,11 @@ void InitMap(void)
 // ================================================================
 void RenderMap(void)
 {
-    // skip kalau map atau tilesets belum siap
+    // Skip kalau map atau tilesets belum siap
     if (tilesonMap == nullptr || tilesonMap->tilesets.empty())
         return;
 
-    // dapatkan range tile yang visible dari inti logic frustum culling di player
+    // Dapatkan range tile yang visible dari frustum culling di player
     currentVisibleRange = PlayerInstance.GetVisibleTileRange();
 
     lastTilesRendered = 0; // reset counter per frame
@@ -280,6 +253,7 @@ void RenderMap(void)
 
     BeginMode2D(camera);
 
+    // Loop semua layer, lalu tile yang visible aja
     for (int l = 0; l < tilesonMap->layerCount; l++)
     {
         for (int y = currentVisibleRange.minY; y < currentVisibleRange.maxY; y++)
@@ -289,9 +263,9 @@ void RenderMap(void)
                 lastTilesRendered++;
                 int tileId = tilesonMap->tiles[l][(y * tilesonMap->width) + x];
                 if (tileId == 0)
-                    continue;
+                    continue; // tile kosong, skip
 
-                // cari tileset yang sesuai berdasarkan tileId
+                // Cari tileset yang sesuai berdasarkan tileId (range firstgid - lastgid)
                 TilesetInfo *ts = nullptr;
                 for (auto &t : tilesonMap->tilesets)
                     if (tileId >= t.firstgid && tileId <= t.lastgid)
@@ -308,16 +282,9 @@ void RenderMap(void)
                 }
 
                 if (ts == nullptr)
-                    continue;
+                    continue; // tileset gak ketemu, skip
 
-                // taruh di sini
-                if (!logged)
-                {
-                    TraceLog(LOG_INFO, "FIRST: tileId=%d firstgid=%d lastgid=%d adjustedId=%d",
-                             tileId, ts->firstgid, ts->lastgid, tileId - ts->firstgid);
-                    logged = true;
-                }
-
+                // Hitung posisi source di spritesheet
                 int adjustedId = tileId - ts->firstgid;
                 int srcX = (adjustedId % ts->cols) * (TILE_SIZE + ts->spacing);
                 int srcY = (adjustedId / ts->cols) * (TILE_SIZE + ts->spacing);
@@ -332,6 +299,10 @@ void RenderMap(void)
 
     EndMode2D();
 }
+
+/*==============================================================================
+ * Object Query Functions
+ *==============================================================================*/
 
 // ================================================================
 // TilesonGetObjectsByLayerName()
@@ -376,4 +347,98 @@ MapObject *TilesonGetObjectByName(const std::string &name)
         if (obj.name == name)
             return &obj;
     return nullptr;
+}
+
+/*==============================================================================
+ * Map Switching & Navigation
+ *==============================================================================*/
+
+/**
+ * @brief Pindah ke map baru di posisi pintu tertentu
+ * @param newMapPath Path file map tujuan (.tmj)
+ * @param targetDoorName Nama object pintu di map baru (spawn point)
+ * @note Otomatis push map lama ke stack, unload, load baru, dan teleport player
+ */
+void SwitchMap(const char *newMapPath, const char *targetDoorName)
+{
+    // Safety check biar gak load path kosong
+    if (newMapPath == nullptr || newMapPath[0] == '\0')
+    {
+        TraceLog(LOG_ERROR, "SwitchMap: newMapPath is null or empty");
+        return;
+    }
+
+    // Push map sekarang ke stack sebelum pindah
+    // Skip kalau currentMapPath kosong (berarti ini load pertama kali)
+    if (!currentMapPath.empty())
+        mapHistoryStack.Push(currentMapPath, "");
+
+    // Update currentMapPath ke map baru
+    currentMapPath = newMapPath;
+
+    // Unload map lama dulu kalau ada
+    UnloadMap();
+
+    // Load map baru
+    LoadMap(newMapPath);
+
+    // Kalau gagal load, jangan lanjut init player/camera
+    if (tilesonMap == nullptr)
+    {
+        TraceLog(LOG_ERROR, "SwitchMap: failed to load map: %s", newMapPath);
+        return;
+    }
+
+    // Re-init player berdasarkan target door di map baru
+    PlayerInstance.Init(targetDoorName);
+
+    // Set camera ke tengah spawn player
+    Vector2 spawnPos = PlayerInstance.GetPosition();
+    camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
+    camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
+    camera.rotation = 0;
+    camera.zoom = 1.0F;
+
+    TraceLog(LOG_INFO, "SwitchMap: switched to map: %s via door: %s",
+             newMapPath,
+             (targetDoorName != nullptr && targetDoorName[0] != '\0') ? targetDoorName : SPAWN_OBJECT_NAME);
+}
+
+/**
+ * @brief Kembali ke map sebelumnya (fitur go back)
+ * @note Pop dari stack, unload map sekarang, load map sebelumnya, teleport player
+ */
+void GoBack(void)
+{
+    if (mapHistoryStack.IsEmpty())
+    {
+        TraceLog(LOG_WARNING, "GoBack: no map history to go back to");
+        return;
+    }
+
+    // Ambil history teratas dan pop dari stack
+    MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();
+    currentMapPath = prev.mapPath;
+
+    // Unload map sekarang, load map sebelumnya
+    UnloadMap();
+    LoadMap(prev.mapPath.c_str());
+
+    if (tilesonMap == nullptr)
+    {
+        TraceLog(LOG_ERROR, "GoBack: failed to load map: %s", prev.mapPath.c_str());
+        return;
+    }
+
+    // Init player di spawn point map sebelumnya
+    PlayerInstance.Init(prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
+
+    // Set camera ke tengah spawn player
+    Vector2 spawnPos = PlayerInstance.GetPosition();
+    camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
+    camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
+    camera.rotation = 0;
+    camera.zoom = 1.0F;
+
+    TraceLog(LOG_INFO, "GoBack: returned to map: %s", prev.mapPath.c_str());
 }
