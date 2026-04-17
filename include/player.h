@@ -99,7 +99,7 @@ private:
     float Mana = 100.0f;
     float MaxMana = 100.0f;
     float ManaRegenTimer = 0.0f;
-    const float ManaRegenDelay = 3.0f;
+    const float ManaRegenDelay = 2.0f;
     const float ManaRegenRate = 10.0f; // per second
     const float AttackManaCost = 10.0f;
 

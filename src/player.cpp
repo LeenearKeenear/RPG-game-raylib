@@ -130,12 +130,26 @@ void Player::Update(void)
     // kalau player dead, skip semua input selain revive
     if (Anim.isDead) return;
 
-    // cek kalau HP habis
     if (Health <= 0)
     {
         Health = 0;
         UpdatePlayerDeath(Anim);
         return;
+    }
+
+    // --- Mana Regeneration ---
+    // Timer tetap berjalan meskipun sedang attack (biar cooldown gak terasa delay karena animasi)
+    if (ManaRegenTimer > 0)
+    {
+        ManaRegenTimer -= GetFrameTime();
+    }
+    else
+    {
+        if (Mana < MaxMana)
+        {
+            Mana += ManaRegenRate * GetFrameTime();
+            if (Mana > MaxMana) Mana = MaxMana;
+        }
     }
 
 
@@ -218,20 +232,6 @@ void Player::Update(void)
     // sync posisi animasi dengan posisi player
     Anim.position = Position;
 
-    // --- Mana Regeneration ---
-    // Regenerasi mana aktif jika timer sudah 0 (3 detik setelah attack terakhir)
-    if (ManaRegenTimer > 0)
-    {
-        ManaRegenTimer -= GetFrameTime();
-    }
-    else
-    {
-        if (Mana < MaxMana)
-        {
-            Mana += ManaRegenRate * GetFrameTime();
-            if (Mana > MaxMana) Mana = MaxMana;
-        }
-    }
 }
 
 // ================================================================
@@ -264,7 +264,7 @@ void Player::HandleAction(void)
         {
             UpdatePlayerAttack(Anim);
             Mana -= AttackManaCost;
-            ManaRegenTimer = ManaRegenDelay; // Reset timer ke 3 detik
+            ManaRegenTimer = ManaRegenDelay; // Reset timer ke 2 detik
             TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d) - Mana: %.1f", (int)InputInstance.GetActiveSlot(), Mana);
         }
         else

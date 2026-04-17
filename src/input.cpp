@@ -41,11 +41,8 @@ void PlayerInput::PollInput(void)
     Current.toggleInventory = IsKeyPressed(KEY_I);
     Current.toggleMap       = IsKeyPressed(KEY_M);
     
-    // Gunakan deteksi manual karena IsMouseButtonPressed mungkin 'dicuri' by main.cpp/pauseMenu.cpp
-    static bool mouseWasDown = false;
-    bool mouseIsDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
-    Current.leftClickPressed = mouseIsDown && !mouseWasDown;
-    mouseWasDown = mouseIsDown;
+    // gunakan fungsi bawaan Raylib agar state mouse tetap sinkron antar layar/state
+    Current.leftClickPressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
     // --- Slot Selection (KeyPressed — tap sekali) ---
     Current.selectSlot1 = IsKeyPressed(KEY_ONE);
