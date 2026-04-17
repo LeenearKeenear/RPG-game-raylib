@@ -3,6 +3,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "map.h"
 #include "screen.h"
+#include "animation.h"
 
 enum EnemyType{
     Slime,
@@ -10,13 +11,13 @@ enum EnemyType{
     Wolf
 };
 
-enum EnemyState {
-    IDLE,
-    ROAMING,
-    CHASE,
-    ATTACK,
-    DEAD
-};
+//enum EnemyState {
+//    IDLE,
+//    ROAMING,
+//    CHASE,
+//    ATTACK,
+//    DEAD
+//};
 
 
 struct Enemy{
@@ -38,7 +39,7 @@ struct Enemy{
 
     bool isAlive;
 
-    EnemyState state;
+    AnimationEnemy EnAnim;
     float stateTime;
 };
 

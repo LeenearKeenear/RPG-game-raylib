@@ -5,6 +5,7 @@
 #include "../include/entities.h"
 #include "../include/player.h"
 #include "../include/enemy.h"
+#include "../include/animation.h"
 
 //EnemyTest EnemyInstance;
 
@@ -57,7 +58,7 @@ Enemy EnemyStat(Vector2 pos, int type)
             break;
     }
 
-    entest.state = IDLE;
+    EnAnim State = IDLE;
     entest.stateTime = GetRandomValue(1,3);
 
     entest.knockbackTime = 0;
@@ -85,7 +86,7 @@ void EnemyRenderTest()
     RenderTilePNG(
         entest.position.x * 32,
         entest.position.y * 32,
-        TILE_ENEMY_TEST,
+        TILE_ENEMY_SLIME,
         0.0f,
         TEXTURE_SLIME
     );
@@ -107,7 +108,7 @@ void RenderEnemy(Enemy &en)
     RenderTilePNG(
         entest.position.x,
         entest.position.y,
-        TILE_ENEMY_TEST,
+        TILE_ENEMY_SLIME,
         0.0f,
         TEXTURE_SLIME
     );
