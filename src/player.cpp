@@ -55,7 +55,7 @@ Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
 void Player::Init(const char *spawnObjectName)
 {
     // Step 1: Load texture karakter
-    LoadTileTexture(TEXTURE_KNIGHT, "texture/Knight.png");
+    LoadTileTexture(TEXTURE_KNIGHT, "texture/knight.png");
     LoadTileTexture(TEXTURE_ITEMS,  "texture/test.png");
 
     // Step 2: Inisialisasi state animasi player
