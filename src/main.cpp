@@ -95,8 +95,10 @@ int main()
                 pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
             }
 
-            // update semua logic game (player, enemy, dll)
-            UpdateLogicAll();
+            // update semua logic game (player, enemy, dll) - skip when paused
+            if (!pauseMenu.IsActive()) {
+                UpdateLogicAll();
+            }
 
             // render semua ke layar virtual
             DrawRenderTexture(&state);
