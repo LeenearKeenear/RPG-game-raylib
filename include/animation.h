@@ -24,8 +24,9 @@
  */
 typedef enum
 {
-    TEXTURE_TILEMAP = 0, /**< Slot buat tileset/spritesheet environment */
-    TEXTURE_KNIGHT       /**< Slot buat sprite karakter knight (akan direfaktor) */
+    TEXTURE_TILEMAP = 0,
+    TEXTURE_KNIGHT,
+    TEXTURE_ITEMS // test menambahkan texture untuk player slot
 } TextureAsset;
 
 /** Global texture array - diakses dari file lain pake extern */

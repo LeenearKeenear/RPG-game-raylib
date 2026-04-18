@@ -156,6 +156,7 @@ void UpdatePlayerDeath(AnimationPlayer &p)
         p.state = DEAD;
         p.isDead = true;
         p.frame = 0;
+        p.isAttacking = false; // reset attack logic if dying during attack
     }
 }
 

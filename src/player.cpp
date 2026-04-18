@@ -55,7 +55,8 @@ Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
 void Player::Init(const char *spawnObjectName)
 {
     // Step 1: Load texture karakter
-    LoadTileTexture(TEXTURE_KNIGHT, "texture/Knight.png");
+    LoadTileTexture(TEXTURE_KNIGHT, "texture/knight.png");
+    LoadTileTexture(TEXTURE_ITEMS,  "texture/test.png");
 
     // Step 2: Inisialisasi state animasi player
     Anim.position = {0.0f, 0.0f};
@@ -68,7 +69,16 @@ void Player::Init(const char *spawnObjectName)
     Anim.isAttacking = false;
     Anim.isDead = false;
 
-    // Reset collision cache biar aman kalau nanti map di-reload
+    // init health
+    MaxHealth = 100.0f;
+    Health = MaxHealth;
+
+    // init mana
+    MaxMana = 100.0f;
+    Mana = MaxMana;
+    ManaRegenTimer = 0.0f;
+
+    // reset collision cache biar aman kalau nanti map di-reload
     CollisionRects.clear();
     CollisionPolygons.clear();
 
@@ -124,6 +134,12 @@ void Player::Init(const char *spawnObjectName)
     TraceLog(LOG_INFO, "Player: Loaded %d collision rects", (int)CollisionRects.size());
     TraceLog(LOG_INFO, "Player: Loaded %d collision polygons", (int)CollisionPolygons.size());
     TraceLog(LOG_INFO, "Player: Custom world boundary %s", WorldBoundaryPolygon.empty() ? "not found" : "loaded");
+
+    // Initialize default hotbar items
+    Hotbar[0] = {ITEM_WEAPON, "Iron Sword", 1, 10, 0, 6, 4};
+    Hotbar[1] = {ITEM_WEAPON, "Wooden Bow", 1, 5, 0, 8, 4};
+    Hotbar[2] = {ITEM_POTION, "Health Potion", 3, 0, 20, 7, 8};
+    Hotbar[3] = {ITEM_POTION, "Mana Bread", 5, 0, 15, 10, 8}; // Digunakan untuk test heal mana
 }
 
 /*==============================================================================
@@ -153,20 +169,43 @@ void Player::Update(void)
     if (Anim.isDead)
         return;
 
-    // ===== Kill (K) — debug: player langsung mati =====
-    if (InputInstance.IsKill())
+    if (Health <= 0)
     {
+        Health = 0;
         UpdatePlayerDeath(Anim);
         return;
     }
 
-    // ===== Left Click — context action (attack / potion / equip) =====
+    // --- Mana Regeneration ---
+    // Timer tetap berjalan meskipun sedang attack (biar cooldown gak terasa delay karena animasi)
+    if (ManaRegenTimer > 0)
+    {
+        ManaRegenTimer -= GetFrameTime();
+    }
+    else
+    {
+        if (Mana < MaxMana)
+        {
+            Mana += ManaRegenRate * GetFrameTime();
+            if (Mana > MaxMana) Mana = MaxMana;
+        }
+    }
+
+
+    // --- Health Test (DEBUG) ---
+    if (InputInstance.IsTestLoseHP())
+    {
+        Health -= 10.0f;
+        if (Health < 0) Health = 0;
+        TraceLog(LOG_INFO, "PLAYER: Test Health Decrease (%.1f)", Health);
+    }
+
+    // --- Left Click — context action (attack / potion / equip) ---
     if (InputInstance.IsLeftClickPressed() && !Anim.isAttacking)
     {
-        HandleSpaceAction();
-        // Kalau jadi attack, skip movement frame ini
-        if (Anim.isAttacking)
-            return;
+        HandleAction();
+        // kalau jadi attack, skip movement frame ini
+        if (Anim.isAttacking) return;
     }
 
     // ===== Go Back (B) — kembali ke map sebelumnya =====
@@ -262,27 +301,46 @@ void Player::Render(void)
  *==============================================================================*/
 
 // ================================================================
-// HandleSpaceAction()
-// Resolve apa yang terjadi saat SPACE ditekan berdasarkan context:
+// HandleAction()
+// Resolve apa yang terjadi saat input aksi (misal: Left Click)
+// dilakukan berdasarkan context:
 // - Inventori terbuka → equip/unequip item
 // - Slot senjata (1/2) → attack
 // - Slot potion (3/4) → minum potion
 // ================================================================
-void Player::HandleSpaceAction(void)
+void Player::HandleAction(void)
 {
-    SpaceAction action = InputInstance.ResolveSpaceAction();
+    PlayerAction action = InputInstance.ResolveAction();
 
     switch (action)
     {
     case ACTION_ATTACK:
-        UpdatePlayerAttack(Anim);
-        TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d)", (int)InputInstance.GetActiveSlot());
+        if (Mana >= AttackManaCost)
+        {
+            UpdatePlayerAttack(Anim);
+            Mana -= AttackManaCost;
+            ManaRegenTimer = ManaRegenDelay; // Reset timer ke 2 detik
+            TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d) - Mana: %.1f", (int)InputInstance.GetActiveSlot(), Mana);
+        }
+        else
+        {
+            TraceLog(LOG_WARNING, "PLAYER: Attack failed! Out of energy.");
+        }
         break;
 
     case ACTION_DRINK_POTION:
-        // TODO: implementasi efek potion (heal, buff, dll)
-        TraceLog(LOG_INFO, "PLAYER: Drink potion! (slot %d)", (int)InputInstance.GetActiveSlot());
+    {
+        int slotIdx = (int)InputInstance.GetActiveSlot() - 1;
+        if (slotIdx >= 0 && slotIdx < 4) {
+            if (Hotbar[slotIdx].type == ITEM_POTION && Hotbar[slotIdx].amount > 0) {
+                UsePotion(slotIdx);
+                TraceLog(LOG_INFO, "PLAYER: Drink potion! %s (slot %d)", Hotbar[slotIdx].name.c_str(), (int)InputInstance.GetActiveSlot());
+            } else {
+                TraceLog(LOG_INFO, "PLAYER: No potion in slot %d!", (int)InputInstance.GetActiveSlot());
+            }
+        }
         break;
+    }
 
     case ACTION_EQUIP_UNEQUIP:
         // TODO: implementasi equip/unequip dari inventori
@@ -292,6 +350,35 @@ void Player::HandleSpaceAction(void)
     case ACTION_NONE:
     default:
         break;
+    }
+}
+
+// ================================================================
+// UsePotion()
+// Terapkan efek potion dan kurangi jumlahnya.
+// ================================================================
+void Player::UsePotion(int slotIndex)
+{
+    if (Hotbar[slotIndex].type != ITEM_POTION || Hotbar[slotIndex].amount <= 0)
+        return;
+
+    // Cek apakah item mengandung kata "Mana" untuk mendeteksi tipe heal
+    if (Hotbar[slotIndex].name.find("Mana") != std::string::npos) {
+        // Apply mana heal
+        Mana += Hotbar[slotIndex].healValue;
+        if (Mana > MaxMana) Mana = MaxMana;
+        TraceLog(LOG_INFO, "PLAYER: Healed Mana by %d! Current: %.1f", Hotbar[slotIndex].healValue, Mana);
+    } else {
+        // Apply health heal
+        Health += Hotbar[slotIndex].healValue;
+        if (Health > MaxHealth) Health = MaxHealth;
+        TraceLog(LOG_INFO, "PLAYER: Healed Health by %d! Current: %.1f", Hotbar[slotIndex].healValue, Health);
+    }
+
+    // Consume item
+    Hotbar[slotIndex].amount--;
+    if (Hotbar[slotIndex].amount <= 0) {
+        Hotbar[slotIndex] = {ITEM_NONE, "", 0, 0, 0, 0, 0};
     }
 }
 
@@ -309,6 +396,8 @@ void Player::HandleRevive(void)
         Anim.state = IDLE;
         Anim.frame = 0;
         Anim.frameTime = 0.0f;
+        Health = MaxHealth; // Reset health
+        Mana = MaxMana;     // Reset mana
         TraceLog(LOG_INFO, "PLAYER: Revived!");
     }
 }
