@@ -32,6 +32,7 @@ int main()
 
     // Step 1: buat window, audio, dan render texture virtual (1280x720)
     GameState state = InitScreen();
+    state.previousScreen = MAIN_MENU; // Default return to main menu
 
     // Step 2: load map dari JSON Tiled
     InitMap();
@@ -60,6 +61,12 @@ int main()
         // State: OPTIONS
         else if (state.currentScreen == OPTIONS)
         {
+            // Show options screen and set return screen on first entry
+            if (!optionsScreen.IsActive()) {
+                optionsScreen.SetReturnScreen(state.previousScreen);
+                optionsScreen.Show();
+            }
+
             UpdateGame(&state);
             bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
             optionsScreen.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
@@ -74,6 +81,11 @@ int main()
         // State: PLAY
         else if (state.currentScreen == PLAY)
         {
+            // If returning from OPTIONS, ensure pause menu is shown
+            if (state.previousScreen == OPTIONS && !pauseMenu.IsActive()) {
+                pauseMenu.Show();
+            }
+
             // toggle pause menu dengan tombol P
             if (IsKeyPressed(KEY_P))
             {

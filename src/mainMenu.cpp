@@ -65,6 +65,7 @@ void UpdateMainMenu(GameState *state)
                     state->currentScreen = PLAY;
                     break;
                 case 2:  // Options
+                    state->previousScreen = MAIN_MENU;
                     state->currentScreen = OPTIONS;
                     break;
                 case 3:  // Quit

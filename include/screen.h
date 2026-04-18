@@ -62,6 +62,7 @@ typedef struct
     int WindowScreenWidth;     /**< Ukuran window asli saat ini (bisa berubah kalo resize) */
     int WindowScreenHeight;    /**< Ukuran window asli saat ini (bisa berubah kalo resize) */
     ScreenState currentScreen; /**< State game yang aktif (MAIN_MENU / PLAY / OPTIONS) */
+    ScreenState previousScreen;/**< Screen sebelum OPTIONS - buat return button */
     bool showFPS;              /**< Tampilkan FPS counter di HUD */
 } GameState;
 

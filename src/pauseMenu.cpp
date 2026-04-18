@@ -355,7 +355,7 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             loadPopup.Show();
             break;
         case 3:
-            Hide();
+            state->previousScreen = PLAY;
             state->currentScreen = OPTIONS;
             break;
         case 4:
