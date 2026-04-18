@@ -23,13 +23,7 @@ void RenderEntities(void)
 {
     // Render player terlebih dahulu (paling bawah/layer terbawah)
     PlayerInstance.Render();
-<<<<<<< HEAD
-    // TODO: RenderEnemies();
-    EnemyRenderTest();
-    // TODO: RenderItems();
-=======
-
     // TODO: RenderEnemies();  // nanti tambahin pas enemy udah diimplementasi
+    RenderAllEnemies();
     // TODO: RenderItems();    // nanti tambahin pas item udah diimplementasi
->>>>>>> 85d5a04db2a1a5a1f4a23edb39f340610bc1345f
 }
