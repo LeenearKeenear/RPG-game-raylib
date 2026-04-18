@@ -31,6 +31,67 @@ struct ResOption {
 };
 
 /*==============================================================================
+ * OptionsScreen Class
+ *==============================================================================*/
+
+/**
+ * @brief Class for handling the standalone Options screen
+ * 
+ * Has 3 tabs: Video, Audio, Keybinds
+ * Accessed from Main Menu or Pause Menu
+ */
+class OptionsScreen {
+public:
+    /** @brief Constructor */
+    OptionsScreen();
+
+    /** @brief Destructor */
+    ~OptionsScreen();
+
+    /** @brief Show the options screen */
+    void Show();
+
+    /** @brief Hide the options screen */
+    void Hide();
+
+    /** @brief Check if options screen is active */
+    bool IsActive() const;
+
+    /** @brief Update input handling */
+    void Update(GameState* state, Vector2 mousePosition, bool mouseClicked);
+
+    /** @brief Render the options screen */
+    void Draw(Vector2 mousePosition);
+
+    /** @brief Set return screen (what screen to return to) */
+    void SetReturnScreen(ScreenState screen);
+
+private:
+    void CalculateDimensions();
+    void DrawVideoTab(Vector2 mousePosition, bool showFPS);
+    void DrawAudioTab(Vector2 mousePosition);
+    void DrawKeybindsTab(Vector2 mousePosition);
+
+    bool showFPS;
+
+    bool active;
+    ScreenState returnScreen;
+    int selectedTab;
+
+    std::array<buttonTxt, 3> tabButtons;
+    buttonTxt backButton;
+
+    int width;
+    int height;
+    int startX;
+    int startY;
+    Rectangle backgroundRect;
+
+    std::vector<ResOption> resolutionOptions;
+    int selectedResolution;
+};
+
+/*==============================================================================
  * PauseMenu Class
  *==============================================================================*/
 
@@ -88,38 +149,6 @@ public:
      */
     void Draw(Vector2 mousePosition);
 
-    /*==========================================================================
-     * Video Settings Methods
-     *==========================================================================*/
-
-    /**
-     * @brief Get available resolution options based on monitor
-     * @vector of ResOption with width, height, label
-     */
-    std::vector<ResOption> GetAvailableResolutions(void);
-
-    /**
-     * @brief Toggle fullscreen mode
-     */
-    void ToggleFullscreen(GameState* state);
-
-    /**
-     * @brief Cycle through resolution options
-     * @note Cycles to next resolution automatically
-     */
-    void CycleResolution(GameState* state);
-
-    /**
-     * @brief Toggle FPS display
-     */
-    void ToggleFPS(GameState* state);
-
-    /**
-     * @brief Render options screen UI
-     * @param mousePosition Posisi mouse (buat efek hover)
-     */
-    void DrawOptionsScreen(Vector2 mousePosition);
-
 private:
     /**
      * @brief Hitung dimensi menu berdasarkan layar
@@ -138,21 +167,12 @@ private:
      * Private Members
      *==========================================================================*/
     
-    bool active;                                    /**< Flag apakah menu aktif/tampil */
-    std::array<buttonTxt, 6> buttons;              /**< Array tombol-tombol menu (6 buah) */
-    std::array<const char*, 6> buttonTexts;        /**< Teks buat masing-masing tombol */
+    bool active;
+    std::array<buttonTxt, 6> buttons;
+    std::array<const char*, 6> buttonTexts;
 
-    Vector2 position;                               /**< Posisi menu di layar (centered) */
-    int width;                                      /**< Lebar menu dalam pixel */
-    int height;                                     /**< Tinggi menu dalam pixel */
-    Rectangle backgroundRect;                       /**< Rectangle buat background menu */
-
-    /*==========================================================================
-     * Video Settings State
-     *==========================================================================*/
-
-    bool optionsActive;                            /**< Flag apakah options screen aktif */
-    std::vector<ResOption> resolutionOptions;    /**< Available resolution options */
-    int selectedResolution;                     /**< Index of selected resolution */
-    buttonTxt backButton;                        /**< Back button for options screen */
+    Vector2 position;
+    int width;
+    int height;
+    Rectangle backgroundRect;
 };

@@ -3,7 +3,7 @@
  * @brief Entry Point Game Application
  *
  * Main game loop dan inisialisasi semua sistem.
- * Handle state management (MAIN_MENU, PLAY) dan pause menu.
+ * Handle state management (MAIN_MENU, PLAY, OPTIONS) dan pause menu.
  */
 
 #include "../include/screen.h"
@@ -15,10 +15,10 @@
 #include "../lib/raylib/include/raymath.h"
 
 /**
- * @brief Global instance pause menu
- * Bisa diakses dari mana aja via extern
+ * @brief Global instances for menu systems
  */
 PauseMenu pauseMenu;
+OptionsScreen optionsScreen;
 
 /**
  * @brief Main entry point game application
@@ -42,27 +42,36 @@ int main()
     // Step 4: init elemen UI main menu
     InitMainMenu(&state);
 
+    // Step 5: init options screen (hidden initially)
+    optionsScreen.Show();
+    optionsScreen.Hide();
+
     // Main Game Loop
     while (!WindowShouldClose())
     {
         // State: MAIN_MENU
-        // Tampilan awal dengan tombol start & quit
         if (state.currentScreen == MAIN_MENU)
         {
-            // update scale kalau window di-resize
             UpdateGame(&state);
-
-            // handle input tombol dan transisi ke state lain
             UpdateMainMenu(&state);
-
-            // render menu ke layar virtual
             RenderMainMenuToVirtualScreen(&state);
+            DrawRenderWindows(&state);
+        }
+        // State: OPTIONS
+        else if (state.currentScreen == OPTIONS)
+        {
+            UpdateGame(&state);
+            bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+            optionsScreen.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
 
-            // scale layar virtual ke window asli
+            BeginTextureMode(state.Dungeon);
+            ClearBackground(DARKGRAY);
+            optionsScreen.Draw(GetVirtualMousePosition(&state));
+            EndTextureMode();
+
             DrawRenderWindows(&state);
         }
         // State: PLAY
-        // Gameplay aktif
         else if (state.currentScreen == PLAY)
         {
             // toggle pause menu dengan tombol P
@@ -70,15 +79,15 @@ int main()
             {
                 if (pauseMenu.IsActive())
                 {
-                    pauseMenu.Hide(); // kalo lagi aktif, sembunyiin
+                    pauseMenu.Hide();
                 }
                 else
                 {
-                    pauseMenu.Show(); // kalo gak aktif, tampilin
+                    pauseMenu.Show();
                 }
             }
 
-            // update scale sebelum rendering (dibutuhkan buat kalkulasi posisi mouse)
+            // update scale sebelum rendering
             UpdateGame(&state);
 
             // capture mouse click before rendering
@@ -90,7 +99,7 @@ int main()
                 pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
             }
 
-            // update semua logic game (player, enemy, dll) - skip when paused
+            // update semua logic game - skip when paused
             if (!pauseMenu.IsActive()) {
                 UpdateLogicAll();
             }
@@ -103,7 +112,7 @@ int main()
         }
     }
 
-    // Shutdown — bersihin semua resource sebelum tutup
+    // Shutdown
     GameShutDown(&state);
     return 0;
 }
