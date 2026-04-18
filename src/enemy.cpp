@@ -6,10 +6,14 @@
 #include "../include/entities.h"
 #include "../include/player.h"
 #include "../include/enemy.h"
+#include "../include/mapLogic.h"
 #include <vector>
+#include <map>
+#include <string>
 
 
 static std::vector<Enemy> currentEnemies;
+static std::map<std::string, std::vector<Enemy>> savedMapEnemies;
 static Enemy entest;
 //Fungsi RNG untuk damage enemy
 int GetRandomDamage(int min, int max){
@@ -26,7 +30,30 @@ void InitEnemyTextures()
 
 void InitEnemy(){
     InitEnemyTextures();
-    SpawnRandomWave();
+}
+
+void SaveEnemiesForMap(const std::string& mapPath)
+{
+    if (mapPath.empty()) return;
+    savedMapEnemies[mapPath] = currentEnemies;
+}
+
+bool LoadEnemiesForMap(const std::string& mapPath)
+{
+    if (mapPath.empty()) return false;
+    
+    auto it = savedMapEnemies.find(mapPath);
+    if (it != savedMapEnemies.end())
+    {
+        currentEnemies = it->second;
+        return true;
+    }
+    return false;
+}
+
+void ClearEnemies()
+{
+    currentEnemies.clear();
 }
 
 //Fungsi untuk membuat enemy dengan stat yang berbeda
@@ -85,7 +112,43 @@ void SpawnRandomWave(){
 }
 
 void SpawnRandomEnemy(){
-    Vector2 randomPos = { (float)GetRandomValue(100, 700), (float)GetRandomValue(100, 500) };
+    if (tilesonMap == nullptr) return;
+
+    Vector2 randomPos;
+    bool validPos = false;
+    int maxAttempts = 50;
+    int attempts = 0;
+
+    float mapWidth = (float)tilesonMap->width * TILE_SIZE;
+    float mapHeight = (float)tilesonMap->height * TILE_SIZE;
+
+    // Ambil data collision map sekali
+    TiledHelper::CollisionResult mapCollision;
+    TiledHelperFunction.TryGetCollisionByLayerName(COLLISION_LAYER_NAME, mapCollision);
+
+    while (!validPos && attempts < maxAttempts)
+    {
+        randomPos = { 
+            (float)GetRandomValue(TILE_SIZE, (int)mapWidth - TILE_SIZE), 
+            (float)GetRandomValue(TILE_SIZE, (int)mapHeight - TILE_SIZE) 
+        };
+
+        // Buat hitbox sementara untuk musuh (asumsi 32x32)
+        Rectangle enemyHitbox = BuildHitbox(randomPos, 0, 0, TILE_SIZE, TILE_SIZE);
+
+        // Cek apakah posisi ini menabrak wall atau polygon collision
+        bool colRect = CheckCollisionAgainstRects(enemyHitbox, mapCollision.rects);
+        bool colPoly = CheckCollisionAgainstPolygons(enemyHitbox, mapCollision.polygons);
+        bool inBounds = IsWithinWorldBounds(enemyHitbox, mapWidth, mapHeight);
+
+        if (!colRect && !colPoly && inBounds)
+        {
+            validPos = true;
+        }
+        attempts++;
+    }
+
+    if (!validPos) return; // Gagal nemu tempat kosong
 
     //Menggunakan GetRandomValue untuk spawn enemy
     int randomInt = GetRandomValue(1, 3);

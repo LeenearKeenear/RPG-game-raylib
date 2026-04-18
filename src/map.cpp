@@ -4,7 +4,7 @@
  *
  * Implementasi dari fungsi-fungsi map yang dideklarasikan di map.h
  * Handle loading, rendering, dan management map dari JSON Tiled.
- */
+*/
 
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
@@ -203,6 +203,7 @@ void UnloadMap(void)
         tilesonMap = nullptr;
     }
 
+    ClearEnemies();
     parsedMap.reset();
 }
 
@@ -222,7 +223,13 @@ void InitMap(void)
     // LoadMap("world_json/inside.json");
 
     // Map yang aktif saat ini
-    LoadMap("world_json/light.json");
+    currentMapPath = "world_json/light.json";
+    LoadMap(currentMapPath.c_str());
+
+    if (!LoadEnemiesForMap(currentMapPath))
+    {
+        SpawnRandomWave();
+    }
 }
 
 /*==============================================================================
@@ -369,8 +376,11 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         return;
     }
 
+    // Simpan musuh map lama sebelum ganti path
+    if (!currentMapPath.empty())
+        SaveEnemiesForMap(currentMapPath);
+
     // Push map sekarang ke stack sebelum pindah
-    // Skip kalau currentMapPath kosong (berarti ini load pertama kali)
     if (!currentMapPath.empty())
         mapHistoryStack.Push(currentMapPath, "");
 
@@ -393,7 +403,11 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     // Re-init player berdasarkan target door di map baru
     PlayerInstance.Init(targetDoorName);
 
-    SpawnRandomWave();
+    // Load musuh yang sudah ada atau spawn baru
+    if (!LoadEnemiesForMap(currentMapPath))
+    {
+        SpawnRandomWave();
+    }
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
@@ -419,6 +433,9 @@ void GoBack(void)
         return;
     }
 
+    // Simpan musuh map sekarang
+    SaveEnemiesForMap(currentMapPath);
+
     // Ambil history teratas dan pop dari stack
     MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();
     currentMapPath = prev.mapPath;
@@ -435,6 +452,12 @@ void GoBack(void)
 
     // Init player di spawn point map sebelumnya
     PlayerInstance.Init(prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
+
+    // Load musuh dari history
+    if (!LoadEnemiesForMap(currentMapPath))
+    {
+        SpawnRandomWave();
+    }
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();

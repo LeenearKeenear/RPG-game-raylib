@@ -4,6 +4,7 @@
 #include "animation.h"
 #include "map.h"
 #include "screen.h"
+#include <string>
 
 enum EnemyType{
     SLIME,
@@ -59,6 +60,10 @@ void SpawnRandomWave();
 
 void SpawnRandomEnemy();
 
+void SaveEnemiesForMap(const std::string& mapPath);
+
+bool LoadEnemiesForMap(const std::string& mapPath);
+
 void RenderAllEnemies();
 
 void RenderEnemy(Enemy &en);
@@ -66,6 +71,8 @@ void RenderEnemy(Enemy &en);
 void EnemyInitTest();
 
 void EnemyAttackPlayer(GameState *state);
+
+void ClearEnemies();
 
 extern Enemy EnemyInstance;
 extern void InitEnemy();
