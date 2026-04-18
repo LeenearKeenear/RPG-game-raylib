@@ -196,7 +196,15 @@ void DrawUIOverlay(GameState *state)
     // 1. HUD Player (Stats, Name)
     DrawPlayerHUD();
 
-    // 2. Menus
+    // 2. FPS Counter (if enabled)
+    if (state->showFPS) {
+        int fps = GetFPS();
+        char fpsText[16];
+        snprintf(fpsText, sizeof(fpsText), "FPS: %d", fps);
+        DrawText(fpsText, 10, 10, 20, GREEN);
+    }
+
+    // 3. Menus
     if (pauseMenu.IsActive()) {
         Vector2 mousePos = GetVirtualMousePosition(state);
         pauseMenu.Draw(mousePos);
