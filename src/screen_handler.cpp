@@ -110,6 +110,7 @@ GameState InitScreen()
 
     // Step 6: Set state awal ke MAIN_MENU
     state.currentScreen = MAIN_MENU;
+    state.showFPS = false;
 
     return state;
 }
@@ -277,4 +278,72 @@ void GameShutDown(GameState *state)
     // Tutup audio dan window
     CloseAudioDevice();
     CloseWindow();
+}
+
+/*==============================================================================
+ * Window & Video Settings Functions
+ *==============================================================================*/
+
+/**
+ * @brief ToggleFullscreenMode()
+ * Toggle antara fullscreen dan windowed mode.
+ * @note Setelah toggle,UpdateGame() akan recalculate scale
+ */
+void ToggleFullscreenMode(void)
+{
+    if (IsWindowFullscreen())
+    {
+        ToggleFullscreen();
+    }
+    else
+    {
+        ToggleFullscreen();
+    }
+}
+
+/**
+ * @brief SetResolution()
+ * Set ukuran window ke resolusi tertentu.
+ * @param width Lebar window baru
+ * @param height Tinggi window baru
+ */
+void SetResolution(int width, int height)
+{
+    SetWindowSize(width, height);
+}
+
+/**
+ * @brief GetCurrentResolution()
+ * Ambil resolusi saat ini.
+ * @return Rectangle berisi x=width, y=height
+ */
+Rectangle GetCurrentResolution(void)
+{
+    Rectangle res = {0};
+    res.width = static_cast<float>(GetScreenWidth());
+    res.height = static_cast<float>(GetScreenHeight());
+    return res;
+}
+
+/**
+ * @brief GetMonitorResolution()
+ * Ambil resolusi monitor utama.
+ * @return Rectangle berisi x=monitorWidth, y=monitorHeight
+ */
+Rectangle GetMonitorResolution(void)
+{
+    Rectangle res = {0};
+    res.width = static_cast<float>(GetMonitorWidth(0));
+    res.height = static_cast<float>(GetMonitorHeight(0));
+    return res;
+}
+
+/**
+ * @brief IsFullscreen()
+ * Cek apakah sedang dalam mode fullscreen.
+ * @return true kalo fullscreen
+ */
+bool IsFullscreen(void)
+{
+    return IsWindowFullscreen();
 }

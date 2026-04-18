@@ -14,6 +14,21 @@
 #include "screen.h"
 #include <array>
 #include <cstdint>
+#include <vector>
+
+/*==============================================================================
+ * Video Settings Constants
+ *==============================================================================*/
+
+/**
+ * @brief Resolution presets untuk video settings
+ * @note Setiap resolusi difilter berdasarkan max monitor resolution
+ */
+struct ResOption {
+    int width;
+    int height;
+    const char* label;
+};
 
 /*==============================================================================
  * PauseMenu Class
@@ -73,6 +88,38 @@ public:
      */
     void Draw(Vector2 mousePosition);
 
+    /*==========================================================================
+     * Video Settings Methods
+     *==========================================================================*/
+
+    /**
+     * @brief Get available resolution options based on monitor
+     * @vector of ResOption with width, height, label
+     */
+    std::vector<ResOption> GetAvailableResolutions(void);
+
+    /**
+     * @brief Toggle fullscreen mode
+     */
+    void ToggleFullscreen(GameState* state);
+
+    /**
+     * @brief Cycle through resolution options
+     * @note Cycles to next resolution automatically
+     */
+    void CycleResolution(GameState* state);
+
+    /**
+     * @brief Toggle FPS display
+     */
+    void ToggleFPS(GameState* state);
+
+    /**
+     * @brief Render options screen UI
+     * @param mousePosition Posisi mouse (buat efek hover)
+     */
+    void DrawOptionsScreen(Vector2 mousePosition);
+
 private:
     /**
      * @brief Hitung dimensi menu berdasarkan layar
@@ -99,4 +146,13 @@ private:
     int width;                                      /**< Lebar menu dalam pixel */
     int height;                                     /**< Tinggi menu dalam pixel */
     Rectangle backgroundRect;                       /**< Rectangle buat background menu */
+
+    /*==========================================================================
+     * Video Settings State
+     *==========================================================================*/
+
+    bool optionsActive;                            /**< Flag apakah options screen aktif */
+    std::vector<ResOption> resolutionOptions;    /**< Available resolution options */
+    int selectedResolution;                     /**< Index of selected resolution */
+    buttonTxt backButton;                        /**< Back button for options screen */
 };
