@@ -16,17 +16,17 @@ int GetRandomDamage(int min, int max){
     return GetRandomValue(min, max);
 }
 
-void InitEnemy(){
-    InitTextures();
-    SpawnRandomWave();
-}
-
 //Inisialisasi Texture Enemies
-void InitTextures()
+void InitEnemyTextures()
 {
     LoadTileTexture(TEXTURE_SLIME, "texture/Enemies.png");
     LoadTileTexture(TEXTURE_SKELETON, "texture/Enemies.png");
     LoadTileTexture(TEXTURE_WOLF, "texture/Enemies.png");
+}
+
+void InitEnemy(){
+    InitEnemyTextures();
+    SpawnRandomWave();
 }
 
 //Fungsi untuk membuat enemy dengan stat yang berbeda

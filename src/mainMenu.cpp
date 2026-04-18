@@ -21,7 +21,7 @@
 static std::array<buttonTxt, 4> buttons;
 
 /** Popup buat fitur "Coming Soon" (Options & Load sementara) */
-static Popup optionsPopup;
+static Popup menuOptionsPopup;
 
 /*==============================================================================
  * Public Functions
@@ -52,7 +52,7 @@ void InitMainMenu(GameState *state)
     }
 
     // Inisialisasi popup "Coming Soon" buat fitur yang belum diimplementasi
-    optionsPopup = Popup("COMING SOON", "OK", 0.6F);
+    menuOptionsPopup = Popup("COMING SOON", "OK", 0.6F);
 }
 
 /**
@@ -67,9 +67,9 @@ void UpdateMainMenu(GameState *state)
     bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
     // Kalo popup lagi aktif, handle popup dulu, menu gak bisa diklik
-    if (optionsPopup.IsActive())
+    if (menuOptionsPopup.IsActive())
     {
-        optionsPopup.Update(mousePosition, mouseClicked);
+        menuOptionsPopup.Update(mousePosition, mouseClicked);
         return;
     }
 
@@ -84,7 +84,7 @@ void UpdateMainMenu(GameState *state)
                 state->currentScreen = PLAY;
                 break;
             case 2: // BTN_OPTIONS - tampilin popup "Coming Soon"
-                optionsPopup.Show();
+                menuOptionsPopup.Show();
                 break;
             case 3: // BTN_QUIT - keluar dari game
                 CloseWindow();
@@ -117,9 +117,9 @@ void RenderMainMenuToVirtualScreen(GameState *state)
     }
 
     // Kalo popup aktif, render di atas menu
-    if (optionsPopup.IsActive())
+    if (menuOptionsPopup.IsActive())
     {
-        optionsPopup.Draw(virtualMouse);
+        menuOptionsPopup.Draw(virtualMouse);
     }
 
     EndTextureMode();

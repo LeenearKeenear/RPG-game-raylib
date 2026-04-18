@@ -20,7 +20,7 @@ static Popup savePopup("Game Saved!", "OK", 0.7F);
 static Popup loadPopup("Game Loaded!", "OK", 0.7F);
 
 /** Popup notifikasi buat fitur "Coming Soon" (Options) */
-static Popup optionsPopup("Coming Soon!", "OK", 0.7F);
+static Popup pauseOptionsPopup("Coming Soon!", "OK", 0.7F);
 
 /*==============================================================================
  * Constructor & Destructor
@@ -168,7 +168,7 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState *state)
         loadPopup.Show();
         break;
     case 3: // Options - tampilin popup "Coming Soon"
-        optionsPopup.Show();
+        pauseOptionsPopup.Show();
         break;
     case 4: // Return to Main Menu - balik ke menu utama
         state->currentScreen = MAIN_MENU;
@@ -214,9 +214,9 @@ void PauseMenu::Update(GameState *state, Vector2 mousePosition, bool mouseClicke
         return;
     }
 
-    if (optionsPopup.IsActive())
+    if (pauseOptionsPopup.IsActive())
     {
-        optionsPopup.Update(mousePosition, mouseClicked);
+        pauseOptionsPopup.Update(mousePosition, mouseClicked);
         return;
     }
 
@@ -274,8 +274,8 @@ void PauseMenu::Draw(Vector2 mousePosition)
         loadPopup.Draw(mousePosition);
     }
 
-    if (optionsPopup.IsActive())
+    if (pauseOptionsPopup.IsActive())
     {
-        optionsPopup.Draw(mousePosition);
+        pauseOptionsPopup.Draw(mousePosition);
     }
 }
