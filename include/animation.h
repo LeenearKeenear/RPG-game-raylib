@@ -16,7 +16,7 @@
  *==============================================================================*/
 
 /** Jumlah maksimum slot texture PNG yang bisa di-load */
-#define MAX_TEXTURES 3
+#define MAX_TEXTURES 5
 
 /**
  * @brief Enum buat milih slot texture
@@ -25,7 +25,10 @@
 typedef enum
 {
     TEXTURE_TILEMAP = 0, /**< Slot buat tileset/spritesheet environment */
-    TEXTURE_KNIGHT       /**< Slot buat sprite karakter knight (akan direfaktor) */
+    TEXTURE_KNIGHT,      /**< Slot buat sprite karakter knight (akan direfaktor) */
+    TEXTURE_SLIME,       /**< Slot buat sprite enemy slime */
+    TEXTURE_SKELETON,    /**< Slot buat sprite enemy skeleton */
+    TEXTURE_WOLF         /**< Slot buat sprite enemy wolf */       
 } TextureAsset;
 
 /** Global texture array - diakses dari file lain pake extern */
@@ -65,7 +68,10 @@ typedef enum
     TILE_GRASS2,     /**< Rumput varian 2 */
     TILE_DOOR_OPEN,  /**< Pintu kebuka */
     TILE_DOOR_CLOSE, /**< Pintu ketutup */
-    TILE_PLAYER_NEW  /**< @deprecated Cuma placeholder, gak dipake */
+    TILE_PLAYER_NEW, /**< @deprecated Cuma placeholder, gak dipake */
+    TILE_ENEMY_SLIME,/**< Slime */
+    TILE_ENEMY_SKELETON,/**< Skeleton */
+    TILE_ENEMY_WOLF  /**< Wolf */
 } TileType;
 
 /**
@@ -189,3 +195,35 @@ void UpdateAnimation(AnimationPlayer &p, float dt);
  * @param p AnimationPlayer dengan state animasi saat ini
  */
 void DrawPlayer(AnimationPlayer &p);
+
+/**
+ * @brief State animasi buat enemy entity
+ */
+enum EnemyState
+{
+    EnIDLE,   /**< Diam/standby */
+    EnWALK,   /**< Jalan */
+    EnCHASE,  /**< Mengejar */
+    EnATTACK, /**< Nyerang */
+    EnDEAD    /**< Mati */
+};
+
+/** 
+ * 
+ * 
+ */
+struct AnimationEnemy
+{
+    Vector2 position; /**< Posisi entity di world (pixel) */
+
+    EnemyState EnState;      /**< State animasi saat ini (IDLE/WALK/CHASE/ATTACK/DEAD) */ 
+
+    int frame;        /**< Index frame animasi yang ditampilin (wrapper dari walkFrameIndex) */
+    float frameTime;  /**< Akumulator waktu buat timing animasi (dalam detik) */
+    float frameSpeed; /**< Kecepatan ganti frame (durasi per frame, misal 0.1 = 10 FPS) */
+
+    int walkFrameIndex; /**< Index frame buat mapping gambar dari texture pack */
+
+    bool isAttacking; /**< Flag ngecek apakah entity sedang attack */
+    bool isDead;      /**< Flag ngecek apakah entity udah mati */
+};

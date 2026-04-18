@@ -140,6 +140,7 @@ void UpdateGame(GameState *state)
 void UpdateLogicAll()
 {
     PlayerInstance.Tick();
+    
 }
 
 /*==============================================================================

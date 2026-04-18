@@ -1,14 +1,14 @@
 #pragma once
 #include <cmath>
 #include "../lib/raylib/include/raylib.h"
+#include "animation.h"
 #include "map.h"
 #include "screen.h"
-#include "animation.h"
 
 enum EnemyType{
-    Slime,
-    Skeleton,
-    Wolf
+    SLIME,
+    SKELETON,
+    WOLF
 };
 
 //enum EnemyState {
@@ -40,6 +40,7 @@ struct Enemy{
     bool isAlive;
 
     AnimationEnemy EnAnim;
+
     float stateTime;
 };
 
@@ -48,17 +49,24 @@ int GetRandomDamage(int min, int max);
 
 void UpdateEnemy(GameState* state);
 
+void InitEnemy();
+
+void InitEnemyTextures();
+
+Enemy CreateEnemy(Vector2 pos, EnemyType type);
+
+void SpawnRandomWave();
+
+void SpawnRandomEnemy();
+
+void RenderAllEnemies();
+
 void RenderEnemy(Enemy &en);
-
-Enemy EnemyStat(Vector2 pos, int type);
-
-void EnemyRenderTest();
-
-void InitTextures();
 
 void EnemyInitTest();
 
 void EnemyAttackPlayer(GameState *state);
 
 extern Enemy EnemyInstance;
-extern void EnemyRenderTest();
+extern void InitEnemy();
+extern void SpawnRandomEnemy();

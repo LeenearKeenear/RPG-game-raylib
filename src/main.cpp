@@ -9,13 +9,8 @@
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/player.h"
-#include "../include/mainMenu.h"
-<<<<<<< HEAD
 #include "../include/enemy.h"
-#include "../lib/raylib/include/raylib.h"
-#include "../lib/raylib/include/raymath.h"
-
-=======
+#include "../include/mainMenu.h"
 #include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
@@ -26,7 +21,6 @@
 
 /** Global instance pause menu — bisa diakses dari mana aja */
 PauseMenu pauseMenu;
->>>>>>> ed566672fef6c48fd5aac57fac0126a3648037c9
 
 /*==============================================================================
  * Main Function
@@ -52,8 +46,8 @@ int main()
     // Step 4: init elemen UI main menu
     InitMainMenu(&state);
 
-    //Init Enemy buat test, nanti dibenerin
-    EnemyInitTest();
+    //Step 5: init enemy
+    InitEnemy();
 
     // ================================================================
     // Main Game Loop

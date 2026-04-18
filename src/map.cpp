@@ -12,6 +12,7 @@
 #include "../include/map.h"
 #include "../include/animation.h"
 #include "../include/player.h"
+#include "../include/enemy.h"
 #include "../include/MapStack.h"
 #include <memory>
 #include <string>
@@ -391,6 +392,8 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
 
     // Re-init player berdasarkan target door di map baru
     PlayerInstance.Init(targetDoorName);
+
+    SpawnRandomWave();
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
