@@ -1,4 +1,13 @@
 #pragma once
+
+/**
+ * @file screen.h
+ * @brief Screen & GameState Management Module
+ *
+ * Handle virtual screen (1280x720), scaling, dan state management.
+ * Semua rendering pake virtual screen biar konsisten di berbagai resolusi.
+ */
+
 #include "../lib/raylib/include/raylib.h"
 
 // ================================================================
@@ -11,44 +20,112 @@
 // - ScaleMultiplier dihitung tiap frame buat handle window resize
 // ================================================================
 
-// ukuran layar virtual — semua rendering mengacu ke ukuran ini
+/*==============================================================================
+ * Virtual Screen Constants
+ *==============================================================================*/
+
+/** Ukuran layar virtual — semua rendering mengacu ke ukuran ini */
 extern const int GameScreenWidth;
 extern const int GameScreenHeight;
 
-// enum state game — tambah state baru di sini kalau perlu
+/*==============================================================================
+ * ScreenState Enum
+ *==============================================================================*/
+
+/**
+ * @brief State game yang aktif
+ * @note Tambah state baru di sini kalo perlu (misal SAVE_MENU, LOAD_MENU)
+ */
 typedef enum
 {
-    MAIN_MENU,
-    PLAY
+    // General States
+    MAIN_MENU, /**< State main menu — nampilin menu utama */
+    PLAY,      /**< State play — lagi main game */
+
+    // TODO: Save states (nanti tambahin kalo udah implementasi save/load)
+
+    // Extras
+    OPTIONS /**< State options — menu pengaturan game */
 } ScreenState;
 
-// struct utama yang nyimpen semua info rendering dan state game
+/*==============================================================================
+ * GameState Struct
+ *==============================================================================*/
+
+/**
+ * @brief Struct utama yang nyimpen semua info rendering dan state game
+ */
 typedef struct
 {
-    RenderTexture2D Dungeon; // render texture virtual (1280x720)
-    float ScaleMultiplier;   // rasio scale layar virtual ke window asli
-    int WindowScreenWidth;   // ukuran window asli saat ini
-    int WindowScreenHeight;
-    ScreenState currentScreen; // state game yang aktif
+    RenderTexture2D Dungeon;   /**< Render texture virtual (1280x720) - target rendering semua game */
+    float ScaleMultiplier;     /**< Rasio scale layar virtual ke window asli (dihitung tiap frame) */
+    int WindowScreenWidth;     /**< Ukuran window asli saat ini (bisa berubah kalo resize) */
+    int WindowScreenHeight;    /**< Ukuran window asli saat ini (bisa berubah kalo resize) */
+    ScreenState currentScreen; /**< State game yang aktif (MAIN_MENU / PLAY / OPTIONS) */
 } GameState;
 
-// inisialisasi window, audio, dan render texture virtual
+/*==============================================================================
+ * Screen Functions
+ *==============================================================================*/
+
+/**
+ * @brief Inisialisasi window, audio, dan render texture virtual
+ * @return GameState yang udah diinisialisasi
+ * @note Panggil sekali pas awal game start
+ */
 GameState InitScreen(void);
 
-// update ukuran window dan scale multiplier — dipanggil tiap frame
+/**
+ * @brief Update ukuran window dan scale multiplier
+ * @param state Pointer ke GameState
+ * @note Dipanggil tiap frame buat handle window resize
+ */
 void UpdateGame(GameState *state);
 
-// inisialisasi semua entity dan camera
+/**
+ * @brief Inisialisasi semua entity dan camera
+ * @note Panggil setelah InitScreen() buat setup player, map, dll
+ */
 void InitAll(void);
 
-// entry point render — semua rendering ke layar virtual lewat sini
+/**
+ * @brief Entry point render — semua rendering ke layar virtual lewat sini
+ * @param state Pointer ke GameState
+ * @note Manggil fungsi-fungsi render berdasarkan currentScreen
+ */
 void DrawRenderTexture(GameState *state);
 
-// entry point logic — semua logic game per frame lewat sini
+/**
+ * @brief UI overlay rendering (pause menu, dll) ke virtual screen
+ * @param state Pointer ke GameState
+ * @note Render di atas game screen
+ */
+void DrawUIOverlay(GameState *state);
+
+/**
+ * @brief Konversi koordinat mouse dari window ke virtual screen
+ * @param state Pointer ke GameState (butuh ScaleMultiplier)
+ * @return Vector2 posisi mouse dalam koordinat virtual screen
+ * @note Dipake buat deteksi klik UI yang dirender di virtual screen
+ */
+Vector2 GetVirtualMousePosition(GameState *state);
+
+/**
+ * @brief Entry point logic — semua logic game per frame lewat sini
+ * @note Manggil fungsi-fungsi update berdasarkan currentScreen
+ */
 void UpdateLogicAll(void);
 
-// scale layar virtual ke window asli
+/**
+ * @brief Scale layar virtual ke window asli
+ * @param state Pointer ke GameState
+ * @note Render texture virtual di-draw ke window asli dengan scale dan letterbox
+ */
 void DrawRenderWindows(GameState *state);
 
-// bersihin semua resource sebelum game ditutup
+/**
+ * @brief Bersihin semua resource sebelum game ditutup
+ * @param state Pointer ke GameState
+ * @note Unload texture, render texture, dan close window
+ */
 void GameShutDown(GameState *state);

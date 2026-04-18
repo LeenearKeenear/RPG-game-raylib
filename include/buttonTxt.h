@@ -1,28 +1,24 @@
 #pragma once
 
-#include "../lib/raylib/include/raylib.h"
-#include <string>
+/**
+ * @file buttontxt.h
+ * @brief Text-based UI Button System
+ *
+ * Nyediain tombol berbasis teks untuk UI.
+ * Ada efek hover gelap dan deteksi klik di area teks.
+ *
+ * @note Sekarang pake template dari button.h (Button<TextPolicy>)
+ *       Buat backward compatibility, nama buttonTxt tetep dipake.
+ */
 
-class buttonTxt 
-{
-    public:
-        buttonTxt();
-        buttonTxt(const char* text, int posX, int posY, int fontSize, Color color, float hoverAmount = 1.0F);
-        // hoverAmount: 0.0 = black, 1.0 = no darkening, <1.0 = darker on hover
-        ~buttonTxt();
+#include "button.h"
 
-        void Draw(Vector2 mousePosition);
+/**
+ * @brief Tombol berbasis teks buat UI
+ * @note Sekarang pake template dari button.h (Button<TextPolicy>)
+ *       Buat backward compatibility, nama buttonTxt tetep dipake.
+ *       Langsung pake Button<TextPolicy> juga bisa.
+ */
 
-        // state checks
-        [[nodiscard]] bool isClicked(Vector2 mousePosition, bool mouseClicked) const;
-        [[nodiscard]] bool isHovered(Vector2 mousePosition) const;
-
-    private:
-        const char* text;
-        int posX;
-        int posY;
-        int fontSize;
-        Color textColor;
-        int textWidth;
-        float hoverAmount;
-};
+// Type alias sudah didefinisikan di button.h:
+// using buttonTxt = Button<TextPolicy>;
