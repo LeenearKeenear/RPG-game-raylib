@@ -54,11 +54,39 @@ Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
 // ================================================================
 void Player::Init(const char *spawnObjectName)
 {
-    // Step 1: Load texture karakter
-    LoadTileTexture(TEXTURE_KNIGHT, "texture/knight.png");
-    LoadTileTexture(TEXTURE_ITEMS,  "texture/test.png");
+    // ================================================================
+    // Step 1: Inisialisasi Satu Kali (Resource Global & Stats)
+    // ================================================================
+    if (!isInitialized)
+    {
+        // Load texture karakter
+        LoadTileTexture(TEXTURE_KNIGHT, "texture/knight.png");
+        LoadTileTexture(TEXTURE_ITEMS,  "texture/test.png");
 
-    // Step 2: Inisialisasi state animasi player
+        // init health
+        MaxHealth = 100.0f;
+        Health = MaxHealth;
+
+        // init mana
+        MaxMana = 100.0f;
+        Mana = MaxMana;
+        ManaRegenTimer = 0.0f;
+
+        // Initialize default hotbar items
+        Hotbar[0] = {ITEM_WEAPON, "Iron Sword", 1, 10, 0, 6, 4};
+        Hotbar[1] = {ITEM_WEAPON, "Wooden Bow", 1, 5, 0, 8, 4};
+        Hotbar[2] = {ITEM_POTION, "Health Potion", 3, 0, 20, 7, 8};
+        Hotbar[3] = {ITEM_POTION, "Mana Bread", 5, 0, 15, 10, 8};
+
+        isInitialized = true;
+        TraceLog(LOG_INFO, "Player: Global resources and stats initialized");
+    }
+
+    // ================================================================
+    // Step 2: Inisialisasi Setiap Pindah Map (Spawn & Collision)
+    // ================================================================
+
+    // Inisialisasi state animasi player (reset state ke IDLE pas pindah map)
     Anim.position = {0.0f, 0.0f};
     Anim.state = IDLE;
     Anim.direction = DOWN;
@@ -68,15 +96,6 @@ void Player::Init(const char *spawnObjectName)
     Anim.walkFrameIndex = 0;
     Anim.isAttacking = false;
     Anim.isDead = false;
-
-    // init health
-    MaxHealth = 100.0f;
-    Health = MaxHealth;
-
-    // init mana
-    MaxMana = 100.0f;
-    Mana = MaxMana;
-    ManaRegenTimer = 0.0f;
 
     // reset collision cache biar aman kalau nanti map di-reload
     CollisionRects.clear();
@@ -91,10 +110,7 @@ void Player::Init(const char *spawnObjectName)
         return;
     }
 
-    // ================================================================
-    // Step 3: ambil spawn point dari object layer Tiled
-    // pakai TiledHelperFunction.TryGetObjectPositionByName
-    // ================================================================
+    // Ambil spawn point dari object layer Tiled
     Vector2 spawnPos;
     if (spawnObjectName != nullptr &&
         spawnObjectName[0] != '\0' &&
@@ -111,7 +127,6 @@ void Player::Init(const char *spawnObjectName)
     else
     {
         // Fallback kalau object spawn belum ada di Tiled
-        // Posisi fallback dipusatkan ke tengah map dalam pixel
         Position = {
             ((float)tilesonMap->width * TILE_SIZE) / 2.0f,
             ((float)tilesonMap->height * TILE_SIZE) / 2.0f};
@@ -122,8 +137,7 @@ void Player::Init(const char *spawnObjectName)
     // Sync posisi animasi dengan posisi player
     Anim.position = Position;
 
-    // Step 4: ambil semua collision object dari object layer Tiled
-    // rectangle disimpan ke CollisionRects, polygon disimpan ke CollisionPolygons
+    // Ambil semua collision object dari object layer Tiled
     TiledHelper::CollisionResult collision;
     if (TiledHelperFunction.TryGetCollisionByLayerName(COLLISION_LAYER_NAME, collision))
     {
@@ -133,13 +147,6 @@ void Player::Init(const char *spawnObjectName)
 
     TraceLog(LOG_INFO, "Player: Loaded %d collision rects", (int)CollisionRects.size());
     TraceLog(LOG_INFO, "Player: Loaded %d collision polygons", (int)CollisionPolygons.size());
-    TraceLog(LOG_INFO, "Player: Custom world boundary %s", WorldBoundaryPolygon.empty() ? "not found" : "loaded");
-
-    // Initialize default hotbar items
-    Hotbar[0] = {ITEM_WEAPON, "Iron Sword", 1, 10, 0, 6, 4};
-    Hotbar[1] = {ITEM_WEAPON, "Wooden Bow", 1, 5, 0, 8, 4};
-    Hotbar[2] = {ITEM_POTION, "Health Potion", 3, 0, 20, 7, 8};
-    Hotbar[3] = {ITEM_POTION, "Mana Bread", 5, 0, 15, 10, 8}; // Digunakan untuk test heal mana
 }
 
 /*==============================================================================

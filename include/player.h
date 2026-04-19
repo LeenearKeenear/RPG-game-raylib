@@ -230,6 +230,8 @@ private:
 
     // Hotbar slots (1-4)
     InventoryItem Hotbar[4];
+
+    bool isInitialized = false; /**< Flag buat ngecek apakah player udah di-init pertama kali */
 };
 
 
