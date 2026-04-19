@@ -8,6 +8,7 @@
  */
 
 #include "../lib/raylib/include/raylib.h"
+#include "input_linkedlist.h"
 
 // ================================================================
 // Input System — Key Binding Module
@@ -30,22 +31,6 @@
 // - Kalo inventori kebuka           → equip/unequip
 // ================================================================
 
-/*==============================================================================
- * Item Slot Enum
- *==============================================================================*/
-
-/**
- * @brief Slot aktif yang dipilih player (1-4)
- * @note SLOT_NONE = 0 berarti gak ada slot yang kepilih
- */
-enum ItemSlot
-{
-    SLOT_NONE = 0,     /**< Gak ada slot aktif */
-    SLOT_WEAPON_1 = 1, /**< Slot senjata 1 (key 1) */
-    SLOT_WEAPON_2 = 2, /**< Slot senjata 2 (key 2) */
-    SLOT_POTION_1 = 3, /**< Slot potion 1 (key 3) */
-    SLOT_POTION_2 = 4  /**< Slot potion 2 (key 4) */
-};
 
 /*==============================================================================
  * SpaceAction Enum
@@ -96,6 +81,9 @@ struct InputState
 
     // --- Debug / Test (pressed sekali) ---
     bool testLoseHP;     // K
+
+    // --- Mouse wheel ---
+    float mouseWheel;   /**< Pergerakan mouse wheel frame ini */
 };
 
 // ================================================================
@@ -109,6 +97,8 @@ struct InputState
 class PlayerInput
 {
 public:
+    PlayerInput();
+
     /**
      * @brief Poll semua key bindings
      * @note Panggil sekali per frame di awal Update()
@@ -169,6 +159,8 @@ private:
     ItemSlot ActiveSlot = SLOT_WEAPON_1; /**< Slot yang lagi aktif (1-4) */
     bool InventoryOpen = false;      /**< Flag apakah inventori kebuka */
     bool MapOpen = false;            /**< Flag apakah map kebuka */
+
+    HotbarList doubleLinkedList;     /**< Linked list untuk navigasi hotbar */
 };
 
 /*==============================================================================

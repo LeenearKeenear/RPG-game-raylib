@@ -28,6 +28,14 @@
 PlayerInput InputInstance;
 
 /*==============================================================================
+ * PlayerInput Constructor
+ *==============================================================================*/
+PlayerInput::PlayerInput()
+{
+    doubleLinkedList.Initialize();
+}
+
+/*==============================================================================
  * Public Methods - Polling & Update
  *==============================================================================*/
 
@@ -68,6 +76,9 @@ void PlayerInput::PollInput(void)
 
     // --- Test / Debug (KeyPressed — tap sekali) ---
     Current.testLoseHP = IsKeyPressed(KEY_K);
+
+    // --- Mouse Wheel (pergerakan frame ini) ---
+    Current.mouseWheel = GetMouseWheelMove();
 }
 
 // ================================================================
@@ -105,22 +116,37 @@ void PlayerInput::UpdateState(void)
     if (Current.selectSlot1)
     {
         ActiveSlot = SLOT_WEAPON_1;
+        doubleLinkedList.SetCurrentBySlot(SLOT_WEAPON_1);
         TraceLog(LOG_INFO, "INPUT: Selected SLOT 1 (Weapon 1)");
     }
     if (Current.selectSlot2)
     {
         ActiveSlot = SLOT_WEAPON_2;
+        doubleLinkedList.SetCurrentBySlot(SLOT_WEAPON_2);
         TraceLog(LOG_INFO, "INPUT: Selected SLOT 2 (Weapon 2)");
     }
     if (Current.selectSlot3)
     {
         ActiveSlot = SLOT_POTION_1;
+        doubleLinkedList.SetCurrentBySlot(SLOT_POTION_1);
         TraceLog(LOG_INFO, "INPUT: Selected SLOT 3 (Potion 1)");
     }
     if (Current.selectSlot4)
     {
         ActiveSlot = SLOT_POTION_2;
+        doubleLinkedList.SetCurrentBySlot(SLOT_POTION_2);
         TraceLog(LOG_INFO, "INPUT: Selected SLOT 4 (Potion 2)");
+    }
+
+    // --- Mouse Wheel Slot Selection ---
+    if (Current.mouseWheel != 0)
+    {
+        if (Current.mouseWheel > 0) // Scroll UP
+            ActiveSlot = doubleLinkedList.GetPrev();
+        else // Scroll DOWN
+            ActiveSlot = doubleLinkedList.GetNext();
+
+        TraceLog(LOG_INFO, "INPUT: Mouse Wheel moved, selected slot %d", (int)ActiveSlot);
     }
 
     // --- Interact (logging buat debugging) ---
