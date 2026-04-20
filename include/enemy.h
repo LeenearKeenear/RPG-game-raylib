@@ -68,8 +68,6 @@ void RenderAllEnemies();
 
 void RenderEnemy(Enemy &en);
 
-void EnemyInitTest();
-
 void EnemyAttackPlayer(GameState *state);
 
 void ClearEnemies();

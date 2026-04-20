@@ -28,7 +28,8 @@ typedef enum
     TEXTURE_KNIGHT,      /**< Slot buat sprite karakter knight (akan direfaktor) */
     TEXTURE_SLIME,       /**< Slot buat sprite enemy slime */
     TEXTURE_SKELETON,    /**< Slot buat sprite enemy skeleton */
-    TEXTURE_WOLF         /**< Slot buat sprite enemy wolf */       
+    TEXTURE_WOLF,        /**< Slot buat sprite enemy wolf */
+    TEXTURE_ITEMS
 } TextureAsset;
 
 /** Global texture array - diakses dari file lain pake extern */

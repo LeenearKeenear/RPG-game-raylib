@@ -10,6 +10,7 @@
 #include "../include/map.h"
 #include "../include/player.h"
 #include "../include/enemy.h"
+#include "../include/item.h"
 #include "../include/mainMenu.h"
 #include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
@@ -48,6 +49,9 @@ int main()
 
     //Step 5: init enemy
     InitEnemy();
+
+    //Testing spawn item
+    SpawnItem(ITEM_WEAPON, {75, 130}, 3, RARITY_COMMON);
 
     // ================================================================
     // Main Game Loop

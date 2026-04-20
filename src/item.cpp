@@ -15,7 +15,7 @@ void SpawnItem(ItemCategory category, Vector2 pos, float multiplier, ItemRarity 
     // Tentukan Nama dan Hitbox berdasarkan kategori (Requirement 2 & 3)
     switch (category) {
         case ITEM_WEAPON:
-            newItem.name = "Rusty Sword";
+            newItem.name = "Sword";
             newItem.hitbox = {pos.x, pos.y, 32, 32}; // Hitbox default 32x32
             break;
         case ITEM_POTION:

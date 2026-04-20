@@ -171,32 +171,6 @@ void RenderAllEnemies(){
     }
 }
 
-//Testing enemy Init
-//void EnemyInitTest()
-//{
-//    // load texture (sekali)
-//   LoadTileTexture(TEXTURE_SLIME, "texture/Enemies.png");
-//
-//    // create enemy
-//    newEnemy.position = {6, 5};
-//    newEnemy.isAlive = true;
-//    newEnemy.type = SLIME;
-//}
-
-//Testing render enemy
-//void EnemyRenderTest()
-//{
-//    if (!newEnemy.isAlive) return;
-//
-//    RenderTilePNG(
-//        newEnemy.position.x * 32,
-//        newEnemy.position.y * 32,
-//        TILE_ENEMY_SLIME,
-//        0.0f,
-//        TEXTURE_SLIME
-//    );
-//}
-
 void RenderEnemy(Enemy &en)
 {
     TextureAsset tex;
@@ -208,11 +182,11 @@ void RenderEnemy(Enemy &en)
             tileID = TILE_ENEMY_SLIME;
             break;
         case SKELETON:
-            tex = TEXTURE_SKELETON;
+            tex = TEXTURE_SLIME;
             tileID = TILE_ENEMY_SKELETON;
             break;
         case WOLF:
-            tex = TEXTURE_WOLF;
+            tex = TEXTURE_SLIME;
             tileID = TILE_ENEMY_WOLF;
             break;
         default:
