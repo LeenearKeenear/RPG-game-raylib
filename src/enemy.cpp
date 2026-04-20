@@ -14,7 +14,7 @@
 
 static std::vector<Enemy> currentEnemies;
 static std::map<std::string, std::vector<Enemy>> savedMapEnemies;
-static Enemy entest;
+
 //Fungsi RNG untuk damage enemy
 int GetRandomDamage(int min, int max){
     return GetRandomValue(min, max);
