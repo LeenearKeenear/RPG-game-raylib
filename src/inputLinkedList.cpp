@@ -1,4 +1,4 @@
-#include "../include/input_linkedlist.h"
+#include "../include/inputLinkedList.h"
 #include <iostream>
 
 HotbarList::HotbarList() : head(nullptr), currentNode(nullptr)
