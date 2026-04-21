@@ -17,7 +17,7 @@ void DrawKeybindsTab(
     int contentStartY = startY + 100;
     const int fontSize = 20;
     int col1X = startX + 40;
-    int col2X = startX + 380;
+    int col2X = startX + 450;
 
     const char* keys[] = {"W / Arrow Up", "S / Arrow Down", "A / Arrow Left", "D / Arrow Right",
                        "E", "I", "M", "Mouse Left",
@@ -39,7 +39,7 @@ void DrawKeybindsTab(
     for (int i = 9; i < 18; i++) {
         int rowY = contentStartY + (i - 9) * 28;
         DrawText(keys[i], col2X, rowY, fontSize, YELLOW);
-        DrawText(" => ", col2X + 60, rowY, fontSize, GRAY);
-        DrawText(actions[i], col2X + 100, rowY, fontSize, WHITE);
+        DrawText(" => ", col2X + 80, rowY, fontSize, GRAY);
+        DrawText(actions[i], col2X + 130, rowY, fontSize, WHITE);
     }
 }
