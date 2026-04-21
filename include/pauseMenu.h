@@ -68,7 +68,7 @@ public:
 
 private:
     void CalculateDimensions();
-    void DrawVideoTab(Vector2 mousePosition, bool showFPS);
+    void DrawVideoTab(Vector2 mousePosition);
     void DrawAudioTab(Vector2 mousePosition);
     void DrawKeybindsTab(Vector2 mousePosition);
 
@@ -80,6 +80,10 @@ private:
 
     std::array<buttonTxt, 3> tabButtons;
     buttonTxt backButton;
+
+    buttonTxt fullscreenButton;
+    buttonTxt resolutionButton;
+    buttonTxt fpsButton;
 
     int width;
     int height;

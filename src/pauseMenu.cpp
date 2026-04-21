@@ -112,6 +112,41 @@ void OptionsScreen::CalculateDimensions()
     int backWidth = MeasureText("BACK", fontSize);
     backButton = buttonTxt("BACK", startX + width - backWidth - padding - 20, startY + height - fontSize - padding - 20, fontSize, WHITE, 0.7F);
 
+    // Video tab buttons (at value positions)
+    const int labelFontSize = 24;
+    int labelX = startX + 40;
+    int valueX = startX + 250;
+    int contentStartY = startY + 100;
+
+    // Fullscreen button (ON/OFF)
+    bool isFullscreen = IsWindowFullscreen();
+    fullscreenButton = buttonTxt(
+        isFullscreen ? "ON" : "OFF",
+        valueX,
+        contentStartY + 15,
+        labelFontSize,
+        isFullscreen ? GREEN : RED,
+        0.7F);
+
+    // Resolution button
+    const char* resLabel = resolutionOptions[selectedResolution].label;
+    resolutionButton = buttonTxt(
+        resLabel,
+        valueX,
+        contentStartY + 75,
+        labelFontSize,
+        YELLOW,
+        0.7F);
+
+    // FPS button (ON/OFF)
+    fpsButton = buttonTxt(
+        showFPS ? "ON" : "OFF",
+        valueX,
+        contentStartY + 135,
+        labelFontSize,
+        showFPS ? GREEN : GRAY,
+        0.7F);
+
     resolutionOptions = GetAvailableResolutions();
 
     int currentWidth = GetScreenWidth();
@@ -143,30 +178,26 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
         }
     }
 
-    int contentStartY = startY + 100;
-    Rectangle videoArea = {static_cast<float>(startX + 20), static_cast<float>(contentStartY), static_cast<float>(width - 40), 150};
-    Rectangle audioArea = {static_cast<float>(startX + 20), static_cast<float>(contentStartY + 160), static_cast<float>(width - 40), 150};
-    Rectangle keybindsArea = {static_cast<float>(startX + 20), static_cast<float>(contentStartY + 320), static_cast<float>(width - 40), 200};
-
     if (selectedTab == 0) {
-        Rectangle fsArea = {static_cast<float>(startX + 20), static_cast<float>(contentStartY), 200, 50};
-        if (CheckCollisionPointRec(mousePosition, fsArea) && mouseClicked) {
+        // Use buttonTxt click detection for Video tab buttons
+        if (fullscreenButton.isClicked(mousePosition, mouseClicked)) {
             ToggleFullscreenMode();
+            CalculateDimensions();
             return;
         }
 
-        Rectangle resArea = {static_cast<float>(startX + 20), static_cast<float>(contentStartY + 60), 200, 50};
-        if (CheckCollisionPointRec(mousePosition, resArea) && mouseClicked) {
+        if (resolutionButton.isClicked(mousePosition, mouseClicked)) {
             selectedResolution = (selectedResolution + 1) % static_cast<int>(resolutionOptions.size());
             if (!IsWindowFullscreen()) {
                 SetWindowSize(resolutionOptions[selectedResolution].width, resolutionOptions[selectedResolution].height);
             }
+            CalculateDimensions();
             return;
         }
 
-        Rectangle fpsArea = {static_cast<float>(startX + 20), static_cast<float>(contentStartY + 120), 200, 50};
-        if (CheckCollisionPointRec(mousePosition, fpsArea) && mouseClicked) {
+        if (fpsButton.isClicked(mousePosition, mouseClicked)) {
             state->showFPS = !state->showFPS;
+            CalculateDimensions();
             return;
         }
     }
@@ -187,36 +218,27 @@ void OptionsScreen::Draw(Vector2 mousePosition)
     backButton.Draw(mousePosition);
 
     switch (selectedTab) {
-        case 0: DrawVideoTab(mousePosition, showFPS); break;
+        case 0: DrawVideoTab(mousePosition); break;
         case 1: DrawAudioTab(mousePosition); break;
         case 2: DrawKeybindsTab(mousePosition); break;
     }
 }
 
-void OptionsScreen::DrawVideoTab(Vector2 mousePosition, bool showFPS)
+void OptionsScreen::DrawVideoTab(Vector2 mousePosition)
 {
-    (void)mousePosition;
     int contentStartY = startY + 100;
     const int fontSize = 24;
     int labelX = startX + 40;
-    int valueX = startX + 250;
 
+    // Labels (not clickable)
     DrawText("Fullscreen", labelX, contentStartY + 15, fontSize, WHITE);
-    {
-        bool fs = IsWindowFullscreen();
-        DrawText(fs ? "ON" : "OFF", valueX, contentStartY + 15, fontSize, fs ? GREEN : RED);
-    }
-
     DrawText("Resolution", labelX, contentStartY + 75, fontSize, WHITE);
-    {
-        const char* resLabel = resolutionOptions[selectedResolution].label;
-        DrawText(resLabel, valueX, contentStartY + 75, fontSize, YELLOW);
-    }
-
     DrawText("Show FPS", labelX, contentStartY + 135, fontSize, WHITE);
-    {
-        DrawText(showFPS ? "ON" : "OFF", valueX, contentStartY + 135, fontSize, showFPS ? GREEN : GRAY);
-    }
+
+    // Value buttons (clickable with hover effect)
+    fullscreenButton.Draw(mousePosition);
+    resolutionButton.Draw(mousePosition);
+    fpsButton.Draw(mousePosition);
 }
 
 void OptionsScreen::DrawAudioTab(Vector2 mousePosition)
