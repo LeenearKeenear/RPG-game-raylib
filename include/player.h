@@ -231,7 +231,7 @@ private:
     void HandleAction(void);
 
     // raycasting
-    RayCast Ray;
+    RayCast Ray; // class buat raycast nya
     RayHitResult LastHit; // hasil ray frame ini, bisa dicek fungsi lain
 
     const float INTERACT_RANGE = TILE_SIZE * 2.0f; // TODO: set nilai yang bener

@@ -289,6 +289,7 @@ void Player::Update()
     // Cek interaksi dengan pintu + raycast
     RayCasting();
     CheckDoorInteraction();
+    CheckPropInteraction();
 }
 
 // ================================================================
@@ -435,6 +436,12 @@ bool Player::CanMove(Vector2 newPosition)
     return true; // Aman, gak nabrak apa-apa
 }
 
+/**
+ * @brief Update arah ray berdasarkan posisi mouse dan cast ke prop objects
+ * @note Origin ray dari tengah hitbox player, bukan pojok kiri atas sprite
+ *       Mouse di-convert ke world space dulu sebelum dihitung direction-nya
+ *       Hasil hit disimpan di LastHit, dibaca oleh CheckPropInteraction()
+ */
 void Player::RayCasting()
 {
     Vector2 playerCenter = {
@@ -451,7 +458,7 @@ void Player::RayCasting()
     std::vector<MapObject> propObjects;
     for (auto &obj : tilesonMap->Objects)
     {
-        if (obj.layerName == "prop")
+        if (obj.layerName == OBJECT_LAYER_NAME)
             propObjects.push_back(obj);
     }
 
@@ -625,6 +632,12 @@ void Player::CheckDoorInteraction(void)
     }
 }
 
+/**
+ * @brief Entry point semua interaksi prop berdasarkan hasil raycasting
+ * @note Hanya trigger kalau LastHit.hit true dan player tekan tombol interact
+ *       Type object diambil dari field type di Tiled — harus koordinasi sama tim
+ *       buat naming convention (chest, npc, dll)
+ */
 void Player::CheckPropInteraction(void)
 {
     if (!LastHit.hit)
@@ -635,9 +648,9 @@ void Player::CheckPropInteraction(void)
     const std::string &type = LastHit.object->type;
     TraceLog(LOG_INFO, "Interacting with: '%s' (type: %s)", LastHit.object->name.c_str(), type.c_str());
 
-    if (type == "chest")
+    if (type == CHEST_TYPE_OBJECT_NAME)
     {
-        // TODO: open chest logic
+        TraceLog(LOG_INFO, "Opening chest: '%s'", LastHit.object->name.c_str());
     }
     else if (type == "npc")
     {

@@ -1,9 +1,13 @@
 /**
  * @file mapLogic.cpp
- * @brief Implementasi dari Map Logic & Collision Helper Module
+ * @brief Implementasi dari Map Logic, Collision, dan Raycasting Helper Module
  *
- * Implementasi dari class TiledHelper dan fungsi-fungsi helper
- * untuk collision detection, hitbox, point-in-polygon, dll.
+ * File ini berisi implementasi helper untuk:
+ * - Lookup object dari data Tiled
+ * - Build index object untuk query cepat
+ * - Hitbox utility
+ * - Collision check rectangle dan polygon
+ * - Raycasting terhadap object map
  */
 
 #include "../include/mapLogic.h"
@@ -18,17 +22,17 @@
 TiledHelper TiledHelperFunction;
 
 /**
- * @brief Precomputed index dari tilesonMap->Objects
- * @note Dibangun sekali via BuildMapObjectIndex() setelah LoadMap().
- *       Isinya pointer langsung ke element di tilesonMap->Objects — zero copy.
- *       JANGAN modifikasi tilesonMap->Objects setelah index dibangun.
+ * @brief Index object Tiled yang dipakai untuk lookup cepat
+ *
+ * Dibangun ulang lewat BuildMapObjectIndex() setelah map selesai dimuat.
+ * Seluruh pointer mengarah langsung ke data object aktif di tilesonMap->Objects.
  */
 static MapObjectIndex g_mapIndex;
 
 /**
- * @brief Build index dari semua object di tilesonMap->Objects
- * @note Panggil SEKALI setelah LoadMap() selesai.
- *       Rebuild otomatis kalau dipanggil lagi (misal setelah SwitchMap()).
+ * @brief Bangun ulang index dari seluruh object pada map aktif
+ *
+ * Wajib dipanggil setelah LoadMap() atau setiap kali data map berubah.
  */
 void BuildMapObjectIndex()
 {
@@ -38,15 +42,15 @@ void BuildMapObjectIndex()
 
     for (auto &obj : tilesonMap->Objects)
     {
-        // byName: satu nama -> satu object (nama harusnya unik di Tiled)
+        // Index berdasarkan nama object
         if (!obj.name.empty())
             g_mapIndex.byName[obj.name] = &obj;
 
-        // byType: satu type -> banyak object (misal semua "pass" door)
+        // Index berdasarkan type object
         if (!obj.type.empty())
             g_mapIndex.byType[obj.type].push_back(&obj);
 
-        // byLayer: satu layer -> banyak object (misal semua object di "obstacle")
+        // Index berdasarkan layer object
         if (!obj.layerName.empty())
             g_mapIndex.byLayer[obj.layerName].push_back(&obj);
     }
@@ -54,12 +58,12 @@ void BuildMapObjectIndex()
 
 /*==============================================================================
  * Low-level Query Functions
- * Langsung akses g_mapIndex — O(1), tanpa loop, tanpa copy.
  *==============================================================================*/
 
 /**
- * @brief Cari object berdasarkan nama
- * @return Pointer ke object kalo ketemu, nullptr kalo gak ada
+ * @brief Cari satu object berdasarkan nama
+ * @param name Nama object di Tiled
+ * @return Pointer ke object jika ditemukan, nullptr jika tidak ada
  */
 MapObject *TilesonGetObjectByName(const std::string &name)
 {
@@ -69,35 +73,40 @@ MapObject *TilesonGetObjectByName(const std::string &name)
 
 /**
  * @brief Ambil semua object dengan type tertentu
- * @return const reference ke internal vector — jangan di-store lama, bisa invalid setelah SwitchMap()
+ * @param type Nilai field Type di Tiled
+ * @return Reference ke vector internal, atau vector kosong jika tidak ditemukan
  */
 const std::vector<MapObject *> &TilesonGetObjectsByType(const std::string &type)
 {
-    static const std::vector<MapObject *> empty; // fallback kalo type gak ketemu
+    static const std::vector<MapObject *> empty;
     auto it = g_mapIndex.byType.find(type);
     return (it != g_mapIndex.byType.end()) ? it->second : empty;
 }
 
 /**
  * @brief Ambil semua object dari layer tertentu
- * @return const reference ke internal vector — jangan di-store lama, bisa invalid setelah SwitchMap()
+ * @param layerName Nama layer di Tiled
+ * @return Reference ke vector internal, atau vector kosong jika tidak ditemukan
  */
 const std::vector<MapObject *> &TilesonGetObjectsByLayerName(const std::string &layerName)
 {
-    static const std::vector<MapObject *> empty; // fallback kalo layer gak ketemu
+    static const std::vector<MapObject *> empty;
     auto it = g_mapIndex.byLayer.find(layerName);
     return (it != g_mapIndex.byLayer.end()) ? it->second : empty;
 }
 
 /*==============================================================================
- * TiledHelper — High-level Helper Functions
- * Wrapper di atas low-level query, return hasil yang lebih spesifik
- * (posisi, bounds, collision) dengan format yang siap pakai.
+ * TiledHelper
  *==============================================================================*/
 
 /**
- * @brief Dapetin posisi (x, y) object berdasarkan nama
- * @note Posisi diambil dari sudut kiri atas bounds object
+ * @brief Ambil posisi object berdasarkan nama
+ *
+ * Posisi yang dipakai adalah titik kiri atas bounds object.
+ *
+ * @param objectName Nama object di Tiled
+ * @param outPosition [OUT] Posisi object jika ditemukan
+ * @return true jika object ditemukan
  */
 bool TiledHelper::TryGetObjectPositionByName(const std::string &objectName, Vector2 &outPosition)
 {
@@ -109,8 +118,11 @@ bool TiledHelper::TryGetObjectPositionByName(const std::string &objectName, Vect
 }
 
 /**
- * @brief Dapetin posisi object pertama yang typenya cocok
- * @note Kalo ada banyak object dengan type sama, yang diambil cuma yang pertama
+ * @brief Ambil posisi object pertama dengan type tertentu
+ *
+ * @param objectType Type object di Tiled
+ * @param outPosition [OUT] Posisi object pertama yang ditemukan
+ * @return true jika object ditemukan
  */
 bool TiledHelper::TryGetObjectPositionByType(const std::string &objectType, Vector2 &outPosition)
 {
@@ -122,7 +134,11 @@ bool TiledHelper::TryGetObjectPositionByType(const std::string &objectType, Vect
 }
 
 /**
- * @brief Dapetin rectangle bounds object pertama yang typenya cocok
+ * @brief Ambil bounds object pertama dengan type tertentu
+ *
+ * @param objectType Type object di Tiled
+ * @param outBounds [OUT] Bounds object pertama yang ditemukan
+ * @return true jika object ditemukan
  */
 bool TiledHelper::TryGetObjectBoundsByType(const std::string &objectType, Rectangle &outBounds)
 {
@@ -134,9 +150,13 @@ bool TiledHelper::TryGetObjectBoundsByType(const std::string &objectType, Rectan
 }
 
 /**
- * @brief Dapetin semua collision data dari layer tertentu
- * @note Object polygon masuk ke outCollision.polygons,
- *       object rectangle biasa masuk ke outCollision.rects
+ * @brief Ambil seluruh collision data dari satu layer
+ *
+ * Object polygon dimasukkan ke polygons, sisanya ke rects.
+ *
+ * @param layerName Nama layer di Tiled
+ * @param outCollision [OUT] Hasil collision yang ditemukan
+ * @return true jika layer berisi object collision
  */
 bool TiledHelper::TryGetCollisionByLayerName(const std::string &layerName, CollisionResult &outCollision)
 {
@@ -154,8 +174,13 @@ bool TiledHelper::TryGetCollisionByLayerName(const std::string &layerName, Colli
 }
 
 /**
- * @brief Dapetin semua collision data dari object dengan type tertentu
- * @note Sama kayak TryGetCollisionByLayerName tapi filter by type, bukan layer
+ * @brief Ambil seluruh collision data dari object dengan type tertentu
+ *
+ * Object polygon dimasukkan ke polygons, sisanya ke rects.
+ *
+ * @param objectType Type object di Tiled
+ * @param outCollision [OUT] Hasil collision yang ditemukan
+ * @return true jika ada object dengan type tersebut
  */
 bool TiledHelper::TryGetCollisionByType(const std::string &objectType, CollisionResult &outCollision)
 {
@@ -173,10 +198,12 @@ bool TiledHelper::TryGetCollisionByType(const std::string &objectType, Collision
 }
 
 /**
- * @brief Dapetin owned copy vector semua object dengan type tertentu
- * @note Beda sama TilesonGetObjectsByType yang return reference —
- *       ini return copy jadi aman disimpen lebih lama.
- *       Pake ini kalo lo butuh iterate sambil map mungkin berubah.
+ * @brief Ambil salinan vector pointer object berdasarkan type
+ *
+ * Dipakai saat caller butuh vector yang aman disimpan sendiri.
+ *
+ * @param objectType Type object di Tiled
+ * @return Copy vector pointer ke object yang sesuai
  */
 std::vector<MapObject *> TiledHelper::GetObjectsByType(const std::string &objectType)
 {
@@ -189,13 +216,14 @@ std::vector<MapObject *> TiledHelper::GetObjectsByType(const std::string &object
  *==============================================================================*/
 
 /**
- * @brief Bikin hitbox rectangle berdasarkan posisi dan offset
- * @param position Posisi dasar (biasanya posisi entity)
+ * @brief Bangun hitbox rectangle dari posisi dasar dan offset
+ *
+ * @param position Posisi dasar entity
  * @param offsetX Offset X dari posisi
  * @param offsetY Offset Y dari posisi
  * @param width Lebar hitbox
  * @param height Tinggi hitbox
- * @return Rectangle hitbox yang udah di-offset
+ * @return Rectangle hitbox yang sudah dihitung
  */
 Rectangle BuildHitbox(Vector2 position, float offsetX, float offsetY, float width, float height)
 {
@@ -208,17 +236,21 @@ Rectangle BuildHitbox(Vector2 position, float offsetX, float offsetY, float widt
 }
 
 /**
- * @brief Dapetin 4 titik sudut dari rectangle
+ * @brief Ambil empat titik sudut dari rectangle
+ *
+ * Urutan titik:
+ * [0] kiri atas, [1] kanan atas, [2] kiri bawah, [3] kanan bawah
+ *
  * @param rect Rectangle sumber
- * @return Array berisi 4 Vector2 (top-left, top-right, bottom-left, bottom-right)
+ * @return Array berisi empat titik sudut
  */
 std::array<Vector2, 4> GetRectangleCorners(const Rectangle &rect)
 {
     std::array<Vector2, 4> corners;
-    corners[0] = {rect.x, rect.y};                            // kiri atas
-    corners[1] = {rect.x + rect.width, rect.y};               // kanan atas
-    corners[2] = {rect.x, rect.y + rect.height};              // kiri bawah
-    corners[3] = {rect.x + rect.width, rect.y + rect.height}; // kanan bawah
+    corners[0] = {rect.x, rect.y};
+    corners[1] = {rect.x + rect.width, rect.y};
+    corners[2] = {rect.x, rect.y + rect.height};
+    corners[3] = {rect.x + rect.width, rect.y + rect.height};
     return corners;
 }
 
@@ -228,11 +260,12 @@ std::array<Vector2, 4> GetRectangleCorners(const Rectangle &rect)
 
 /**
  * @brief Cek apakah sebuah titik berada di dalam polygon
- * @param point Titik yang mau dicek
- * @param polygon Daftar titik-titik polygon (berurutan)
- * @return true kalo titik di dalam polygon
- * @note Pake ray casting algorithm (even-odd rule)
- *       Ada epsilon 0.00001f buat menghindari division by zero
+ *
+ * Menggunakan even-odd rule dengan ray casting algorithm.
+ *
+ * @param point Titik yang ingin dicek
+ * @param polygon Daftar titik polygon berurutan
+ * @return true jika titik berada di dalam polygon
  */
 bool IsPointInPolygon(Vector2 point, const std::vector<Vector2> &polygon)
 {
@@ -253,12 +286,27 @@ bool IsPointInPolygon(Vector2 point, const std::vector<Vector2> &polygon)
                          (point.x < (pj.x - pi.x) * (point.y - pi.y) / ((pj.y - pi.y) + 0.00001f) + pi.x);
 
         if (intersect)
-            inside = !inside; // flip inside flag tiap kali ada intersection
+            inside = !inside;
     }
 
     return inside;
 }
 
+/*==============================================================================
+ * RayCast
+ *==============================================================================*/
+
+/**
+ * @brief Cast satu ray dan cari object terdekat yang terkena
+ *
+ * Ray akan dicek ke seluruh object yang diberikan, lalu dipilih hit terdekat.
+ *
+ * @param origin Titik asal ray
+ * @param direction Arah ray yang sudah dinormalisasi
+ * @param maxDistance Jarak maksimum ray
+ * @param objects Daftar object yang akan dicek
+ * @return Hasil hit terdekat, atau hit=false jika tidak ada tumbukan
+ */
 RayHitResult RayCast::Cast(Vector2 origin, Vector2 direction, float maxDistance, std::vector<MapObject> &objects)
 {
     RayHitResult result = {false, {0, 0}, maxDistance, nullptr};
@@ -271,7 +319,6 @@ RayHitResult RayCast::Cast(Vector2 origin, Vector2 direction, float maxDistance,
             t = HitPolygon(origin, direction, obj.polygonPoints, maxDistance);
         else
             t = HitRect(origin, direction, obj.bounds, maxDistance);
-            
 
         if (t && *t < result.distance)
         {
@@ -284,13 +331,22 @@ RayHitResult RayCast::Cast(Vector2 origin, Vector2 direction, float maxDistance,
     return result;
 }
 
+/**
+ * @brief Cek ray terhadap rectangle dengan memeriksa seluruh sisinya
+ *
+ * Rectangle dipecah menjadi empat edge lalu tiap edge diuji terhadap ray.
+ *
+ * @param origin Titik asal ray
+ * @param direction Arah ray
+ * @param rect Rectangle target
+ * @param maxDistance Jarak maksimum ray
+ * @return Jarak hit terdekat, atau nullopt jika tidak ada intersection
+ */
 std::optional<float> RayCast::HitRect(Vector2 origin, Vector2 direction, Rectangle rect, float maxDistance)
 {
     auto corners = GetRectangleCorners(rect);
     Vector2 rayEnd = {origin.x + direction.x * maxDistance, origin.y + direction.y * maxDistance};
 
-    // corners order: [0]TL, [1]TR, [2]BL, [3]BR
-    // edge: TL→TR, TR→BR, BR→BL, BL→TL
     std::pair<int, int> edgeIdx[4] = {{0, 1}, {1, 3}, {3, 2}, {2, 0}};
 
     std::optional<float> closest;
@@ -303,12 +359,22 @@ std::optional<float> RayCast::HitRect(Vector2 origin, Vector2 direction, Rectang
     return closest;
 }
 
+/**
+ * @brief Cek ray terhadap polygon dengan memeriksa seluruh edge
+ *
+ * Jika origin sudah berada di dalam polygon, hasilnya langsung 0.
+ *
+ * @param origin Titik asal ray
+ * @param direction Arah ray
+ * @param polygon Titik-titik polygon
+ * @param maxDistance Jarak maksimum ray
+ * @return Jarak hit terdekat, atau nullopt jika tidak ada intersection
+ */
 std::optional<float> RayCast::HitPolygon(Vector2 origin, Vector2 direction, std::vector<Vector2> &polygon, float maxDistance)
 {
     if (polygon.size() < 3)
         return std::nullopt;
 
-    // kalo origin udah di dalam polygon, jarak = 0
     if (IsPointInPolygon(origin, polygon))
         return 0.0f;
 
@@ -326,6 +392,15 @@ std::optional<float> RayCast::HitPolygon(Vector2 origin, Vector2 direction, std:
     return closest;
 }
 
+/**
+ * @brief Hitung intersection antara dua line segment
+ *
+ * @param p1 Titik awal segment pertama
+ * @param p2 Titik akhir segment pertama
+ * @param p3 Titik awal segment kedua
+ * @param p4 Titik akhir segment kedua
+ * @return Jarak dari p1 ke titik potong, atau nullopt jika tidak berpotongan
+ */
 std::optional<float> RayCast::LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4)
 {
     float d1x = p2.x - p1.x, d1y = p2.y - p1.y;
@@ -339,7 +414,7 @@ std::optional<float> RayCast::LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, 
     float u = ((p3.x - p1.x) * d1y - (p3.y - p1.y) * d1x) / denom;
 
     if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f)
-        return t * sqrtf(d1x * d1x + d1y * d1y); // konversi t ke pixel distance
+        return t * sqrtf(d1x * d1x + d1y * d1y);
 
     return std::nullopt;
 }
@@ -349,10 +424,11 @@ std::optional<float> RayCast::LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, 
  *==============================================================================*/
 
 /**
- * @brief Cek collision antara hitbox dengan kumpulan rectangle
- * @param hitbox Hitbox entity yang mau dicek
- * @param collisionRects Daftar rectangle collision dari map
- * @return true kalo ada tabrakan
+ * @brief Cek collision hitbox terhadap kumpulan rectangle
+ *
+ * @param hitbox Hitbox entity yang diperiksa
+ * @param collisionRects Daftar rectangle collision
+ * @return true jika ada tabrakan
  */
 bool CheckCollisionAgainstRects(const Rectangle &hitbox, const std::vector<Rectangle> &collisionRects)
 {
@@ -365,12 +441,13 @@ bool CheckCollisionAgainstRects(const Rectangle &hitbox, const std::vector<Recta
 }
 
 /**
- * @brief Cek collision antara hitbox dengan kumpulan polygon
- * @param hitbox Hitbox entity yang mau dicek
- * @param collisionPolygons Daftar polygon collision dari map
- * @return true kalo ada tabrakan (salah satu titik sudut hitbox masuk polygon)
- * @note Cek collision dengan ngecek keempat titik sudut hitbox
- *       apakah ada yang masuk ke dalam polygon
+ * @brief Cek collision hitbox terhadap kumpulan polygon
+ *
+ * Collision dianggap terjadi jika salah satu sudut hitbox berada di dalam polygon.
+ *
+ * @param hitbox Hitbox entity yang diperiksa
+ * @param collisionPolygons Daftar polygon collision
+ * @return true jika ada tabrakan
  */
 bool CheckCollisionAgainstPolygons(const Rectangle &hitbox, const std::vector<std::vector<Vector2>> &collisionPolygons)
 {
@@ -393,10 +470,11 @@ bool CheckCollisionAgainstPolygons(const Rectangle &hitbox, const std::vector<st
 
 /**
  * @brief Cek apakah hitbox masih berada di dalam batas dunia
- * @param hitbox Hitbox entity yang mau dicek
+ *
+ * @param hitbox Hitbox entity yang diperiksa
  * @param worldWidth Lebar dunia dalam pixel
  * @param worldHeight Tinggi dunia dalam pixel
- * @return true kalo hitbox di dalam batas, false kalo keluar
+ * @return true jika hitbox masih berada di dalam batas dunia
  */
 bool IsWithinWorldBounds(const Rectangle &hitbox, float worldWidth, float worldHeight)
 {

@@ -4,9 +4,11 @@
  * @file map.h
  * @brief Map System & Tileson Integration Module
  *
- * Handle loading, rendering, dan management map dari JSON Tiled.
- * Pake library Tileson buat parse file .tmj (Tiled map JSON).
- * Handle juga collision objects, spawn points, dan frustum culling.
+ * Header ini mendeklarasikan data dan fungsi utama untuk:
+ * - Load dan unload map dari Tiled JSON
+ * - Render tile map
+ * - Simpan object map dan tileset
+ * - Hitung visible tile range untuk culling
  */
 
 #include "../lib/raylib/include/raylib.h"
@@ -21,12 +23,8 @@
  * Global Camera
  *==============================================================================*/
 
-/** Camera2D global - dipake buat rendering world dengan offset/zoom */
+// Camera global untuk rendering world
 extern Camera2D camera;
-
-// ================================================================
-// Tileson Map System
-// ================================================================
 
 /*==============================================================================
  * MapObject Struct
@@ -34,17 +32,16 @@ extern Camera2D camera;
 
 /**
  * @brief Representasi satu object dari object layer Tiled
- * @note Bisa berupa collision rect, spawn point, door, dll
  */
 struct MapObject
 {
-    std::string name;                                 /**< Nama object di Tiled */
-    std::string type;                                 /**< Type object (kalo di-set di Tiled) */
-    std::string layerName;                            /**< Nama object layer asal di Tiled */
-    Rectangle bounds;                                 /**< Bounding box rectangle object */
-    std::vector<Vector2> polygonPoints;               /**< Titik polygon/polyline dalam world space */
-    bool hasPolygon = false;                          /**< True kalo object punya polygon custom */
-    std::map<std::string, tson::Property> properties; /**< Property custom dari Tiled */
+    std::string name;                                 // Nama object di Tiled
+    std::string type;                                 // Type object di Tiled
+    std::string layerName;                            // Nama layer asal object
+    Rectangle bounds;                                 // Bounding box object
+    std::vector<Vector2> polygonPoints;               // Titik polygon dalam world space
+    bool hasPolygon = false;                          // True jika object punya polygon
+    std::map<std::string, tson::Property> properties; // Custom properties dari object
 };
 
 /*==============================================================================
@@ -52,15 +49,15 @@ struct MapObject
  *==============================================================================*/
 
 /**
- * @brief Info satu tileset — texture + metadata buat render
+ * @brief Menyimpan data tileset yang dibutuhkan saat rendering
  */
 struct TilesetInfo
 {
-    Texture2D texture; /**< Texture tileset yang udah di-load */
-    int cols;          /**< Jumlah kolom tile dalam tileset */
-    int spacing;       /**< Jarak antar tile dalam tileset (padding) */
-    int firstgid;      /**< Global ID pertama dari tileset ini */
-    int lastgid;       /**< Global ID terakhir (firstgid tileset berikutnya - 1) - dipake buat nyari tileset yang bener pas render */
+    Texture2D texture; // Texture tileset yang sudah dimuat
+    int cols;          // Jumlah kolom tile dalam tileset
+    int spacing;       // Jarak antar tile dalam tileset
+    int firstgid;      // Global ID pertama dari tileset
+    int lastgid;       // Global ID terakhir dari tileset
 };
 
 /*==============================================================================
@@ -68,19 +65,19 @@ struct TilesetInfo
  *==============================================================================*/
 
 /**
- * @brief Semua data map yang udah di-parse dari JSON Tiled
+ * @brief Menyimpan seluruh data map hasil parse Tiled
  */
 struct TilesonMapData
 {
-    int width;                         /**< Lebar map dalam satuan tile */
-    int height;                        /**< Tinggi map dalam satuan tile */
-    int layerCount;                    /**< Jumlah layer dalam map */
-    int **tiles;                       /**< Array 2D tile IDs untuk tiap layer */
-    std::vector<TilesetInfo> tilesets; /**< Daftar tileset yang dipake map (support multiple tilesets) */
-    std::vector<MapObject> Objects;    /**< Daftar object dari semua object layer */
+    int width;                         // Lebar map dalam satuan tile
+    int height;                        // Tinggi map dalam satuan tile
+    int layerCount;                    // Jumlah tile layer
+    int **tiles;                       // Data tile untuk tiap layer
+    std::vector<TilesetInfo> tilesets; // Daftar tileset yang dipakai map
+    std::vector<MapObject> Objects;    // Daftar object dari object layer
 };
 
-/** Global pointer ke data map yang lagi aktif */
+// Pointer global ke map yang sedang aktif
 extern TilesonMapData *tilesonMap;
 
 /*==============================================================================
@@ -88,21 +85,19 @@ extern TilesonMapData *tilesonMap;
  *==============================================================================*/
 
 /**
- * @brief Hasil kalkulasi frustum: range index tile yang visible di layar
- * @note Dipake buat culling - cuma render tile yang keliatan aja
+ * @brief Range tile yang terlihat di layar
  */
 struct TileRange
 {
-    int minX; /**< Kolom tile paling kiri yang visible */
-    int minY; /**< Baris tile paling atas yang visible */
-    int maxX; /**< Kolom tile paling kanan yang visible (exclusive) */
-    int maxY; /**< Baris tile paling bawah yang visible (exclusive) */
+    int minX; // Kolom minimum yang terlihat
+    int minY; // Baris minimum yang terlihat
+    int maxX; // Kolom maksimum yang terlihat (exclusive)
+    int maxY; // Baris maksimum yang terlihat (exclusive)
 };
 
 /**
- * @brief Hitung range tile yang visible di layar berdasarkan camera viewport
- * @return TileRange berisi minX, minY, maxX, maxY
- * @note Ini adalah inti logic frustum culling — dipake oleh RenderMap()
+ * @brief Hitung range tile yang terlihat berdasarkan camera
+ * @return TileRange untuk kebutuhan frustum culling
  */
 TileRange GetVisibleTileRange(void);
 
@@ -110,23 +105,21 @@ TileRange GetVisibleTileRange(void);
  * Debug Variables
  *==============================================================================*/
 
-/** Jumlah tile yang dirender di frame terakhir - bisa dibaca sistem debug */
+// Jumlah tile yang dirender pada frame terakhir
 extern int lastTilesRendered;
 
-/** Range tile visible di frame terakhir - bisa dibaca sistem debug */
+// Range tile visible pada frame terakhir
 extern TileRange currentVisibleRange;
 
 /*==============================================================================
  * Tiled Layer & Object Name Constants
  *==============================================================================*/
 
-// Nama layer & object di Tiled — sesuaikan kalo beda
-// #define COLLISION_LAYER_NAME "map_bound" // (alternatif, sementara di-comment)
-
-#define COLLISION_LAYER_NAME "obstacle" /**< Nama layer buat collision obstacle */
-#define OBJECT_LAYER_NAME "object"      /**< Nama layer buat object placement */
-#define SPAWN_OBJECT_NAME "spawn"       /**< Nama object buat spawn point player */
-#define DOOR_TYPE_OBJECT_NAME "pass"    /**< Type object buat door/pintu */
+#define COLLISION_LAYER_NAME "obstacle" // Nama layer collision obstacle
+#define OBJECT_LAYER_NAME "object"      // Nama layer object placement
+#define SPAWN_OBJECT_NAME "spawn"       // Nama object spawn player
+#define DOOR_TYPE_OBJECT_NAME "pass"    // Type object untuk pintu
+#define CHEST_TYPE_OBJECT_NAME "chest"  // Type object untuk chest
 
 /*==============================================================================
  * Map Functions
@@ -134,41 +127,33 @@ extern TileRange currentVisibleRange;
 
 /**
  * @brief Load map dari file JSON Tiled
- * @param mapPath Path ke file .tmj (Tiled map JSON)
- * @note Parse file, load texture, dan inisialisasi data map
+ * @param mapPath Path file map yang akan dimuat
  */
 void LoadMap(const char *mapPath);
 
 /**
  * @brief Render map ke layar
- * @note Pake frustum culling - cuma render tile yang visible di camera
- *       Hasil render diupdate ke lastTilesRendered dan currentVisibleRange
  */
 void RenderMap(void);
 
 /**
- * @brief Unload/bersihin data map
- * @note Free memory dan unload texture
+ * @brief Bersihkan seluruh data map yang sedang aktif
  */
 void UnloadMap(void);
 
 /**
- * @brief Inisialisasi sistem map
- * @note Dipanggil pas game start
+ * @brief Inisialisasi map awal game
  */
 void InitMap(void);
 
 /**
- * @brief Ganti map ke map baru di posisi spawn tertentu
- * @param newMapPath Path ke map baru yang mau di-load
- * @param targetSpawnName Nama spawn point object di map baru
- * @note Unload map lama, load map baru, teleport player ke spawn point yang ditentuin
+ * @brief Pindah ke map baru di titik tujuan tertentu
+ * @param newMapPath Path file map tujuan
+ * @param targetSpawnName Nama spawn point atau pintu tujuan
  */
 void SwitchMap(const char *newMapPath, const char *targetSpawnName);
 
 /**
  * @brief Kembali ke map sebelumnya
- * @note Buat fitur go back ke map sebelum SwitchMap()
  */
 void GoBack(void);
-
