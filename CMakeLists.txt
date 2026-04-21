@@ -1,4 +1,16 @@
 cmake_minimum_required(VERSION 3.20)
+
+# Try to use clang, fallback to default compiler if not available
+find_program(CLANG_COMPILER_NAME clang++)
+find_program(CLANG_COMPILER_C CMAKE_C_COMPILER)
+if(CLANG_COMPILER_NAME AND CLANG_COMPILER_C)
+    set(CMAKE_CXX_COMPILER "clang++" CACHE STRING "C++ compiler" FORCE)
+    set(CMAKE_C_COMPILER "clang" CACHE STRING "C compiler" FORCE)
+    message(STATUS "Using clang as compiler")
+else()
+    message(STATUS "Using default compiler")
+endif()
+
 project(RPGGame VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -18,7 +30,7 @@ if(MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     add_compile_options(/W4)
 else()
-    add_compile_options(-Wall -Wextra -Wno-missing-field-initializers)
+    add_compile_options(-Wall -Wextra -Wno-missing-field-initializers -fno-inline-functions -fuse-ld=lld -O1 -v)
 endif()
 
 # Enable ccache for faster recompilation
