@@ -11,7 +11,7 @@ Game RPG 2D yang dibuat dengan Raylib.
 
 ## Persyaratan
 
-- **OS**: Windows 10+, macOS, atau Linux
+- **OS**: Windows 10/11, macOS, atau Linux
 - **Compiler**: gcc atau clang
 - **CMake**: >= 3.20
 - **Ninja**
@@ -31,7 +31,7 @@ cmake --preset ninja && cmake --build --preset ninja
 
 Ini akan:
 
-1. Download Raylib 5.5 ke `lib/raylib/`
+1. Download Raylib 5.5 ke `lib/raylib/` (Windows saja)
 2. Compile semua file .cpp (Unity build)
 3. Link dengan library
 4. Copy raylib.dll ke folder output
@@ -50,12 +50,6 @@ cmake --build --preset ninja-debug
 
 ```bash
 ./build/bin/main.exe
-```
-
-Atau jalankan dengan
-
-```cmd
-run.bat
 ```
 
 ## Catatan

@@ -18,7 +18,6 @@
 // - Player animation state machine (walk, idle, attack, dead)
 // - Sprite frame management (GetFrame)
 // ================================================================
-
 #include "../include/animation.h"
 
 /*==============================================================================
