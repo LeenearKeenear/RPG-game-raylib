@@ -14,24 +14,21 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 
-/*==============================================================================
- * Global Variables
- *==============================================================================*/
-
-/** Global instance pause menu — bisa diakses dari mana aja */
+/**
+ * @brief Global instance pause menu
+ * Bisa diakses dari mana aja via extern
+ */
 PauseMenu pauseMenu;
 
-/*==============================================================================
- * Main Function
- *==============================================================================*/
-
+/**
+ * @brief Main entry point game application
+ * @return 0 saat game ditutup
+ */
 int main()
 {
-    // ================================================================
     // Inisialisasi
     // Urutan penting: InitScreen dulu → InitMap → InitAll → InitMainMenu
     // InitMap harus sebelum InitAll karena player butuh data map buat spawn
-    // ================================================================
 
     // Step 1: buat window, audio, dan render texture virtual (1280x720)
     GameState state = InitScreen();
@@ -46,12 +43,10 @@ int main()
     // Step 4: init elemen UI main menu
     InitMainMenu(&state);
 
-    // ================================================================
     // Main Game Loop
-    // ================================================================
     while (!WindowShouldClose())
     {
-        // ===== State: MAIN_MENU =====
+        // State: MAIN_MENU
         // Tampilan awal dengan tombol start & quit
         if (state.currentScreen == MAIN_MENU)
         {
@@ -67,7 +62,7 @@ int main()
             // scale layar virtual ke window asli
             DrawRenderWindows(&state);
         }
-        // ===== State: PLAY =====
+        // State: PLAY
         // Gameplay aktif
         else if (state.currentScreen == PLAY)
         {
@@ -96,8 +91,10 @@ int main()
                 pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
             }
 
-            // update semua logic game (player, enemy, dll)
-            UpdateLogicAll();
+            // update semua logic game (player, enemy, dll) - skip when paused
+            if (!pauseMenu.IsActive()) {
+                UpdateLogicAll();
+            }
 
             // render semua ke layar virtual
             DrawRenderTexture(&state);
@@ -107,9 +104,7 @@ int main()
         }
     }
 
-    // ================================================================
     // Shutdown — bersihin semua resource sebelum tutup
-    // ================================================================
     GameShutDown(&state);
     return 0;
 }

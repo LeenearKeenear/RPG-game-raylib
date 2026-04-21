@@ -1,8 +1,14 @@
-# ==============================================================================
-# DEPRECATED: Makefile ini tidak lagi dikelola.
-# Silakan gunakan CMake + Ninja sebagai gantinya.
-# Lihat CONTRIBUTING.md untuk petunjuk pembangunan.
-# ==============================================================================
+# ============================================================================
+#                        ⚠️  DEPRECATED MAKEFILE  ⚠️
+# ============================================================================
+# This Makefile is no longer maintained!
+#
+# PLEASE USE CMake + Ninja instead:
+#   cmake --preset ninja
+#   cmake --build --preset ninja
+#
+# See CONTRIBUTING.md for detailed instructions.
+# ============================================================================
 
 CXX = g++
 CXXFLAGS = -Wall -Wextra -Wno-missing-field-initializers -std=c++17 -I./lib/raylib/include -I./lib/tileson -I./include
@@ -17,13 +23,20 @@ endif
 
 MAKEFLAGS = -j$(CORES)
 
+# ============================================================================
+# DEPRECATION WARNING - Prints on every make command
+# ============================================================================
+DEPRECATION_WARNING = echo ""; echo "=============================================================="; echo "  ⚠️  WARNING: This Makefile is deprecated!"; echo "  Please use CMake instead. See CONTRIBUTING.md"; echo "=============================================================="; echo ""
+
 .PHONY: cores help
 cores:
+	@$(DEPRECATION_WARNING)
 	@echo Detected cores: $(CORES)
 
 help:
+	@$(DEPRECATION_WARNING)
 	@echo "=============================================="
-	@echo "  Build Options"
+	@echo "  Build Options (DEPRECATED - Use CMake!)"
 	@echo "=============================================="
 	@echo "  make app        - Build (parallel compilation)"
 	@echo "  make refresh    - Clean and rebuild"
@@ -47,6 +60,7 @@ SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 
 app: setup $(OBJ)
+	@$(DEPRECATION_WARNING)
 	@echo ""
 	@echo "=============================================="
 	@echo "  Building with $(CORES) parallel jobs..."
@@ -57,6 +71,7 @@ app: setup $(OBJ)
 	@powershell -Command "if (Test-Path '$(DLL_SOURCE)') { Write-Host '[DLL] Copying raylib.dll...' -ForegroundColor Cyan; Copy-Item -Force '$(DLL_SOURCE)' . }"
 
 setup:
+	@$(DEPRECATION_WARNING)
 	@powershell -ExecutionPolicy Bypass -File setup.ps1
 
 $(OBJ_DIR): $(TMPDIR)
@@ -66,6 +81,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 cln:
+	@$(DEPRECATION_WARNING)
 	@echo ""
 	@echo "[CLEAN] Removing build artifacts..."
 	@powershell -Command "Remove-Item -Recurse -Force $(OBJ_DIR) -ErrorAction Continue; Remove-Item -Recurse -Force $(TMPDIR) -ErrorAction Continue; Remove-Item -Force $(EXE), raylib.dll -ErrorAction Continue; exit 0"
@@ -73,5 +89,6 @@ cln:
 	@echo ""
 
 refresh:
-	make cln
-	make app
+	@$(DEPRECATION_WARNING)
+	@make cln
+	@make app

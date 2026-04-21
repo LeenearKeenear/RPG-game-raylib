@@ -6,85 +6,19 @@
  *
  * Nyediain tombol berbasis teks untuk UI.
  * Ada efek hover gelap dan deteksi klik di area teks.
+ *
+ * @note Sekarang pake template dari button.h (Button<TextPolicy>)
+ *       Buat backward compatibility, nama buttonTxt tetep dipake.
  */
 
-#include "../lib/raylib/include/raylib.h"
-#include <string>
-
-/*==============================================================================
- * ButtonTxt Class
- *==============================================================================*/
+#include "button.h"
 
 /**
  * @brief Tombol berbasis teks buat UI
- *
- * Render tombol dari teks dengan efek hover gelap.
- * Pake isClicked() buat deteksi klik dan Draw() buat ngerender.
- * Lebar teks diitung otomatis pas konstruktor.
+ * @note Sekarang pake template dari button.h (Button<TextPolicy>)
+ *       Buat backward compatibility, nama buttonTxt tetep dipake.
+ *       Langsung pake Button<TextPolicy> juga bisa.
  */
-class buttonTxt
-{
-public:
-    /**
-     * @brief Constructor default - bikin tombol kosong
-     */
-    buttonTxt();
 
-    /**
-     * @brief Constructor dengan parameter lengkap
-     * @param text Teks yang bakal ditampilin di tombol
-     * @param posX Posisi X tombol di layar (pixel)
-     * @param posY Posisi Y tombol di layar (pixel)
-     * @param fontSize Ukuran font dalam pixel
-     * @param color Warna teks normal (saat gak hover)
-     * @param hoverAmount Intensitas efek gelap pas hover
-     *                    - 0.0 = item item (hitam total)
-     *                    - 1.0 = gak ada perubahan
-     *                    - <1.0 = makin gelap pas hover (contoh 0.7 = 30% lebih gelap)
-     */
-    buttonTxt(const char *text, int posX, int posY, int fontSize, Color color, float hoverAmount = 1.0F);
-
-    /** @brief Destructor */
-    ~buttonTxt();
-
-    /**
-     * @brief Render tombol teks ke layar
-     * @param mousePosition Posisi kursor mouse saat ini (dari GetMousePosition())
-     * @note Otomatis ngasih efek hover gelap kalo mouse di atas teks
-     *       Efek hover dilakukan dengan mengurangi komponen warna RGB
-     */
-    void Draw(Vector2 mousePosition);
-
-    /*==========================================================================
-     * State Checks
-     *==========================================================================*/
-
-    /**
-     * @brief Cek apakah tombol diklik
-     * @param mousePosition Posisi kursor mouse saat ini
-     * @param mouseClicked Apakah tombol mouse lagi diteken
-     * @return true kalo mouse di area teks tombol DAN mouseClicked true
-     */
-    [[nodiscard]] bool isClicked(Vector2 mousePosition, bool mouseClicked) const;
-
-    /**
-     * @brief Cek apakah mouse lagi hover di atas tombol
-     * @param mousePosition Posisi kursor mouse saat ini
-     * @return true kalo posisi mouse ada di dalam area teks tombol
-     * @note Area deteksi diitung berdasarkan lebar teks yang udah diukur
-     */
-    [[nodiscard]] bool isHovered(Vector2 mousePosition) const;
-
-private:
-    /*==========================================================================
-     * Private Members
-     *==========================================================================*/
-
-    const char *text;  /**< Teks yang ditampilin di tombol */
-    int posX;          /**< Posisi X tombol di layar (pixel) */
-    int posY;          /**< Posisi Y tombol di layar (pixel) */
-    int fontSize;      /**< Ukuran font dalam pixel */
-    Color textColor;   /**< Warna teks normal (saat gak hover) */
-    int textWidth;     /**< Lebar teks dalam pixel (dihitung pas konstruktor pake MeasureText()) */
-    float hoverAmount; /**< Intensitas efek gelap pas hover (0.0 - 1.0) */
-};
+// Type alias sudah didefinisikan di button.h:
+// using buttonTxt = Button<TextPolicy>;
