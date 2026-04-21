@@ -112,27 +112,15 @@ void OptionsScreen::CalculateDimensions()
     int backWidth = MeasureText("BACK", fontSize);
     backButton = buttonTxt("BACK", startX + width - backWidth - padding - 20, startY + height - fontSize - padding - 20, fontSize, WHITE, 0.7F);
 
-    // MUST populate resolutionOptions BEFORE creating buttons that use it
     resolutionOptions = GetAvailableResolutions();
 
-    // Find current resolution index
-    int currentWidth = GetScreenWidth();
-    int currentHeight = GetScreenHeight();
     selectedResolution = 0;
-    for (size_t i = 0; i < resolutionOptions.size(); i++) {
-        if (resolutionOptions[i].width == currentWidth && resolutionOptions[i].height == currentHeight) {
-            selectedResolution = static_cast<int>(i);
-            break;
-        }
-    }
 
-    // Video tab buttons (at value positions)
     const int labelFontSize = 24;
     int labelX = startX + 40;
     int valueX = startX + 250;
     int contentStartY = startY + 100;
 
-    // Fullscreen button (ON/OFF)
     bool isFullscreen = IsWindowFullscreen();
     fullscreenButton = buttonTxt(
         isFullscreen ? "ON" : "OFF",
@@ -142,7 +130,6 @@ void OptionsScreen::CalculateDimensions()
         isFullscreen ? GREEN : RED,
         0.7F);
 
-    // Resolution button
     const char* resLabel = resolutionOptions[selectedResolution].label;
     resolutionButton = buttonTxt(
         resLabel,
@@ -152,7 +139,6 @@ void OptionsScreen::CalculateDimensions()
         YELLOW,
         0.7F);
 
-    // FPS button (ON/OFF)
     fpsButton = buttonTxt(
         showFPS ? "ON" : "OFF",
         valueX,
@@ -181,9 +167,16 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
     }
 
     if (selectedTab == 0) {
-        // Use buttonTxt click detection for Video tab buttons
         if (fullscreenButton.isClicked(mousePosition, mouseClicked)) {
-            ToggleFullscreenMode();
+            if (IsWindowFullscreen()) {
+                ToggleFullscreenMode();
+            } else {
+                Rectangle monitorRes = GetMonitorResolution();
+                SetWindowSize(
+                    static_cast<int>(monitorRes.width),
+                    static_cast<int>(monitorRes.height));
+                ToggleFullscreenMode();
+            }
             CalculateDimensions();
             return;
         }
@@ -191,7 +184,9 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
         if (resolutionButton.isClicked(mousePosition, mouseClicked)) {
             selectedResolution = (selectedResolution + 1) % static_cast<int>(resolutionOptions.size());
             if (!IsWindowFullscreen()) {
-                SetWindowSize(resolutionOptions[selectedResolution].width, resolutionOptions[selectedResolution].height);
+                SetWindowSize(
+                    resolutionOptions[selectedResolution].width,
+                    resolutionOptions[selectedResolution].height);
             }
             CalculateDimensions();
             return;
@@ -199,6 +194,7 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
 
         if (fpsButton.isClicked(mousePosition, mouseClicked)) {
             state->showFPS = !state->showFPS;
+            showFPS = state->showFPS;
             CalculateDimensions();
             return;
         }
