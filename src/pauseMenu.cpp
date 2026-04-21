@@ -12,14 +12,29 @@
  * Static Variables (Popup Notifications)
  *==============================================================================*/
 
+/**
+ * @brief Popup notifikasi untuk save game
+ */
 static Popup savePopup("Game Saved!", "OK", 0.7F);
+
+/**
+ * @brief Popup notifikasi untuk load game
+ */
 static Popup loadPopup("Game Loaded!", "OK", 0.7F);
 
 /*==============================================================================
  * OptionsScreen Implementation
  *==============================================================================*/
 
-OptionsScreen::OptionsScreen() : active(false), returnScreen(PLAY), selectedTab(0), width(0), height(0), startX(0), startY(0), selectedResolution(0)
+/**
+ * @brief Constructor
+ * 
+ * Menginisialisasi semua tombol tab, tombol back, dan dimensi awal.
+ */
+OptionsScreen::OptionsScreen() 
+    : active(false), returnScreen(PLAY), selectedTab(0), 
+      width(0), height(0), startX(0), startY(0), 
+      selectedResolution(0), showFPS(false)
 {
     tabButtons = {buttonTxt("VIDEO", 0, 0, 30, WHITE, 0.7F),
                 buttonTxt("AUDIO", 0, 0, 30, WHITE, 0.7F),
@@ -29,31 +44,52 @@ OptionsScreen::OptionsScreen() : active(false), returnScreen(PLAY), selectedTab(
     CalculateDimensions();
 }
 
+/**
+ * @brief Destructor
+ */
 OptionsScreen::~OptionsScreen()
 {
 }
 
+/**
+ * @brief Menampilkan layar options
+ */
 void OptionsScreen::Show()
 {
     active = true;
     CalculateDimensions();
 }
 
+/**
+ * @brief Menyembunyikan layar options
+ */
 void OptionsScreen::Hide()
 {
     active = false;
 }
 
+/**
+ * @brief Memeriksa apakah layar options sedang aktif
+ * @return true jika aktif, false jika tidak
+ */
 bool OptionsScreen::IsActive() const
 {
     return active;
 }
 
+/**
+ * @brief Mengatur layar kembali saat BACK diklik
+ * @param screen Layar tujuan
+ */
 void OptionsScreen::SetReturnScreen(ScreenState screen)
 {
     returnScreen = screen;
 }
 
+/**
+ * @brief Mendapatkan daftar resolusi yang tersedia berdasarkan monitor
+ * @return Vektor berisi ResOption (width, height, label)
+ */
 std::vector<ResOption> GetAvailableResolutions()
 {
     std::vector<ResOption> options;
@@ -82,12 +118,17 @@ std::vector<ResOption> GetAvailableResolutions()
     return options;
 }
 
+/**
+ * @brief Menghitung dimensi dan membuat elemen UI
+ * 
+ * Menggunakan Approach B: selalu mulai dari opsi pertama (720p)
+ * tanpa melakukan auto-detect resolusi saat ini.
+ */
 void OptionsScreen::CalculateDimensions()
 {
     const int fontSize = 30;
     const int padding = 20;
     const int tabWidth = 200;
-    const int tabHeight = 50;
     const int tabSpacing = 10;
 
     width = 800;
@@ -110,7 +151,11 @@ void OptionsScreen::CalculateDimensions()
     }
 
     int backWidth = MeasureText("BACK", fontSize);
-    backButton = buttonTxt("BACK", startX + width - backWidth - padding - 20, startY + height - fontSize - padding - 20, fontSize, WHITE, 0.7F);
+    backButton = buttonTxt(
+        "BACK", 
+        startX + width - backWidth - padding - 20, 
+        startY + height - fontSize - padding - 20, 
+        fontSize, WHITE, 0.7F);
 
     resolutionOptions = GetAvailableResolutions();
 
@@ -148,6 +193,12 @@ void OptionsScreen::CalculateDimensions()
         0.7F);
 }
 
+/**
+ * @brief Memperbarui handling input
+ * @param state Pointer ke GameState
+ * @param mousePosition Posisi mouse saat ini
+ * @param mouseClicked Status klik mouse
+ */
 void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseClicked)
 {
     if (!active) return;
@@ -201,6 +252,10 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
     }
 }
 
+/**
+ * @brief Me-render layar options
+ * @param mousePosition Posisi mouse untuk efek hover
+ */
 void OptionsScreen::Draw(Vector2 mousePosition)
 {
     if (!active) return;
@@ -222,23 +277,29 @@ void OptionsScreen::Draw(Vector2 mousePosition)
     }
 }
 
+/**
+ * @brief Me-render tab Video
+ * @param mousePosition Posisi mouse untuk efek hover
+ */
 void OptionsScreen::DrawVideoTab(Vector2 mousePosition)
 {
     int contentStartY = startY + 100;
     const int fontSize = 24;
     int labelX = startX + 40;
 
-    // Labels (not clickable)
     DrawText("Fullscreen", labelX, contentStartY + 15, fontSize, WHITE);
     DrawText("Resolution", labelX, contentStartY + 75, fontSize, WHITE);
     DrawText("Show FPS", labelX, contentStartY + 135, fontSize, WHITE);
 
-    // Value buttons (clickable with hover effect)
     fullscreenButton.Draw(mousePosition);
     resolutionButton.Draw(mousePosition);
     fpsButton.Draw(mousePosition);
 }
 
+/**
+ * @brief Me-render tab Audio
+ * @param mousePosition Posisi mouse untuk efek hover
+ */
 void OptionsScreen::DrawAudioTab(Vector2 mousePosition)
 {
     (void)mousePosition;
@@ -259,6 +320,10 @@ void OptionsScreen::DrawAudioTab(Vector2 mousePosition)
     DrawText("(Coming Soon)", labelX, contentStartY + 180, 18, GRAY);
 }
 
+/**
+ * @brief Me-render tab Keybinds
+ * @param mousePosition Posisi mouse untuk efek hover
+ */
 void OptionsScreen::DrawKeybindsTab(Vector2 mousePosition)
 {
     (void)mousePosition;
@@ -273,10 +338,10 @@ void OptionsScreen::DrawKeybindsTab(Vector2 mousePosition)
                        "P", "TAB", "R", "K",
                        "B", "Scroll"};
     const char* actions[] = {"Move Up", "Move Down", "Move Left", "Move Right",
-                           "Interact", "Inventory", "Map", "Action",
-                           "Weapon 1", "Weapon 2", "Potion 1", "Potion 2",
-                           "Pause", "Debug", "Revive", "Damage",
-                           "Prev Map", "Zoom"};
+                            "Interact", "Inventory", "Map", "Action",
+                            "Weapon 1", "Weapon 2", "Potion 1", "Potion 2",
+                            "Pause", "Debug", "Revive", "Damage",
+                            "Prev Map", "Zoom"};
 
     for (int i = 0; i < 9; i++) {
         int rowY = contentStartY + i * 28;
@@ -294,6 +359,11 @@ void OptionsScreen::DrawKeybindsTab(Vector2 mousePosition)
  * PauseMenu Implementation
  *==============================================================================*/
 
+/**
+ * @brief Constructor
+ * 
+ * Menginisialisasi semua tombol menu: Resume, Save, Load, Options, Return, Close
+ */
 PauseMenu::PauseMenu() : active(false), position({0, 0}), width(0), height(0)
 {
     buttonTexts = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
@@ -307,26 +377,42 @@ PauseMenu::PauseMenu() : active(false), position({0, 0}), width(0), height(0)
     CalculateDimensions();
 }
 
+/**
+ * @brief Destructor
+ */
 PauseMenu::~PauseMenu()
 {
 }
 
+/**
+ * @brief Menampilkan pause menu
+ */
 void PauseMenu::Show()
 {
     CalculateDimensions();
     active = true;
 }
 
+/**
+ * @brief Menyembunyikan pause menu
+ */
 void PauseMenu::Hide()
 {
     active = false;
 }
 
+/**
+ * @brief Memeriksa apakah pause menu sedang aktif
+ * @return true jika aktif, false jika tidak
+ */
 bool PauseMenu::IsActive() const
 {
     return active;
 }
 
+/**
+ * @brief Menghitung dimensi menu berdasarkan layar
+ */
 void PauseMenu::CalculateDimensions()
 {
     const int maxWidth = static_cast<int>(GameScreenWidth * 0.30F);
@@ -341,7 +427,7 @@ void PauseMenu::CalculateDimensions()
         if (btnWidth > maxButtonWidth) maxButtonWidth = btnWidth;
     }
 
-    width = maxWidth;
+    width = maxButtonWidth;
     height = GameScreenHeight;
     position.x = 0;
     position.y = 0;
@@ -362,6 +448,11 @@ void PauseMenu::CalculateDimensions()
     }
 }
 
+/**
+ * @brief Handle klik pada tombol berdasarkan index
+ * @param buttonIndex Index tombol yang diklik (0-5)
+ * @param state Pointer ke GameState
+ */
 void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
 {
     switch (buttonIndex) {
@@ -390,6 +481,12 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
     }
 }
 
+/**
+ * @brief Memperbarui logic pause menu
+ * @param state Pointer ke GameState
+ * @param mousePosition Posisi mouse saat ini
+ * @param mouseClicked Status klik mouse
+ */
 void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicked)
 {
     if (!active) return;
@@ -411,6 +508,10 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
     }
 }
 
+/**
+ * @brief Me-render pause menu ke layar
+ * @param mousePosition Posisi mouse untuk efek hover
+ */
 void PauseMenu::Draw(Vector2 mousePosition)
 {
     if (!active) return;
