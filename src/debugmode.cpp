@@ -11,6 +11,7 @@
 #include "../lib/raylib/include/raymath.h"
 #include "../include/screen.h"
 #include "../include/map.h"
+#include "../include/mapLogic.h"
 #include "../include/animation.h"
 #include "../include/player.h"
 
@@ -106,28 +107,28 @@ void Debug::DrawPanelFrame(Rectangle bounds, const char *title, Color borderColo
  */
 void Debug::DrawCollisionOverlay(const std::string& layerName, Color rectColor, Color polygonColor, Color pointColor)
 {
-    std::vector<MapObject> objs = TilesonGetObjectsByLayerName(layerName.c_str());
+    const std::vector<MapObject*>& objs = TilesonGetObjectsByLayerName(layerName.c_str());
 
-    for (auto& obj : objs)
+    for (auto* obj : objs)
     {
-        if (obj.hasPolygon)
+        if (obj->hasPolygon)
         {
             // Gambar polygon: loop setiap edge dan titik sudutnya
-            int pointCount = (int)obj.polygonPoints.size();
+            int pointCount = (int)obj->polygonPoints.size();
             if (pointCount >= 2)
             {
                 for (int i = 0; i < pointCount; i++)
                 {
                     int nextIndex = (i + 1) % pointCount;
-                    DrawLineEx(obj.polygonPoints[i], obj.polygonPoints[nextIndex], 2.0f, polygonColor);
-                    DrawCircleV(obj.polygonPoints[i], 3.0f, pointColor);
+                    DrawLineEx(obj->polygonPoints[i], obj->polygonPoints[nextIndex], 2.0f, polygonColor);
+                    DrawCircleV(obj->polygonPoints[i], 3.0f, pointColor);
                 }
             }
         }
         else
         {
             // Gambar rectangle collision
-            DrawRectangleLinesEx(obj.bounds, 2.0f, rectColor);
+            DrawRectangleLinesEx(obj->bounds, 2.0f, rectColor);
         }
     }
 }
@@ -302,10 +303,10 @@ void Debug::DrawCollisionPanel(Rectangle bounds)
     int mapBoundPolygonCount = 0;
 
     // hitung object collision berdasarkan layer name
-    std::vector<MapObject> collisionObjs = TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME);
-    for (auto &obj : collisionObjs)
+    const std::vector<MapObject*>& collisionObjs = TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME);
+    for (auto *obj : collisionObjs)
     {
-        if (obj.hasPolygon)
+        if (obj->hasPolygon)
             collisionPolygonCount++;
         else
             collisionRectCount++;

@@ -15,7 +15,6 @@
 #include "input.h"
 #include "inventory.h"
 
-
 // ================================================================
 // Player Class
 // Handle semua behavior player: movement, collision, render
@@ -81,16 +80,16 @@ public:
     void Render(void);
 
     /**
-     * @brief Handle camera follow player dengan clamp ke world bounds
-     * @note Camera bakal ngikutin player tapi gak bakal keluar dari batas map
-     */
-    void PlayerCamera(void);
-
-    /**
      * @brief Wrapper per frame — dipanggil dari UpdateLogicAll()
      * @note Urutan: Update() → PlayerCamera()
      */
     void Tick(void);
+
+    /**
+     * @brief Handle camera follow player dengan clamp ke world bounds
+     * @note Camera bakal ngikutin player tapi gak bakal keluar dari batas map
+     */
+    void PlayerCamera(void);
 
     // ================================================================
     // Getters
@@ -115,13 +114,6 @@ public:
     // Frustum Culling
     // ================================================================
 
-    /**
-     * @brief Hitung range tile yang visible di layar berdasarkan camera viewport
-     * @return TileRange berisi minX, minY, maxX, maxY
-     * @note Ini adalah inti logic frustum culling — dipake oleh RenderMap()
-     */
-    TileRange GetVisibleTileRange(void);
-
     // health getters
     float GetHealth() { return Health; }
     float GetMaxHealth() { return MaxHealth; }
@@ -133,7 +125,7 @@ public:
     void SetMana(float m) { Mana = m; }
 
     // info getters
-    const char* GetName() { return Name; }
+    const char *GetName() { return Name; }
 
     // ================================================================
     // Public Members
@@ -196,7 +188,7 @@ private:
     int TileSize = 32;     /**< Ukuran tile dalam pixel */
     float Speed = 4.0f;    /**< Kecepatan gerak player (pixel per frame) */
     Texture2D CharTexture; /**< Texture sprite player */
-    const char* Name = "Player Name";
+    const char *Name = "Player Name";
 
     // ukuran hitbox player bisa diperkecil dari sprite biar movement
     // terasa lebih enak dan gak gampang nyangkut di sudut/object.
@@ -231,7 +223,6 @@ private:
     // Hotbar slots (1-4)
     InventoryItem Hotbar[4];
 };
-
 
 /*==============================================================================
  * Global Player Instance

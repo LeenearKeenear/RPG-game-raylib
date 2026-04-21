@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 /*==============================================================================
  * Global Camera
@@ -98,6 +99,13 @@ struct TileRange
     int maxY; /**< Baris tile paling bawah yang visible (exclusive) */
 };
 
+/**
+ * @brief Hitung range tile yang visible di layar berdasarkan camera viewport
+ * @return TileRange berisi minX, minY, maxX, maxY
+ * @note Ini adalah inti logic frustum culling — dipake oleh RenderMap()
+ */
+TileRange GetVisibleTileRange(void);
+
 /*==============================================================================
  * Debug Variables
  *==============================================================================*/
@@ -164,27 +172,3 @@ void SwitchMap(const char *newMapPath, const char *targetSpawnName);
  */
 void GoBack(void);
 
-/*==============================================================================
- * Object Query Functions
- *==============================================================================*/
-
-/**
- * @brief Dapetin semua object dari layer tertentu
- * @param layerName Nama object layer yang mau diambil
- * @return Vector berisi MapObject yang ada di layer tersebut
- */
-std::vector<MapObject> TilesonGetObjectsByLayerName(const std::string &layerName);
-
-/**
- * @brief Dapetin semua object dengan type tertentu
- * @param type Type object yang mau dicari (sesuai Tiled)
- * @return Vector berisi MapObject dengan type yang sesuai
- */
-std::vector<MapObject> TilesonGetObjectsByType(const std::string &type);
-
-/**
- * @brief Dapetin object berdasarkan nama
- * @param name Nama object yang mau dicari
- * @return Pointer ke MapObject kalo ketemu, nullptr kalo gak ada
- */
-MapObject *TilesonGetObjectByName(const std::string &name);

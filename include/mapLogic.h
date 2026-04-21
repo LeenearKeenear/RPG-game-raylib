@@ -3,7 +3,7 @@
 /**
  * @file maplogic.h
  * @brief Map Logic & Collision Helper Module
- * 
+ *
  * Nyediain helper functions buat interaksi dengan map:
  * - Posisi object (spawn point, dll)
  * - Bounds object
@@ -21,12 +21,56 @@
 struct MapObject;
 
 /*==============================================================================
+ * Map Object Index
+ *==============================================================================*/
+
+/**
+ * @brief Precomputed index buat O(1) lookup MapObject
+ * @note Dibangun sekali via BuildMapObjectIndex() setelah LoadMap()
+ *       Pointer nunjuk langsung ke element di tilesonMap->Objects
+ */
+struct MapObjectIndex
+{
+    std::unordered_map<std::string, MapObject *> byName;
+    std::unordered_map<std::string, std::vector<MapObject *>> byType;
+    std::unordered_map<std::string, std::vector<MapObject *>> byLayer;
+};
+
+/**
+ * @brief Build/rebuild index dari tilesonMap->Objects
+ * @note Panggil ini setelah LoadMap() selesai
+ */
+void BuildMapObjectIndex();
+
+/*==============================================================================
+ * Object Query Functions
+ *==============================================================================*/
+
+/**
+ * @brief Dapetin semua object dari layer tertentu
+ * @return const reference ke internal vector, zero copy
+ */
+const std::vector<MapObject *> &TilesonGetObjectsByLayerName(const std::string &layerName);
+
+/**
+ * @brief Dapetin semua object dengan type tertentu
+ * @return const reference ke internal vector, zero copy
+ */
+const std::vector<MapObject *> &TilesonGetObjectsByType(const std::string &type);
+
+/**
+ * @brief Dapetin object berdasarkan nama
+ * @return Pointer ke MapObject kalo ketemu, nullptr kalo gak ada
+ */
+MapObject *TilesonGetObjectByName(const std::string &name);
+
+/*==============================================================================
  * TiledHelper Class
  *==============================================================================*/
 
 /**
  * @brief Helper class buat interaksi dengan data map dari Tiled
- * 
+ *
  * Nyediain method-method static buat ngambil data object dari map:
  * - Posisi object berdasarkan nama atau type
  * - Bounds object berdasarkan type
@@ -46,7 +90,7 @@ public:
      * @return true kalo object ditemukan, false kalo gak ada
      */
     static bool TryGetObjectPositionByName(const std::string &objectName, Vector2 &outPosition);
-    
+
     /**
      * @brief Coba dapetin posisi object berdasarkan typenya
      * @param objectType Type object yang mau dicari
@@ -76,8 +120,8 @@ public:
      */
     struct CollisionResult
     {
-        std::vector<Rectangle> rects;                    /**< Daftar rectangle collision */
-        std::vector<std::vector<Vector2>> polygons;      /**< Daftar polygon collision (masing-masing polygon punya titik-titik) */
+        std::vector<Rectangle> rects;               /**< Daftar rectangle collision */
+        std::vector<std::vector<Vector2>> polygons; /**< Daftar polygon collision (masing-masing polygon punya titik-titik) */
     };
 
     /**
@@ -87,7 +131,7 @@ public:
      * @return true kalo layer ditemukan dan ada collision data, false kalo gak ada
      */
     static bool TryGetCollisionByLayerName(const std::string &layerName, CollisionResult &outCollision);
-    
+
     /**
      * @brief Coba dapetin collision data berdasarkan object type
      * @param objectType Type object collision yang mau dicari
@@ -101,7 +145,7 @@ public:
      * @param objectType Type object yang mau dicari
      * @return Vector berisi MapObject yang typenya sesuai
      */
-    std::vector<MapObject> GetObjectsByType(const std::string &objectType);
+    static std::vector<MapObject *> GetObjectsByType(const std::string &objectType);
 };
 
 /*==============================================================================

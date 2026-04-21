@@ -15,125 +15,173 @@
  * Global Variables
  *==============================================================================*/
 
-/** Global instance TiledHelper - bisa diakses file lain via extern */
 TiledHelper TiledHelperFunction;
 
+/**
+ * @brief Precomputed index dari tilesonMap->Objects
+ * @note Dibangun sekali via BuildMapObjectIndex() setelah LoadMap().
+ *       Isinya pointer langsung ke element di tilesonMap->Objects — zero copy.
+ *       JANGAN modifikasi tilesonMap->Objects setelah index dibangun.
+ */
+static MapObjectIndex g_mapIndex;
+
+/**
+ * @brief Build index dari semua object di tilesonMap->Objects
+ * @note Panggil SEKALI setelah LoadMap() selesai.
+ *       Rebuild otomatis kalau dipanggil lagi (misal setelah SwitchMap()).
+ */
+void BuildMapObjectIndex()
+{
+    g_mapIndex.byName.clear();
+    g_mapIndex.byType.clear();
+    g_mapIndex.byLayer.clear();
+
+    for (auto &obj : tilesonMap->Objects)
+    {
+        // byName: satu nama -> satu object (nama harusnya unik di Tiled)
+        if (!obj.name.empty())
+            g_mapIndex.byName[obj.name] = &obj;
+
+        // byType: satu type -> banyak object (misal semua "pass" door)
+        if (!obj.type.empty())
+            g_mapIndex.byType[obj.type].push_back(&obj);
+
+        // byLayer: satu layer -> banyak object (misal semua object di "obstacle")
+        if (!obj.layerName.empty())
+            g_mapIndex.byLayer[obj.layerName].push_back(&obj);
+    }
+}
+
 /*==============================================================================
- * Position Helpers
+ * Low-level Query Functions
+ * Langsung akses g_mapIndex — O(1), tanpa loop, tanpa copy.
  *==============================================================================*/
 
 /**
- * @brief Coba dapetin posisi object berdasarkan namanya
- * @param objectName Nama object yang dicari
- * @param outPosition [OUT] Posisi object kalo ketemu
- * @return true kalo object ditemukan
+ * @brief Cari object berdasarkan nama
+ * @return Pointer ke object kalo ketemu, nullptr kalo gak ada
+ */
+MapObject *TilesonGetObjectByName(const std::string &name)
+{
+    auto it = g_mapIndex.byName.find(name);
+    return (it != g_mapIndex.byName.end()) ? it->second : nullptr;
+}
+
+/**
+ * @brief Ambil semua object dengan type tertentu
+ * @return const reference ke internal vector — jangan di-store lama, bisa invalid setelah SwitchMap()
+ */
+const std::vector<MapObject *> &TilesonGetObjectsByType(const std::string &type)
+{
+    static const std::vector<MapObject *> empty; // fallback kalo type gak ketemu
+    auto it = g_mapIndex.byType.find(type);
+    return (it != g_mapIndex.byType.end()) ? it->second : empty;
+}
+
+/**
+ * @brief Ambil semua object dari layer tertentu
+ * @return const reference ke internal vector — jangan di-store lama, bisa invalid setelah SwitchMap()
+ */
+const std::vector<MapObject *> &TilesonGetObjectsByLayerName(const std::string &layerName)
+{
+    static const std::vector<MapObject *> empty; // fallback kalo layer gak ketemu
+    auto it = g_mapIndex.byLayer.find(layerName);
+    return (it != g_mapIndex.byLayer.end()) ? it->second : empty;
+}
+
+/*==============================================================================
+ * TiledHelper — High-level Helper Functions
+ * Wrapper di atas low-level query, return hasil yang lebih spesifik
+ * (posisi, bounds, collision) dengan format yang siap pakai.
+ *==============================================================================*/
+
+/**
+ * @brief Dapetin posisi (x, y) object berdasarkan nama
+ * @note Posisi diambil dari sudut kiri atas bounds object
  */
 bool TiledHelper::TryGetObjectPositionByName(const std::string &objectName, Vector2 &outPosition)
 {
-    MapObject *obj = TilesonGetObjectByName(objectName.c_str());
-    if (obj == nullptr)
+    MapObject *obj = TilesonGetObjectByName(objectName);
+    if (!obj)
         return false;
-
     outPosition = {obj->bounds.x, obj->bounds.y};
     return true;
 }
 
 /**
- * @brief Coba dapetin posisi object berdasarkan typenya
- * @param objectType Type object yang dicari
- * @param outPosition [OUT] Posisi object pertama yang ketemu
- * @return true kalo ada object dengan type tersebut
+ * @brief Dapetin posisi object pertama yang typenya cocok
+ * @note Kalo ada banyak object dengan type sama, yang diambil cuma yang pertama
  */
 bool TiledHelper::TryGetObjectPositionByType(const std::string &objectType, Vector2 &outPosition)
 {
-    std::vector<MapObject> objs = TilesonGetObjectsByType(objectType.c_str());
+    const auto &objs = TilesonGetObjectsByType(objectType);
     if (objs.empty())
         return false;
-
-    outPosition = {objs[0].bounds.x, objs[0].bounds.y};
+    outPosition = {objs[0]->bounds.x, objs[0]->bounds.y};
     return true;
 }
 
-/*==============================================================================
- * Bounds Helpers
- *==============================================================================*/
-
 /**
- * @brief Coba dapetin bounds object berdasarkan typenya
- * @param objectType Type object yang dicari
- * @param outBounds [OUT] Rectangle bounds object pertama yang ketemu
- * @return true kalo ada object dengan type tersebut
+ * @brief Dapetin rectangle bounds object pertama yang typenya cocok
  */
 bool TiledHelper::TryGetObjectBoundsByType(const std::string &objectType, Rectangle &outBounds)
 {
-    std::vector<MapObject> objs = TilesonGetObjectsByType(objectType.c_str());
+    const auto &objs = TilesonGetObjectsByType(objectType);
     if (objs.empty())
         return false;
-
-    outBounds = objs[0].bounds;
+    outBounds = objs[0]->bounds;
     return true;
 }
 
-/*==============================================================================
- * Collision Helpers
- *==============================================================================*/
-
 /**
- * @brief Coba dapetin collision data berdasarkan layer name
- * @param layerName Nama layer collision (misal "obstacle")
- * @param outCollision [OUT] CollisionResult berisi rects dan polygons
- * @return true kalo layer ditemukan dan ada collision data
+ * @brief Dapetin semua collision data dari layer tertentu
+ * @note Object polygon masuk ke outCollision.polygons,
+ *       object rectangle biasa masuk ke outCollision.rects
  */
 bool TiledHelper::TryGetCollisionByLayerName(const std::string &layerName, CollisionResult &outCollision)
 {
-    std::vector<MapObject> objs = TilesonGetObjectsByLayerName(layerName.c_str());
+    const auto &objs = TilesonGetObjectsByLayerName(layerName);
     if (objs.empty())
         return false;
-
-    // Loop semua object di layer, pisahkan polygon dan rectangle
-    for (auto &obj : objs)
+    for (auto *obj : objs)
     {
-        if (obj.hasPolygon)
-            outCollision.polygons.push_back(obj.polygonPoints);
+        if (obj->hasPolygon)
+            outCollision.polygons.push_back(obj->polygonPoints);
         else
-            outCollision.rects.push_back(obj.bounds);
+            outCollision.rects.push_back(obj->bounds);
     }
-
     return true;
 }
 
 /**
- * @brief Coba dapetin collision data berdasarkan object type
- * @param objectType Type object collision yang dicari
- * @param outCollision [OUT] CollisionResult berisi rects dan polygons
- * @return true kalo ada object dengan type tersebut
+ * @brief Dapetin semua collision data dari object dengan type tertentu
+ * @note Sama kayak TryGetCollisionByLayerName tapi filter by type, bukan layer
  */
 bool TiledHelper::TryGetCollisionByType(const std::string &objectType, CollisionResult &outCollision)
 {
-    std::vector<MapObject> objs = TilesonGetObjectsByType(objectType.c_str());
+    const auto &objs = TilesonGetObjectsByType(objectType);
     if (objs.empty())
         return false;
-
-    // Loop semua object, pisahkan polygon dan rectangle
-    for (auto &obj : objs)
+    for (auto *obj : objs)
     {
-        if (obj.hasPolygon)
-            outCollision.polygons.push_back(obj.polygonPoints);
+        if (obj->hasPolygon)
+            outCollision.polygons.push_back(obj->polygonPoints);
         else
-            outCollision.rects.push_back(obj.bounds);
+            outCollision.rects.push_back(obj->bounds);
     }
-
     return true;
 }
 
 /**
- * @brief Dapetin semua object berdasarkan typenya
- * @param objectType Type object yang dicari
- * @return Vector berisi MapObject yang typenya sesuai
+ * @brief Dapetin owned copy vector semua object dengan type tertentu
+ * @note Beda sama TilesonGetObjectsByType yang return reference —
+ *       ini return copy jadi aman disimpen lebih lama.
+ *       Pake ini kalo lo butuh iterate sambil map mungkin berubah.
  */
-std::vector<MapObject> TiledHelper::GetObjectsByType(const std::string &objectType)
+std::vector<MapObject *> TiledHelper::GetObjectsByType(const std::string &objectType)
 {
-    return TilesonGetObjectsByType(objectType.c_str());
+    const auto &objs = TilesonGetObjectsByType(objectType);
+    return std::vector<MapObject *>(objs.begin(), objs.end());
 }
 
 /*==============================================================================

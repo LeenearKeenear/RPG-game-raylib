@@ -56,7 +56,7 @@ void Player::Init(const char *spawnObjectName)
 {
     // Step 1: Load texture karakter
     LoadTileTexture(TEXTURE_KNIGHT, "texture/knight.png");
-    LoadTileTexture(TEXTURE_ITEMS,  "texture/test.png");
+    LoadTileTexture(TEXTURE_ITEMS, "texture/test.png");
 
     // Step 2: Inisialisasi state animasi player
     Anim.position = {0.0f, 0.0f};
@@ -187,16 +187,17 @@ void Player::Update(void)
         if (Mana < MaxMana)
         {
             Mana += ManaRegenRate * GetFrameTime();
-            if (Mana > MaxMana) Mana = MaxMana;
+            if (Mana > MaxMana)
+                Mana = MaxMana;
         }
     }
-
 
     // --- Health Test (DEBUG) ---
     if (InputInstance.IsTestLoseHP())
     {
         Health -= 10.0f;
-        if (Health < 0) Health = 0;
+        if (Health < 0)
+            Health = 0;
         TraceLog(LOG_INFO, "PLAYER: Test Health Decrease (%.1f)", Health);
     }
 
@@ -205,7 +206,8 @@ void Player::Update(void)
     {
         HandleAction();
         // kalau jadi attack, skip movement frame ini
-        if (Anim.isAttacking) return;
+        if (Anim.isAttacking)
+            return;
     }
 
     // ===== Go Back (B) — kembali ke map sebelumnya =====
@@ -297,194 +299,39 @@ void Player::Render(void)
 }
 
 /*==============================================================================
- * Action Handlers
+ * Main Update Loop & Frustum Culling
  *==============================================================================*/
 
 // ================================================================
-// HandleAction()
-// Resolve apa yang terjadi saat input aksi (misal: Left Click)
-// dilakukan berdasarkan context:
-// - Inventori terbuka → equip/unequip item
-// - Slot senjata (1/2) → attack
-// - Slot potion (3/4) → minum potion
+// Tick()
+// Wrapper logic player per frame — dipanggil dari UpdateLogicAll().
+// Urutan: update input/movement → update animasi → update camera
 // ================================================================
-void Player::HandleAction(void)
+void Player::Tick(void)
 {
-    PlayerAction action = InputInstance.ResolveAction();
+    // Step 1: Update movement dan input
+    Update();
 
-    switch (action)
+    // Step 2: Handle pending go back (kembali ke map sebelumnya)
+    if (PlayerInstance.pendingGoBack)
     {
-    case ACTION_ATTACK:
-        if (Mana >= AttackManaCost)
-        {
-            UpdatePlayerAttack(Anim);
-            Mana -= AttackManaCost;
-            ManaRegenTimer = ManaRegenDelay; // Reset timer ke 2 detik
-            TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d) - Mana: %.1f", (int)InputInstance.GetActiveSlot(), Mana);
-        }
-        else
-        {
-            TraceLog(LOG_WARNING, "PLAYER: Attack failed! Out of energy.");
-        }
-        break;
-
-    case ACTION_DRINK_POTION:
-    {
-        int slotIdx = (int)InputInstance.GetActiveSlot() - 1;
-        if (slotIdx >= 0 && slotIdx < 4) {
-            if (Hotbar[slotIdx].type == ITEM_POTION && Hotbar[slotIdx].amount > 0) {
-                UsePotion(slotIdx);
-                TraceLog(LOG_INFO, "PLAYER: Drink potion! %s (slot %d)", Hotbar[slotIdx].name.c_str(), (int)InputInstance.GetActiveSlot());
-            } else {
-                TraceLog(LOG_INFO, "PLAYER: No potion in slot %d!", (int)InputInstance.GetActiveSlot());
-            }
-        }
-        break;
-    }
-
-    case ACTION_EQUIP_UNEQUIP:
-        // TODO: implementasi equip/unequip dari inventori
-        TraceLog(LOG_INFO, "PLAYER: Equip/Unequip from inventory!");
-        break;
-
-    case ACTION_NONE:
-    default:
-        break;
-    }
-}
-
-// ================================================================
-// UsePotion()
-// Terapkan efek potion dan kurangi jumlahnya.
-// ================================================================
-void Player::UsePotion(int slotIndex)
-{
-    if (Hotbar[slotIndex].type != ITEM_POTION || Hotbar[slotIndex].amount <= 0)
-        return;
-
-    // Cek apakah item mengandung kata "Mana" untuk mendeteksi tipe heal
-    if (Hotbar[slotIndex].name.find("Mana") != std::string::npos) {
-        // Apply mana heal
-        Mana += Hotbar[slotIndex].healValue;
-        if (Mana > MaxMana) Mana = MaxMana;
-        TraceLog(LOG_INFO, "PLAYER: Healed Mana by %d! Current: %.1f", Hotbar[slotIndex].healValue, Mana);
-    } else {
-        // Apply health heal
-        Health += Hotbar[slotIndex].healValue;
-        if (Health > MaxHealth) Health = MaxHealth;
-        TraceLog(LOG_INFO, "PLAYER: Healed Health by %d! Current: %.1f", Hotbar[slotIndex].healValue, Health);
-    }
-
-    // Consume item
-    Hotbar[slotIndex].amount--;
-    if (Hotbar[slotIndex].amount <= 0) {
-        Hotbar[slotIndex] = {ITEM_NONE, "", 0, 0, 0, 0, 0};
-    }
-}
-
-// ================================================================
-// HandleRevive()
-// Reset player dari state DEAD ke IDLE.
-// Dipanggil saat R ditekan (debug/testing).
-// ================================================================
-void Player::HandleRevive(void)
-{
-    if (Anim.isDead)
-    {
-        Anim.isDead = false;
-        Anim.isAttacking = false;
-        Anim.state = IDLE;
-        Anim.frame = 0;
-        Anim.frameTime = 0.0f;
-        Health = MaxHealth; // Reset health
-        Mana = MaxMana;     // Reset mana
-        TraceLog(LOG_INFO, "PLAYER: Revived!");
-    }
-}
-
-/*==============================================================================
- * Collision & Movement
- *==============================================================================*/
-
-// ================================================================
-// CanMove()
-// Cek apakah posisi baru player (NewPos) nabrak salah satu
-// collision shape dari object layer Tiled, atau keluar dari
-// world boundary.
-//
-// Collision box player diasumsiin 1 tile (TileSize x TileSize).
-// Return false kalau nabrak / keluar bound, true kalau aman.
-// ================================================================
-bool Player::CanMove(Vector2 newPosition)
-{
-    // Step 1: Build hitbox di posisi baru
-    Rectangle hitbox = GetPlayerHitboxAtPosition(newPosition);
-
-    // Step 2: Cek world bounds (batas luar map)
-    if (!IsWithinWorldBounds(hitbox, tilesonMap->width * TILE_SIZE, tilesonMap->height * TILE_SIZE))
-        return false;
-
-    // Step 3: Cek collision dengan rectangle obstacles
-    if (CheckCollisionAgainstRects(hitbox, CollisionRects))
-        return false;
-
-    // Step 4: Cek collision dengan polygon obstacles
-    if (CheckCollisionAgainstPolygons(hitbox, CollisionPolygons))
-        return false;
-
-    return true; // Aman, gak nabrak apa-apa
-}
-
-/*==============================================================================
- * Door Interaction
- *==============================================================================*/
-
-/**
- * @brief Cek interaksi dengan pintu dan trigger switch map
- * @note Dipanggil tiap frame, kalo player nabrak pintu dan tekan E
- */
-void Player::CheckDoorInteraction(void)
-{
-    Rectangle playerHitbox = GetPlayerHitboxAtPosition(Position);
-
-    // Ambil semua object dengan type "pass" (pintu)
-    std::vector<MapObject> doors = TiledHelperFunction.GetObjectsByType(DOOR_TYPE_OBJECT_NAME);
-
-    for (const auto &door : doors)
-    {
-        // Cek apakah player nabrak pintu
-        if (!CheckCollisionRecs(playerHitbox, door.bounds))
-            continue;
-
-        // Kalo nabrak tapi gak tekan E, gak terjadi apa-apa
-        if (!IsKeyPressed(KEY_E))
-            return;
-
-        // Cek properti "target_map" (map tujuan)
-        auto mapIt = door.properties.find("target_map");
-        if (mapIt == door.properties.end())
-        {
-            TraceLog(LOG_WARNING, "Door '%s' has no target_map property", door.name.c_str());
-            return;
-        }
-
-        // Cek properti "target_door" (spawn point di map tujuan)
-        auto doorIt = door.properties.find("target_door");
-        if (doorIt == door.properties.end())
-        {
-            TraceLog(LOG_WARNING, "Door '%s' has no target_door property", door.name.c_str());
-            return;
-        }
-
-        // Set pending switch map (dieksekusi di Tick())
-        std::string targetMap = mapIt->second.getValue<std::string>();
-        std::string targetDoor = doorIt->second.getValue<std::string>();
-
-        pendingSwitchMap = true;
-        pendingMapPath = targetMap;
-        pendingDoorName = targetDoor;
+        PlayerInstance.pendingGoBack = false;
+        GoBack();
         return;
     }
+
+    // Step 3: Handle pending switch map (pindah map lewat pintu)
+    if (PlayerInstance.pendingSwitchMap)
+    {
+        PlayerInstance.pendingSwitchMap = false;
+        SwitchMap(PlayerInstance.pendingMapPath.c_str(), PlayerInstance.pendingDoorName.c_str());
+    }
+
+    // Step 4: Update animasi berdasarkan delta time
+    UpdateAnimation(Anim, GetFrameTime());
+
+    // Step 5: Update camera follow player
+    PlayerCamera();
 }
 
 /*==============================================================================
@@ -552,78 +399,202 @@ void Player::PlayerCamera(void)
 }
 
 /*==============================================================================
- * Main Update Loop & Frustum Culling
+ * Collision & Movement
  *==============================================================================*/
 
 // ================================================================
-// Tick()
-// Wrapper logic player per frame — dipanggil dari UpdateLogicAll().
-// Urutan: update input/movement → update animasi → update camera
+// CanMove()
+// Cek apakah posisi baru player (NewPos) nabrak salah satu
+// collision shape dari object layer Tiled, atau keluar dari
+// world boundary.
+//
+// Collision box player diasumsiin 1 tile (TileSize x TileSize).
+// Return false kalau nabrak / keluar bound, true kalau aman.
 // ================================================================
-void Player::Tick(void)
+bool Player::CanMove(Vector2 newPosition)
 {
-    // Step 1: Update movement dan input
-    Update();
+    // Step 1: Build hitbox di posisi baru
+    Rectangle hitbox = GetPlayerHitboxAtPosition(newPosition);
 
-    // Step 2: Handle pending go back (kembali ke map sebelumnya)
-    if (PlayerInstance.pendingGoBack)
+    // Step 2: Cek world bounds (batas luar map)
+    if (!IsWithinWorldBounds(hitbox, tilesonMap->width * TILE_SIZE, tilesonMap->height * TILE_SIZE))
+        return false;
+
+    // Step 3: Cek collision dengan rectangle obstacles
+    if (CheckCollisionAgainstRects(hitbox, CollisionRects))
+        return false;
+
+    // Step 4: Cek collision dengan polygon obstacles
+    if (CheckCollisionAgainstPolygons(hitbox, CollisionPolygons))
+        return false;
+
+    return true; // Aman, gak nabrak apa-apa
+}
+
+/*==============================================================================
+ * Action Handlers
+ *==============================================================================*/
+
+// ================================================================
+// HandleAction()
+// Resolve apa yang terjadi saat input aksi (misal: Left Click)
+// dilakukan berdasarkan context:
+// - Inventori terbuka → equip/unequip item
+// - Slot senjata (1/2) → attack
+// - Slot potion (3/4) → minum potion
+// ================================================================
+void Player::HandleAction(void)
+{
+    PlayerAction action = InputInstance.ResolveAction();
+
+    switch (action)
     {
-        PlayerInstance.pendingGoBack = false;
-        GoBack();
-        return;
+    case ACTION_ATTACK:
+        if (Mana >= AttackManaCost)
+        {
+            UpdatePlayerAttack(Anim);
+            Mana -= AttackManaCost;
+            ManaRegenTimer = ManaRegenDelay; // Reset timer ke 2 detik
+            TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d) - Mana: %.1f", (int)InputInstance.GetActiveSlot(), Mana);
+        }
+        else
+        {
+            TraceLog(LOG_WARNING, "PLAYER: Attack failed! Out of energy.");
+        }
+        break;
+
+    case ACTION_DRINK_POTION:
+    {
+        int slotIdx = (int)InputInstance.GetActiveSlot() - 1;
+        if (slotIdx >= 0 && slotIdx < 4)
+        {
+            if (Hotbar[slotIdx].type == ITEM_POTION && Hotbar[slotIdx].amount > 0)
+            {
+                UsePotion(slotIdx);
+                TraceLog(LOG_INFO, "PLAYER: Drink potion! %s (slot %d)", Hotbar[slotIdx].name.c_str(), (int)InputInstance.GetActiveSlot());
+            }
+            else
+            {
+                TraceLog(LOG_INFO, "PLAYER: No potion in slot %d!", (int)InputInstance.GetActiveSlot());
+            }
+        }
+        break;
     }
 
-    // Step 3: Handle pending switch map (pindah map lewat pintu)
-    if (PlayerInstance.pendingSwitchMap)
-    {
-        PlayerInstance.pendingSwitchMap = false;
-        SwitchMap(PlayerInstance.pendingMapPath.c_str(), PlayerInstance.pendingDoorName.c_str());
+    case ACTION_EQUIP_UNEQUIP:
+        // TODO: implementasi equip/unequip dari inventori
+        TraceLog(LOG_INFO, "PLAYER: Equip/Unequip from inventory!");
+        break;
+
+    case ACTION_NONE:
+    default:
+        break;
     }
-
-    // Step 4: Update animasi berdasarkan delta time
-    UpdateAnimation(Anim, GetFrameTime());
-
-    // Step 5: Update camera follow player
-    PlayerCamera();
 }
 
 // ================================================================
-// GetVisibleTileRange()
-// Inti logic frustum culling — hitung range tile yang visible
-// di layar berdasarkan camera viewport saat ini.
-//
-// Cara kerja:
-// 1. Konversi pojok kiri-atas layar ke world space → worldMin
-// 2. Konversi pojok kanan-bawah layar ke world space → worldMax
-// 3. Bagi koordinat world dengan TILE_SIZE → dapat index tile
-// 4. Tambah margin 1 tile di tiap sisi biar gak ada pop-in di tepi
-// 5. Clamp ke batas map yang valid (0 .. width/height)
-//
-// Dipanggil oleh RenderMap() setiap frame.
+// UsePotion()
+// Terapkan efek potion dan kurangi jumlahnya.
 // ================================================================
-TileRange Player::GetVisibleTileRange(void)
+void Player::UsePotion(int slotIndex)
 {
-    // Pojok kiri-atas dan kanan-bawah layar dalam world space
-    Vector2 worldMin = GetScreenToWorld2D({0.0f, 0.0f}, camera);
-    Vector2 worldMax = GetScreenToWorld2D({(float)GameScreenWidth, (float)GameScreenHeight}, camera);
+    if (Hotbar[slotIndex].type != ITEM_POTION || Hotbar[slotIndex].amount <= 0)
+        return;
 
-    TileRange range;
+    // Cek apakah item mengandung kata "Mana" untuk mendeteksi tipe heal
+    if (Hotbar[slotIndex].name.find("Mana") != std::string::npos)
+    {
+        // Apply mana heal
+        Mana += Hotbar[slotIndex].healValue;
+        if (Mana > MaxMana)
+            Mana = MaxMana;
+        TraceLog(LOG_INFO, "PLAYER: Healed Mana by %d! Current: %.1f", Hotbar[slotIndex].healValue, Mana);
+    }
+    else
+    {
+        // Apply health heal
+        Health += Hotbar[slotIndex].healValue;
+        if (Health > MaxHealth)
+            Health = MaxHealth;
+        TraceLog(LOG_INFO, "PLAYER: Healed Health by %d! Current: %.1f", Hotbar[slotIndex].healValue, Health);
+    }
 
-    // Konversi ke tile index + margin 1 tile biar gak ada pop-in di tepi
-    range.minX = (int)floorf(worldMin.x / TILE_SIZE) - 1;
-    range.minY = (int)floorf(worldMin.y / TILE_SIZE) - 1;
-    range.maxX = (int)ceilf(worldMax.x / TILE_SIZE) + 1;
-    range.maxY = (int)ceilf(worldMax.y / TILE_SIZE) + 1;
+    // Consume item
+    Hotbar[slotIndex].amount--;
+    if (Hotbar[slotIndex].amount <= 0)
+    {
+        Hotbar[slotIndex] = {ITEM_NONE, "", 0, 0, 0, 0, 0};
+    }
+}
 
-    // Clamp ke batas map yang valid (0 .. width/height)
-    if (range.minX < 0)
-        range.minX = 0;
-    if (range.minY < 0)
-        range.minY = 0;
-    if (range.maxX > tilesonMap->width)
-        range.maxX = tilesonMap->width;
-    if (range.maxY > tilesonMap->height)
-        range.maxY = tilesonMap->height;
+// ================================================================
+// HandleRevive()
+// Reset player dari state DEAD ke IDLE.
+// Dipanggil saat R ditekan (debug/testing).
+// ================================================================
+void Player::HandleRevive(void)
+{
+    if (Anim.isDead)
+    {
+        Anim.isDead = false;
+        Anim.isAttacking = false;
+        Anim.state = IDLE;
+        Anim.frame = 0;
+        Anim.frameTime = 0.0f;
+        Health = MaxHealth; // Reset health
+        Mana = MaxMana;     // Reset mana
+        TraceLog(LOG_INFO, "PLAYER: Revived!");
+    }
+}
 
-    return range;
+/*==============================================================================
+ * Door Interaction
+ *==============================================================================*/
+
+/**
+ * @brief Cek interaksi dengan pintu dan trigger switch map
+ * @note Dipanggil tiap frame, kalo player nabrak pintu dan tekan E
+ */
+void Player::CheckDoorInteraction(void)
+{
+    Rectangle playerHitbox = GetPlayerHitboxAtPosition(Position);
+
+    // Ambil semua object dengan type "pass" (pintu)
+    std::vector<MapObject*> doors = TiledHelperFunction.GetObjectsByType(DOOR_TYPE_OBJECT_NAME);
+
+    for (const auto &door : doors)
+    {
+        // Cek apakah player nabrak pintu
+        if (!CheckCollisionRecs(playerHitbox, door->bounds))
+            continue;
+
+        // Kalo nabrak tapi gak tekan E, gak terjadi apa-apa
+        if (!InputInstance.IsInteract())
+            return;
+
+        // Cek properti "target_map" (map tujuan)
+        auto mapIt = door->properties.find("target_map");
+        if (mapIt == door->properties.end())
+        {
+            TraceLog(LOG_WARNING, "Door '%s' has no target_map property", door->name.c_str());
+            return;
+        }
+
+        // Cek properti "target_door" (spawn point di map tujuan)
+        auto doorIt = door->properties.find("target_door");
+        if (doorIt == door->properties.end())
+        {
+            TraceLog(LOG_WARNING, "Door '%s' has no target_door property", door->name.c_str());
+            return;
+        }
+
+        // Set pending switch map (dieksekusi di Tick())
+        std::string targetMap = mapIt->second.getValue<std::string>();
+        std::string targetDoor = doorIt->second.getValue<std::string>();
+
+        pendingSwitchMap = true;
+        pendingMapPath = targetMap;
+        pendingDoorName = targetDoor;
+        return;
+    }
 }

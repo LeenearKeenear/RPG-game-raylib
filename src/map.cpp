@@ -9,6 +9,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../include/screen.h"
+#include "../include/mapLogic.h"
 #include "../include/map.h"
 #include "../include/animation.h"
 #include "../include/player.h"
@@ -55,6 +56,7 @@ static std::string currentMapPath = "";
 // 3. Baca semua ObjectGroup → simpen ke tilesonMap->Objects
 // 4. Load texture tileset dari folder texture/
 // ================================================================
+
 void LoadMap(const char *mapPath)
 {
     // Step 1: Parse file JSON dengan Tileson
@@ -222,6 +224,8 @@ void InitMap(void)
 
     // Map yang aktif saat ini
     LoadMap("world_json/light.json");
+    BuildMapObjectIndex();
+
 }
 
 /*==============================================================================
@@ -240,7 +244,7 @@ void RenderMap(void)
         return;
 
     // Dapatkan range tile yang visible dari frustum culling di player
-    currentVisibleRange = PlayerInstance.GetVisibleTileRange();
+    currentVisibleRange = GetVisibleTileRange();
 
     lastTilesRendered = 0; // reset counter per frame
 
@@ -300,53 +304,45 @@ void RenderMap(void)
     EndMode2D();
 }
 
-/*==============================================================================
- * Object Query Functions
- *==============================================================================*/
-
 // ================================================================
-// TilesonGetObjectsByLayerName()
-// Ambil semua object dari tilesonMap->Objects yang berasal dari
-// object layer dengan nama yang cocok.
+// GetVisibleTileRange()
+// Inti logic frustum culling — hitung range tile yang visible
+// di layar berdasarkan camera viewport saat ini.
 //
-// Dipake buat sistem yang identitasnya berbasis layer name,
-// misalnya collision dan custom world boundary.
+// Cara kerja:
+// 1. Konversi pojok kiri-atas layar ke world space → worldMin
+// 2. Konversi pojok kanan-bawah layar ke world space → worldMax
+// 3. Bagi koordinat world dengan TILE_SIZE → dapat index tile
+// 4. Tambah margin 1 tile di tiap sisi biar gak ada pop-in di tepi
+// 5. Clamp ke batas map yang valid (0 .. width/height)
+//
+// Dipanggil oleh RenderMap() setiap frame.
 // ================================================================
-std::vector<MapObject> TilesonGetObjectsByLayerName(const std::string &layerName)
+TileRange GetVisibleTileRange(void)
 {
-    std::vector<MapObject> result;
-    for (auto &obj : tilesonMap->Objects)
-        if (obj.layerName == layerName)
-            result.push_back(obj);
-    return result;
-}
+    // Pojok kiri-atas dan kanan-bawah layar dalam world space
+    Vector2 worldMin = GetScreenToWorld2D({0.0f, 0.0f}, camera);
+    Vector2 worldMax = GetScreenToWorld2D({(float)GameScreenWidth, (float)GameScreenHeight}, camera);
 
-// ================================================================
-// TilesonGetObjectsByType()
-// Ambil semua object dari tilesonMap->Objects yang type-nya cocok.
-// Dipake buat load collision rectangles pas Player::Init().
-// ================================================================
-std::vector<MapObject> TilesonGetObjectsByType(const std::string &type)
-{
-    std::vector<MapObject> result;
-    for (auto &obj : tilesonMap->Objects)
-        if (obj.type == type)
-            result.push_back(obj);
-    return result;
-}
+    TileRange range;
 
-// ================================================================
-// TilesonGetObjectByName()
-// Cari object pertama yang namanya cocok dari tilesonMap->Objects.
-// Dipake buat nyari spawn point pas Player::Init().
-// Return nullptr kalau gak ketemu.
-// ================================================================
-MapObject *TilesonGetObjectByName(const std::string &name)
-{
-    for (auto &obj : tilesonMap->Objects)
-        if (obj.name == name)
-            return &obj;
-    return nullptr;
+    // Konversi ke tile index + margin 1 tile biar gak ada pop-in di tepi
+    range.minX = (int)floorf(worldMin.x / TILE_SIZE) - 1;
+    range.minY = (int)floorf(worldMin.y / TILE_SIZE) - 1;
+    range.maxX = (int)ceilf(worldMax.x / TILE_SIZE) + 1;
+    range.maxY = (int)ceilf(worldMax.y / TILE_SIZE) + 1;
+
+    // Clamp ke batas map yang valid (0 .. width/height)
+    if (range.minX < 0)
+        range.minX = 0;
+    if (range.minY < 0)
+        range.minY = 0;
+    if (range.maxX > tilesonMap->width)
+        range.maxX = tilesonMap->width;
+    if (range.maxY > tilesonMap->height)
+        range.maxY = tilesonMap->height;
+
+    return range;
 }
 
 /*==============================================================================
@@ -381,6 +377,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
 
     // Load map baru
     LoadMap(newMapPath);
+    BuildMapObjectIndex();
 
     // Kalau gagal load, jangan lanjut init player/camera
     if (tilesonMap == nullptr)
