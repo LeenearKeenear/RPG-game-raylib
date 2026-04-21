@@ -259,6 +259,91 @@ bool IsPointInPolygon(Vector2 point, const std::vector<Vector2> &polygon)
     return inside;
 }
 
+RayHitResult RayCast::Cast(Vector2 origin, Vector2 direction, float maxDistance, std::vector<MapObject> &objects)
+{
+    RayHitResult result = {false, {0, 0}, maxDistance, nullptr};
+
+    for (auto &obj : objects)
+    {
+        std::optional<float> t;
+
+        if (obj.hasPolygon)
+            t = HitPolygon(origin, direction, obj.polygonPoints, maxDistance);
+        else
+            t = HitRect(origin, direction, obj.bounds, maxDistance);
+            
+
+        if (t && *t < result.distance)
+        {
+            result.hit = true;
+            result.distance = *t;
+            result.point = {origin.x + direction.x * *t, origin.y + direction.y * *t};
+            result.object = &obj;
+        }
+    }
+    return result;
+}
+
+std::optional<float> RayCast::HitRect(Vector2 origin, Vector2 direction, Rectangle rect, float maxDistance)
+{
+    auto corners = GetRectangleCorners(rect);
+    Vector2 rayEnd = {origin.x + direction.x * maxDistance, origin.y + direction.y * maxDistance};
+
+    // corners order: [0]TL, [1]TR, [2]BL, [3]BR
+    // edge: TL→TR, TR→BR, BR→BL, BL→TL
+    std::pair<int, int> edgeIdx[4] = {{0, 1}, {1, 3}, {3, 2}, {2, 0}};
+
+    std::optional<float> closest;
+    for (auto &[a, b] : edgeIdx)
+    {
+        auto t = LineIntersect(origin, rayEnd, corners[a], corners[b]);
+        if (t && (!closest || *t < *closest))
+            closest = t;
+    }
+    return closest;
+}
+
+std::optional<float> RayCast::HitPolygon(Vector2 origin, Vector2 direction, std::vector<Vector2> &polygon, float maxDistance)
+{
+    if (polygon.size() < 3)
+        return std::nullopt;
+
+    // kalo origin udah di dalam polygon, jarak = 0
+    if (IsPointInPolygon(origin, polygon))
+        return 0.0f;
+
+    Vector2 rayEnd = {origin.x + direction.x * maxDistance, origin.y + direction.y * maxDistance};
+    std::optional<float> closest;
+
+    for (size_t i = 0; i < polygon.size(); i++)
+    {
+        Vector2 a = polygon[i];
+        Vector2 b = polygon[(i + 1) % polygon.size()];
+        auto t = LineIntersect(origin, rayEnd, a, b);
+        if (t && (!closest || *t < *closest))
+            closest = t;
+    }
+    return closest;
+}
+
+std::optional<float> RayCast::LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4)
+{
+    float d1x = p2.x - p1.x, d1y = p2.y - p1.y;
+    float d2x = p4.x - p3.x, d2y = p4.y - p3.y;
+    float denom = d1x * d2y - d1y * d2x;
+
+    if (fabsf(denom) < 1e-6f)
+        return std::nullopt;
+
+    float t = ((p3.x - p1.x) * d2y - (p3.y - p1.y) * d2x) / denom;
+    float u = ((p3.x - p1.x) * d1y - (p3.y - p1.y) * d1x) / denom;
+
+    if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f)
+        return t * sqrtf(d1x * d1x + d1y * d1y); // konversi t ke pixel distance
+
+    return std::nullopt;
+}
+
 /*==============================================================================
  * Collision Check Helpers
  *==============================================================================*/

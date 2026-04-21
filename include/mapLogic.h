@@ -17,6 +17,7 @@
 #include "../lib/tileson/tileson.hpp"
 #include <vector>
 #include <string>
+#include <optional>
 
 struct MapObject;
 
@@ -155,9 +156,29 @@ public:
 /** Global instance TiledHelper - bisa diakses file lain via extern */
 extern TiledHelper TiledHelperFunction;
 
-// ================================================================
-// Hitbox Helpers
-// ================================================================
+struct RayHitResult {
+    bool hit;
+    Vector2 point;       // titik tumbukan
+    float distance;      // jarak dari origin
+    MapObject* object;   // pointer ke object yang kena (nullptr kalo miss)
+};
+
+class RayCast {
+public:
+    // Cast ray, cek semua object yang relevan
+    RayHitResult Cast(Vector2 origin, Vector2 direction, float maxDistance, std::vector<MapObject>& objects);
+
+private:
+    // cek ray vs rectangle
+    std::optional<float> HitRect(Vector2 origin, Vector2 direction, Rectangle rect, float maxDistance);
+
+    // cek ray vs polygon
+    std::optional<float> HitPolygon(Vector2 origin, Vector2 direction, std::vector<Vector2> &polygon, float maxDistance);
+
+    
+    // cek intersect 2 line segment — dipake HitPolygon
+    std::optional<float> LineIntersect(Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4);
+};
 
 /*==============================================================================
  * Hitbox Functions

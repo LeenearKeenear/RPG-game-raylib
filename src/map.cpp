@@ -387,7 +387,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     }
 
     // Re-init player berdasarkan target door di map baru
-    PlayerInstance.Init(targetDoorName);
+    PlayerInstance.Init(gState, targetDoorName);
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
@@ -428,7 +428,7 @@ void GoBack(void)
     }
 
     // Init player di spawn point map sebelumnya
-    PlayerInstance.Init(prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
+    PlayerInstance.Init(gState, prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();

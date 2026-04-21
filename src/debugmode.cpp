@@ -1,7 +1,7 @@
 /**
  * @file debugmode.cpp
  * @brief Implementasi dari Debug System Module
- * 
+ *
  * Implementasi dari class Debug yang dideklarasikan di debug.h
  * Handle semua debug panel, overlay, dan zoom debug.
  */
@@ -44,14 +44,14 @@ bool isDebugMode = false;
 Rectangle Debug::GetPanelBounds(int index, float panelWidth, float panelHeight) const
 {
     // konfigurasi grid debug panel
-    const int ColumnCount = 2;      // jumlah kolom grid
-    const float StartX = 5.0f;      // posisi X awal panel pertama
-    const float StartY = 5.0f;      // posisi Y awal panel pertama
-    const float GapX = 10.0f;       // jarak antar kolom
-    const float GapY = 10.0f;       // jarak antar baris
+    const int ColumnCount = 2; // jumlah kolom grid
+    const float StartX = 5.0f; // posisi X awal panel pertama
+    const float StartY = 5.0f; // posisi Y awal panel pertama
+    const float GapX = 10.0f;  // jarak antar kolom
+    const float GapY = 10.0f;  // jarak antar baris
 
-    int column = index % ColumnCount;   // kolom ke berapa (0 atau 1)
-    int row = index / ColumnCount;      // baris ke berapa
+    int column = index % ColumnCount; // kolom ke berapa (0 atau 1)
+    int row = index / ColumnCount;    // baris ke berapa
 
     Rectangle bounds = {
         StartX + column * (panelWidth + GapX),
@@ -73,10 +73,10 @@ std::vector<Debug::DebugPanelEntry> Debug::BuildActivePanels(void) const
 
     // daftar panel aktif
     // urutan di vector = urutan layout di grid
-    panels.push_back({"Map", &Debug::DrawMapPanel, true});
-    panels.push_back({"Camera", &Debug::DrawCameraPanel, true});
+    // panels.push_back({"Map", &Debug::DrawMapPanel, true});
+    // panels.push_back({"Camera", &Debug::DrawCameraPanel, true});
     panels.push_back({"Player", &Debug::DrawPlayerPanel, true});
-    panels.push_back({"Zoom", &Debug::DrawZoomPanel, true});
+    // panels.push_back({"Zoom", &Debug::DrawZoomPanel, true});
     panels.push_back({"Frustum", &Debug::DrawFrustumPanel, true});
     panels.push_back({"Collision", &Debug::DrawCollisionPanel, true});
 
@@ -105,11 +105,11 @@ void Debug::DrawPanelFrame(Rectangle bounds, const char *title, Color borderColo
  * @param pointColor Warna buat titik-titik polygon
  * @note Rectangle digambar pake DrawRectangleLinesEx, polygon pake DrawLineEx
  */
-void Debug::DrawCollisionOverlay(const std::string& layerName, Color rectColor, Color polygonColor, Color pointColor)
+void Debug::DrawCollisionOverlay(const std::string &layerName, Color rectColor, Color polygonColor, Color pointColor)
 {
-    const std::vector<MapObject*>& objs = TilesonGetObjectsByLayerName(layerName.c_str());
+    const std::vector<MapObject *> &objs = TilesonGetObjectsByLayerName(layerName.c_str());
 
-    for (auto* obj : objs)
+    for (auto *obj : objs)
     {
         if (obj->hasPolygon)
         {
@@ -131,6 +131,26 @@ void Debug::DrawCollisionOverlay(const std::string& layerName, Color rectColor, 
             DrawRectangleLinesEx(obj->bounds, 2.0f, rectColor);
         }
     }
+}
+
+void Debug::DrawRaycastOverlay(void)
+{
+
+    Vector2 playerCenter = {
+        PlayerInstance.GetPosition().x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2,
+        PlayerInstance.GetPosition().y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2};
+
+    Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(gState), camera);
+    Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+    Vector2 rayEnd = {
+        playerCenter.x + aimDir.x * PlayerInstance.GetINTERACT_RANGE(),
+        playerCenter.y + aimDir.y * PlayerInstance.GetINTERACT_RANGE()};
+
+    DrawLineEx(playerCenter, rayEnd, 2.0f, GREEN);
+
+    // titik hit hanya kalo kena sesuatu
+    if (PlayerInstance.GetLastHit().hit)
+        DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, RED);
 }
 
 /*==============================================================================
@@ -303,7 +323,7 @@ void Debug::DrawCollisionPanel(Rectangle bounds)
     int mapBoundPolygonCount = 0;
 
     // hitung object collision berdasarkan layer name
-    const std::vector<MapObject*>& collisionObjs = TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME);
+    const std::vector<MapObject *> &collisionObjs = TilesonGetObjectsByLayerName(COLLISION_LAYER_NAME);
     for (auto *obj : collisionObjs)
     {
         if (obj->hasPolygon)
@@ -369,6 +389,7 @@ void Debug::DrawWorldOverlay(void)
 
     DrawCollisionOverlay(COLLISION_LAYER_NAME, RED, GOLD, GOLD);
     DrawCollisionOverlay(OBJECT_LAYER_NAME, BLUE, BLUE, BLUE);
+    DrawRaycastOverlay();
 
     // ============================================================
     // batas luar map rectangle
@@ -387,4 +408,3 @@ void Debug::DrawWorldOverlay(void)
     // ============================================================
     DrawText("Hitbox", (int)playerHitbox.x, (int)playerHitbox.y - 14, 14, LIME);
 }
-

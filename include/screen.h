@@ -64,6 +64,8 @@ typedef struct
     ScreenState currentScreen; /**< State game yang aktif (MAIN_MENU / PLAY / OPTIONS) */
 } GameState;
 
+extern GameState *gState;
+
 /*==============================================================================
  * Screen Functions
  *==============================================================================*/

@@ -12,6 +12,7 @@
 #include "../include/map.h"
 #include "../include/animation.h"
 #include "../include/input.h"
+#include "../lib/raylib/include/raymath.h"
 #include <cmath>
 
 /*==============================================================================
@@ -52,8 +53,10 @@ Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
 // 3. Ambil semua object dari layer "collision" → simpen di CollisionRects / CollisionPolygons
 // 4. Ambil custom world boundary polygon dari layer "map_bound"
 // ================================================================
-void Player::Init(const char *spawnObjectName)
+void Player::Init(GameState *state, const char *spawnObjectName)
 {
+    State = gState;
+
     // Step 1: Load texture karakter
     LoadTileTexture(TEXTURE_KNIGHT, "texture/knight.png");
     LoadTileTexture(TEXTURE_ITEMS, "texture/test.png");
@@ -152,7 +155,7 @@ void Player::Init(const char *spawnObjectName)
 // Normalisasi velocity biar diagonal gak lebih cepet dari cardinal.
 // Cek collision sebelum apply posisi baru.
 // ================================================================
-void Player::Update(void)
+void Player::Update()
 {
     // Poll input di awal frame
     InputInstance.PollInput();
@@ -283,7 +286,8 @@ void Player::Update(void)
     // Sync posisi animasi dengan posisi player
     Anim.position = Position;
 
-    // Cek interaksi dengan pintu
+    // Cek interaksi dengan pintu + raycast
+    RayCasting();
     CheckDoorInteraction();
 }
 
@@ -307,7 +311,7 @@ void Player::Render(void)
 // Wrapper logic player per frame — dipanggil dari UpdateLogicAll().
 // Urutan: update input/movement → update animasi → update camera
 // ================================================================
-void Player::Tick(void)
+void Player::Tick()
 {
     // Step 1: Update movement dan input
     Update();
@@ -431,6 +435,28 @@ bool Player::CanMove(Vector2 newPosition)
     return true; // Aman, gak nabrak apa-apa
 }
 
+void Player::RayCasting()
+{
+    Vector2 playerCenter = {
+        Position.x + HitboxOffsetX + HitboxWidth / 2,
+        Position.y + HitboxOffsetY + HitboxHeight / 2};
+
+    // convert mouse ke world space
+    Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(State), camera);
+
+    // hitung direction dari player ke mouse
+    Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+
+    // filter prop objects
+    std::vector<MapObject> propObjects;
+    for (auto &obj : tilesonMap->Objects)
+    {
+        if (obj.layerName == "prop")
+            propObjects.push_back(obj);
+    }
+
+    LastHit = Ray.Cast(playerCenter, aimDir, INTERACT_RANGE, propObjects);
+}
 /*==============================================================================
  * Action Handlers
  *==============================================================================*/
@@ -560,7 +586,7 @@ void Player::CheckDoorInteraction(void)
     Rectangle playerHitbox = GetPlayerHitboxAtPosition(Position);
 
     // Ambil semua object dengan type "pass" (pintu)
-    std::vector<MapObject*> doors = TiledHelperFunction.GetObjectsByType(DOOR_TYPE_OBJECT_NAME);
+    std::vector<MapObject *> doors = TiledHelperFunction.GetObjectsByType(DOOR_TYPE_OBJECT_NAME);
 
     for (const auto &door : doors)
     {
@@ -596,5 +622,29 @@ void Player::CheckDoorInteraction(void)
         pendingMapPath = targetMap;
         pendingDoorName = targetDoor;
         return;
+    }
+}
+
+void Player::CheckPropInteraction(void)
+{
+    if (!LastHit.hit)
+        return;
+    if (!InputInstance.IsInteract())
+        return;
+
+    const std::string &type = LastHit.object->type;
+    TraceLog(LOG_INFO, "Interacting with: '%s' (type: %s)", LastHit.object->name.c_str(), type.c_str());
+
+    if (type == "chest")
+    {
+        // TODO: open chest logic
+    }
+    else if (type == "npc")
+    {
+        // TODO: trigger dialog
+    }
+    else
+    {
+        TraceLog(LOG_WARNING, "Unknown prop type: %s", type.c_str());
     }
 }

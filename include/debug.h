@@ -105,6 +105,8 @@ private:
      */
     void DrawCollisionOverlay(const std::string &layerName, Color rectColor, Color polygonColor, Color pointColor);
 
+    void DrawRaycastOverlay(void);
+
     /**
      * @brief Gambar frame/border panel debug
      * @param bounds Area panel

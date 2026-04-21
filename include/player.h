@@ -60,7 +60,7 @@ public:
      * @param spawnObjectName Nama object spawn point di Tiled (default: SPAWN_OBJECT_NAME)
      * @note Load texture, baca spawn & collision dari Tiled, setup animasi awal
      */
-    void Init(const char *spawnObjectName = SPAWN_OBJECT_NAME);
+    void Init(GameState* state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
 
     // ================================================================
     // Update & Render
@@ -71,7 +71,7 @@ public:
      * @note Cek collision sebelum apply posisi baru
      *       Juga handle attack, death, revive, dll
      */
-    void Update(void);
+    void Update();
 
     /**
      * @brief Render sprite player di posisi world saat ini
@@ -83,7 +83,7 @@ public:
      * @brief Wrapper per frame — dipanggil dari UpdateLogicAll()
      * @note Urutan: Update() → PlayerCamera()
      */
-    void Tick(void);
+    void Tick();
 
     /**
      * @brief Handle camera follow player dengan clamp ke world bounds
@@ -124,6 +124,10 @@ public:
     float GetMaxMana() { return MaxMana; }
     void SetMana(float m) { Mana = m; }
 
+    // raycasting getters
+    RayHitResult GetLastHit() { return LastHit; }
+    float GetINTERACT_RANGE() { return INTERACT_RANGE; }
+
     // info getters
     const char *GetName() { return Name; }
 
@@ -162,10 +166,14 @@ private:
      */
     bool CanMove(Vector2 NewPos);
 
+    void RayCasting();
+
     /**
      * @brief Cek interaksi dengan door/pintu dan trigger switch map kalo perlu
      */
     void CheckDoorInteraction(void);
+
+    void CheckPropInteraction(void);
 
     /**
      * @brief Handle aksi left click berdasarkan context (slot aktif / inventori)
@@ -182,6 +190,8 @@ private:
     // ================================================================
     // Private Members
     // ================================================================
+
+    GameState* State = nullptr;
 
     Vector2 Position;      /**< Posisi player di world (pixel) */
     Vector2 Velocity;      /**< Kecepatan player (belum dipake maksimal) */
@@ -220,6 +230,11 @@ private:
     // handle action berdasarkan context (slot aktif / inventori)
     void HandleAction(void);
 
+    // raycasting
+    RayCast Ray;
+    RayHitResult LastHit; // hasil ray frame ini, bisa dicek fungsi lain
+
+    const float INTERACT_RANGE = TILE_SIZE * 2.0f; // TODO: set nilai yang bener
     // Hotbar slots (1-4)
     InventoryItem Hotbar[4];
 };

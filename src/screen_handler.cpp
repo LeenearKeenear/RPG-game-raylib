@@ -21,6 +21,8 @@
  * External Variables & Macros
  *==============================================================================*/
 
+GameState *gState;
+
 /** Reference ke pause menu global (dari main.cpp) */
 extern PauseMenu pauseMenu;
 
@@ -58,7 +60,7 @@ extern const int GameScreenHeight = 720;
 void InitAll()
 {
     // Step 1: Inisialisasi player — spawn point diambil otomatis dari object layer Tiled
-    PlayerInstance.Init(SPAWN_OBJECT_NAME);
+    PlayerInstance.Init(gState, SPAWN_OBJECT_NAME);
 
     // Step 2: Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
@@ -196,7 +198,8 @@ void DrawUIOverlay(GameState *state)
     DrawPlayerHUD();
 
     // 2. Menus
-    if (pauseMenu.IsActive()) {
+    if (pauseMenu.IsActive())
+    {
         Vector2 mousePos = GetVirtualMousePosition(state);
         pauseMenu.Draw(mousePos);
     }
