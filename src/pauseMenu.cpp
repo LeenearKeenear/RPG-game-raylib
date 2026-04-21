@@ -112,6 +112,20 @@ void OptionsScreen::CalculateDimensions()
     int backWidth = MeasureText("BACK", fontSize);
     backButton = buttonTxt("BACK", startX + width - backWidth - padding - 20, startY + height - fontSize - padding - 20, fontSize, WHITE, 0.7F);
 
+    // MUST populate resolutionOptions BEFORE creating buttons that use it
+    resolutionOptions = GetAvailableResolutions();
+
+    // Find current resolution index
+    int currentWidth = GetScreenWidth();
+    int currentHeight = GetScreenHeight();
+    selectedResolution = 0;
+    for (size_t i = 0; i < resolutionOptions.size(); i++) {
+        if (resolutionOptions[i].width == currentWidth && resolutionOptions[i].height == currentHeight) {
+            selectedResolution = static_cast<int>(i);
+            break;
+        }
+    }
+
     // Video tab buttons (at value positions)
     const int labelFontSize = 24;
     int labelX = startX + 40;
@@ -146,18 +160,6 @@ void OptionsScreen::CalculateDimensions()
         labelFontSize,
         showFPS ? GREEN : GRAY,
         0.7F);
-
-    resolutionOptions = GetAvailableResolutions();
-
-    int currentWidth = GetScreenWidth();
-    int currentHeight = GetScreenHeight();
-    selectedResolution = 0;
-    for (size_t i = 0; i < resolutionOptions.size(); i++) {
-        if (resolutionOptions[i].width == currentWidth && resolutionOptions[i].height == currentHeight) {
-            selectedResolution = static_cast<int>(i);
-            break;
-        }
-    }
 }
 
 void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseClicked)
