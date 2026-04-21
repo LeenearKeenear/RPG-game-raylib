@@ -7,6 +7,9 @@
 
 #include "../include/pauseMenu.h"
 #include "../include/popup.h"
+#include "../include/videoTab.h"
+#include "../include/audioTab.h"
+#include "../include/keybindsTab.h"
 
 /*==============================================================================
  * Static Variables (Popup Notifications)
@@ -34,14 +37,12 @@ static Popup loadPopup("Game Loaded!", "OK", 0.7F);
 OptionsScreen::OptionsScreen() 
     : active(false), returnScreen(PLAY), selectedTab(0), 
       width(0), height(0), startX(0), startY(0), 
-      selectedResolution(0), showFPS(false)
+      showFPS(false)
 {
     tabButtons = {buttonTxt("VIDEO", 0, 0, 30, WHITE, 0.7F),
                 buttonTxt("AUDIO", 0, 0, 30, WHITE, 0.7F),
                 buttonTxt("KEYBINDS", 0, 0, 30, WHITE, 0.7F)};
     backButton = buttonTxt("BACK", 0, 0, 30, WHITE, 0.7F);
-
-    CalculateDimensions();
 }
 
 /**
@@ -157,9 +158,9 @@ void OptionsScreen::CalculateDimensions()
         startY + height - fontSize - padding - 20, 
         fontSize, WHITE, 0.7F);
 
-    resolutionOptions = GetAvailableResolutions();
-
-    selectedResolution = 0;
+    if (resolutionOptions.empty()) {
+        resolutionOptions = GetAvailableResolutions();
+    }
 
     const int labelFontSize = 24;
     int labelX = startX + 40;
@@ -175,19 +176,10 @@ void OptionsScreen::CalculateDimensions()
         isFullscreen ? GREEN : RED,
         0.7F);
 
-    const char* resLabel = resolutionOptions[selectedResolution].label;
-    resolutionButton = buttonTxt(
-        resLabel,
-        valueX,
-        contentStartY + 75,
-        labelFontSize,
-        YELLOW,
-        0.7F);
-
-    fpsButton = buttonTxt(
+fpsButton = buttonTxt(
         showFPS ? "ON" : "OFF",
         valueX,
-        contentStartY + 135,
+        contentStartY + 75,
         labelFontSize,
         showFPS ? GREEN : GRAY,
         0.7F);
@@ -218,36 +210,9 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
     }
 
     if (selectedTab == 0) {
-        if (fullscreenButton.isClicked(mousePosition, mouseClicked)) {
-            if (IsWindowFullscreen()) {
-                ToggleFullscreenMode();
-            } else {
-                Rectangle monitorRes = GetMonitorResolution();
-                SetWindowSize(
-                    static_cast<int>(monitorRes.width),
-                    static_cast<int>(monitorRes.height));
-                ToggleFullscreenMode();
-            }
-            CalculateDimensions();
-            return;
-        }
-
-        if (resolutionButton.isClicked(mousePosition, mouseClicked)) {
-            selectedResolution = (selectedResolution + 1) % static_cast<int>(resolutionOptions.size());
-            if (!IsWindowFullscreen()) {
-                SetWindowSize(
-                    resolutionOptions[selectedResolution].width,
-                    resolutionOptions[selectedResolution].height);
-            }
-            CalculateDimensions();
-            return;
-        }
-
-        if (fpsButton.isClicked(mousePosition, mouseClicked)) {
-            state->showFPS = !state->showFPS;
+        if (UpdateVideoTab(fullscreenButton, fpsButton, state, mousePosition, mouseClicked)) {
             showFPS = state->showFPS;
             CalculateDimensions();
-            return;
         }
     }
 }
@@ -271,87 +236,9 @@ void OptionsScreen::Draw(Vector2 mousePosition)
     backButton.Draw(mousePosition);
 
     switch (selectedTab) {
-        case 0: DrawVideoTab(mousePosition); break;
-        case 1: DrawAudioTab(mousePosition); break;
-        case 2: DrawKeybindsTab(mousePosition); break;
-    }
-}
-
-/**
- * @brief Me-render tab Video
- * @param mousePosition Posisi mouse untuk efek hover
- */
-void OptionsScreen::DrawVideoTab(Vector2 mousePosition)
-{
-    int contentStartY = startY + 100;
-    const int fontSize = 24;
-    int labelX = startX + 40;
-
-    DrawText("Fullscreen", labelX, contentStartY + 15, fontSize, WHITE);
-    DrawText("Resolution", labelX, contentStartY + 75, fontSize, WHITE);
-    DrawText("Show FPS", labelX, contentStartY + 135, fontSize, WHITE);
-
-    fullscreenButton.Draw(mousePosition);
-    resolutionButton.Draw(mousePosition);
-    fpsButton.Draw(mousePosition);
-}
-
-/**
- * @brief Me-render tab Audio
- * @param mousePosition Posisi mouse untuk efek hover
- */
-void OptionsScreen::DrawAudioTab(Vector2 mousePosition)
-{
-    (void)mousePosition;
-    int contentStartY = startY + 260;
-    const int fontSize = 24;
-    int labelX = startX + 40;
-    int valueX = startX + 250;
-
-    DrawText("Master Volume", labelX, contentStartY + 15, fontSize, WHITE);
-    DrawText("100%", valueX, contentStartY + 15, fontSize, YELLOW);
-
-    DrawText("Music Volume", labelX, contentStartY + 75, fontSize, WHITE);
-    DrawText("80%", valueX, contentStartY + 75, fontSize, YELLOW);
-
-    DrawText("SFX Volume", labelX, contentStartY + 135, fontSize, WHITE);
-    DrawText("100%", valueX, contentStartY + 135, fontSize, YELLOW);
-
-    DrawText("(Coming Soon)", labelX, contentStartY + 180, 18, GRAY);
-}
-
-/**
- * @brief Me-render tab Keybinds
- * @param mousePosition Posisi mouse untuk efek hover
- */
-void OptionsScreen::DrawKeybindsTab(Vector2 mousePosition)
-{
-    (void)mousePosition;
-    int contentStartY = startY + 100;
-    const int fontSize = 20;
-    int col1X = startX + 40;
-    int col2X = startX + 300;
-
-    const char* keys[] = {"W / Arrow Up", "S / Arrow Down", "A / Arrow Left", "D / Arrow Right",
-                       "E", "I", "M", "Mouse Left",
-                       "1", "2", "3", "4",
-                       "P", "TAB", "R", "K",
-                       "B", "Scroll"};
-    const char* actions[] = {"Move Up", "Move Down", "Move Left", "Move Right",
-                            "Interact", "Inventory", "Map", "Action",
-                            "Weapon 1", "Weapon 2", "Potion 1", "Potion 2",
-                            "Pause", "Debug", "Revive", "Damage",
-                            "Prev Map", "Zoom"};
-
-    for (int i = 0; i < 9; i++) {
-        int rowY = contentStartY + i * 28;
-        DrawText(keys[i], col1X, rowY, fontSize, YELLOW);
-        DrawText(actions[i], col1X + 120, rowY, fontSize, WHITE);
-    }
-    for (int i = 9; i < 18; i++) {
-        int rowY = contentStartY + (i - 9) * 28;
-        DrawText(keys[i], col2X, rowY, fontSize, YELLOW);
-        DrawText(actions[i], col2X + 120, rowY, fontSize, WHITE);
+        case 0: DrawVideoTab(fullscreenButton, fpsButton, mousePosition, startX, startY); break;
+        case 1: DrawAudioTab(mousePosition, startX, startY); break;
+        case 2: DrawKeybindsTab(mousePosition, startX, startY); break;
     }
 }
 

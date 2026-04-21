@@ -99,24 +99,6 @@ private:
      */
     void CalculateDimensions();
 
-    /**
-     * @brief Me-render tab Video
-     * @param mousePosition Posisi mouse untuk efek hover
-     */
-    void DrawVideoTab(Vector2 mousePosition);
-
-    /**
-     * @brief Me-render tab Audio
-     * @param mousePosition Posisi mouse untuk efek hover
-     */
-    void DrawAudioTab(Vector2 mousePosition);
-
-    /**
-     * @brief Me-render tab Keybinds
-     * @param mousePosition Posisi mouse untuk efek hover
-     */
-    void DrawKeybindsTab(Vector2 mousePosition);
-
     /// Status aktif layar options
     bool active;
 
@@ -134,9 +116,6 @@ private:
 
     /// Tombol toggle fullscreen (ON/OFF)
     buttonTxt fullscreenButton;
-
-    /// Tombol pemilihan resolusi (720p, 1080p, dll)
-    buttonTxt resolutionButton;
 
     /// Tombol toggle FPS display (ON/OFF)
     buttonTxt fpsButton;
@@ -161,9 +140,6 @@ private:
 
     /// Vektor opsi resolusi yang tersedia
     std::vector<ResOption> resolutionOptions;
-
-    /// Indeks resolusi yang dipilih
-    int selectedResolution;
 };
 
 /*==============================================================================
