@@ -39,7 +39,7 @@ void DrawKeybindsTab(
     for (int i = 9; i < 18; i++) {
         int rowY = contentStartY + (i - 9) * 28;
         DrawText(keys[i], col2X, rowY, fontSize, YELLOW);
-        DrawText(" => ", col2X + 180, rowY, fontSize, GRAY);
-        DrawText(actions[i], col2X + 240, rowY, fontSize, WHITE);
+        DrawText(" => ", col2X + 60, rowY, fontSize, GRAY);
+        DrawText(actions[i], col2X + 100, rowY, fontSize, WHITE);
     }
 }
