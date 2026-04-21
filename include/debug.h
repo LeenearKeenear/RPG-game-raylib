@@ -4,60 +4,44 @@
  * @file debug.h
  * @brief Debug System Module
  *
- * Handle semua debug panel dan zoom debug buat keperluan development.
- * Bisa nampilin info map, camera, player, collision, dll.
+ * Header ini mendeklarasikan sistem debug untuk menampilkan
+ * panel informasi runtime dan overlay debug di world space.
  */
 
 #include "../lib/raylib/include/raylib.h"
 #include <string>
 #include <vector>
 
-// ================================================================
-// Debug Class
-// Handle semua debug panel dan zoom debug
-//
-// Workflow:
-// - Toggle() dipanggil tiap frame buat cek input TAB
-// - Draw() jadi wrapper semua panel, hanya aktif kalau isDebugMode true
-// - Tiap panel punya fungsi sendiri biar gampang di-maintain
-// ================================================================
-
 /*==============================================================================
  * Debug Class
  *==============================================================================*/
 
 /**
- * @brief Class buat handle semua fungsi debug
+ * @brief Menangani seluruh fitur panel dan overlay debug
  *
- * Nyediain debug panel untuk nampilin info real-time:
- * - Map info (ukuran, jumlah tile)
- * - Camera info (posisi, zoom)
- * - Player position
- * - Zoom control
- * - Frustum culling info
- * - Collision overlay
+ * Sistem ini dipakai untuk menampilkan informasi runtime seperti:
+ * - Info map
+ * - Info camera
+ * - Info player
+ * - Info collision
+ * - Info frustum culling
+ * - Overlay debug di world space
  */
 class Debug
 {
 public:
     /**
-     * @brief Handle toggle debug mode
-     * @note Dipanggil tiap frame buat cek input TAB
-     *       Otomatis nge-tracelog kalo mode berubah
+     * @brief Toggle debug mode berdasarkan input
      */
     void Toggle(void);
 
     /**
-     * @brief Wrapper buat semua panel debug
-     * @note Hanya render kalo isDebugMode true
-     *       Manggil semua panel DrawXxxPanel()
+     * @brief Render seluruh panel debug yang aktif
      */
     void Draw(void);
 
     /**
-     * @brief Overlay debug di world-space
-     * @note Nampilin hitbox, collision, dan map bounds
-     *       Langsung di-render ke world (bukan UI)
+     * @brief Render overlay debug langsung di world space
      */
     void DrawWorldOverlay(void);
 
@@ -67,14 +51,13 @@ private:
      *==========================================================================*/
 
     /**
-     * @brief Entry buat satu panel debug
-     * @note Dipake buat ngelola panel yang aktif dan urutannya
+     * @brief Menyimpan data satu panel debug
      */
     struct DebugPanelEntry
     {
-        std::string name;                        /**< Nama panel (buat judul) */
-        void (Debug::*drawFn)(Rectangle bounds); /**< Pointer ke fungsi render panel */
-        bool enabled;                            /**< Apakah panel ini aktif/ditampilin */
+        std::string name;                        // Nama panel
+        void (Debug::*drawFn)(Rectangle bounds); // Pointer ke fungsi render panel
+        bool enabled;                            // Status panel aktif atau tidak
     };
 
     /*==========================================================================
@@ -82,33 +65,38 @@ private:
      *==========================================================================*/
 
     /**
-     * @brief Hitung bounds (posisi & ukuran) panel berdasarkan index
-     * @param index Urutan panel (0, 1, 2, ...)
-     * @param panelWidth Lebar panel dalam pixel
-     * @param panelHeight Tinggi panel dalam pixel
-     * @return Rectangle posisi dan ukuran panel di layar
+     * @brief Hitung posisi dan ukuran panel berdasarkan urutan
+     * @param index Urutan panel
+     * @param panelWidth Lebar panel
+     * @param panelHeight Tinggi panel
+     * @return Rectangle area panel di layar
      */
     Rectangle GetPanelBounds(int index, float panelWidth, float panelHeight) const;
 
     /**
-     * @brief Bikin daftar panel yang aktif
-     * @return Vector berisi DebugPanelEntry yang enabled = true
+     * @brief Bangun daftar panel yang sedang aktif
+     * @return Vector panel yang aktif untuk dirender
      */
     std::vector<DebugPanelEntry> BuildActivePanels(void) const;
 
     /**
-     * @brief Gambar overlay collision buat layer tertentu
-     * @param layerName Nama layer collision yang mau digambar
-     * @param rectColor Warna buat rectangle collision
-     * @param polygonColor Warna buat polygon collision
-     * @param pointColor Warna buat point collision
+     * @brief Gambar overlay collision untuk layer tertentu
+     * @param layerName Nama layer collision
+     * @param rectColor Warna rectangle collision
+     * @param polygonColor Warna polygon collision
+     * @param pointColor Warna titik polygon
      */
     void DrawCollisionOverlay(const std::string &layerName, Color rectColor, Color polygonColor, Color pointColor);
 
     /**
-     * @brief Gambar frame/border panel debug
+     * @brief Gambar overlay raycast debug
+     */
+    void DrawRaycastOverlay(void);
+
+    /**
+     * @brief Gambar frame panel debug
      * @param bounds Area panel
-     * @param title Judul panel (ditampilin di atas)
+     * @param title Judul panel
      * @param borderColor Warna border panel
      */
     void DrawPanelFrame(Rectangle bounds, const char *title, Color borderColor) const;
@@ -118,50 +106,44 @@ private:
      *==========================================================================*/
 
     /**
-     * @brief Panel info map
-     * @note Nampilin ukuran map, jumlah tile, dll
+     * @brief Gambar panel informasi map
      */
     void DrawMapPanel(Rectangle bounds);
 
     /**
-     * @brief Panel info camera
-     * @note Nampilin posisi camera, zoom level, dll
+     * @brief Gambar panel informasi camera
      */
     void DrawCameraPanel(Rectangle bounds);
 
     /**
-     * @brief Panel info player position
-     * @note Nampilin posisi player (world dan tile), direction, state
+     * @brief Gambar panel informasi player
      */
     void DrawPlayerPanel(Rectangle bounds);
 
     /**
-     * @brief Panel zoom debug + handle zoom input
-     * @note Nampilin current zoom level dan handle input +/- buat zoom
+     * @brief Gambar panel zoom debug
      */
     void DrawZoomPanel(Rectangle bounds);
 
     /**
-     * @brief Panel info frustum culling
-     * @note Nampilin info tentang tile/camera yang lagi di-culling
+     * @brief Gambar panel informasi frustum culling
      */
     void DrawFrustumPanel(Rectangle bounds);
 
     /**
-     * @brief Panel info collision & world boundary
-     * @note Nampilin status collision, boundary map, dll
+     * @brief Gambar panel informasi collision dan boundary
      */
     void DrawCollisionPanel(Rectangle bounds);
 
-    // void DebugMouse(GameState *state); // handle mouse position (sementara di-comment)
+    // void DebugMouse(GameState *state); // sementara tidak dipakai
 };
 
 /*==============================================================================
  * Global Debug Instance
  *==============================================================================*/
 
-/** Global instance debug - bisa diakses file lain pake extern */
+// Global instance debug
 extern Debug DebugInstance;
 
-/** Flag buat toggle debug mode - didefinisiin di debugmode.cpp */
+// Flag status debug mode
 extern bool isDebugMode;
