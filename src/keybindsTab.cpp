@@ -33,13 +33,13 @@ void DrawKeybindsTab(
     for (int i = 0; i < 9; i++) {
         int rowY = contentStartY + i * 28;
         DrawText(keys[i], col1X, rowY, fontSize, YELLOW);
-        DrawText(" => ", col1X + 150, rowY, fontSize, GRAY);
-        DrawText(actions[i], col1X + 200, rowY, fontSize, WHITE);
+        DrawText(" => ", col1X + 180, rowY, fontSize, GRAY);
+        DrawText(actions[i], col1X + 240, rowY, fontSize, WHITE);
     }
     for (int i = 9; i < 18; i++) {
         int rowY = contentStartY + (i - 9) * 28;
         DrawText(keys[i], col2X, rowY, fontSize, YELLOW);
-        DrawText(" => ", col2X + 150, rowY, fontSize, GRAY);
-        DrawText(actions[i], col2X + 200, rowY, fontSize, WHITE);
+        DrawText(" => ", col2X + 180, rowY, fontSize, GRAY);
+        DrawText(actions[i], col2X + 240, rowY, fontSize, WHITE);
     }
 }
