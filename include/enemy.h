@@ -43,6 +43,8 @@ struct Enemy{
     AnimationEnemy EnAnim;
 
     float stateTime;
+
+    Vector2 targetPos;
 };
 
 //Declaration for RNG
@@ -54,7 +56,17 @@ void InitEnemy();
 
 void InitEnemyTextures();
 
+void UpdateEnemyAI(Enemy& en, Vector2 playerPos);
+
 Enemy CreateEnemy(Vector2 pos, EnemyType type);
+
+extern void UpdateEnemyAI(Enemy& en, Vector2 playerPos);
+
+void UpdateAllEnemies();
+
+void DrawEnemyHealthBar(Enemy en);
+
+void TakeDamage(Enemy& en, int damage);
 
 void SpawnRandomWave();
 
@@ -71,6 +83,8 @@ void RenderEnemy(Enemy &en);
 void EnemyAttackPlayer(GameState *state);
 
 void ClearEnemies();
+
+extern std::vector<Enemy> activeEnemies;
 
 extern Enemy EnemyInstance;
 extern void InitEnemy();

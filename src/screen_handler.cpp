@@ -10,6 +10,7 @@
 #include "../include/map.h"
 #include "../include/animation.h"
 #include "../include/player.h"
+#include "../include/enemy.h"
 #include "../include/entities.h"
 #include "../include/debug.h"
 #include "../include/pauseMenu.h"
@@ -140,6 +141,7 @@ void UpdateGame(GameState *state)
 void UpdateLogicAll()
 {
     PlayerInstance.Tick();
+    UpdateAllEnemies();
     
 }
 

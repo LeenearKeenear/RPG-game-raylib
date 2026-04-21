@@ -26,9 +26,7 @@ typedef enum
 {
     TEXTURE_TILEMAP = 0, /**< Slot buat tileset/spritesheet environment */
     TEXTURE_KNIGHT,      /**< Slot buat sprite karakter knight (akan direfaktor) */
-    TEXTURE_SLIME,       /**< Slot buat sprite enemy slime */
-    TEXTURE_SKELETON,    /**< Slot buat sprite enemy skeleton */
-    TEXTURE_WOLF,        /**< Slot buat sprite enemy wolf */
+    TEXTURE_ENEMIES,       /**< Slot buat sprite enemy slime */
     TEXTURE_ITEMS
 } TextureAsset;
 
@@ -72,7 +70,9 @@ typedef enum
     TILE_PLAYER_NEW, /**< @deprecated Cuma placeholder, gak dipake */
     TILE_ENEMY_SLIME,/**< Slime */
     TILE_ENEMY_SKELETON,/**< Skeleton */
-    TILE_ENEMY_WOLF  /**< Wolf */
+    TILE_ENEMY_WOLF, /**< Wolf */
+    TILE_ITEM_POTION,
+    TILE_CHEST
 } TileType;
 
 /**
@@ -203,7 +203,7 @@ void DrawPlayer(AnimationPlayer &p);
 enum EnemyState
 {
     EnIDLE,   /**< Diam/standby */
-    EnWALK,   /**< Jalan */
+    EnROAM,   /**< Jalan */
     EnCHASE,  /**< Mengejar */
     EnATTACK, /**< Nyerang */
     EnDEAD    /**< Mati */

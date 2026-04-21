@@ -14,6 +14,7 @@
 
 static std::vector<Enemy> currentEnemies;
 static std::map<std::string, std::vector<Enemy>> savedMapEnemies;
+std::vector<Enemy> activeEnemies;
 
 //Fungsi RNG untuk damage enemy
 int GetRandomDamage(int min, int max){
@@ -23,9 +24,7 @@ int GetRandomDamage(int min, int max){
 //Inisialisasi Texture Enemies
 void InitEnemyTextures()
 {
-    LoadTileTexture(TEXTURE_SLIME, "texture/Enemies.png");
-    LoadTileTexture(TEXTURE_SKELETON, "texture/Enemies.png");
-    LoadTileTexture(TEXTURE_WOLF, "texture/Enemies.png");
+    LoadTileTexture(TEXTURE_ENEMIES, "texture/Enemies.png");
 }
 
 void InitEnemy(){
@@ -72,7 +71,7 @@ Enemy CreateEnemy(Vector2 pos, EnemyType type)
             newEnemy.currentHP = 40;
             newEnemy.minDamage = 2;
             newEnemy.maxDamage = 10;
-            newEnemy.speed = 50.0f;
+            newEnemy.speed = 75.0f;
             newEnemy.detectionRange = 175.0f;
             break;
 
@@ -81,7 +80,7 @@ Enemy CreateEnemy(Vector2 pos, EnemyType type)
             newEnemy.currentHP = 70;
             newEnemy.minDamage = 5;
             newEnemy.maxDamage = 15;
-            newEnemy.speed = 75.0f;
+            newEnemy.speed = 100.0f;
             newEnemy.detectionRange = 200.0f;
             break;
 
@@ -90,17 +89,94 @@ Enemy CreateEnemy(Vector2 pos, EnemyType type)
             newEnemy.currentHP = 100;
             newEnemy.minDamage = 5;
             newEnemy.maxDamage = 20;
-            newEnemy.speed = 100.0f;
+            newEnemy.speed = 120.0f;
             newEnemy.detectionRange = 300.0f;
             break;
     }
 
-    //newEnemy.EnAnim.EnState = EnIDLE;
+    newEnemy.EnAnim.EnState = EnROAM;
     newEnemy.stateTime = GetRandomValue(1,3);
 
     newEnemy.knockbackTime = 0;
 
+    const char* typeName = (type == SLIME) ? "SLIME" : (type == SKELETON) ? "SKELETON" : "WOLF";
+    
+    TraceLog(LOG_INFO, "ENEMY: Spawned [%s] at (%.1f, %.1f) - HP: %d", 
+             typeName, pos.x, pos.y, newEnemy.enemyHP);
+
     return newEnemy;
+}
+
+void UpdateEnemyAI(Enemy& en, Vector2 playerPos) {
+    float distToPlayer = Vector2Distance(en.position, playerPos);
+
+    // 1. Logika Transisi State
+    if (distToPlayer < en.detectionRange) {
+        en.EnAnim.EnState = EnCHASE;
+    } else if (en.EnAnim.EnState == EnCHASE && distToPlayer > en.detectionRange * 1.5f) {
+        en.EnAnim.EnState = EnIDLE; // Berhenti ngejar kalau player jauh banget
+    }
+
+    // 2. Eksekusi Perilaku Berdasarkan State
+    switch (en.EnAnim.EnState) {
+        case EnIDLE:{
+            en.stateTime -= GetFrameTime();
+            if (en.stateTime <= 0) {
+                en.EnAnim.EnState = EnROAM;
+                // Cari titik random di deket dia buat didatengin
+                en.targetPos = { en.position.x + GetRandomValue(-100, 100), 
+                                 en.position.y + GetRandomValue(-100, 100) };
+                en.stateTime = (float)GetRandomValue(2, 5);
+            }
+            break;
+        }
+        case EnROAM:{
+            // Jalan pelan ke targetPos
+            Vector2 moveDir = Vector2Normalize(Vector2Subtract(en.targetPos, en.position));
+            en.position = Vector2Add(en.position, Vector2Scale(moveDir, en.speed * 0.5f * GetFrameTime()));
+            
+            if (Vector2Distance(en.position, en.targetPos) < 5.0f) en.EnAnim.EnState = EnIDLE;
+            break;
+        }
+        case EnCHASE:{
+            // Kejar player dengan speed penuh
+            Vector2 chaseDir = Vector2Normalize(Vector2Subtract(playerPos, en.position));
+            en.position = Vector2Add(en.position, Vector2Scale(chaseDir, en.speed * GetFrameTime()));
+            break;
+        }
+    }
+}
+
+void UpdateAllEnemies() {
+    for (auto& en : activeEnemies) {
+        if (en.isAlive) {
+            UpdateEnemyAI(en, PlayerInstance.GetPosition());
+        }
+    }
+}
+
+void DrawEnemyHealthBar(Enemy en) {
+    float barWidth = 40.0f;
+    float barHeight = 5.0f;
+    float healthPercentage = (float)en.currentHP / (float)en.enemyHP;
+
+    // Background Bar (Hitam/Merah Tua)
+    DrawRectangle(en.position.x - barWidth/2, en.position.y + 40, barWidth, barHeight, BLACK);
+    
+    // Foreground Bar (Merah Terang)
+    DrawRectangle(en.position.x - barWidth/2, en.position.y + 40, barWidth * healthPercentage, barHeight, RED);
+}
+
+void TakeDamage(Enemy& en, int damage) {
+    en.currentHP -= damage;
+    if (en.currentHP < 0) en.currentHP = 0;
+    
+    TraceLog(LOG_INFO, "ENEMY: Took %d damage. Remaining HP: %d", damage, en.currentHP);
+    
+    if (en.currentHP <= 0) {
+        // Logic musuh mati (misal isAlive = false)
+        TraceLog(LOG_WARNING, "ENEMY: Has been defeated!");
+    }
 }
 
 void SpawnRandomWave(){
@@ -153,11 +229,11 @@ void SpawnRandomEnemy(){
     //Menggunakan GetRandomValue untuk spawn enemy
     int randomInt = GetRandomValue(1, 3);
 
-    //Mengkoversi angka 1-3 menjadi EnemyType
+    //Mengkonversi angka 1-3 menjadi EnemyType
     EnemyType t;
     if (randomInt == 1) t = SLIME;
     else if (randomInt == 2) t = SKELETON;
-    else t = WOLF;
+    else t = WOLF; 
 
     currentEnemies.push_back(CreateEnemy(randomPos, t));
 }
@@ -178,19 +254,19 @@ void RenderEnemy(Enemy &en)
 
     switch (en.type){
         case SLIME:
-            tex = TEXTURE_SLIME;
+            tex = TEXTURE_ENEMIES;
             tileID = TILE_ENEMY_SLIME;
             break;
         case SKELETON:
-            tex = TEXTURE_SLIME;
+            tex = TEXTURE_ENEMIES;
             tileID = TILE_ENEMY_SKELETON;
             break;
         case WOLF:
-            tex = TEXTURE_SLIME;
+            tex = TEXTURE_ENEMIES;
             tileID = TILE_ENEMY_WOLF;
             break;
         default:
-            tex = TEXTURE_SLIME;
+            tex = TEXTURE_ENEMIES;
             tileID = TILE_ENEMY_SLIME;
             break;
     }

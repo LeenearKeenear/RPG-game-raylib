@@ -51,7 +51,7 @@ int main()
     InitEnemy();
 
     //Testing spawn item
-    SpawnItem(ITEM_POTION, {100, 130}, 4, RARITY_COMMON);
+    SpawnPotion({750, 169}, 3, RARITY_COMMON);
 
     // ================================================================
     // Main Game Loop
