@@ -17,7 +17,7 @@ void DrawKeybindsTab(
     int contentStartY = startY + 100;
     const int fontSize = 20;
     int col1X = startX + 40;
-    int col2X = startX + 300;
+    int col2X = startX + 380;
 
     const char* keys[] = {"W / Arrow Up", "S / Arrow Down", "A / Arrow Left", "D / Arrow Right",
                        "E", "I", "M", "Mouse Left",

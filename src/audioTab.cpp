@@ -14,7 +14,7 @@ void DrawAudioTab(
     int startY)
 {
     (void)mousePosition;
-    int contentStartY = startY + 260;
+    int contentStartY = startY + 100;
     const int fontSize = 24;
     int labelX = startX + 40;
     int valueX = startX + 250;
