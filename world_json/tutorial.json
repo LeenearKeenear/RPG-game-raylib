@@ -207,8 +207,8 @@
                  "type":"pass",
                  "visible":true,
                  "width":32,
-                 "x":768.666666666667,
-                 "y":447.5
+                 "x":768,
+                 "y":448
                 }, 
                 {
                  "height":32,
@@ -229,7 +229,7 @@
          "y":0
         }],
  "nextlayerid":9,
- "nextobjectid":14,
+ "nextobjectid":16,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

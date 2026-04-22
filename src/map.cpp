@@ -17,6 +17,7 @@
 #include "../include/animation.h"
 #include "../include/player.h"
 #include "../include/mapstack.h"
+#include "../include/propsbehavior.h"
 #include <memory>
 #include <string>
 
@@ -193,6 +194,7 @@ void UnloadMap(void)
             delete[] tilesonMap->tiles[i];
         delete[] tilesonMap->tiles;
 
+        chestManager.Clear();
         tilesonMap->Objects.clear();
 
         // Unload texture tileset dari GPU
@@ -224,13 +226,15 @@ void InitMap(void)
     // LoadMap("world_json/inside.json");
     // LoadMap("world_json/light.json");
 
-    // LoadMap("world_json/floorA.json");
+    LoadMap("world_json/floorA.json");
     // LoadMap("world_json/floorB.json");
     // LoadMap("world_json/floorC.json");
 
     // Map yang aktif saat ini
-    LoadMap("world_json/tutorial.json");
+    // LoadMap("world_json/tutorial.json");
     BuildMapObjectIndex();
+
+    SpawnObject();
 }
 
 /*==============================================================================
@@ -353,6 +357,7 @@ TileRange GetVisibleTileRange(void)
  * @brief Pindah ke map baru dan spawn di pintu atau titik tujuan tertentu
  *
  * Map aktif saat ini akan disimpan ke history sebelum map baru dimuat.
+ * entry point untuk semua logic map setelah inimap();
  *
  * @param newMapPath Path file map tujuan
  * @param targetDoorName Nama pintu atau spawn point pada map tujuan
@@ -376,6 +381,8 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     UnloadMap();
     LoadMap(newMapPath);
     BuildMapObjectIndex();
+
+    SpawnObject();
 
     // Stop kalau load map gagal
     if (tilesonMap == nullptr)
@@ -419,6 +426,8 @@ void GoBack(void)
     // Muat kembali map sebelumnya
     UnloadMap();
     LoadMap(prev.mapPath.c_str());
+    BuildMapObjectIndex();
+    SpawnObject();
 
     if (tilesonMap == nullptr)
     {

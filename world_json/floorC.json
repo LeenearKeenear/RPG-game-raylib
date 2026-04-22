@@ -220,8 +220,8 @@
                  "type":"spawn",
                  "visible":true,
                  "width":830.30303030303,
-                 "x":393.939393939394,
-                 "y":718.181818181818
+                 "x":384,
+                 "y":704
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -348,7 +348,7 @@
                          "y":0
                         }],
                  "rotation":0,
-                 "type":"pass",
+                 "type":"finish",
                  "visible":true,
                  "width":0,
                  "x":992,

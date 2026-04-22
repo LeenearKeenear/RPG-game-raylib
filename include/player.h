@@ -60,7 +60,7 @@ public:
      * @param spawnObjectName Nama object spawn point di Tiled (default: SPAWN_OBJECT_NAME)
      * @note Load texture, baca spawn & collision dari Tiled, setup animasi awal
      */
-    void Init(GameState* state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
+    void Init(GameState *state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
 
     // ================================================================
     // Update & Render
@@ -166,12 +166,16 @@ private:
      */
     bool CanMove(Vector2 NewPos);
 
-    void RayCasting();
+    // raycasting buat player
+    void RayCasting(void);
 
-    /**
-     * @brief Cek interaksi dengan door/pintu dan trigger switch map kalo perlu
-     */
-    void CheckDoorInteraction(void);
+    // indicator raycastingnya TODO: ubah pake gambar biar enak diliat
+    void DrawAimIndicator(void);
+
+        /**
+         * @brief Cek interaksi dengan door/pintu dan trigger switch map kalo perlu
+         */
+        void CheckDoorInteraction(void);
 
     void CheckPropInteraction(void);
 
@@ -191,12 +195,12 @@ private:
     // Private Members
     // ================================================================
 
-    GameState* State = nullptr;
+    GameState *State = nullptr;
 
     Vector2 Position;      /**< Posisi player di world (pixel) */
     Vector2 Velocity;      /**< Kecepatan player (belum dipake maksimal) */
     int TileSize = 32;     /**< Ukuran tile dalam pixel */
-    float Speed = 10.0f;    /**< Kecepatan gerak player (pixel per frame) */
+    float Speed = 4.0f;   /**< Kecepatan gerak player (pixel per frame) */
     Texture2D CharTexture; /**< Texture sprite player */
     const char *Name = "Player Name";
 
@@ -231,10 +235,10 @@ private:
     void HandleAction(void);
 
     // raycasting
-    RayCast Ray; // class buat raycast nya
+    RayCast Ray;          // class buat raycast nya
     RayHitResult LastHit; // hasil ray frame ini, bisa dicek fungsi lain
-
-    const float INTERACT_RANGE = TILE_SIZE * 2.0f; // TODO: set nilai yang bener
+  const float INTERACT_RANGE = TILE_SIZE * 1.0f; // TODO: set nilai yang bener
+  const float RayCastAngle = 0.3f; // angle maksimum buat raycast interactionnya. makin gede makin sempit anglenya
     // Hotbar slots (1-4)
     InventoryItem Hotbar[4];
 };

@@ -24,6 +24,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../include/hud.h"
+#include "../include/propsbehavior.h"
 
 /*==============================================================================
  * External Variables & Macros
@@ -164,9 +165,12 @@ void DrawRenderTexture(GameState *state)
     // layer 1: tile map
     RenderMap();
 
-    // layer 2: entity dan debug overlay dalam world space
+    // layer 2: entity dan debug overlay dalam world space 
+    // (urutan fungsi sangat penting disini)
     BeginMode2D(camera);
+    chestManager.Render();
     RenderEntities();
+
     DebugInstance.DrawWorldOverlay();
     EndMode2D();
 

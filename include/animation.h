@@ -51,22 +51,9 @@ typedef struct
  */
 typedef enum
 {
-    TILE_CLU_WALL,   /**< Dinding kiri atas (corner left up) */
-    TILE_CMU_WALL,   /**< Dinding tengah atas (corner middle up) */
-    TILE_CRU_WALL,   /**< Dinding kanan atas (corner right up) */
-    TILE_CML_WALL,   /**< Dinding kiri tengah (corner middle left) */
-    TILE_M_WALL,     /**< Dinding tengah */
-    TILE_CMR_WALL,   /**< Dinding kanan tengah (corner middle right) */
-    TILE_CLD_WALL,   /**< Dinding kiri bawah (corner left down) */
-    TILE_CMD_WALL,   /**< Dinding tengah bawah (corner middle down) */
-    TILE_CRD_WALL,   /**< Dinding kanan bawah (corner right down) */
-    TILE_POOL,       /**< Kolam air */
-    TILE_BIGMAN,     /**< Tile buat karakter besar */
-    TILE_GRASS1,     /**< Rumput varian 1 */
-    TILE_GRASS2,     /**< Rumput varian 2 */
-    TILE_DOOR_OPEN,  /**< Pintu kebuka */
-    TILE_DOOR_CLOSE, /**< Pintu ketutup */
-    TILE_PLAYER_NEW  /**< @deprecated Cuma placeholder, gak dipake */
+    TILE_PLAYER_NEW,
+    TILE_CHEST_OPEN,
+    TILE_CHEST_CLOSED /**< @deprecated Cuma placeholder, gak dipake */
 } TileType;
 
 /**
