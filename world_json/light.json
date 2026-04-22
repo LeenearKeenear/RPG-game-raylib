@@ -33,7 +33,7 @@
         {
          "draworder":"topdown",
          "id":2,
-         "name":"map_bound",
+         "name":"obstacle",
          "objects":[
                 {
                  "height":0,
@@ -344,41 +344,7 @@
                  "width":0,
                  "x":1280,
                  "y":0
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":10,
-         "name":"sign",
-         "objects":[
-                {
-                 "height":28.0625,
-                 "id":10,
-                 "name":"sign",
-                 "opacity":1,
-                 "rotation":0,
-                 "type":"interact",
-                 "visible":true,
-                 "width":23.9375,
-                 "x":580.0625,
-                 "y":932.125
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":7,
-         "name":"obstacle",
-         "objects":[
+                }, 
                 {
                  "height":0,
                  "id":9,
@@ -416,8 +382,31 @@
         }, 
         {
          "draworder":"topdown",
+         "id":10,
+         "name":"sign",
+         "objects":[
+                {
+                 "height":28.0625,
+                 "id":10,
+                 "name":"sign",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"interact",
+                 "visible":true,
+                 "width":23.9375,
+                 "x":578.729166666667,
+                 "y":936.125
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
+         "draworder":"topdown",
          "id":8,
-         "name":"doorToInside",
+         "name":"object",
          "objects":[
                 {
                  "height":27.875,
@@ -430,29 +419,64 @@
                  "width":28.75,
                  "x":609.5,
                  "y":993.875
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":9,
-         "name":"passToCave",
-         "objects":[
+                }, 
                 {
-                 "height":30.6875,
+                 "height":20.9375,
                  "id":8,
                  "name":"goToCave",
                  "opacity":1,
+                 "properties":[
+                        {
+                         "name":"target_door",
+                         "type":"string",
+                         "value":"goOutsideCave"
+                        }, 
+                        {
+                         "name":"target_map",
+                         "type":"string",
+                         "value":"world_json\/cave.json"
+                        }],
                  "rotation":0,
                  "type":"pass",
                  "visible":true,
-                 "width":30.8125,
-                 "x":1216.625,
-                 "y":512.75
+                 "width":22.5625,
+                 "x":1210.875,
+                 "y":518.25
+                }, 
+                {
+                 "height":140,
+                 "id":11,
+                 "name":"spawn",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"spawn",
+                 "visible":true,
+                 "width":146.666666666667,
+                 "x":72,
+                 "y":256
+                }, 
+                {
+                 "height":34,
+                 "id":15,
+                 "name":"goInside",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"target_door",
+                         "type":"string",
+                         "value":"goOutside"
+                        }, 
+                        {
+                         "name":"target_map",
+                         "type":"string",
+                         "value":"world_json\/inside.json"
+                        }],
+                 "rotation":0,
+                 "type":"pass",
+                 "visible":true,
+                 "width":26,
+                 "x":334,
+                 "y":183
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -461,7 +485,7 @@
          "y":0
         }],
  "nextlayerid":11,
- "nextobjectid":11,
+ "nextobjectid":16,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
@@ -583,7 +607,7 @@
         {
          "columns":14,
          "firstgid":539,
-         "image":"..\/texture\/map.png",
+         "image":"..\/texture\/test.png",
          "imageheight":428,
          "imagewidth":500,
          "margin":0,

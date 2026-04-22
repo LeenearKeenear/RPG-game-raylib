@@ -1,64 +1,110 @@
+/**
+ * @file main.cpp
+ * @brief Entry Point Game Application
+ *
+ * Main game loop dan inisialisasi semua sistem.
+ * Handle state management (MAIN_MENU, PLAY) dan pause menu.
+ */
+
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/player.h"
 #include "../include/mainMenu.h"
+#include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 
+/**
+ * @brief Global instance pause menu
+ * Bisa diakses dari mana aja via extern
+ */
+PauseMenu pauseMenu;
+
+/**
+ * @brief Main entry point game application
+ * @return 0 saat game ditutup
+ */
 int main()
 {
-    // ================================================================
     // Inisialisasi
     // Urutan penting: InitScreen dulu → InitMap → InitAll → InitMainMenu
     // InitMap harus sebelum InitAll karena player butuh data map buat spawn
-    // ================================================================
 
-    // buat window, audio, dan render texture virtual (1280x720)
+    // Step 1: buat window, audio, dan render texture virtual (1280x720)
     GameState state = InitScreen();
+    gState = &state;
 
-    // load map dari JSON Tiled
+    // Step 2: load map dari JSON Tiled
     InitMap();
 
-    // init player dan camera — spawn point dibaca dari map
+    // Step 3: init player dan camera — spawn point dibaca dari map
     InitAll();
 
-    // init elemen UI main menu
+    // Step 4: init elemen UI main menu
     InitMainMenu(&state);
 
-    // ================================================================
     // Main Game Loop
-    // ================================================================
     while (!WindowShouldClose())
     {
-        // state MAIN_MENU — tampilan awal dengan tombol start & quit
+        // State: MAIN_MENU
+        // Tampilan awal dengan tombol start & quit
         if (state.currentScreen == MAIN_MENU)
         {
             // update scale kalau window di-resize
             UpdateGame(&state);
+
             // handle input tombol dan transisi ke state lain
             UpdateMainMenu(&state);
+
             // render menu ke layar virtual
             RenderMainMenuToVirtualScreen(&state);
+
             // scale layar virtual ke window asli
             DrawRenderWindows(&state);
         }
-        // state PLAY — gameplay
+        // State: PLAY
+        // Gameplay aktif
         else if (state.currentScreen == PLAY)
         {
-            // update scale kalau window di-resize
+            // toggle pause menu dengan tombol P
+            if (IsKeyPressed(KEY_P))
+            {
+                if (pauseMenu.IsActive())
+                {
+                    pauseMenu.Hide(); // kalo lagi aktif, sembunyiin
+                }
+                else
+                {
+                    pauseMenu.Show(); // kalo gak aktif, tampilin
+                }
+            }
+
+            // update scale sebelum rendering (dibutuhkan buat kalkulasi posisi mouse)
             UpdateGame(&state);
-            // update semua logic game (player, enemy, dll)
-            UpdateLogicAll();
+
+            // capture mouse click before rendering
+            bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+            // update pause menu if active (HARUS sebelum rendering)
+            if (pauseMenu.IsActive())
+            {
+                pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
+            }
+
+            // update semua logic game (player, enemy, dll) - skip when paused
+            if (!pauseMenu.IsActive()) {
+                UpdateLogicAll();
+            }
+
             // render semua ke layar virtual
             DrawRenderTexture(&state);
+
             // scale layar virtual ke window asli
             DrawRenderWindows(&state);
         }
     }
 
-    // ================================================================
     // Shutdown — bersihin semua resource sebelum tutup
-    // ================================================================
     GameShutDown(&state);
     return 0;
 }
