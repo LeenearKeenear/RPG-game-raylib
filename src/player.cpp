@@ -598,9 +598,17 @@ void Player::CheckDoorInteraction(void)
     for (const auto &door : doors)
     {
         // Cek apakah player nabrak pintu
-        if (!CheckCollisionRecs(playerHitbox, door->bounds))
-            continue;
-
+        if (door->hasPolygon)
+        {
+            if (!CheckCollisionAgainstPolygons(playerHitbox, {door->polygonPoints}))
+                continue;
+        }
+        else
+        {
+            if (!CheckCollisionAgainstRects(playerHitbox, {door->bounds}))
+                continue;
+        }
+        
         // Kalo nabrak tapi gak tekan E, gak terjadi apa-apa
         if (!InputInstance.IsInteract())
             return;

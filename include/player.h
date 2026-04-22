@@ -196,7 +196,7 @@ private:
     Vector2 Position;      /**< Posisi player di world (pixel) */
     Vector2 Velocity;      /**< Kecepatan player (belum dipake maksimal) */
     int TileSize = 32;     /**< Ukuran tile dalam pixel */
-    float Speed = 4.0f;    /**< Kecepatan gerak player (pixel per frame) */
+    float Speed = 10.0f;    /**< Kecepatan gerak player (pixel per frame) */
     Texture2D CharTexture; /**< Texture sprite player */
     const char *Name = "Player Name";
 

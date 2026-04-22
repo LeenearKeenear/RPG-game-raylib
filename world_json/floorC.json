@@ -378,7 +378,7 @@
                          "value":"world_json\/tutorial.json"
                         }],
                  "rotation":0,
-                 "type":"finish",
+                 "type":"pass",
                  "visible":true,
                  "width":0,
                  "x":992,
