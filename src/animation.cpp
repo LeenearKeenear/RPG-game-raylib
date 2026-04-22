@@ -98,6 +98,45 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
     DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
 }
 
+/*==============================================================================
+ * Tile Rendering for small sprites
+ *==============================================================================*/
+
+// ================================================================
+// DrawSmallSprite()
+// Render satu tile dari spritesheet ke posisi world dengan size yang lebih kecil dari tile pada umumnya.
+//
+// Cara kerja:
+// 1. Lookup TileProperty berdasarkan Type — dapet koordinat di spritesheet
+// 2. Hitung Source rectangle dari koordinat itu
+// 3. DrawTexturePro ke posisi Destination di world
+// ================================================================
+void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale) {
+    // 1. Source (Ambil potongan dari spritesheet)
+    Rectangle source = {
+        sheetCoord.x * (TILE_SIZE + TILE_GAP),
+        sheetCoord.y * (TILE_SIZE + TILE_GAP),
+        (float)TILE_SIZE,
+        (float)TILE_SIZE
+    };
+
+    // 2. Destination (Scaling & Centering)
+    float smallSize = TILE_SIZE * scale;
+    float offset = (TILE_SIZE - smallSize) / 2.0f;
+
+    Rectangle dest = {
+        worldPos.x + offset,
+        worldPos.y + offset,
+        smallSize,
+        smallSize
+    };
+
+    // 3. Render
+    // Gunakan TexturesMap yang sudah ada di animation.cpp atau extern-kan
+    extern Texture2D TexturesMap[]; 
+    DrawTexturePro(TexturesMap[slot], source, dest, (Vector2){0,0}, 0.0f, WHITE);
+}
+
 // ================================================================
 // GetFrame()
 // Ambil source rectangle dari spritesheet berdasarkan frame koordinat.

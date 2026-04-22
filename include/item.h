@@ -42,6 +42,12 @@ void SpawnRandomItem();
 // Fungsi utama untuk spawn
 Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity rarity);
 
+void SaveItemsForMap(const std::string& mapPath);
+
+bool LoadItemsforMap(const std::string& mapPath);
+
+void ClearItems();
+
 // Fungsi pembantu untuk kategori spesifik
 void SpawnWeapon(Vector2 pos, float multiplier, ItemRarity rarity);
 void SpawnPotion(Vector2 pos, float multiplier, ItemRarity rarity);

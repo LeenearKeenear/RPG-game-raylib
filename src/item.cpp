@@ -8,8 +8,11 @@
 #include <iostream>
 #include <vector>
 
-// Inisialisasi list item kosong
+static  std::vector<Item> currentItems;
+static std::map<std::string, std::vector<Item>> savedMapItems;
 std::vector<Item> activeItems;
+extern void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale);
+extern TileDefinition TileProperty[];
 
 void InitItemTextures(){
     LoadTileTexture(TEXTURE_ITEMS, "texture/map.png");
@@ -28,6 +31,25 @@ void InitItems(){
     SpawnItemWave();
 }
 
+void SaveItemsForMap(const std::string& mapPath){
+    if (mapPath.empty()) return;
+    savedMapItems[mapPath] = currentItems;
+}
+
+bool LoadItemsforMap(const std::string& mapPath){
+    if (mapPath.empty()) return false;
+
+    auto it = savedMapItems.find(mapPath);
+    if (it != savedMapItems.end()){
+        currentItems = it->second;
+        return true;
+    }
+    return false;
+}
+
+void ClearItems(){
+    currentItems.clear();
+}
 
 void SpawnRandomItem(){
     if (tilesonMap == nullptr) return;
@@ -80,7 +102,7 @@ void SpawnRandomItem(){
     if(randomRarity == 1) r = RARITY_COMMON;
     else r = RARITY_RARE;
 
-    activeItems.push_back(SpawnItem(randomPos, c, randomMult, r));
+    currentItems.push_back(SpawnItem(randomPos, c, randomMult, r));
 }
 
 Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity rarity) {
@@ -117,15 +139,6 @@ Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity 
     return newItem;
 }
 
-// Wrapper spesifik buat Weapon (Tinggal panggil SpawnItem)
-//void SpawnWeapon(Vector2 pos, float multiplier, ItemRarity rarity) {
-//    SpawnItem(ITEM_WEAPON, pos, multiplier, rarity);
-//}
-
-//void SpawnPotion(Vector2 pos, float multiplier, ItemRarity rarity) {
-//    SpawnItem(ITEM_POTION, pos, multiplier, rarity);
-//}
-
 void UpdateItems(Rectangle playerHitbox) {
     for (size_t i = 0; i < activeItems.size(); i++) {
         if (!activeItems[i].isPickedUp) {
@@ -140,45 +153,29 @@ void UpdateItems(Rectangle playerHitbox) {
 }
 
 void RenderAllItems(){
-    for(auto& Item : activeItems){
+    for(auto& Item : currentItems){
         if (!Item.isPickedUp){
             RenderItems(Item);
         }
     }
 }
 
-void RenderItems(Item &item) {
-    TextureAsset tex = TEXTURE_ITEMS;
-    TileType tileID;
+void RenderItems(Item& item) {
+    // Tentukan koordinat di spritesheet secara manual saja kalau dilarang akses TileProperty
+    Vector2 sheetCoord;
 
-    //for (const auto& item : activeItems) {
-        // Cek dulu apakah item masih ada di dunia
-        //if (!item.isPickedUp) {
-            //if (item.category == ITEM_POTION) tileID = TILE_ITEM_POTION;
-            //else if (item.category == ITEM_WEAPON) tileID = TILE_WEAPON;
+    switch(item.category){
+        case ITEM_POTION:
+            sheetCoord = {7, 8};
+            break;
+        case ITEM_WEAPON:
+            sheetCoord = {6, 4};
+            break;
+        default:
+            sheetCoord = {7, 8};
+            break;
+    }
 
-            //Debug: gambar kotak biru kalau texture ga muncul
-            DrawRectangleLines(item.position.x, item.position.y, 32, 32, BLUE);
-            switch (item.category) {
-                case ITEM_POTION:
-                    tileID = TILE_ITEM_POTION;
-                    break;
-                case ITEM_WEAPON:
-                    tileID = TILE_WEAPON; // Pastikan ini ada di enum kamu
-                    break;
-                default:
-                    tileID = TILE_ITEM_POTION; // Fallback
-                    break;
-            }
-
-            
-            RenderTilePNG(
-                item.position.x, 
-                item.position.y, 
-                tileID, 
-                0.0f, 
-                tex
-            );
-        //}
-    //}
+    // Panggil fungsi pembungkus tadi
+    DrawSmallSprite(TEXTURE_ITEMS, sheetCoord, item.position, 0.5f);
 }

@@ -114,6 +114,16 @@ void LoadTileTexture(TextureAsset Slot, const char *Path);
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
 
 /**
+ * @brief Render satu tile dari spritesheet ke posisi world dengan ukuran kecil
+ * @param Slot Texture asset yang dipake 
+ * @param sheetCoord Koordinat dalam png texture
+ * @param worldPos Posisi dalam world
+ * @param scale Skala pengecilan untuk texture
+ * @param 
+ */
+void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale);
+
+/**
  * @brief Ambil source rectangle dari spritesheet berdasarkan frame koordinat
  * @param frameX Koordinat X frame (dalam satuan tile)
  * @param frameY Koordinat Y frame (dalam satuan tile)

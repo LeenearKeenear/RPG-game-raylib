@@ -13,6 +13,7 @@
 #include "../include/animation.h"
 #include "../include/player.h"
 #include "../include/enemy.h"
+#include "../include/item.h"
 #include "../include/MapStack.h"
 #include <memory>
 #include <string>
@@ -204,6 +205,7 @@ void UnloadMap(void)
     }
 
     ClearEnemies();
+    ClearItems();
     parsedMap.reset();
 }
 
@@ -229,6 +231,10 @@ void InitMap(void)
     if (!LoadEnemiesForMap(currentMapPath))
     {
         SpawnRandomWave();
+    }
+
+    if (!LoadItemsforMap(currentMapPath)){
+        SpawnItemWave();
     }
 }
 
@@ -380,6 +386,9 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     if (!currentMapPath.empty())
         SaveEnemiesForMap(currentMapPath);
 
+    if (!currentMapPath.empty())
+        SaveItemsForMap(currentMapPath);
+    
     // Push map sekarang ke stack sebelum pindah
     if (!currentMapPath.empty())
         mapHistoryStack.Push(currentMapPath, "");
@@ -409,6 +418,10 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         SpawnRandomWave();
     }
 
+    if (!LoadItemsforMap(currentMapPath)){
+        SpawnItemWave();
+    }
+
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
     camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
@@ -436,6 +449,8 @@ void GoBack(void)
     // Simpan musuh map sekarang
     SaveEnemiesForMap(currentMapPath);
 
+    SaveItemsForMap(currentMapPath);
+
     // Ambil history teratas dan pop dari stack
     MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();
     currentMapPath = prev.mapPath;
@@ -457,6 +472,10 @@ void GoBack(void)
     if (!LoadEnemiesForMap(currentMapPath))
     {
         SpawnRandomWave();
+    }
+
+    if (!LoadItemsforMap(currentMapPath)){
+        SpawnItemWave();
     }
 
     // Set camera ke tengah spawn player
