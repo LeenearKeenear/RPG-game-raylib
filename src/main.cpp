@@ -33,6 +33,7 @@ int main()
     // Step 1: buat window, audio, dan render texture virtual (1280x720)
     GameState state = InitScreen();
     state.previousScreen = MAIN_MENU; // Default return to main menu
+    gState = &state;
 
     // Step 2: load map dari JSON Tiled
     InitMap();
