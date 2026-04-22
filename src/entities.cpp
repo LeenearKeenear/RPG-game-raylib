@@ -27,5 +27,5 @@ void RenderEntities(void)
     // TODO: RenderEnemies();  // nanti tambahin pas enemy udah diimplementasi
     RenderAllEnemies();
     // TODO: RenderItems();    // nanti tambahin pas item udah diimplementasi
-    RenderItems();
+    RenderAllItems();
 }

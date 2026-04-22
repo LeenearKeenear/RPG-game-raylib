@@ -249,24 +249,20 @@ void RenderAllEnemies(){
 
 void RenderEnemy(Enemy &en)
 {
-    TextureAsset tex;
+    TextureAsset tex = TEXTURE_ENEMIES;
     TileType tileID;
 
     switch (en.type){
         case SLIME:
-            tex = TEXTURE_ENEMIES;
             tileID = TILE_ENEMY_SLIME;
             break;
         case SKELETON:
-            tex = TEXTURE_ENEMIES;
             tileID = TILE_ENEMY_SKELETON;
             break;
         case WOLF:
-            tex = TEXTURE_ENEMIES;
             tileID = TILE_ENEMY_WOLF;
             break;
         default:
-            tex = TEXTURE_ENEMIES;
             tileID = TILE_ENEMY_SLIME;
             break;
     }

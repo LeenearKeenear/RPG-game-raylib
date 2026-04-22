@@ -32,10 +32,15 @@ typedef struct {
 // Global list untuk item yang ada di map
 extern std::vector<Item> activeItems;
 
-void LoadItemTexture();
+void InitItemTextures();
 
+void InitItems();
+
+void SpawnItemWave();
+
+void SpawnRandomItem();
 // Fungsi utama untuk spawn
-void SpawnItem(ItemCategory category, Vector2 pos, float multiplier, ItemRarity rarity);
+Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity rarity);
 
 // Fungsi pembantu untuk kategori spesifik
 void SpawnWeapon(Vector2 pos, float multiplier, ItemRarity rarity);
@@ -43,6 +48,10 @@ void SpawnPotion(Vector2 pos, float multiplier, ItemRarity rarity);
 
 // Fungsi Render & Update
 void UpdateItems(Rectangle playerHitbox);
-void RenderItems();
+void RenderItems(Item &item);
 
-extern void RenderItems();
+void RenderAllItems();
+
+extern void InitItemTextures();
+extern void RenderAllItems();
+extern void RenderItems(Item &item);

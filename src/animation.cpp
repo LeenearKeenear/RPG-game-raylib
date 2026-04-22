@@ -81,8 +81,8 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
         [TILE_ENEMY_SLIME] = {{0, 0}, false, true},
         [TILE_ENEMY_SKELETON] = {{0, 1}, false, true},
         [TILE_ENEMY_WOLF] = {{0, 2}, false, true},
-        [TILE_ITEM_POTION] = {{8, 8}, false, true},
-        [TILE_CHEST] = {{10, 4}, false, true}
+        [TILE_ITEM_POTION] = {{7, 8}, false, true},
+        [TILE_WEAPON] = {{6, 4}, false, true}
     };
 
     // hitung posisi source di spritesheet pake koordinat + ukuran tile + gap

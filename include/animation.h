@@ -16,7 +16,7 @@
  *==============================================================================*/
 
 /** Jumlah maksimum slot texture PNG yang bisa di-load */
-#define MAX_TEXTURES 5
+#define MAX_TEXTURES 6
 
 /**
  * @brief Enum buat milih slot texture
@@ -72,7 +72,7 @@ typedef enum
     TILE_ENEMY_SKELETON,/**< Skeleton */
     TILE_ENEMY_WOLF, /**< Wolf */
     TILE_ITEM_POTION,
-    TILE_CHEST
+    TILE_WEAPON
 } TileType;
 
 /**
