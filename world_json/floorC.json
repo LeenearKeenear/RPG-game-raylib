@@ -194,47 +194,13 @@
         }, 
         {
          "draworder":"topdown",
-         "id":2,
-         "name":"passC",
-         "objects":[
-                {
-                 "height":30,
-                 "id":3,
-                 "name":"passC",
-                 "opacity":1,
-                 "rotation":0,
-                 "type":"pass",
-                 "visible":true,
-                 "width":68,
-                 "x":764,
-                 "y":2562
-                }],
-         "opacity":1,
-         "properties":[
-                {
-                 "name":"target_map",
-                 "type":"string",
-                 "value":"floorB"
-                }, 
-                {
-                 "name":"target_pass",
-                 "type":"string",
-                 "value":"passB2"
-                }],
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "draworder":"topdown",
          "id":5,
          "name":"enemy",
          "objects":[
                 {
                  "height":1414.30303030303,
                  "id":18,
-                 "name":"spawn",
+                 "name":"spawnspawn_enemy",
                  "opacity":1,
                  "rotation":0,
                  "type":"spawn",
@@ -277,7 +243,7 @@
                          "y":18.9091
                         }],
                  "rotation":0,
-                 "type":"interact",
+                 "type":"chest",
                  "visible":true,
                  "width":0,
                  "x":260.738636363636,
@@ -306,7 +272,7 @@
                          "y":18.9091
                         }],
                  "rotation":0,
-                 "type":"interact",
+                 "type":"chest",
                  "visible":true,
                  "width":0,
                  "x":1316.99621212121,
@@ -335,7 +301,7 @@
                          "y":18.9091
                         }],
                  "rotation":0,
-                 "type":"interact",
+                 "type":"chest",
                  "visible":true,
                  "width":0,
                  "x":581.458333333333,
@@ -364,24 +330,12 @@
                          "y":18.9091
                         }],
                  "rotation":0,
-                 "type":"interact",
+                 "type":"chest",
                  "visible":true,
                  "width":0,
                  "x":996.375,
                  "y":582.333333333333
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":true,
-         "x":0,
-         "y":0
-        }, 
-        {
-         "class":"finish",
-         "draworder":"topdown",
-         "id":4,
-         "name":"finish",
-         "objects":[
+                }, 
                 {
                  "height":0,
                  "id":5,
@@ -412,12 +366,46 @@
                          "x":-192,
                          "y":0
                         }],
+                 "properties":[
+                        {
+                         "name":"target_door",
+                         "type":"string",
+                         "value":"passT1"
+                        }, 
+                        {
+                         "name":"target_map",
+                         "type":"string",
+                         "value":"world_json\/tutorial.json"
+                        }],
                  "rotation":0,
                  "type":"finish",
                  "visible":true,
                  "width":0,
                  "x":992,
                  "y":480
+                }, 
+                {
+                 "height":30,
+                 "id":3,
+                 "name":"passC",
+                 "opacity":1,
+                 "properties":[
+                        {
+                         "name":"target_door",
+                         "type":"string",
+                         "value":"passB2"
+                        }, 
+                        {
+                         "name":"target_map",
+                         "type":"string",
+                         "value":"world_json\/floorB.json"
+                        }],
+                 "rotation":0,
+                 "type":"pass",
+                 "visible":true,
+                 "width":68,
+                 "x":764,
+                 "y":2562
                 }],
          "opacity":1,
          "type":"objectgroup",
