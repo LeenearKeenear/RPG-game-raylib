@@ -11,7 +11,7 @@
          "name":"ground",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":80,
          "x":0,
          "y":0
@@ -470,6 +470,109 @@
          "y":0
         }, 
         {
+         "class":"pass",
+         "draworder":"topdown",
+         "id":3,
+         "name":"pass",
+         "objects":[
+                {
+                 "height":0,
+                 "id":1,
+                 "name":"passB1",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":0,
+                         "y":0
+                        }, 
+                        {
+                         "x":32,
+                         "y":0
+                        }, 
+                        {
+                         "x":32,
+                         "y":32
+                        }, 
+                        {
+                         "x":0,
+                         "y":32
+                        }],
+                 "properties":[
+                        {
+                         "name":"target_map",
+                         "type":"string",
+                         "value":"floorA"
+                        }, 
+                        {
+                         "name":"target_pass",
+                         "type":"string",
+                         "value":"passA2"
+                        }],
+                 "rotation":0,
+                 "type":"pass",
+                 "visible":true,
+                 "width":0,
+                 "x":192,
+                 "y":960
+                }, 
+                {
+                 "height":0,
+                 "id":3,
+                 "name":"passB2",
+                 "opacity":1,
+                 "polygon":[
+                        {
+                         "x":-32,
+                         "y":0
+                        }, 
+                        {
+                         "x":32,
+                         "y":0
+                        }, 
+                        {
+                         "x":32,
+                         "y":32
+                        }, 
+                        {
+                         "x":-32,
+                         "y":32
+                        }],
+                 "properties":[
+                        {
+                         "name":"target_door",
+                         "type":"string",
+                         "value":""
+                        }, 
+                        {
+                         "name":"target_map",
+                         "type":"string",
+                         "value":""
+                        }],
+                 "rotation":0,
+                 "type":"pass",
+                 "visible":true,
+                 "width":0,
+                 "x":1856,
+                 "y":128
+                }],
+         "opacity":1,
+         "properties":[
+                {
+                 "name":"target_map",
+                 "type":"string",
+                 "value":"floorC"
+                }, 
+                {
+                 "name":"target_pass",
+                 "type":"string",
+                 "value":"passC"
+                }],
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
+        }, 
+        {
          "draworder":"topdown",
          "id":4,
          "name":"enemy",
@@ -477,7 +580,7 @@
                 {
                  "height":0,
                  "id":18,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -490,7 +593,7 @@
                 {
                  "height":0,
                  "id":19,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -503,7 +606,7 @@
                 {
                  "height":0,
                  "id":21,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -516,7 +619,7 @@
                 {
                  "height":0,
                  "id":22,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -529,7 +632,7 @@
                 {
                  "height":0,
                  "id":23,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -542,7 +645,7 @@
                 {
                  "height":0,
                  "id":24,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -555,7 +658,7 @@
                 {
                  "height":0,
                  "id":25,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -568,7 +671,7 @@
                 {
                  "height":0,
                  "id":26,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -581,7 +684,7 @@
                 {
                  "height":0,
                  "id":27,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -594,7 +697,7 @@
                 {
                  "height":0,
                  "id":28,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -607,7 +710,7 @@
                 {
                  "height":0,
                  "id":29,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -620,7 +723,7 @@
                 {
                  "height":0,
                  "id":30,
-                 "name":"spawn_enemy",
+                 "name":"enemy_spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
@@ -664,7 +767,7 @@
                          "y":18.9091
                         }],
                  "rotation":0,
-                 "type":"chest",
+                 "type":"interact",
                  "visible":true,
                  "width":0,
                  "x":196.515151515151,
@@ -693,7 +796,7 @@
                          "y":18.9091
                         }],
                  "rotation":0,
-                 "type":"chest",
+                 "type":"interact",
                  "visible":true,
                  "width":0,
                  "x":805.757575757576,
@@ -722,7 +825,7 @@
                          "y":18.9091
                         }],
                  "rotation":0,
-                 "type":"chest",
+                 "type":"interact",
                  "visible":true,
                  "width":0,
                  "x":1604.42424242424,
@@ -751,7 +854,7 @@
                          "y":18.9091
                         }],
                  "rotation":0,
-                 "type":"chest",
+                 "type":"interact",
                  "visible":true,
                  "width":0,
                  "x":2149.78787878788,
@@ -780,7 +883,7 @@
                          "y":18.9091
                         }],
                  "rotation":0,
-                 "type":"chest",
+                 "type":"interact",
                  "visible":true,
                  "width":0,
                  "x":1412.06060606061,
@@ -809,91 +912,11 @@
                          "y":18.9091
                         }],
                  "rotation":0,
-                 "type":"chest",
+                 "type":"interact",
                  "visible":true,
                  "width":0,
                  "x":2308.9696969697,
                  "y":195.818181818182
-                }, 
-                {
-                 "height":0,
-                 "id":1,
-                 "name":"passB1",
-                 "opacity":1,
-                 "polygon":[
-                        {
-                         "x":0,
-                         "y":0
-                        }, 
-                        {
-                         "x":32,
-                         "y":0
-                        }, 
-                        {
-                         "x":32,
-                         "y":32
-                        }, 
-                        {
-                         "x":0,
-                         "y":32
-                        }],
-                 "properties":[
-                        {
-                         "name":"target_door",
-                         "type":"string",
-                         "value":"passA2"
-                        }, 
-                        {
-                         "name":"target_map",
-                         "type":"string",
-                         "value":"world_json\/floorA.json"
-                        }],
-                 "rotation":0,
-                 "type":"pass",
-                 "visible":true,
-                 "width":0,
-                 "x":192,
-                 "y":960
-                }, 
-                {
-                 "height":0,
-                 "id":3,
-                 "name":"passB2",
-                 "opacity":1,
-                 "polygon":[
-                        {
-                         "x":-32,
-                         "y":0
-                        }, 
-                        {
-                         "x":32,
-                         "y":0
-                        }, 
-                        {
-                         "x":32,
-                         "y":32
-                        }, 
-                        {
-                         "x":-32,
-                         "y":32
-                        }],
-                 "properties":[
-                        {
-                         "name":"target_door",
-                         "type":"string",
-                         "value":"passC"
-                        }, 
-                        {
-                         "name":"target_map",
-                         "type":"string",
-                         "value":"world_json\/floorC.json"
-                        }],
-                 "rotation":0,
-                 "type":"pass",
-                 "visible":true,
-                 "width":0,
-                 "x":1856,
-                 "y":128
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -930,7 +953,7 @@
          "margin":0,
          "name":"map",
          "spacing":4,
-         "tilecount":0,
+         "tilecount":168,
          "tileheight":32,
          "tilewidth":32
         }],
