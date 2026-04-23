@@ -1,28 +1,32 @@
-/**
- * @file entities.cpp
- * @brief Implementasi dari Entities Coordination Module
- *
- * Implementasi dari fungsi-fungsi yang dideklarasikan di entities.h
- * Handle master rendering semua entity dalam game.
- */
-
 #include "../include/entities.h"
 #include "../include/player.h"
 
-/*==============================================================================
- * Public Functions
- *==============================================================================*/
+namespace Entities {
 
-// ================================================================
-// RenderEntities()
-// Master render semua entity, dipanggil dalam BeginMode2D block
-// Urutan render: player → enemy → item (nanti)
-// ================================================================
-void RenderEntities(void)
-{
-    // Render player terlebih dahulu (paling bawah/layer terbawah)
-    PlayerInstance.Render();
+    void Init() {
+        // Player Init sudah ditangani di screen_handler.cpp
+        // Di sini bisa ditambahkan init untuk manager lain (misal: EnemyManager)
+    }
 
-    // TODO: RenderEnemies();  // nanti tambahin pas enemy udah diimplementasi
-    // TODO: RenderItems();    // nanti tambahin pas item udah diimplementasi
+    void Update() {
+        // Update Player
+        PlayerInstance.Tick();
+
+        // Placeholder untuk skalabilitas masa depan:
+        // UpdateEnemies();
+        // UpdateNPCs();
+    }
+
+    void Render() {
+        // Render Player
+        PlayerInstance.Render();
+
+        // Placeholder untuk skalabilitas masa depan:
+        // RenderEnemies();
+        // RenderNPCs();
+    }
+
+    void Shutdown() {
+        // Cleanup resource jika diperlukan
+    }
 }

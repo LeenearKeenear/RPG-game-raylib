@@ -1,24 +1,31 @@
 #pragma once
 
 /**
- * @file entities.h
- * @brief Entities Coordination Module
- *
- * Coordinator buat semua entity di game (player, enemy, item).
- * Jadi tempat sentral buat ngelola render dan update semua entity.
+ * @namespace Entities
+ * @brief Manager pusat untuk semua entitas game (Player, Musuh, NPC).
+ * 
+ * Arsitektur Scalable & Ultra-Lean:
+ * - Modul ini hanya mengatur alur siklus hidup (Init, Update, Render).
+ * - Logika detail didelegasikan ke masing-masing kelas entitas.
  */
+namespace Entities {
+    /**
+     * @brief Inisialisasi awal sistem entitas.
+     */
+    void Init();
 
-/*==============================================================================
- * Entities Functions
- *==============================================================================*/
+    /**
+     * @brief Update logika semua entitas tiap frame.
+     */
+    void Update();
 
-/**
- * @brief Master render buat semua entity
- * @note Dipanggil di dalam BeginMode2D block
- *       Handle render player, enemy, item, dll dalam satu tempat
- *
- * Roadmap kedepan:
- * - Spawn logic enemy/item bakal masuk sini
- * - Update logic enemy/item bakal masuk sini
- */
-void RenderEntities(void);
+    /**
+     * @brief Render semua entitas ke layar (world space).
+     */
+    void Render();
+
+    /**
+     * @brief Membersihkan resource entitas saat shutdown.
+     */
+    void Shutdown();
+}

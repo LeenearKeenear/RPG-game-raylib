@@ -1,9 +1,7 @@
 #include "../include/inputLinkedList.h"
 #include <iostream>
 
-HotbarList::HotbarList() : head(nullptr), currentNode(nullptr)
-{
-}
+HotbarList::HotbarList() : head(nullptr), currentNode(nullptr) {}
 
 HotbarList::~HotbarList()
 {
@@ -19,7 +17,6 @@ HotbarList::~HotbarList()
 
 void HotbarList::Initialize()
 {
-    // Bersihkan jika sudah ada (re-init)
     if (head != nullptr) {
         SlotNode* temp = head;
         do {
@@ -30,13 +27,11 @@ void HotbarList::Initialize()
         head = nullptr;
     }
 
-    // Buat 4 node untuk slot 1, 2, 3, 4
     SlotNode* node1 = CreateNode(SLOT_WEAPON_1);
     SlotNode* node2 = CreateNode(SLOT_WEAPON_2);
     SlotNode* node3 = CreateNode(SLOT_POTION_1);
     SlotNode* node4 = CreateNode(SLOT_POTION_2);
 
-    // Hubungkan node (1 <-> 2 <-> 3 <-> 4 <-> 1)
     node1->next = node2; node1->prev = node4;
     node2->next = node3; node2->prev = node1;
     node3->next = node4; node3->prev = node2;
@@ -76,11 +71,6 @@ void HotbarList::SetCurrentBySlot(ItemSlot slot)
         }
         temp = temp->next;
     } while (temp != head);
-}
-
-ItemSlot HotbarList::GetCurrentSlot() const
-{
-    return currentNode ? currentNode->slot : SLOT_NONE;
 }
 
 SlotNode* HotbarList::CreateNode(ItemSlot slot)

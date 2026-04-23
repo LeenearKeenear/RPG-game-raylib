@@ -139,7 +139,7 @@ void UpdateGame(GameState *state)
  */
 void UpdateLogicAll()
 {
-    PlayerInstance.Tick();
+    Entities::Update();
 }
 
 /*==============================================================================
@@ -165,9 +165,8 @@ void DrawRenderTexture(GameState *state)
     // layer 1: tile map
     RenderMap();
 
-    // layer 2: entity dan debug overlay dalam world space
     BeginMode2D(camera);
-    RenderEntities();
+    Entities::Render();
     DebugInstance.DrawWorldOverlay();
     EndMode2D();
 
@@ -273,6 +272,7 @@ void GameShutDown(GameState *state)
     for (int i = 0; i < MAX_TEXTURES; i++)
         UnloadTexture(TexturesMap[i]);
 
+    Entities::Shutdown();
     UnloadMap();
     UnloadRenderTexture(state->Dungeon);
 
