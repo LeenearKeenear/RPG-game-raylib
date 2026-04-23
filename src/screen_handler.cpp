@@ -22,7 +22,9 @@
 #include "../include/entities.h"
 #include "../include/enemy.h"
 #include "../include/debug.h"
+#include "../include/mapLogic.h"
 #include "../include/pauseMenu.h"
+
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 
@@ -73,9 +75,24 @@ void InitAll()
 
     // Spawn test enemy untuk verifikasi AI
     static Enemy testEnemy;
-    testEnemy.Init({spawnPos.x + 100.0f, spawnPos.y + 100.0f}, "Goblin Scout");
+    Vector2 enemySpawnPos = {spawnPos.x + 100.0f, spawnPos.y + 100.0f};
+
+    // 1. Coba ambil posisi spawn dari object layer 'enemy' di map
+    if (!TiledHelperFunction.TryGetObjectPositionByName("spawn_enemy", enemySpawnPos))
+    {
+        // 2. Fallback: Kalo gak ada object spawn_enemy, pastiin posisi default aman
+        if (!IsPositionSafe(enemySpawnPos, testEnemy.HitboxWidth, testEnemy.HitboxHeight, testEnemy.HitboxOffsetX, testEnemy.HitboxOffsetY))
+        {
+            // Jika tidak aman, coba cari posisi di sekitar player yang aman
+            // Untuk sekarang kita pakai posisi player sebagai fallback paling aman
+            enemySpawnPos = spawnPos;
+        }
+    }
+
+    testEnemy.Init(enemySpawnPos, "Goblin Scout");
     Entities::Add(&testEnemy);
 }
+
 
 
 /**

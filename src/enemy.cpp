@@ -11,7 +11,15 @@ Enemy::Enemy() {
 Enemy::~Enemy() {}
 
 void Enemy::Init(Vector2 pos, const char* name) {
+    // Validasi posisi sebelum inisialisasi
+    if (!IsPositionSafe(pos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        TraceLog(LOG_WARNING, "ENEMY: Spawn position (%.1f, %.1f) for '%s' is unsafe! Adjusting...", pos.x, pos.y, name);
+        // Fallback sederhana: jika tidak aman, coba posisi player
+        pos = PlayerInstance.GetPosition();
+    }
+
     Position = pos;
+
     Name = name;
     Health = 50.0f;
     MaxHealth = 50.0f;
@@ -91,11 +99,23 @@ void Enemy::HandleIdle() {
         PatrolTimer = 0;
         
         // Pilih titik patroli acak di sekitar posisi sekarang
-        float angle = (float)GetRandomValue(0, 360) * DEG2RAD;
-        float radius = (float)GetRandomValue(48, 128);
-        PatrolTarget = Vector2Add(Position, {cosf(angle) * radius, sinf(angle) * radius});
+        // Coba beberapa kali untuk mendapatkan posisi yang aman
+        for (int i = 0; i < 10; i++) {
+            float angle = (float)GetRandomValue(0, 360) * DEG2RAD;
+            float radius = (float)GetRandomValue(48, 128);
+            Vector2 potentialTarget = Vector2Add(Position, {cosf(angle) * radius, sinf(angle) * radius});
+            
+            if (IsPositionSafe(potentialTarget, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+                PatrolTarget = potentialTarget;
+                break;
+            }
+            
+            // Jika percobaan terakhir masih gagal, tetap di tempat
+            if (i == 9) PatrolTarget = Position;
+        }
         
         AIState = ENEMY_PATROL;
+
         PlayAnimation(Anim, WALK, Anim.direction, PlayerAnimationSet);
     }
 }
