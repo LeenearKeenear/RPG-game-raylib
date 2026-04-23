@@ -27,6 +27,8 @@ void Enemy::Init(Vector2 pos, const char* name) {
     MaxHealth = 50.0f;
     AIState = ENEMY_IDLE;
     PatrolTarget = pos;
+    AttackCooldownTimer = 0.0f;
+    PlayerWasInRange = false;
     
     // Inisialisasi animasi - menggunakan PlayerAnimationSet sebagai placeholder
     PlayAnimation(Anim, IDLE, DOWN, PlayerAnimationSet);
@@ -35,6 +37,8 @@ void Enemy::Init(Vector2 pos, const char* name) {
 
 void Enemy::Update() {
     if (!IsActive || Health <= 0) return;
+
+    if (AttackCooldownTimer > 0) AttackCooldownTimer -= GetFrameTime();
 
     UpdateAI();
     
@@ -171,9 +175,14 @@ void Enemy::HandleChase() {
     float dist = Vector2Distance(enemyCenter, playerCenter);
 
     if (dist <= AttackRange) {
+        if (!PlayerWasInRange) {
+            PerformAttack();
+        }
         AIState = ENEMY_ATTACK;
-        PlayAnimation(Anim, ATTACK, Anim.direction, PlayerAnimationSet);
+        PlayerWasInRange = true;
         return;
+    } else {
+        PlayerWasInRange = false;
     }
 
     // Jika pemain terlalu jauh, berhenti mengejar
@@ -219,23 +228,35 @@ void Enemy::HandleAttack() {
 
     float dist = Vector2Distance(enemyCenter, playerCenter);
     
-    if (dist > AttackRange * 1.2f) {
-        AIState = ENEMY_CHASE;
-        PlayAnimation(Anim, WALK, Anim.direction, PlayerAnimationSet);
-        return;
-    }
-
-    // Logika serangan sederhana
-    if (!Anim.isAttacking) {
-        if (dist <= AttackRange) {
-             PlayerInstance.SetHealth(PlayerInstance.GetHealth() - 5.0f);
-             TraceLog(LOG_INFO, "ENEMY: Hit Player! Remaining HP: %.1f", PlayerInstance.GetHealth());
+    if (dist <= AttackRange) {
+        if (!PlayerWasInRange) {
+            // Serangan instan saat pertama kali masuk (mengabaikan cooldown)
+            PerformAttack();
+        } else if (AttackCooldownTimer <= 0) {
+            // Serangan berkala setelah berada di dalam area
+            PerformAttack();
         }
+        PlayerWasInRange = true;
+    } else {
+        PlayerWasInRange = false;
         
-        // Trigger animasi attack lagi
-        PlayAnimation(Anim, ATTACK, Anim.direction, PlayerAnimationSet);
-        Anim.isAttacking = true;
+        if (dist > AttackRange * 1.2f) {
+            AIState = ENEMY_CHASE;
+            PlayAnimation(Anim, WALK, Anim.direction, PlayerAnimationSet);
+            return;
+        }
     }
+}
+
+void Enemy::PerformAttack() {
+    PlayerInstance.SetHealth(PlayerInstance.GetHealth() - 5.0f);
+    TraceLog(LOG_INFO, "ENEMY: Hit Player! Remaining HP: %.1f", PlayerInstance.GetHealth());
+    
+    // Trigger animasi attack
+    PlayAnimation(Anim, ATTACK, Anim.direction, PlayerAnimationSet);
+    Anim.isAttacking = true;
+    
+    AttackCooldownTimer = AttackCooldown;
 }
 
 void Enemy::Render() {

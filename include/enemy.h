@@ -61,6 +61,11 @@ private:
     void HandlePatrol();
     void HandleChase();
     void HandleAttack();
+    void PerformAttack();
 
     RayCast Ray;
+
+    float AttackCooldownTimer = 0.0f;
+    const float AttackCooldown = 1.5f;
+    bool PlayerWasInRange = false;
 };
