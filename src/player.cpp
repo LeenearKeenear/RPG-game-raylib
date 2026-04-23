@@ -55,6 +55,8 @@ Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
 // ================================================================
 void Player::Init(GameState *state, const char *spawnObjectName)
 {
+    State = state;
+
     // ================================================================
     // Step 1: Inisialisasi Satu Kali (Resource Global & Stats)
     // ================================================================
