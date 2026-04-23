@@ -1,9 +1,17 @@
 /**
  * @file screen.cpp
- * @brief Implementasi dari Screen & GameState Management Module
+ * @brief Implementasi Screen & GameState Management Module
  *
- * Implementasi dari fungsi-fungsi screen yang dideklarasikan di screen.h
- * Handle virtual screen rendering, scaling, window management, dan game loop.
+ * Handle virtual screen rendering, window scaling, dan game loop entry points.
+ * Semua rendering dan update logic masuk lewat fungsi-fungsi di sini.
+ *
+ * Arsitektur rendering:
+ * - Game dirender ke RenderTexture2D virtual (1280x720)
+ * - Texture virtual di-scale ke window asli sambil jaga aspect ratio
+ * - Sisi yang tidak terpakai diisi black bar (letterbox)
+ *
+ * Urutan init yang benar:
+ * InitScreen() → InitMap() → InitAll() → masuk game loop
  */
 
 #include "../include/screen.h"
@@ -21,46 +29,38 @@
  * External Variables & Macros
  *==============================================================================*/
 
-/** Reference ke pause menu global (dari main.cpp) */
+GameState *gState;
+
 extern PauseMenu pauseMenu;
 
-/** Macro min untuk perbandingan dua nilai */
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 /*==============================================================================
  * Constants
  *==============================================================================*/
 
-/**
- * @brief Konstanta layar virtual — semua rendering di-scale ke ukuran ini
- */
-const float ScaleMultiplierMonitor = 0.7F;    // ukuran default window = 70% monitor
-const float ScaleMinMultiplierMonitor = 0.4F; // ukuran minimum window = 40% monitor
+const float ScaleMultiplierMonitor = 0.7F;
+const float ScaleMinMultiplierMonitor = 0.4F;
 
-/** Lebar layar virtual (semua rendering pake ukuran ini) */
 extern const int GameScreenWidth = 1280;
-
-/** Tinggi layar virtual (semua rendering pake ukuran ini) */
 extern const int GameScreenHeight = 720;
 
 /*==============================================================================
- * Initialization Functions
+ * Initialization
  *==============================================================================*/
 
 /**
- * @brief InitAll()
- * Inisialisasi semua entity dan camera di awal game.
+ * @brief Inisialisasi semua entity dan camera di awal game
  *
- * Cara kerja:
- * 1. Init player — spawn point otomatis dibaca dari object layer Tiled
- * 2. Set camera target ke posisi spawn player
+ * Wajib dipanggil setelah InitMap() karena player butuh data map untuk spawn.
+ * Camera langsung di-set ke posisi spawn player setelah init.
  */
 void InitAll()
 {
-    // Step 1: Inisialisasi player — spawn point diambil otomatis dari object layer Tiled
-    PlayerInstance.Init(SPAWN_OBJECT_NAME);
+    // init player — spawn point dibaca otomatis dari object layer Tiled
+    PlayerInstance.Init(gState, SPAWN_OBJECT_NAME);
 
-    // Step 2: Set camera ke tengah spawn player
+    // set camera ke tengah posisi spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
     camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
     camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
@@ -69,60 +69,57 @@ void InitAll()
 }
 
 /**
- * @brief InitScreen()
- * Inisialisasi window, audio, dan render texture virtual.
+ * @brief Inisialisasi window, audio, dan render texture virtual
  *
- * Cara kerja:
+ * Urutan init internal:
  * 1. Buat window resizable ukuran 70% monitor
- * 2. Buat render texture 1280x720 sebagai layar virtual
- * 3. Set FPS target ke 60
- * @return GameState yang udah diinisialisasi
+ * 2. Hitung scale multiplier berdasarkan ukuran monitor
+ * 3. Buat RenderTexture2D 1280x720 sebagai layar virtual
+ * 4. Set FPS target ke 60
+ *
+ * @return GameState yang sudah diinisialisasi, siap dipakai game loop
  */
 GameState InitScreen()
 {
     GameState state = {{0}};
 
-    // Step 1: Setup window (resizable, title)
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "Dungeon Game");
     InitAudioDevice();
 
-    // Step 2: Hitung ukuran default window (70% monitor)
     state.WindowScreenWidth = (int)(GetMonitorWidth(0) * ScaleMultiplierMonitor);
     state.WindowScreenHeight = (int)(GetMonitorHeight(0) * ScaleMultiplierMonitor);
     state.ScaleMultiplier = MIN(
         (float)state.WindowScreenWidth / GameScreenWidth,
         (float)state.WindowScreenHeight / GameScreenHeight);
 
-    // Step 3: Set ukuran window dan minimum size (40% monitor)
     SetWindowSize(state.WindowScreenWidth, state.WindowScreenHeight);
     SetWindowMinSize(
         (int)(GetMonitorWidth(0) * ScaleMinMultiplierMonitor),
         (int)(GetMonitorHeight(0) * ScaleMinMultiplierMonitor));
 
-    // Step 4: Buat render texture virtual (target rendering)
     state.Dungeon = LoadRenderTexture(GameScreenWidth, GameScreenHeight);
     SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_BILINEAR);
 
-    // Step 5: Set FPS target ke 60
     const int FPS = 60;
     SetTargetFPS(FPS);
 
-    // Step 6: Set state awal ke MAIN_MENU
     state.currentScreen = MAIN_MENU;
 
     return state;
 }
 
 /*==============================================================================
- * Game Loop & Update Functions
+ * Update
  *==============================================================================*/
 
 /**
- * @brief UpdateGame()
- * Update ukuran window dan scale multiplier tiap frame.
- * Dipanggil tiap frame biar scaling tetap bener pas window di-resize.
- * @param state Pointer ke GameState
+ * @brief Update ukuran window dan scale multiplier tiap frame
+ *
+ * Wajib dipanggil tiap frame sebelum rendering agar scaling tetap benar
+ * ketika window di-resize oleh user.
+ *
+ * @param state Pointer ke GameState aktif
  */
 void UpdateGame(GameState *state)
 {
@@ -134,9 +131,10 @@ void UpdateGame(GameState *state)
 }
 
 /**
- * @brief UpdateLogicAll()
- * Entry point update logic — semua logic game lewat sini tiap frame.
- * @note Tambah logic baru di sini kalau ada entity/system baru
+ * @brief Entry point update logic game — dipanggil sekali per frame
+ *
+ * Semua update logic entity masuk lewat sini.
+ * Tambahkan system baru di sini kalau ada entity atau module baru.
  */
 void UpdateLogicAll()
 {
@@ -144,137 +142,139 @@ void UpdateLogicAll()
 }
 
 /*==============================================================================
- * Render Functions
+ * Rendering
  *==============================================================================*/
 
 /**
- * @brief DrawRenderTexture()
- * Entry point render — semua yang keliatan di layar lewat sini.
+ * @brief Entry point render — semua yang terlihat di layar lewat sini
  *
- * Urutan render:
- * 1. RenderMap() — render tile map dari Tiled
- * 2. RenderEntities() — render semua entity dalam world space (pake camera)
- * 3. DebugInstance — toggle dan draw debug panel kalau aktif
+ * Urutan layer render (urutan penting, jangan diubah sembarangan):
+ * 1. Map — tile-based, tidak kena transform camera
+ * 2. Entities & world overlay — dalam BeginMode2D (world space)
+ * 3. Debug panels — screen space, di luar BeginMode2D
+ * 4. UI overlay — HUD, pause menu, dll
  *
- * Catatan: debug panel di luar BeginMode2D biar posisinya fixed di layar
- * @param state Pointer ke GameState
+ * @param state Pointer ke GameState aktif
  */
 void DrawRenderTexture(GameState *state)
 {
-    // Mulai render ke texture virtual
     BeginTextureMode(state->Dungeon);
     ClearBackground(RAYWHITE);
 
-    // ===== Layer 1: Map (tile-based) =====
+    // layer 1: tile map
     RenderMap();
 
-    // ===== Layer 2: Entities & Debug Overlay (world-space) =====
+    // layer 2: entity dan debug overlay dalam world space
     BeginMode2D(camera);
     RenderEntities();
     DebugInstance.DrawWorldOverlay();
     EndMode2D();
 
-    // ===== Layer 3: UI & Debug Panels (screen-space) =====
+    // layer 3: debug panels (screen space)
     DebugInstance.Toggle();
     DebugInstance.Draw();
 
-    // ===== Layer 4: UI Overlay (pause menu, dll) =====
+    // layer 4: UI overlay
     DrawUIOverlay(state);
 
     EndTextureMode();
 }
 
 /**
- * @brief DrawUIOverlay()
- * Render UI elements (HUD, pause menu, etc) ke virtual screen.
- * Dipanggil setelah rendering game, sebelum EndTextureMode().
- * @param state Pointer ke GameState
+ * @brief Render UI elements ke virtual screen
+ *
+ * Dipanggil di dalam BeginTextureMode, setelah semua world-space rendering selesai.
+ * Tambahkan UI baru di sini.
+ *
+ * @param state Pointer ke GameState aktif
  */
 void DrawUIOverlay(GameState *state)
 {
-    // 1. HUD Player (Stats, Name)
     DrawPlayerHUD();
 
-    // 2. Menus
-    if (pauseMenu.IsActive()) {
+    if (pauseMenu.IsActive())
+    {
         Vector2 mousePos = GetVirtualMousePosition(state);
         pauseMenu.Draw(mousePos);
     }
 }
 
 /**
- * @brief DrawRenderWindows()
- * Render layar virtual (1280x720) ke window asli dengan scaling.
- * Layar virtual di-fit ke ukuran window sambil jaga aspect ratio.
- * Sisi yang gak kepakai diisi black bar.
- * @param state Pointer ke GameState
+ * @brief Scale dan render layar virtual ke window asli
+ *
+ * Layar virtual 1280x720 di-fit ke ukuran window sambil menjaga aspect ratio.
+ * Area yang tidak terpakai diisi warna hitam (letterbox).
+ *
+ * @param state Pointer ke GameState aktif
  */
 void DrawRenderWindows(GameState *state)
 {
-    // Hitung offset biar layar virtual di-center di window
+    // hitung offset centering biar layar virtual di tengah window
     float offsetX = (state->WindowScreenWidth - ((float)GameScreenWidth * state->ScaleMultiplier)) * 0.5F;
     float offsetY = (state->WindowScreenHeight - ((float)GameScreenHeight * state->ScaleMultiplier)) * 0.5F;
 
     BeginDrawing();
-    ClearBackground(BLACK); // Black bar di area yang gak kepakai
+    ClearBackground(BLACK);
 
-    // Render texture virtual ke window dengan scaling
     DrawTexturePro(
         state->Dungeon.texture,
-        (Rectangle){0, 0, (float)GameScreenWidth, -(float)GameScreenHeight}, // Source (flipped Y)
+        (Rectangle){0, 0, (float)GameScreenWidth, -(float)GameScreenHeight}, // source flipped Y
         (Rectangle){offsetX, offsetY, (float)GameScreenWidth * state->ScaleMultiplier, (float)GameScreenHeight * state->ScaleMultiplier},
         (Vector2){0, 0},
         0.0F,
         WHITE);
+
     EndDrawing();
 }
 
 /*==============================================================================
- * Utility Functions
+ * Utilities
  *==============================================================================*/
 
 /**
- * @brief GetVirtualMousePosition()
- * Konversi koordinat mouse dari window ke virtual screen.
- * @param state Pointer ke GameState (butuh ScaleMultiplier dan window size)
- * @return Vector2 posisi mouse dalam koordinat virtual screen (1280x720)
+ * @brief Konversi posisi mouse dari window space ke virtual screen space
+ *
+ * Diperlukan karena game dirender ke texture virtual yang di-scale ke window.
+ * Tanpa konversi ini, posisi mouse tidak akan akurat di virtual screen.
+ *
+ * @param state Pointer ke GameState (butuh ScaleMultiplier dan ukuran window)
+ * @return Vector2 posisi mouse dalam koordinat virtual screen (0,0 sampai 1280x720)
  */
 Vector2 GetVirtualMousePosition(GameState *state)
 {
     Vector2 mouse = GetMousePosition();
     Vector2 virtualMouse = {0, 0};
 
-    // Konversi: kurangi offset letterbox, lalu bagi dengan scale
+    // kurangi offset letterbox lalu bagi scale untuk dapat koordinat virtual
     virtualMouse.x = (mouse.x - ((state->WindowScreenWidth - (GameScreenWidth * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
     virtualMouse.y = (mouse.y - ((state->WindowScreenHeight - (GameScreenHeight * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
 
-    // Clamp ke batas virtual screen biar gak keluar
     return Vector2Clamp(virtualMouse, (Vector2){0, 0}, (Vector2){(float)GameScreenWidth, (float)GameScreenHeight});
 }
 
 /*==============================================================================
- * Cleanup Functions
+ * Cleanup
  *==============================================================================*/
 
 /**
- * @brief GameShutDown()
- * Bersihin semua resource sebelum game ditutup.
+ * @brief Bersihin semua resource sebelum game ditutup
  *
- * @param state Pointer ke GameState
+ * Urutan cleanup (urutan penting):
+ * 1. Unload semua texture di TexturesMap
+ * 2. Unload map data
+ * 3. Unload render texture virtual
+ * 4. Tutup audio dan window
+ *
+ * @param state Pointer ke GameState aktif
  */
 void GameShutDown(GameState *state)
 {
-    // Unload semua texture yang ada di global TexturesMap
     for (int i = 0; i < MAX_TEXTURES; i++)
-    {
         UnloadTexture(TexturesMap[i]);
-    }
 
-    // Unload map data dan render texture
     UnloadMap();
     UnloadRenderTexture(state->Dungeon);
 
-    // Tutup audio dan window
     CloseAudioDevice();
     CloseWindow();
 }

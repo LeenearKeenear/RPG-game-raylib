@@ -79,6 +79,7 @@ void PlayerInput::PollInput(void)
 
     // --- Mouse Wheel (pergerakan frame ini) ---
     Current.mouseWheel = GetMouseWheelMove();
+    Current.goBack = IsKeyPressed(KEY_B);
 }
 
 // ================================================================

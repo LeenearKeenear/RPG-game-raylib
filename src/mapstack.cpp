@@ -2,8 +2,8 @@
  * @file mapstack.cpp
  * @brief Implementasi dari Map History Stack System
  *
- * Implementasi dari class MapStack yang dideklarasikan di mapstack.h
- * Handle stack untuk riwayat perpindahan antar map (fitur go back).
+ * File ini berisi implementasi class MapStack yang dideklarasikan di mapstack.h.
+ * Dipakai untuk menyimpan riwayat perpindahan antar map agar fitur go back bisa jalan.
  */
 
 #include "../include/mapstack.h"
@@ -19,12 +19,12 @@ namespace MapSystem
      *==========================================================================*/
 
     /**
-     * @brief Constructor - bikin stack kosong
+     * @brief Inisialisasi stack dalam keadaan kosong
      */
     MapStack::MapStack() : top(nullptr), size(0) {}
 
     /**
-     * @brief Destructor - bersihin semua node
+     * @brief Bersihkan seluruh node saat object dihancurkan
      */
     MapStack::~MapStack()
     {
@@ -36,10 +36,12 @@ namespace MapSystem
      *==========================================================================*/
 
     /**
-     * @brief Push map baru ke stack
+     * @brief Tambahkan riwayat map baru ke posisi teratas stack
+     *
+     * Entry baru akan menjadi top dan menunjuk ke top sebelumnya.
+     *
      * @param mapPath Path map yang dikunjungi
-     * @param doorName Nama pintu yang dipake masuk
-     * @note Node baru jadi top, next指向 top lama
+     * @param doorName Nama pintu yang dipakai untuk masuk
      */
     void MapStack::Push(const std::string &mapPath, const std::string &doorName)
     {
@@ -56,9 +58,9 @@ namespace MapSystem
     }
 
     /**
-     * @brief Pop (hapus dan return) map teratas dari stack
-     * @return MapHistoryEntry map yang baru di-pop
-     * @note Kalo stack kosong, return entry kosong
+     * @brief Hapus dan kembalikan entry paling atas dari stack
+     *
+     * @return Entry map paling atas, atau entry kosong jika stack kosong
      */
     MapHistoryEntry MapStack::Pop()
     {
@@ -80,9 +82,9 @@ namespace MapSystem
     }
 
     /**
-     * @brief Lihat map teratas tanpa ngeluarin dari stack
-     * @return MapHistoryEntry map yang ada di top
-     * @note Kalo stack kosong, return entry kosong
+     * @brief Lihat entry paling atas tanpa menghapusnya dari stack
+     *
+     * @return Entry map paling atas, atau entry kosong jika stack kosong
      */
     MapHistoryEntry MapStack::Peek() const
     {
@@ -92,8 +94,9 @@ namespace MapSystem
     }
 
     /**
-     * @brief Cek apakah stack kosong
-     * @return true kalo top == nullptr (gak ada node)
+     * @brief Cek apakah stack sedang kosong
+     *
+     * @return true jika tidak ada node di stack
      */
     bool MapStack::IsEmpty() const
     {
@@ -101,8 +104,7 @@ namespace MapSystem
     }
 
     /**
-     * @brief Kosongkan seluruh stack (hapus semua node)
-     * @note Panggil Pop() berulang sampai stack kosong
+     * @brief Hapus seluruh entry yang ada di stack
      */
     void MapStack::Clear()
     {

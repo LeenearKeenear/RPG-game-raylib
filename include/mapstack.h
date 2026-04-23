@@ -4,9 +4,8 @@
  * @file mapstack.h
  * @brief Map History Stack System
  *
- * Sistem stack buat nyimpen history perpindahan antar map.
- * Dipake buat fitur "go back" ke map sebelumnya.
- * Implementasi pake linked list manual.
+ * Header ini mendeklarasikan stack riwayat perpindahan map
+ * yang dipakai untuk fitur kembali ke map sebelumnya.
  */
 
 #include <string>
@@ -22,13 +21,12 @@ namespace MapSystem
      *==========================================================================*/
 
     /**
-     * @brief Satu entry di stack = satu map yang pernah dikunjungi
-     * @note Nyimpen info map dan pintu masuk yang dipake
+     * @brief Menyimpan satu riwayat kunjungan map
      */
     struct MapHistoryEntry
     {
-        std::string mapPath;  /**< Path file map (.tmj) yang dikunjungi */
-        std::string doorName; /**< Nama pintu/object yang dipake buat masuk ke map ini */
+        std::string mapPath;  // Path file map yang dikunjungi
+        std::string doorName; // Nama pintu atau spawn yang terkait
     };
 
     /*==========================================================================
@@ -36,13 +34,12 @@ namespace MapSystem
      *==========================================================================*/
 
     /**
-     * @brief Node untuk linked list manual (bukan pake std::stack)
-     * @note Karena project pake C++ tapi hindari STL complex? atau alasan tertentu
+     * @brief Node linked list untuk penyimpanan stack
      */
     struct MapStackNode
     {
-        MapHistoryEntry data; /**< Data map history di node ini */
-        MapStackNode *next;   /**< Pointer ke node berikutnya (ke arah bottom stack) */
+        MapHistoryEntry data; // Data riwayat map
+        MapStackNode *next;   // Pointer ke node berikutnya
     };
 
     /*==========================================================================
@@ -50,59 +47,51 @@ namespace MapSystem
      *==========================================================================*/
 
     /**
-     * @brief Stack implementation buat history perpindahan map
+     * @brief Stack untuk menyimpan history perpindahan map
      *
-     * Cara pake:
-     * - Push() pas pindah ke map baru
-     * - Pop() pas mau kembali ke map sebelumnya
-     * - Peek() buat liat map teratas tanpa ngeluarin
-     *
-     * Stack top = map yang paling baru dikunjungi
-     * Stack bottom = map pertama kali
+     * Entry paling atas adalah map yang terakhir disimpan.
      */
     class MapStack
     {
     public:
-        /** @brief Constructor - bikin stack kosong */
+        /** @brief Inisialisasi stack kosong */
         MapStack();
 
-        /** @brief Destructor - bersihin semua node dan free memory */
+        /** @brief Bersihkan seluruh node saat object dihancurkan */
         ~MapStack();
 
         /**
-         * @brief Push map baru ke stack
+         * @brief Tambahkan entry map baru ke stack
          * @param mapPath Path map yang dikunjungi
-         * @param doorName Nama pintu/object yang dipake masuk
+         * @param doorName Nama pintu atau spawn yang dipakai
          */
         void Push(const std::string &mapPath, const std::string &doorName);
 
         /**
-         * @brief Pop (hapus dan return) map teratas dari stack
-         * @return MapHistoryEntry map yang baru aja di-pop
-         * @warning Asumsikan stack gak kosong sebelum panggil Pop()
+         * @brief Hapus dan kembalikan entry paling atas
+         * @return Entry map paling atas
          */
         MapHistoryEntry Pop();
 
         /**
-         * @brief Lihat map teratas tanpa ngeluarin dari stack
-         * @return MapHistoryEntry map yang ada di top
-         * @warning Asumsikan stack gak kosong sebelum panggil Peek()
+         * @brief Lihat entry paling atas tanpa menghapusnya
+         * @return Entry map paling atas
          */
         MapHistoryEntry Peek() const;
 
         /**
          * @brief Cek apakah stack kosong
-         * @return true kalo gak ada node, false kalo ada isinya
+         * @return true jika stack tidak punya node
          */
         bool IsEmpty() const;
 
         /**
-         * @brief Kosongkan seluruh stack (hapus semua node)
+         * @brief Hapus seluruh isi stack
          */
         void Clear();
 
     private:
-        MapStackNode *top; /**< Pointer ke node teratas (yang paling baru) */
-        int size;          /**< Jumlah node dalam stack (opsional, kalo butuh) */
+        MapStackNode *top; // Pointer ke node teratas
+        int size;          // Jumlah node dalam stack
     };
 }
