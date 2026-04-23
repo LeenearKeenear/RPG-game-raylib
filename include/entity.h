@@ -14,4 +14,5 @@ public:
     virtual void Render() = 0;
     Vector2 GetPosition() const { return Position; }
     virtual bool IsAlive() const { return Health > 0; }
+    virtual Rectangle GetHitbox() const { return { Position.x, Position.y, 32, 32 }; }
 };

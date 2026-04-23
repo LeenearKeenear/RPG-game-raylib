@@ -62,6 +62,7 @@ public:
     float HitboxHeight = 12.0f;
     float HitboxOffsetX = 8.0f;
     float HitboxOffsetY = 14.0f;
+    Rectangle GetHitbox() const override { return { Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight }; }
 
     EnemyType Type = SLIME;
     const AnimationSet* AnimSet = &SlimeAnimationSet;

@@ -70,4 +70,9 @@ namespace Entities
         DynamicRegistry.clear();
         Registry.clear();
     }
+
+    const std::vector<Entity *> &GetRegistry()
+    {
+        return Registry;
+    }
 }

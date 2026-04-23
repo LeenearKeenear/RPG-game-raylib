@@ -11,4 +11,5 @@ namespace Entities
     void Add(Entity *entity);
     void AddDynamic(Entity *entity);
     void Clear();
+    const std::vector<Entity *> &GetRegistry();
 }

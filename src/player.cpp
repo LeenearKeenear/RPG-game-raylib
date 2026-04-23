@@ -74,11 +74,6 @@ void Player::Update()
 
     if (Anim.isDead) return;
 
-    Combat::HandleCombat(*this);
-    if (Anim.isDead) return;
-
-    Inventory::HandleInventoryActions(*this);
-
     if (InputInstance.IsGoBack()) {
         pendingSwitchMap = false;
         pendingGoBack = true;
@@ -87,6 +82,11 @@ void Player::Update()
     if (!Anim.isAttacking) {
         Movement::HandleMovement(*this);
     }
+
+    Combat::HandleCombat(*this);
+    if (Anim.isDead) return;
+
+    Inventory::HandleInventoryActions(*this);
 
     Interaction::HandleInteractions(*this);
 

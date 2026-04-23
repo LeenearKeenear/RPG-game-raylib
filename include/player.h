@@ -60,6 +60,8 @@ public:
     float HitboxOffsetX = 8.0f;
     float HitboxOffsetY = 14.0f;
 
+    Rectangle GetHitbox() const override { return { Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight }; }
+
     std::vector<Rectangle> CollisionRects;
     std::vector<std::vector<Vector2>> CollisionPolygons;
 
