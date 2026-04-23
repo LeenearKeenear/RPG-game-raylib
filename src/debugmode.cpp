@@ -160,7 +160,7 @@ void Debug::DrawRaycastOverlay(void)
         playerCenter.x + aimDir.x * PlayerInstance.GetINTERACT_RANGE(),
         playerCenter.y + aimDir.y * PlayerInstance.GetINTERACT_RANGE()};
 
-    DrawLineEx(playerCenter, rayEnd, 2.0f, GREEN);
+    DrawLineEx(playerCenter, rayEnd, 1.0f, GREEN);
 
     // Gambar titik hit jika ray mengenai object
     if (PlayerInstance.GetLastHit().hit)

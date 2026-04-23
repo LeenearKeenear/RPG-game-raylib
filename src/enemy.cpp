@@ -2,7 +2,9 @@
 #include "../include/player.h"
 #include "../include/map.h"
 #include "../lib/raylib/include/raymath.h"
+#include "../include/debug.h"
 #include <cmath>
+
 
 Enemy::Enemy() {
     IsActive = true;
@@ -134,7 +136,13 @@ void Enemy::HandlePatrol() {
     }
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(PatrolTarget, Position));
-    Position = Vector2Add(Position, Vector2Scale(dir, Speed));
+    Vector2 nextPos = Vector2Add(Position, Vector2Scale(dir, Speed));
+    
+    // Gunakan logic IsPositionSafe (sama seperti player) untuk menahan musuh
+    if (IsPositionSafe(nextPos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        Position = nextPos;
+    }
+
 
     // Update arah animasi
     if (std::abs(dir.x) > std::abs(dir.y)) {
@@ -167,7 +175,13 @@ void Enemy::HandleChase() {
     }
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(playerPos, Position));
-    Position = Vector2Add(Position, Vector2Scale(dir, Speed * 1.5f));
+    Vector2 nextPos = Vector2Add(Position, Vector2Scale(dir, Speed * 1.5f));
+    
+    // Gunakan logic IsPositionSafe (sama seperti player) untuk menahan musuh
+    if (IsPositionSafe(nextPos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        Position = nextPos;
+    }
+
 
     // Update arah animasi
     if (std::abs(dir.x) > std::abs(dir.y)) {
@@ -221,4 +235,39 @@ void Enemy::Render() {
     if (AIState == ENEMY_CHASE) {
         DrawText("!", (int)Position.x + 12, (int)Position.y - 22, 20, RED);
     }
+
+    // Fitur Debug Mode tambahan untuk Musuh
+    if (isDebugMode) {
+        Vector2 enemyCenter = {
+            Position.x + HitboxOffsetX + HitboxWidth / 2.0f,
+            Position.y + HitboxOffsetY + HitboxHeight / 2.0f
+        };
+
+        // 1. Jangkauan deteksi/chase (Lingkaran Abu-abu)
+        DrawCircleLinesV(enemyCenter, DetectionRange, Fade(GRAY, 0.6f));
+
+        // 2. Jangkauan serangan (Lingkaran Merah)
+        DrawCircleLinesV(enemyCenter, AttackRange, RED);
+
+        // 3. Garis Raycast saat mengejar atau mendeteksi Player
+        if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {
+            Vector2 playerPos = PlayerInstance.GetPosition();
+            Vector2 playerCenter = {
+                playerPos.x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2.0f,
+                playerPos.y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2.0f
+            };
+            DrawLineEx(enemyCenter, playerCenter, 1.0f, GREEN);
+        }
+
+        // 4. Hitbox Enemy (Rectangle Violet)
+        Rectangle enemyHitbox = {
+            Position.x + HitboxOffsetX,
+            Position.y + HitboxOffsetY,
+            HitboxWidth,
+            HitboxHeight
+        };
+        DrawRectangleLinesEx(enemyHitbox, 1.0f, VIOLET);
+        DrawText("Enemy", (int)enemyHitbox.x, (int)enemyHitbox.y - 12, 10, VIOLET);
+    }
 }
+
