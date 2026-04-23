@@ -20,6 +20,7 @@
 #include "../include/tiles.h"
 #include "../include/animation.h"
 #include "../include/entities.h"
+#include "../include/enemy.h"
 #include "../include/debug.h"
 #include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
@@ -69,6 +70,11 @@ void InitAll()
 
     // Daftarkan player ke sistem entitas agar diupdate & dirender otomatis
     Entities::Add(&PlayerInstance);
+
+    // Spawn test enemy untuk verifikasi AI
+    static Enemy testEnemy;
+    testEnemy.Init({spawnPos.x + 100.0f, spawnPos.y + 100.0f}, "Goblin Scout");
+    Entities::Add(&testEnemy);
 }
 
 
