@@ -9,5 +9,6 @@ namespace Entities
     void Render();
     void Shutdown();
     void Add(Entity *entity);
+    void AddDynamic(Entity *entity);
     void Clear();
 }

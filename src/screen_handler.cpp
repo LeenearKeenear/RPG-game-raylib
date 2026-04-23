@@ -73,24 +73,17 @@ void InitAll()
     // Daftarkan player ke sistem entitas agar diupdate & dirender otomatis
     Entities::Add(&PlayerInstance);
 
-    // Spawn test enemy untuk verifikasi AI
-    static Enemy testEnemy;
-    Vector2 enemySpawnPos = {spawnPos.x + 100.0f, spawnPos.y + 100.0f};
-
-    // 1. Coba ambil posisi spawn dari object layer 'enemy' di map
-    if (!TiledHelperFunction.TryGetObjectPositionByName("spawn_enemy", enemySpawnPos))
+    // Spawn musuh dari data map (Berdasarkan nama objek: spawn_enemy)
+    for (auto &obj : tilesonMap->Objects)
     {
-        // 2. Fallback: Kalo gak ada object spawn_enemy, pastiin posisi default aman
-        if (!IsPositionSafe(enemySpawnPos, testEnemy.HitboxWidth, testEnemy.HitboxHeight, testEnemy.HitboxOffsetX, testEnemy.HitboxOffsetY))
+        if (obj.name == ENEMY_SPAWN_OBJECT_NAME)
         {
-            // Jika tidak aman, coba cari posisi di sekitar player yang aman
-            // Untuk sekarang kita pakai posisi player sebagai fallback paling aman
-            enemySpawnPos = spawnPos;
+            Enemy *enemy = new Enemy();
+            enemy->Init({obj.bounds.x, obj.bounds.y}, obj.name.c_str());
+            Entities::AddDynamic(enemy);
+            TraceLog(LOG_INFO, "Spawned enemy: %s at (%.1f, %.1f)", obj.name.c_str(), obj.bounds.x, obj.bounds.y);
         }
     }
-
-    testEnemy.Init(enemySpawnPos, "Goblin Scout");
-    Entities::Add(&testEnemy);
 }
 
 

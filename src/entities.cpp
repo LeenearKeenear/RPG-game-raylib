@@ -4,10 +4,12 @@
 namespace Entities
 {
     static std::vector<Entity *> Registry;
+    static std::vector<Entity *> DynamicRegistry;
 
     void Init()
     {
         Registry.clear();
+        DynamicRegistry.clear();
     }
 
     void Update()
@@ -34,6 +36,11 @@ namespace Entities
 
     void Shutdown()
     {
+        for (auto entity : DynamicRegistry)
+        {
+            delete entity;
+        }
+        DynamicRegistry.clear();
         Registry.clear();
     }
 
@@ -45,8 +52,22 @@ namespace Entities
         }
     }
 
+    void AddDynamic(Entity *entity)
+    {
+        if (entity)
+        {
+            DynamicRegistry.push_back(entity);
+            Registry.push_back(entity);
+        }
+    }
+
     void Clear()
     {
+        for (auto entity : DynamicRegistry)
+        {
+            delete entity;
+        }
+        DynamicRegistry.clear();
         Registry.clear();
     }
 }
