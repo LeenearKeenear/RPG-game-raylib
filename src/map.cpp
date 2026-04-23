@@ -18,6 +18,7 @@
 #include "../include/animation.h"
 #include "../include/player.h"
 #include "../include/mapstack.h"
+#include "../include/entities.h"
 #include <memory>
 #include <string>
 
@@ -388,6 +389,9 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     // Re-init player berdasarkan target spawn di map baru
     PlayerInstance.Init(gState, targetDoorName);
 
+    // Spawn enemies dari data map baru
+    Entities::SpawnEnemies();
+
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
     camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
@@ -429,6 +433,9 @@ void GoBack(void)
 
     // Init player di spawn point map sebelumnya
     PlayerInstance.Init(gState, prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
+
+    // Spawn enemies dari data map lama
+    Entities::SpawnEnemies();
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();

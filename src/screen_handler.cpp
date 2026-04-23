@@ -58,8 +58,14 @@ extern const int GameScreenHeight = 720;
  */
 void InitAll()
 {
+    // init resources
+    Entities::Init();
+
     // init player — spawn point dibaca otomatis dari object layer Tiled
     PlayerInstance.Init(gState, SPAWN_OBJECT_NAME);
+
+    // spawn enemies dari data map
+    Entities::SpawnEnemies();
 
     // set camera ke tengah posisi spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();

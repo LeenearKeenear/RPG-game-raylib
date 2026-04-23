@@ -24,8 +24,7 @@ namespace Entities {
      */
     void Render();
 
-    /**
-     * @brief Membersihkan resource entitas saat shutdown.
-     */
+    void SpawnEnemies();
+
     void Shutdown();
 }

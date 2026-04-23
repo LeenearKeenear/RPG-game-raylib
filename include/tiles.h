@@ -3,7 +3,7 @@
 
 #define TILE_SIZE 32
 #define TILE_GAP 4
-#define MAX_TEXTURES 3
+#define MAX_TEXTURES 4
 
 extern Texture2D TexturesMap[MAX_TEXTURES];
 
@@ -11,7 +11,8 @@ enum TextureAsset
 {
     TEXTURE_TILEMAP = 0,
     TEXTURE_KNIGHT,
-    TEXTURE_ITEMS
+    TEXTURE_ITEMS,
+    TEXTURE_ENEMY
 };
 
 struct TileCoordinate

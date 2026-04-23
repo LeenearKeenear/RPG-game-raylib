@@ -29,6 +29,93 @@ const AnimationSet PlayerAnimationSet = {
     }
 };
 
+const AnimationSet SlimeAnimationSet = {
+    .configs = {
+        [IDLE] = {
+            [LEFT]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {0, 0, 2, 0.5f, true, {0, 1}, 2}
+        },
+        [WALK] = {
+            [LEFT]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {0, 0, 2, 0.5f, true, {0, 1}, 2}
+        },
+        [ATTACK] = {
+            [LEFT]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {0, 0, 2, 0.5f, true, {0, 1}, 2}
+        },
+        [DEAD] = {
+            [LEFT]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {0, 0, 2, 0.5f, true, {0, 1}, 2}
+        }
+    }
+};
+
+const AnimationSet SkeletonAnimationSet = {
+    .configs = {
+        [IDLE] = {
+            [LEFT]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {1, 0, 2, 0.5f, true, {0, 1}, 2}
+        },
+        [WALK] = {
+            [LEFT]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {1, 0, 2, 0.5f, true, {0, 1}, 2}
+        },
+        [ATTACK] = {
+            [LEFT]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {1, 0, 2, 0.5f, true, {0, 1}, 2}
+        },
+        [DEAD] = {
+            [LEFT]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {1, 0, 2, 0.5f, true, {0, 1}, 2}
+        }
+    }
+};
+
+const AnimationSet WolfAnimationSet = {
+    .configs = {
+        [IDLE] = {
+            [LEFT]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {2, 0, 2, 0.5f, true, {0, 1}, 2}
+        },
+        [WALK] = {
+            [LEFT]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {2, 0, 2, 0.5f, true, {0, 1}, 2}
+        },
+        [ATTACK] = {
+            [LEFT]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {2, 0, 2, 0.5f, true, {0, 1}, 2}
+        },
+        [DEAD] = {
+            [LEFT]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {2, 0, 2, 0.5f, true, {0, 1}, 2}
+        }
+    }
+};
+
 void UpdateAnimation(Animation &anim, float dt)
 {
     if (!anim.currentConfig) return;
@@ -51,7 +138,7 @@ void UpdateAnimation(Animation &anim, float dt)
                 if (anim.state == ATTACK)
                 {
                     anim.isAttacking = false;
-                    PlayAnimation(anim, IDLE, anim.direction, PlayerAnimationSet);
+                    if (anim.set) PlayAnimation(anim, IDLE, anim.direction, *anim.set);
                 }
             }
         }
@@ -82,6 +169,7 @@ void PlayAnimation(Animation &anim, State newState, Direction newDir, const Anim
 
     anim.state = newState;
     anim.direction = newDir;
+    anim.set = &set;
     anim.currentConfig = &set.configs[newState][newDir];
     
     anim.timer = 0;
