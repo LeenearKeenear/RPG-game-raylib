@@ -158,7 +158,17 @@ void Enemy::HandlePatrol() {
 
 void Enemy::HandleChase() {
     Vector2 playerPos = PlayerInstance.GetPosition();
-    float dist = Vector2Distance(Position, playerPos);
+    
+    Vector2 enemyCenter = {
+        Position.x + HitboxOffsetX + HitboxWidth / 2.0f,
+        Position.y + HitboxOffsetY + HitboxHeight / 2.0f
+    };
+    Vector2 playerCenter = {
+        playerPos.x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2.0f,
+        playerPos.y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2.0f
+    };
+
+    float dist = Vector2Distance(enemyCenter, playerCenter);
 
     if (dist <= AttackRange) {
         AIState = ENEMY_ATTACK;
@@ -197,7 +207,17 @@ void Enemy::HandleChase() {
 
 void Enemy::HandleAttack() {
     Vector2 playerPos = PlayerInstance.GetPosition();
-    float dist = Vector2Distance(Position, playerPos);
+    
+    Vector2 enemyCenter = {
+        Position.x + HitboxOffsetX + HitboxWidth / 2.0f,
+        Position.y + HitboxOffsetY + HitboxHeight / 2.0f
+    };
+    Vector2 playerCenter = {
+        playerPos.x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2.0f,
+        playerPos.y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2.0f
+    };
+
+    float dist = Vector2Distance(enemyCenter, playerCenter);
     
     if (dist > AttackRange * 1.2f) {
         AIState = ENEMY_CHASE;

@@ -40,7 +40,7 @@ public:
 
     EnemyAIState AIState = ENEMY_IDLE;
     float DetectionRange = 160.0f; // Jarak deteksi pemain (pixel)
-    float AttackRange = 40.0f;    // Jarak serangan (pixel)
+    float AttackRange = 16.0f;    // Jarak serangan (pixel)
     float Speed = 1.0f;           // Kecepatan gerak musuh
 
     Animation Anim;
