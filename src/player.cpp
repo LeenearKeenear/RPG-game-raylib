@@ -16,6 +16,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
     {
         LoadTileTexture(TEXTURE_KNIGHT, "texture/knight.png");
         LoadTileTexture(TEXTURE_ITEMS,  "texture/test.png");
+        LoadTileTexture(TEXTURE_ENEMIES, "texture/enemies.png");
 
         MaxHealth = 100.0f;
         Health = MaxHealth;

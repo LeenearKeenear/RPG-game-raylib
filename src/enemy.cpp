@@ -12,7 +12,17 @@ Enemy::Enemy() {
 
 Enemy::~Enemy() {}
 
-void Enemy::Init(Vector2 pos, const char* name) {
+void Enemy::Init(Vector2 pos, const char* name, EnemyType type) {
+    Type = type;
+    
+    // Tentukan AnimationSet berdasarkan tipe
+    switch (Type) {
+        case SLIME:    AnimSet = &SlimeAnimationSet; break;
+        case SKELETON: AnimSet = &SkeletonAnimationSet; break;
+        case WOLF:     AnimSet = &WolfAnimationSet; break;
+        default:       AnimSet = &SlimeAnimationSet; break;
+    }
+
     // Validasi posisi sebelum inisialisasi
     if (!IsPositionSafe(pos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
         TraceLog(LOG_WARNING, "ENEMY: Spawn position (%.1f, %.1f) for '%s' is unsafe! Adjusting...", pos.x, pos.y, name);
@@ -30,8 +40,8 @@ void Enemy::Init(Vector2 pos, const char* name) {
     AttackCooldownTimer = 0.0f;
     PlayerWasInRange = false;
     
-    // Inisialisasi animasi - menggunakan PlayerAnimationSet sebagai placeholder
-    PlayAnimation(Anim, IDLE, DOWN, PlayerAnimationSet);
+    // Inisialisasi animasi
+    PlayAnimation(Anim, IDLE, DOWN, *AnimSet);
     Anim.position = Position;
 }
 
@@ -122,7 +132,7 @@ void Enemy::HandleIdle() {
         
         AIState = ENEMY_PATROL;
 
-        PlayAnimation(Anim, WALK, Anim.direction, PlayerAnimationSet);
+        PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
     }
 }
 
@@ -135,7 +145,7 @@ void Enemy::HandlePatrol() {
     float dist = Vector2Distance(Position, PatrolTarget);
     if (dist < 10.0f) {
         AIState = ENEMY_IDLE;
-        PlayAnimation(Anim, IDLE, Anim.direction, PlayerAnimationSet);
+        PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
         return;
     }
 
@@ -156,7 +166,7 @@ void Enemy::HandlePatrol() {
     }
     
     if (Anim.state != WALK) {
-        PlayAnimation(Anim, WALK, Anim.direction, PlayerAnimationSet);
+        PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
     }
 }
 
@@ -188,7 +198,7 @@ void Enemy::HandleChase() {
     // Jika pemain terlalu jauh, berhenti mengejar
     if (dist > DetectionRange * 1.5f) {
         AIState = ENEMY_IDLE;
-        PlayAnimation(Anim, IDLE, Anim.direction, PlayerAnimationSet);
+        PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
         TraceLog(LOG_INFO, "ENEMY: Lost Player. Returning to IDLE.");
         return;
     }
@@ -210,7 +220,7 @@ void Enemy::HandleChase() {
     }
     
     if (Anim.state != WALK) {
-        PlayAnimation(Anim, WALK, Anim.direction, PlayerAnimationSet);
+        PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
     }
 }
 
@@ -242,7 +252,7 @@ void Enemy::HandleAttack() {
         
         if (dist > AttackRange * 1.2f) {
             AIState = ENEMY_CHASE;
-            PlayAnimation(Anim, WALK, Anim.direction, PlayerAnimationSet);
+            PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
             return;
         }
     }
@@ -253,7 +263,7 @@ void Enemy::PerformAttack() {
     TraceLog(LOG_INFO, "ENEMY: Hit Player! Remaining HP: %.1f", PlayerInstance.GetHealth());
     
     // Trigger animasi attack
-    PlayAnimation(Anim, ATTACK, Anim.direction, PlayerAnimationSet);
+    PlayAnimation(Anim, ATTACK, Anim.direction, *AnimSet);
     Anim.isAttacking = true;
     
     AttackCooldownTimer = AttackCooldown;
@@ -265,8 +275,8 @@ void Enemy::Render() {
     // Shadow sederhana
     DrawEllipse((int)Position.x + 16, (int)Position.y + 28, 10, 4, {0, 0, 0, 80});
     
-    // Render musuh (menggunakan texture ksatria sementara)
-    DrawAnimation(Anim, TEXTURE_KNIGHT);
+    // Render musuh (menggunakan texture enemies yang baru)
+    DrawAnimation(Anim, TEXTURE_ENEMIES);
     
     // Health Bar
     DrawRectangle((int)Position.x + 4, (int)Position.y - 8, 24, 4, BLACK);

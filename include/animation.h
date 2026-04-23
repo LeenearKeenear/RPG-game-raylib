@@ -53,3 +53,6 @@ void DrawAnimation(const Animation &anim, TextureAsset texture);
 void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set);
 
 extern const AnimationSet PlayerAnimationSet;
+extern const AnimationSet SlimeAnimationSet;
+extern const AnimationSet SkeletonAnimationSet;
+extern const AnimationSet WolfAnimationSet;

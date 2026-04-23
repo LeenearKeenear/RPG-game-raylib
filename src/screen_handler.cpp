@@ -73,15 +73,23 @@ void InitAll()
     // Daftarkan player ke sistem entitas agar diupdate & dirender otomatis
     Entities::Add(&PlayerInstance);
 
-    // Spawn musuh dari data map (Berdasarkan nama objek: spawn_enemy)
+    // Spawn musuh dari data map (Berdasarkan nama objek: slime, skeleton, wolf, atau spawn_enemy)
     for (auto &obj : tilesonMap->Objects)
     {
-        if (obj.name == ENEMY_SPAWN_OBJECT_NAME)
+        bool isEnemy = false;
+        EnemyType type = SLIME;
+
+        if (obj.name.find("slime") != std::string::npos) { isEnemy = true; type = SLIME; }
+        else if (obj.name.find("skeleton") != std::string::npos) { isEnemy = true; type = SKELETON; }
+        else if (obj.name.find("wolf") != std::string::npos) { isEnemy = true; type = WOLF; }
+        else if (obj.name == ENEMY_SPAWN_OBJECT_NAME) { isEnemy = true; type = SLIME; }
+
+        if (isEnemy)
         {
             Enemy *enemy = new Enemy();
-            enemy->Init({obj.bounds.x, obj.bounds.y}, obj.name.c_str());
+            enemy->Init({obj.bounds.x, obj.bounds.y}, obj.name.c_str(), type);
             Entities::AddDynamic(enemy);
-            TraceLog(LOG_INFO, "Spawned enemy: %s at (%.1f, %.1f)", obj.name.c_str(), obj.bounds.x, obj.bounds.y);
+            TraceLog(LOG_INFO, "Spawned enemy: %s (Type: %d) at (%.1f, %.1f)", obj.name.c_str(), (int)type, obj.bounds.x, obj.bounds.y);
         }
     }
 }

@@ -15,6 +15,12 @@ enum EnemyAIState {
     ENEMY_ATTACK
 };
 
+enum EnemyType {
+    SLIME,
+    SKELETON,
+    WOLF
+};
+
 /**
  * @brief Kelas Musuh yang mewarisi Entity
  * Memiliki sistem FSM (Finite State Machine) sederhana untuk perilaku AI.
@@ -28,8 +34,9 @@ public:
      * @brief Inisialisasi musuh di posisi tertentu
      * @param pos Posisi awal world space
      * @param name Nama musuh
+     * @param type Tipe musuh (Slime, Skeleton, Wolf)
      */
-    void Init(Vector2 pos, const char* name);
+    void Init(Vector2 pos, const char* name, EnemyType type = SLIME);
 
     void Update() override;
     void Render() override;
@@ -55,6 +62,9 @@ public:
     float HitboxHeight = 12.0f;
     float HitboxOffsetX = 8.0f;
     float HitboxOffsetY = 14.0f;
+
+    EnemyType Type = SLIME;
+    const AnimationSet* AnimSet = &SlimeAnimationSet;
 
 private:
     void HandleIdle();
