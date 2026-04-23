@@ -83,6 +83,7 @@ void DrawRenderTexture(GameState *state);
  * @param state Pointer ke GameState aktif
  */
 void DrawUIOverlay(GameState *state);
+void DrawPlayerHUD();
 
 /**
  * @brief Konversi posisi mouse dari window space ke virtual screen space

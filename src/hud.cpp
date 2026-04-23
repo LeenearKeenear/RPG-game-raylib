@@ -1,4 +1,4 @@
-#include "../include/hud.h"
+#include "../include/screen.h"
 #include "../include/player.h"
 #include "../include/tiles.h"
 #include "../include/animation.h"

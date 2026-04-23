@@ -24,7 +24,6 @@
 #include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
-#include "../include/hud.h"
 
 /*==============================================================================
  * External Variables & Macros
@@ -67,7 +66,11 @@ void InitAll()
     camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
     camera.rotation = 0;
     camera.zoom = 1.0F;
+
+    // Daftarkan player ke sistem entitas agar diupdate & dirender otomatis
+    Entities::Add(&PlayerInstance);
 }
+
 
 /**
  * @brief Inisialisasi window, audio, dan render texture virtual

@@ -1,32 +1,52 @@
 #include "../include/entities.h"
-#include "../include/player.h"
+#include <vector>
 
-namespace Entities {
+namespace Entities
+{
+    static std::vector<Entity *> Registry;
 
-    void Init() {
-        // Player Init sudah ditangani di screen_handler.cpp
-        // Di sini bisa ditambahkan init untuk manager lain (misal: EnemyManager)
+    void Init()
+    {
+        Registry.clear();
     }
 
-    void Update() {
-        // Update Player
-        PlayerInstance.Tick();
-
-        // Placeholder untuk skalabilitas masa depan:
-        // UpdateEnemies();
-        // UpdateNPCs();
+    void Update()
+    {
+        for (auto entity : Registry)
+        {
+            if (entity && entity->IsActive)
+            {
+                entity->Update();
+            }
+        }
     }
 
-    void Render() {
-        // Render Player
-        PlayerInstance.Render();
-
-        // Placeholder untuk skalabilitas masa depan:
-        // RenderEnemies();
-        // RenderNPCs();
+    void Render()
+    {
+        for (auto entity : Registry)
+        {
+            if (entity && entity->IsActive)
+            {
+                entity->Render();
+            }
+        }
     }
 
-    void Shutdown() {
-        // Cleanup resource jika diperlukan
+    void Shutdown()
+    {
+        Registry.clear();
+    }
+
+    void Add(Entity *entity)
+    {
+        if (entity)
+        {
+            Registry.push_back(entity);
+        }
+    }
+
+    void Clear()
+    {
+        Registry.clear();
     }
 }
