@@ -1,278 +1,90 @@
-/**
- * @file animation.cpp
- * @brief Implementasi dari Animation System & Tile Rendering
- *
- * Handle semua animasi sprite untuk player, enemy, dan entity lain.
- * Implementasi dari fungsi-fungsi yang dideklarasikan di animation.h
- */
-
-// ================================================================
-// Animation System
-// Handle semua animasi sprite untuk player, enemy, dan entity lain.
-//
-// Semua logic animasi (frame switching, timing, direction)
-// dipusatin di sini biar gak nyebar ke mana-mana.
-//
-// Module ini juga contain:
-// - Tile texture loading & rendering (LoadTileTexture, RenderTilePNG)
-// - Player animation state machine (walk, idle, attack, dead)
-// - Sprite frame management (GetFrame)
-// ================================================================
 #include "../include/animation.h"
 
-/*==============================================================================
- * Global Variables
- *==============================================================================*/
-
-/** Global texture array - index sesuai TextureAsset enum */
-Texture2D TexturesMap[MAX_TEXTURES];
-
-/*==============================================================================
- * Texture Loading
- *==============================================================================*/
-
-// ================================================================
-// LoadTileTexture()
-// Load texture PNG ke slot TextureAsset yang ditentuin.
-// Slot ini dipake sama RenderTilePNG() buat milih texture yang bener.
-// ================================================================
-void LoadTileTexture(TextureAsset Slot, const char *Path)
-{
-    Image img = LoadImage(Path);
-    TexturesMap[Slot] = LoadTextureFromImage(img);
-    UnloadImage(img);
-}
-
-/*==============================================================================
- * Tile Rendering
- *==============================================================================*/
-
-// ================================================================
-// RenderTilePNG()
-// Render satu tile dari spritesheet ke posisi world.
-//
-// Cara kerja:
-// 1. Lookup TileProperty berdasarkan Type — dapet koordinat di spritesheet
-// 2. Hitung Source rectangle dari koordinat itu
-// 3. DrawTexturePro ke posisi Destination di world
-// ================================================================
-void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
-{
-    // mapping TileType ke koordinat di spritesheet
-    // NOTE: Koordinat ini berdasarkan layout spritesheet tileset
-    TileDefinition TileProperty[] = {
-        [TILE_CLU_WALL] = {{0, 0}, false, false},
-        [TILE_CMU_WALL] = {{1, 0}, false, false},
-        [TILE_CRU_WALL] = {{3, 0}, false, false},
-        [TILE_CML_WALL] = {{0, 1}, false, false},
-        [TILE_M_WALL] = {{1, 1}, false, false},
-        [TILE_CMR_WALL] = {{3, 1}, false, false},
-        [TILE_CLD_WALL] = {{0, 2}, false, false},
-        [TILE_CMD_WALL] = {{1, 2}, false, false},
-        [TILE_CRD_WALL] = {{3, 2}, false, false},
-        [TILE_POOL] = {{12, 8}, false, false},
-        [TILE_BIGMAN] = {{7, 0}, false, false},
-        [TILE_GRASS1] = {{4, 4}, true, false},
-        [TILE_GRASS2] = {{5, 4}, true, false},
-        [TILE_DOOR_OPEN] = {{4, 2}, true, true},
-        [TILE_DOOR_CLOSE] = {{5, 2}, false, true},
-        [TILE_PLAYER_NEW] = {{3, 2}, false, false}};
-
-    // hitung posisi source di spritesheet pake koordinat + ukuran tile + gap
-    // Formula: X = (kolom * (TILE_SIZE + TILE_GAP))
-    Rectangle Source = {
-        (float)(TileProperty[Type].CoordID.x * (TILE_SIZE + TILE_GAP)),
-        (float)(TileProperty[Type].CoordID.y * (TILE_SIZE + TILE_GAP)),
-        (float)TILE_SIZE,
-        (float)TILE_SIZE};
-
-    Rectangle Destination = {(float)pos_x, (float)pos_y, (float)TILE_SIZE, (float)TILE_SIZE};
-    Vector2 origin = {0, 0};
-    DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
-}
-
-// ================================================================
-// GetFrame()
-// Ambil source rectangle dari spritesheet berdasarkan frame koordinat.
-// Dipakai oleh DrawPlayer() buat milih frame yang bener.
-// ================================================================
-Rectangle GetFrame(int frameX, int frameY)
-{
-    return {
-        (float)(frameX * (TILE_SIZE + TILE_GAP)),
-        (float)(frameY * (TILE_SIZE + TILE_GAP)),
-        (float)TILE_SIZE,
-        (float)TILE_SIZE};
-}
-
-/*==============================================================================
- * State Setters
- *==============================================================================*/
-
-// ================================================================
-// State Setters
-// Set direction dan state animasi player.
-// Dipanggil dari input handler / AI controller.
-// ================================================================
-
-void UpdatePlayerWalkUp(AnimationPlayer &p)
-{
-    p.direction = UP;
-    p.state = WALK;
-}
-void UpdatePlayerWalkDown(AnimationPlayer &p)
-{
-    p.direction = DOWN;
-    p.state = WALK;
-}
-void UpdatePlayerWalkLeft(AnimationPlayer &p)
-{
-    p.direction = LEFT;
-    p.state = WALK;
-}
-void UpdatePlayerWalkRight(AnimationPlayer &p)
-{
-    p.direction = RIGHT;
-    p.state = WALK;
-}
-void UpdatePlayerIdle(AnimationPlayer &p) { p.state = IDLE; }
-
-void UpdatePlayerAttack(AnimationPlayer &p)
-{
-    if (!p.isAttacking)
-    {
-        p.state = ATTACK;
-        p.frame = 0;
-        p.frameTime = 0;
-        p.isAttacking = true;
-    }
-}
-
-void UpdatePlayerDeath(AnimationPlayer &p)
-{
-    if (!p.isDead)
-    {
-        p.state = DEAD;
-        p.isDead = true;
-        p.frame = 0;
-        p.isAttacking = false; // reset attack logic if dying during attack
-    }
-}
-
-/*==============================================================================
- * Animation Update Logic
- *==============================================================================*/
-
-// ================================================================
-// UpdateAnimation()
-// Update frame animasi berdasarkan delta time dan current state.
-//
-// State machine:
-// - DEAD: frame tetap 0, tidak ada animasi
-// - IDLE: 2 frame, speed lambat (0.5s)
-// - WALK: 4 frame cycle (0-2-0-3), speed sedang (0.15s)
-// - ATTACK: jumlahnya 2 frame sequential frames
-// ================================================================
-void UpdateAnimation(AnimationPlayer &p, float dt)
-{
-    // DEAD state: gak ada animasi, frame tetap di 0
-    if (p.state == DEAD)
-    {
-        p.frame = 0;
-        return;
-    }
-
-    p.frameTime += dt;
-
-    // IDLE state: 2 frame bolak-balik (0 -> 1 -> 0 -> 1 ...)
-    if (p.state == IDLE)
-    {
-        p.frameSpeed = 0.5f;
-        if (p.frameTime >= p.frameSpeed)
-        {
-            p.frame = (p.frame + 1) % 2;
-            p.frameTime = 0;
+const AnimationSet PlayerAnimationSet = {
+    .configs = {
+        [IDLE] = {
+            [LEFT]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
+            [RIGHT] = {1, 0, 2, 0.5f, true, {0, 1}, 2},
+            [DOWN]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
+            [UP]    = {3, 0, 2, 0.5f, true, {0, 1}, 2}
+        },
+        [WALK] = {
+            [LEFT]  = {0, 0, 4, 0.15f, true, {0, 2, 0, 3}, 4},
+            [RIGHT] = {1, 0, 4, 0.15f, true, {0, 2, 0, 3}, 4},
+            [DOWN]  = {2, 0, 4, 0.15f, true, {0, 2, 0, 3}, 4},
+            [UP]    = {3, 0, 4, 0.15f, true, {0, 2, 0, 3}, 4}
+        },
+        [ATTACK] = {
+            [LEFT]  = {0, 6, 2, 0.15f, false, {0, 1}, 2},
+            [RIGHT] = {1, 6, 2, 0.15f, false, {0, 1}, 2},
+            [DOWN]  = {2, 4, 2, 0.15f, false, {0, 1}, 2},
+            [UP]    = {3, 4, 2, 0.15f, false, {0, 1}, 2}
+        },
+        [DEAD] = {
+            [LEFT]  = {4, 0, 1, 1.0f, false, {0}, 1},
+            [RIGHT] = {4, 0, 1, 1.0f, false, {0}, 1},
+            [DOWN]  = {4, 0, 1, 1.0f, false, {0}, 1},
+            [UP]    = {4, 0, 1, 1.0f, false, {0}, 1}
         }
     }
-    // WALK state: 4 frame dengan pola 0 -> 2 -> 0 -> 3
-    else if (p.state == WALK)
+};
+
+void UpdateAnimation(Animation &anim, float dt)
+{
+    if (!anim.currentConfig) return;
+
+    anim.timer += dt;
+    if (anim.timer >= anim.currentConfig->speed)
     {
-        p.frameSpeed = 0.15f;
-        if (p.frameTime >= p.frameSpeed)
+        anim.timer = 0;
+        anim.walkFrameIndex++;
+
+        if (anim.walkFrameIndex >= anim.currentConfig->patternCount)
         {
-            p.walkFrameIndex = (p.walkFrameIndex + 1) % 4;
-            int walkFrames[4] = {0, 2, 0, 3}; // pola frame buat animasi jalan
-            p.frame = walkFrames[p.walkFrameIndex];
-            p.frameTime = 0;
-        }
-    }
-    // ATTACK state: 2 frame sequential, pas frame ke-1 trigger "HIT!"
-    else if (p.state == ATTACK)
-    {
-        p.frameSpeed = 0.15f;
-
-        if (p.frameTime >= p.frameSpeed)
-        {
-            p.frame++;
-            p.frameTime = 0;
-
-            int maxFrames = 2;
-            int hitFrame = 1; // frame dimana damage di-trigger
-
-            if (p.frame == hitFrame)
+            if (anim.currentConfig->loop)
             {
-                TraceLog(LOG_INFO, "HIT!");
+                anim.walkFrameIndex = 0;
             }
-
-            // attack selesai, balik ke IDLE
-            if (p.frame >= maxFrames)
+            else
             {
-                p.isAttacking = false;
-                p.state = IDLE;
-                p.frame = 0;
+                anim.walkFrameIndex = anim.currentConfig->patternCount - 1;
+                if (anim.state == ATTACK)
+                {
+                    anim.isAttacking = false;
+                    PlayAnimation(anim, IDLE, anim.direction, PlayerAnimationSet);
+                }
             }
         }
+        
+        anim.currentFrame = anim.currentConfig->pattern[anim.walkFrameIndex];
+        
+        if (anim.state == ATTACK && anim.walkFrameIndex == 1)
+        {
+            TraceLog(LOG_INFO, "HIT!");
+        }
     }
 }
 
-/*==============================================================================
- * Player Rendering
- *==============================================================================*/
-
-// ================================================================
-// DrawPlayer()
-// Render player sprite berdasarkan current state dan direction.
-//
-// Layout spritesheet knight.png:
-// - Row 0-3: direction (LEFT, RIGHT, DOWN, UP)
-// - Col 0-3: idle/walk frames
-// - Col 4+:  attack frames
-// - Row 4:   death frame (col 0)
-// ================================================================
-void DrawPlayer(AnimationPlayer &p)
+void DrawAnimation(const Animation &anim, TextureAsset texture)
 {
-    // tentuin row berdasarkan direction atau state DEAD
-    int row = (int)p.direction;
-    int frameX = p.frame;
+    if (!anim.currentConfig) return;
 
-    // DEAD state: pake row 4 (khusus mati)
-    if (p.state == DEAD)
-    {
-        row = 4;
-        frameX = 0;
-    }
-    // ATTACK state: geser frameX ke kolom attack (offset 4 atau 6)
-    else if (p.state == ATTACK)
-    {
-        // UP/DOWN attack mulai dari kolom 4, LEFT/RIGHT dari kolom 6
-        // (karena layout spritesheet punya attack frames di posisi berbeda)
-        int attackOffset = (p.direction == UP || p.direction == DOWN) ? 4 : 6;
-        frameX += attackOffset;
-    }
+    int frameX = anim.currentConfig->startFrame + anim.currentFrame;
+    int row = anim.currentConfig->row;
 
     Rectangle src = GetFrame(frameX, row);
+    DrawTextureRec(TexturesMap[texture], src, anim.position, WHITE);
+}
 
-    // render pake TexturesMap[TEXTURE_KNIGHT] supaya konsisten
-    // dengan LoadTileTexture yang dipake di Player::Init()
-    DrawTextureRec(TexturesMap[TEXTURE_KNIGHT], src, p.position, WHITE);
+void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set)
+{
+    if (anim.state == newState && anim.direction == newDir && anim.currentConfig) return;
+
+    anim.state = newState;
+    anim.direction = newDir;
+    anim.currentConfig = &set.configs[newState][newDir];
+    
+    anim.timer = 0;
+    anim.walkFrameIndex = 0;
+    anim.currentFrame = anim.currentConfig->pattern[0];
 }

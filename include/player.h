@@ -11,6 +11,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "map.h"
 #include "screen.h"
+#include "tiles.h"
 #include "animation.h"
 #include "input.h"
 #include "inventory.h"
@@ -135,7 +136,7 @@ public:
     // Public Members
     // ================================================================
 
-    AnimationPlayer Anim; /**< Data animasi player (state, frame, dll) */
+    Animation Anim;
 
     bool pendingSwitchMap = false; /**< Flag nunggu ganti map */
     std::string pendingMapPath;    /**< Path map tujuan */
@@ -196,7 +197,7 @@ private:
     Vector2 Position;      /**< Posisi player di world (pixel) */
     Vector2 Velocity;      /**< Kecepatan player (belum dipake maksimal) */
     int TileSize = 32;     /**< Ukuran tile dalam pixel */
-    float Speed = 4.0f;    /**< Kecepatan gerak player (pixel per frame) */
+    float Speed = 3.0f;    /**< Kecepatan gerak player (pixel per frame) */
     Texture2D CharTexture; /**< Texture sprite player */
     const char *Name = "Player Name";
 

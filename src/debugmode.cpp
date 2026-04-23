@@ -15,6 +15,7 @@
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/mapLogic.h"
+#include "../include/tiles.h"
 #include "../include/animation.h"
 #include "../include/player.h"
 

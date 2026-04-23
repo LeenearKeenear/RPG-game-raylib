@@ -10,6 +10,7 @@
 #include "../include/player.h"
 #include "../include/debug.h"
 #include "../include/map.h"
+#include "../include/tiles.h"
 #include "../include/animation.h"
 #include "../include/input.h"
 #include "../lib/raylib/include/raymath.h"
@@ -89,16 +90,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
     // Step 2: Inisialisasi Setiap Pindah Map (Spawn & Collision)
     // ================================================================
 
-    // Inisialisasi state animasi player (reset state ke IDLE pas pindah map)
-    Anim.position = {0.0f, 0.0f};
-    Anim.state = IDLE;
-    Anim.direction = DOWN;
-    Anim.frame = 0;
-    Anim.frameTime = 0.0f;
-    Anim.frameSpeed = 0.5f;
-    Anim.walkFrameIndex = 0;
-    Anim.isAttacking = false;
-    Anim.isDead = false;
+    PlayAnimation(Anim, IDLE, DOWN, PlayerAnimationSet);
 
     // reset collision cache biar aman kalau nanti map di-reload
     CollisionRects.clear();
@@ -182,7 +174,8 @@ void Player::Update()
     if (Health <= 0)
     {
         Health = 0;
-        UpdatePlayerDeath(Anim);
+        PlayAnimation(Anim, DEAD, Anim.direction, PlayerAnimationSet);
+        Anim.isDead = true;
         return;
     }
 
@@ -239,40 +232,16 @@ void Player::Update()
         TraceLog(LOG_INFO, "PLAYER: Interact triggered");
     }
 
-    // ===== Movement (Arrow/WASD) =====
     Velocity = {0, 0};
     bool moving = false;
+    Direction nextDir = Anim.direction;
+    if (InputInstance.IsMoveUp())    { Velocity.y -= 1; nextDir = UP;    moving = true; }
+    if (InputInstance.IsMoveDown())  { Velocity.y += 1; nextDir = DOWN;  moving = true; }
+    if (InputInstance.IsMoveLeft())  { Velocity.x -= 1; nextDir = LEFT;  moving = true; }
+    if (InputInstance.IsMoveRight()) { Velocity.x += 1; nextDir = RIGHT; moving = true; }
 
-    if (InputInstance.IsMoveUp())
-    {
-        Velocity.y -= 1;
-        Anim.direction = UP;
-        moving = true;
-    }
-    if (InputInstance.IsMoveDown())
-    {
-        Velocity.y += 1;
-        Anim.direction = DOWN;
-        moving = true;
-    }
-    if (InputInstance.IsMoveLeft())
-    {
-        Velocity.x -= 1;
-        Anim.direction = LEFT;
-        moving = true;
-    }
-    if (InputInstance.IsMoveRight())
-    {
-        Velocity.x += 1;
-        Anim.direction = RIGHT;
-        moving = true;
-    }
-
-    // Set animation state berdasarkan movement
-    if (moving)
-        Anim.state = WALK;
-    else
-        Anim.state = IDLE;
+    ::State nextState = moving ? WALK : IDLE;
+    PlayAnimation(Anim, nextState, nextDir, PlayerAnimationSet);
 
     // Normalisasi biar diagonal gak lebih cepet dari cardinal
     float Length = sqrtf(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
@@ -307,7 +276,7 @@ void Player::Update()
 // ================================================================
 void Player::Render(void)
 {
-    DrawPlayer(Anim);
+    DrawAnimation(Anim, TEXTURE_KNIGHT);
 }
 
 /*==============================================================================
@@ -492,7 +461,8 @@ void Player::HandleAction(void)
     case ACTION_ATTACK:
         if (Mana >= AttackManaCost)
         {
-            UpdatePlayerAttack(Anim);
+            PlayAnimation(Anim, ATTACK, Anim.direction, PlayerAnimationSet);
+            Anim.isAttacking = true;
             Mana -= AttackManaCost;
             ManaRegenTimer = ManaRegenDelay; // Reset timer ke 2 detik
             TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d) - Mana: %.1f", (int)InputInstance.GetActiveSlot(), Mana);
@@ -578,9 +548,7 @@ void Player::HandleRevive(void)
     {
         Anim.isDead = false;
         Anim.isAttacking = false;
-        Anim.state = IDLE;
-        Anim.frame = 0;
-        Anim.frameTime = 0.0f;
+        PlayAnimation(Anim, IDLE, Anim.direction, PlayerAnimationSet);
         Health = MaxHealth; // Reset health
         Mana = MaxMana;     // Reset mana
         TraceLog(LOG_INFO, "PLAYER: Revived!");

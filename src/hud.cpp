@@ -1,5 +1,6 @@
 #include "../include/hud.h"
 #include "../include/player.h"
+#include "../include/tiles.h"
 #include "../include/animation.h"
 #include <cstdio>
 
