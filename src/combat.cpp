@@ -293,7 +293,7 @@ namespace Combat
     }
 
     // --- Damage Popup System ---
-    static std::vector<DamagePopup> Popups;
+    static DamageQueue Popups;
 
     void AddDamagePopup(Vector2 pos, float damage)
     {
@@ -304,50 +304,17 @@ namespace Combat
         p.duration = 1.0f;
         p.velocity = { (float)GetRandomValue(-20, 20) / 10.0f, -2.0f };
         p.active = true;
-        Popups.push_back(p);
+        Popups.Enqueue(p);
     }
 
     void UpdateDamagePopups(float dt)
     {
-        for (size_t i = 0; i < Popups.size(); i++)
-        {
-            if (!Popups[i].active) continue;
-
-            Popups[i].timer += dt;
-            if (Popups[i].timer >= Popups[i].duration)
-            {
-                Popups[i].active = false;
-                continue;
-            }
-
-            // Move popup
-            Popups[i].position = Vector2Add(Popups[i].position, Popups[i].velocity);
-            // Gravity effect
-            Popups[i].velocity.y += 0.1f;
-            // Friction effect
-            Popups[i].velocity.x *= 0.95f;
-        }
-
-        // Cleanup inactive popups
-        Popups.erase(std::remove_if(Popups.begin(), Popups.end(), [](const DamagePopup& p) {
-            return !p.active;
-        }), Popups.end());
+        Popups.Update(dt);
     }
 
     void DrawDamagePopups()
     {
-        for (const auto& p : Popups)
-        {
-            if (!p.active) continue;
-
-            float alpha = 1.0f - (p.timer / p.duration);
-            Color color = Fade(YELLOW, alpha);
-            
-            std::string dmgStr = std::to_string((int)p.damage);
-            Vector2 textPos = { p.position.x - MeasureText(dmgStr.c_str(), 10) / 2.0f, p.position.y };
-            
-            DrawText(dmgStr.c_str(), (int)textPos.x, (int)textPos.y, 10, color);
-        }
+        Popups.Draw();
     }
 }
 

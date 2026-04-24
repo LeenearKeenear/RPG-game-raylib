@@ -277,6 +277,8 @@ bool CheckCollisionAgainstPolygons(const Rectangle &hitbox, const std::vector<st
  * @param worldHeight Tinggi dunia dalam pixel
  * @return true kalo hitbox di dalam batas
  */
+bool IsWithinWorldBounds(const Rectangle &hitbox, float worldWidth, float worldHeight);
+
 /**
  * @brief Cek apakah sebuah posisi aman (tidak menabrak wall/collision) dan berada di dalam batas map
  * @param pos Posisi yang mau dicek

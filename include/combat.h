@@ -1,5 +1,6 @@
 #pragma once
 #include "raylib.h"
+#include "damageQueue.h"
 #include <vector>
 
 class Player;
@@ -20,15 +21,6 @@ struct SwingAttack {
 
 namespace Combat
 {
-    struct DamagePopup {
-        Vector2 position;
-        float damage;
-        float timer;
-        float duration;
-        Vector2 velocity;
-        bool active;
-    };
-
     void HandleCombat(Player &player);
     void HandleRevive(Player &player);
     
