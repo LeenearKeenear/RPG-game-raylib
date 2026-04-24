@@ -51,6 +51,7 @@ public:
     float DetectionRange = 120.0f;      // Jarak deteksi aktif
     float AttackRange = 16.0f;    // Jarak serangan (pixel)
     float Speed = 1.0f;           // Kecepatan gerak musuh
+    float HealthRegenRate = 10.0f; // Kecepatan pengisian darah (sama dengan rate player)
 
     Animation Anim;
     std::string Name;

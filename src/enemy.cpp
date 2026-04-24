@@ -89,6 +89,12 @@ void Enemy::UpdateAI() {
         DetectionRange = BaseDetectionRange;
     }
 
+    // Health Regeneration instan saat IDLE atau PATROL
+    if ((AIState == ENEMY_IDLE || AIState == ENEMY_PATROL) && Health < MaxHealth) {
+        Health += HealthRegenRate * GetFrameTime();
+        if (Health > MaxHealth) Health = MaxHealth;
+    }
+
     switch (AIState) {
         case ENEMY_IDLE: HandleIdle(); break;
         case ENEMY_PATROL: HandlePatrol(); break;
