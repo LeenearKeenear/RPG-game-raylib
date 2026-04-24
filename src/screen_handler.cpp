@@ -24,6 +24,7 @@
 #include "../include/debug.h"
 #include "../include/mapLogic.h"
 #include "../include/pauseMenu.h"
+#include "../include/combat.h"
 
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
@@ -167,6 +168,7 @@ void UpdateGame(GameState *state)
 void UpdateLogicAll()
 {
     Entities::Update();
+    Combat::UpdateDamagePopups(GetFrameTime());
 }
 
 /*==============================================================================
@@ -194,6 +196,7 @@ void DrawRenderTexture(GameState *state)
 
     BeginMode2D(camera);
     Entities::Render();
+    Combat::DrawDamagePopups();
     DebugInstance.DrawWorldOverlay();
     EndMode2D();
 

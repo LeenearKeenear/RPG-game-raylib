@@ -20,10 +20,22 @@ struct SwingAttack {
 
 namespace Combat
 {
+    struct DamagePopup {
+        Vector2 position;
+        float damage;
+        float timer;
+        float duration;
+        Vector2 velocity;
+        bool active;
+    };
+
     void HandleCombat(Player &player);
     void HandleRevive(Player &player);
     
     void UpdateSwingAttack(Player &player, float dt);
     void DrawSwingAttack(Player &player);
-}
 
+    void AddDamagePopup(Vector2 pos, float damage);
+    void UpdateDamagePopups(float dt);
+    void DrawDamagePopups();
+}

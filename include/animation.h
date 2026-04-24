@@ -49,7 +49,7 @@ struct AnimationSet
 };
 
 void UpdateAnimation(Animation &anim, float dt);
-void DrawAnimation(const Animation &anim, TextureAsset texture);
+void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint = WHITE);
 void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set);
 
 extern const AnimationSet PlayerAnimationSet;

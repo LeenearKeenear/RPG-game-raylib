@@ -40,6 +40,7 @@ public:
 
     void Update() override;
     void Render() override;
+    void TakeDamage(float amount, Vector2 knockback = {0, 0}) override;
 
     // Logic AI
     void UpdateAI();
@@ -82,4 +83,10 @@ private:
     float AttackCooldownTimer = 0.0f;
     const float AttackCooldown = 1.5f;
     bool PlayerWasInRange = false;
+
+    // Feedback visual/physics
+    float HitFlashTimer = 0.0f;
+    Vector2 KnockbackVelocity = {0, 0};
+    float DeathTimer = 0.0f;
+    const float DeathDuration = 1.2f;
 };

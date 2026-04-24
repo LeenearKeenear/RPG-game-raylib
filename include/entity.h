@@ -16,7 +16,7 @@ public:
     virtual bool IsAlive() const { return Health > 0; }
     virtual Rectangle GetHitbox() const { return { Position.x, Position.y, 32, 32 }; }
 
-    virtual void TakeDamage(float amount) {
+    virtual void TakeDamage(float amount, Vector2 knockback = {0, 0}) {
         Health -= amount;
         if (Health < 0) Health = 0;
         if (Health > MaxHealth) Health = MaxHealth;

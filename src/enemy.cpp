@@ -53,14 +53,34 @@ void Enemy::Update() {
     if (Health <= 0) {
         if (Anim.state != DEAD) {
             PlayAnimation(Anim, DEAD, Anim.direction, *AnimSet);
-            AIState = ENEMY_IDLE; // Reset AI state agar tidak lagi dianggap mengejar (memperbaiki bug raycast)
-            DetectionRange = BaseDetectionRange; // Reset jangkauan pandangan ke standar
+            AIState = ENEMY_IDLE;
+            DetectionRange = BaseDetectionRange;
         }
         
+        DeathTimer += GetFrameTime();
+        if (DeathTimer >= DeathDuration) {
+            IsActive = false; // Musuh benar-benar hilang setelah durasi mati selesai
+        }
+
         // Tetap update animasi agar frame kematian terlihat (jika ada)
         Anim.position = Position;
         UpdateAnimation(Anim, GetFrameTime());
         return;
+    }
+
+    // Update Hit Flash Timer
+    if (HitFlashTimer > 0) HitFlashTimer -= GetFrameTime();
+
+    // Update Knockback
+    if (Vector2Length(KnockbackVelocity) > 0.1f) {
+        Vector2 nextPos = Vector2Add(Position, Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f));
+        if (IsPositionSafe(nextPos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+            Position = nextPos;
+        }
+        // Decay knockback
+        KnockbackVelocity = Vector2Scale(KnockbackVelocity, 0.85f);
+    } else {
+        KnockbackVelocity = {0, 0};
     }
 
     if (AttackCooldownTimer > 0) AttackCooldownTimer -= GetFrameTime();
@@ -295,8 +315,26 @@ void Enemy::HandleAttack() {
     }
 }
 
+void Enemy::TakeDamage(float amount, Vector2 knockback) {
+    Entity::TakeDamage(amount, knockback);
+    
+    // Trigger Hit Flash
+    HitFlashTimer = 0.15f;
+    
+    // Trigger Knockback (Jangan timpa, tapi tambahkan jika perlu, atau set yang baru)
+    KnockbackVelocity = Vector2Scale(knockback, 2.0f); // Intensitas knockback
+    
+    TraceLog(LOG_INFO, "ENEMY: %s took %.1f damage. Remaining HP: %.1f", Name.c_str(), amount, Health);
+}
+
 void Enemy::PerformAttack() {
-    PlayerInstance.TakeDamage(5.0f);
+    // Hitung arah knockback ke arah player
+    Vector2 enemyCenter = { Position.x + 16, Position.y + 16 };
+    Vector2 playerPos = PlayerInstance.GetPosition();
+    Vector2 playerCenter = { playerPos.x + 16, playerPos.y + 16 };
+    Vector2 knockDir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
+
+    PlayerInstance.TakeDamage(5.0f, knockDir);
     TraceLog(LOG_INFO, "ENEMY: Hit Player! Remaining HP: %.1f", PlayerInstance.GetHealth());
     
     // Trigger animasi attack
@@ -312,8 +350,26 @@ void Enemy::Render() {
     // Shadow sederhana
     DrawEllipse((int)Position.x + 16, (int)Position.y + 30, 10, 4, {0, 0, 0, 80});
     
-    // Render musuh (menggunakan texture enemies yang baru)
-    DrawAnimation(Anim, TEXTURE_ENEMIES);
+    // Handle Blink saat mati
+    bool shouldDraw = true;
+    if (Health <= 0) {
+        // Blink semakin cepat seiring waktu
+        float blinkFreq = (DeathTimer / DeathDuration) * 15.0f;
+        if ((int)(DeathTimer * blinkFreq * 10) % 2 == 0) {
+            shouldDraw = false;
+        }
+    }
+
+    if (shouldDraw) {
+        // Tentukan warna tint (Hit Flash Merah)
+        Color tint = WHITE;
+        if (HitFlashTimer > 0) {
+            tint = RED;
+        }
+
+        // Render musuh (menggunakan texture enemies yang baru)
+        DrawAnimation(Anim, TEXTURE_ENEMIES, tint);
+    }
     
     // Health Bar (Muncul hanya saat Chase/Attack dan diletakkan di bawah musuh)
     if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {

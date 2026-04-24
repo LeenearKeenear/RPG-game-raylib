@@ -40,6 +40,7 @@ public:
     void Init(GameState* state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
     void Update() override;
     void Render(void) override;
+    void TakeDamage(float amount, Vector2 knockback = {0, 0}) override;
 
     SwingAttack Swing = {0};
 
@@ -98,6 +99,10 @@ public:
     void SetHotbarItem(int index, InventoryItem item) { Hotbar[index] = item; }
 
     GameState* State = nullptr;
+
+    // Feedback visual/physics
+    float HitFlashTimer = 0.0f;
+    Vector2 KnockbackVelocity = {0, 0};
 
 private:
     const char *Name = "Player Name";

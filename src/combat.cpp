@@ -1,12 +1,15 @@
 #include "../include/combat.h"
-#include "../include/player.h"
 #include "../include/input.h"
 #include "../include/animation.h"
 #include "../include/inventory.h"
 #include "../include/entities.h"
 #include "../include/map.h"
+#include "../include/player.h"
+#include "../include/tiles.h"
 #include "../lib/raylib/include/raymath.h"
 #include <cmath>
+#include <string>
+#include <algorithm>
 
 namespace Combat
 {
@@ -61,9 +64,21 @@ namespace Combat
 
             if (CheckCollisionRecs(attackHitbox, entity->GetHitbox()))
             {
-                entity->TakeDamage(25.0f); // Damage dasar
+                // Hitung arah knockback
+                Vector2 entityCenter = {
+                    entity->Position.x + 16, // Asumsi 32x32 entity
+                    entity->Position.y + 16
+                };
+                Vector2 knockDir = Vector2Normalize(Vector2Subtract(entityCenter, playerCenter));
+                
+                float damage = 25.0f;
+                entity->TakeDamage(damage, knockDir); 
+                
+                // Tambahkan Damage Popup
+                AddDamagePopup(entityCenter, damage);
+
                 player.Swing.damagedEntities.push_back((void*)entity);
-                TraceLog(LOG_INFO, "COMBAT: Player hit enemy with Rectangle Attack! Damage: 25. Enemy HP: %.1f", entity->Health);
+                TraceLog(LOG_INFO, "COMBAT: Player hit enemy! Damage: %.1f", damage);
             }
         }
     }
@@ -259,6 +274,64 @@ namespace Combat
             
             // Render dengan rotasi (ditambah 45 karena sprite sudah miring 45 derajat secara default)
             DrawTexturePro(TexturesMap[TEXTURE_ITEMS], src, dest, origin, player.Swing.currentAngle + 45.0f, WHITE);
+        }
+    }
+
+    // --- Damage Popup System ---
+    static std::vector<DamagePopup> Popups;
+
+    void AddDamagePopup(Vector2 pos, float damage)
+    {
+        DamagePopup p;
+        p.position = pos;
+        p.damage = damage;
+        p.timer = 0;
+        p.duration = 1.0f;
+        p.velocity = { (float)GetRandomValue(-20, 20) / 10.0f, -2.0f };
+        p.active = true;
+        Popups.push_back(p);
+    }
+
+    void UpdateDamagePopups(float dt)
+    {
+        for (size_t i = 0; i < Popups.size(); i++)
+        {
+            if (!Popups[i].active) continue;
+
+            Popups[i].timer += dt;
+            if (Popups[i].timer >= Popups[i].duration)
+            {
+                Popups[i].active = false;
+                continue;
+            }
+
+            // Move popup
+            Popups[i].position = Vector2Add(Popups[i].position, Popups[i].velocity);
+            // Gravity effect
+            Popups[i].velocity.y += 0.1f;
+            // Friction effect
+            Popups[i].velocity.x *= 0.95f;
+        }
+
+        // Cleanup inactive popups
+        Popups.erase(std::remove_if(Popups.begin(), Popups.end(), [](const DamagePopup& p) {
+            return !p.active;
+        }), Popups.end());
+    }
+
+    void DrawDamagePopups()
+    {
+        for (const auto& p : Popups)
+        {
+            if (!p.active) continue;
+
+            float alpha = 1.0f - (p.timer / p.duration);
+            Color color = Fade(YELLOW, alpha);
+            
+            std::string dmgStr = std::to_string((int)p.damage);
+            Vector2 textPos = { p.position.x - MeasureText(dmgStr.c_str(), 10) / 2.0f, p.position.y };
+            
+            DrawText(dmgStr.c_str(), (int)textPos.x, (int)textPos.y, 10, color);
         }
     }
 }

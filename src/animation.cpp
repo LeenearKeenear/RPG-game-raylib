@@ -92,7 +92,7 @@ void UpdateAnimation(Animation &anim, float dt)
     }
 }
 
-void DrawAnimation(const Animation &anim, TextureAsset texture)
+void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint)
 {
     if (!anim.currentConfig) return;
 
@@ -100,7 +100,7 @@ void DrawAnimation(const Animation &anim, TextureAsset texture)
     int row = anim.currentConfig->row;
 
     Rectangle src = GetFrame(frameX, row);
-    DrawTextureRec(TexturesMap[texture], src, anim.position, WHITE);
+    DrawTextureRec(TexturesMap[texture], src, anim.position, tint);
 }
 
 void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set)

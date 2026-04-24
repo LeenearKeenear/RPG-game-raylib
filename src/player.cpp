@@ -5,6 +5,7 @@
 #include "../include/inventory.h"
 #include "../include/mapLogic.h"
 #include "../include/debug.h"
+#include "../lib/raylib/include/raymath.h"
 
 Player PlayerInstance;
 
@@ -74,6 +75,22 @@ void Player::Update()
 
     if (Anim.isDead) return;
 
+    // Update Hit Flash Timer
+    if (HitFlashTimer > 0) HitFlashTimer -= GetFrameTime();
+
+    // Update Knockback
+    if (Vector2Length(KnockbackVelocity) > 0.1f) {
+        Vector2 nextPos = Vector2Add(Position, Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f));
+        // Gunakan Movement::CanMove untuk pengecekan collision player
+        if (Movement::CanMove(*this, nextPos)) {
+            Position = nextPos;
+        }
+        // Decay knockback
+        KnockbackVelocity = Vector2Scale(KnockbackVelocity, 0.85f);
+    } else {
+        KnockbackVelocity = {0, 0};
+    }
+
     if (InputInstance.IsGoBack()) {
         pendingSwitchMap = false;
         pendingGoBack = true;
@@ -95,12 +112,34 @@ void Player::Update()
     Movement::UpdateCamera(*this);
 }
 
+void Player::TakeDamage(float amount, Vector2 knockback) {
+    Entity::TakeDamage(amount, knockback);
+    
+    // Trigger Hit Flash
+    HitFlashTimer = 0.15f;
+    
+    // Trigger Knockback
+    KnockbackVelocity = Vector2Scale(knockback, 3.0f); // Sedikit lebih kuat buat player biar berasa
+    
+    // Tambahkan Damage Popup
+    Vector2 center = { Position.x + 16, Position.y + 16 };
+    Combat::AddDamagePopup(center, amount);
+
+    TraceLog(LOG_INFO, "PLAYER: Took %.1f damage. Remaining HP: %.1f", amount, Health);
+}
+
 
 void Player::Render(void)
 {
     // Shadow sederhana (sama dengan enemy)
     DrawEllipse((int)Position.x + 16, (int)Position.y + 31, 10, 4, {0, 0, 0, 80});
 
-    DrawAnimation(Anim, TEXTURE_KNIGHT);
+    // Tentukan warna tint (Hit Flash Merah)
+    Color tint = WHITE;
+    if (HitFlashTimer > 0) {
+        tint = RED;
+    }
+
+    DrawAnimation(Anim, TEXTURE_KNIGHT, tint);
     Combat::DrawSwingAttack(*this);
 }
