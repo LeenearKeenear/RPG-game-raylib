@@ -1,18 +1,21 @@
 #pragma once
 #include "raylib.h"
+#include <vector>
 
 class Player;
 
 struct SwingAttack {
     bool active = false;
     float timer = 0.0f;
-    float duration = 0.2f;      // Durasi ayunan singkat (snappy)
+    float duration = 0.75f;      // Durasi ayunan lebih lambat (0.75 detik)
     float startAngle = 0.0f;
     float currentAngle = 0.0f;
     float sweepAngle = 180.0f;  // Ayunan 180 derajat
     Vector2 center = {0, 0};
     int iconX = 6;              // Default icon (Sword)
     int iconY = 4;
+    std::vector<void*> damagedEntities; // List entitas yang sudah terkena damage dalam satu ayunan
+    bool pressRegistered = false;       // Memastikan klik dimulai saat state PLAY
 };
 
 namespace Combat

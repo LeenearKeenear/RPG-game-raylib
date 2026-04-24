@@ -24,6 +24,7 @@ struct InputState
     bool toggleInventory;
     bool toggleMap;
     bool leftClickPressed;
+    bool leftClickDown;
     bool goBack;
 
     bool selectSlot1;
@@ -56,6 +57,7 @@ public:
     bool IsToggleInventory() const { return Current.toggleInventory; }
     bool IsToggleMap() const { return Current.toggleMap; }
     bool IsLeftClickPressed() const { return Current.leftClickPressed; }
+    bool IsLeftClickDown() const { return Current.leftClickDown; }
     bool IsGoBack() const { return Current.goBack; }
 
     bool IsSelectSlot1() const { return Current.selectSlot1; }

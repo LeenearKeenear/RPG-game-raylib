@@ -22,7 +22,7 @@ namespace Combat
         
         Rectangle attackHitbox;
         float reach = 32.0f;   // Jangkauan serangan ke depan
-        float breadth = 64.0f; // Lebar serangan ke samping (tegak lurus)
+        float breadth = 48.0f; // Lebar serangan ke samping (tegak lurus)
 
         switch (player.Anim.direction)
         {
@@ -47,9 +47,22 @@ namespace Combat
             if (entity == &player) continue;
             if (!entity->IsActive || entity->Health <= 0) continue;
 
+            // Cek apakah entitas sudah pernah terkena damage di ayunan ini
+            bool alreadyHit = false;
+            for (void* ptr : player.Swing.damagedEntities)
+            {
+                if (ptr == (void*)entity)
+                {
+                    alreadyHit = true;
+                    break;
+                }
+            }
+            if (alreadyHit) continue;
+
             if (CheckCollisionRecs(attackHitbox, entity->GetHitbox()))
             {
                 entity->Health -= 25.0f; // Damage dasar
+                player.Swing.damagedEntities.push_back((void*)entity);
                 TraceLog(LOG_INFO, "COMBAT: Player hit enemy with Rectangle Attack! Damage: 25. Enemy HP: %.1f", entity->Health);
             }
         }
@@ -59,6 +72,14 @@ namespace Combat
     {
         if (player.Anim.isDead)
             return;
+
+        // Update status pressRegistered: Hanya izinkan serangan jika klik dimulai saat sudah di state PLAY
+        if (InputInstance.IsLeftClickPressed()) {
+            player.Swing.pressRegistered = true;
+        }
+        if (!InputInstance.IsLeftClickDown()) {
+            player.Swing.pressRegistered = false;
+        }
 
         if (player.Health <= 0)
         {
@@ -90,7 +111,7 @@ namespace Combat
             TraceLog(LOG_INFO, "PLAYER: Test Health Decrease (%.1f)", player.Health);
         }
 
-        if (InputInstance.IsLeftClickPressed() && !player.Anim.isAttacking)
+        if (player.Swing.pressRegistered && !player.Anim.isAttacking)
         {
             PlayerAction action = InputInstance.ResolveAction();
             if (action == ACTION_ATTACK)
@@ -122,20 +143,33 @@ namespace Combat
                 // Cek apakah mana cukup untuk melakukan serangan nyata
                 if (player.Mana >= player.AttackManaCost)
                 {
-                    // Lakukan deteksi hit
-                    PerformHitDetection(player);
-
                     player.Mana -= player.AttackManaCost;
                     player.ManaRegenTimer = player.ManaRegenDelay;
 
                     // INisialisasi Animasi Swing (Stardew Style)
                     player.Swing.active = true;
                     player.Swing.timer = 0;
+                    player.Swing.damagedEntities.clear(); // Reset list musuh yang terkena hit
                     player.Swing.center = playerCenter;
+                    switch (attackFaceDir)
+                    {
+                        case UP:    player.Swing.center.y -= 8; break;
+                        case DOWN:  player.Swing.center.y += 8; break;
+                        case LEFT:  player.Swing.center.x -= 8; break;
+                        case RIGHT: player.Swing.center.x += 8; break;
+                    }
                     
-                    float targetAngle = atan2(attackDir.y, attackDir.x) * (180.0f / PI);
-                    player.Swing.startAngle = targetAngle - 90.0f; // Mulai dari 90 derajat di belakang target
-                    player.Swing.sweepAngle = 180.0f;              // Ayunan 180 derajat
+                    float baseAngle = 0.0f;
+                    switch (attackFaceDir)
+                    {
+                        case RIGHT: baseAngle = 0.0f; break;
+                        case DOWN:  baseAngle = 90.0f; break;
+                        case LEFT:  baseAngle = 180.0f; break;
+                        case UP:    baseAngle = -90.0f; break;
+                    }
+
+                    player.Swing.startAngle = baseAngle + 55.0f;
+                    player.Swing.sweepAngle = -95.0f;
                     
                     // Gunakan animasi IDLE saat menyerang (sesuai permintaan user)
                     PlayAnimation(player.Anim, IDLE, attackFaceDir, PlayerAnimationSet);
@@ -182,6 +216,9 @@ namespace Combat
             // Gunakan sine easing untuk swing yang lebih mulus (cepat di tengah)
             float easedProgress = sinf(progress * PI / 2.0f); 
             player.Swing.currentAngle = player.Swing.startAngle + (easedProgress * player.Swing.sweepAngle);
+
+            // Deteksi hit setiap frame selama ayunan aktif
+            PerformHitDetection(player);
         }
     }
 
@@ -189,7 +226,8 @@ namespace Combat
     {
         if (!player.Swing.active) return;
 
-        // 1. Gambar Slash Trail (Multiple fading arcs)
+        // 1. Gambar Slash Trail (Removed by request)
+        /*
         float progress = player.Swing.timer / player.Swing.duration;
         int trailSegments = 8;
         float segmentAngle = player.Swing.sweepAngle / trailSegments;
@@ -208,6 +246,7 @@ namespace Combat
             // Kita kurangi 90 karena startAngle kita berbasis atan2 (0 = kanan)
             DrawCircleSector(player.Swing.center, 40.0f, startAngle, startAngle + segmentAngle, 10, color);
         }
+        */
 
         // 2. Gambar Weapon Sprite yang berputar
         ItemSlot activeSlot = InputInstance.GetActiveSlot();
@@ -216,12 +255,12 @@ namespace Combat
         if (item.type == ITEM_WEAPON)
         {
             Rectangle src = GetFrame(item.iconX, item.iconY);
-            Rectangle dest = { player.Swing.center.x, player.Swing.center.y, 32, 32 };
-            // Origin {16, 32} berarti putar di dasar bawah sprite (gagang)
-            Vector2 origin = { 16, 32 }; 
+            Rectangle dest = { player.Swing.center.x, player.Swing.center.y, 20, 20 };
+            // Origin {0, 20} untuk tile diagonal 20x20 (handle di pojok kiri bawah)
+            Vector2 origin = { 0, 24 }; 
             
-            // Render dengan rotasi (ditambah 90 agar tegak lurus dengan arah ayunan)
-            DrawTexturePro(TexturesMap[TEXTURE_ITEMS], src, dest, origin, player.Swing.currentAngle + 90.0f, WHITE);
+            // Render dengan rotasi (ditambah 45 karena sprite sudah miring 45 derajat secara default)
+            DrawTexturePro(TexturesMap[TEXTURE_ITEMS], src, dest, origin, player.Swing.currentAngle + 45.0f, WHITE);
         }
     }
 }

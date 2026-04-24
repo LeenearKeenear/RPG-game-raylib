@@ -183,7 +183,7 @@ void Debug::DrawAttackOverlay(void)
     // Logika yang sama dengan Combat::PerformHitDetection
     Rectangle attackHitbox;
     float reach = 32.0f;   // Jangkauan serangan ke depan
-    float breadth = 64.0f; // Lebar serangan ke samping (tegak lurus) - Rasio 2:1
+    float breadth = 48.0f; // Lebar serangan ke samping (tegak lurus) - Rasio 2:1
 
     switch (PlayerInstance.Anim.direction)
     {
