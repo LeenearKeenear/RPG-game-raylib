@@ -98,6 +98,9 @@ void Player::Update()
 
 void Player::Render(void)
 {
+    // Shadow sederhana (sama dengan enemy)
+    DrawEllipse((int)Position.x + 16, (int)Position.y + 31, 10, 4, {0, 0, 0, 80});
+
     DrawAnimation(Anim, TEXTURE_KNIGHT);
     Combat::DrawSwingAttack(*this);
 }

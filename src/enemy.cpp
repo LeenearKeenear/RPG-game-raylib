@@ -36,6 +36,7 @@ void Enemy::Init(Vector2 pos, const char* name, EnemyType type) {
     Health = 50.0f;
     MaxHealth = 50.0f;
     AIState = ENEMY_IDLE;
+    DetectionRange = BaseDetectionRange;
     PatrolTarget = pos;
     AttackCooldownTimer = 0.0f;
     PlayerWasInRange = false;
@@ -58,6 +59,13 @@ void Enemy::Update() {
 }
 
 void Enemy::UpdateAI() {
+    // Update jangkauan deteksi dinamis
+    if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {
+        DetectionRange = ChaseDetectionRange;
+    } else {
+        DetectionRange = BaseDetectionRange;
+    }
+
     switch (AIState) {
         case ENEMY_IDLE: HandleIdle(); break;
         case ENEMY_PATROL: HandlePatrol(); break;
@@ -195,11 +203,11 @@ void Enemy::HandleChase() {
         PlayerWasInRange = false;
     }
 
-    // Jika pemain terlalu jauh, berhenti mengejar
-    if (dist > DetectionRange * 1.5f) {
+    // Jika pemain keluar dari Line of Sight atau terlalu jauh
+    if (!CheckPlayerLoS()) {
         AIState = ENEMY_IDLE;
         PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
-        TraceLog(LOG_INFO, "ENEMY: Lost Player. Returning to IDLE.");
+        TraceLog(LOG_INFO, "ENEMY: Lost Player LoS. Returning to IDLE.");
         return;
     }
 
@@ -273,19 +281,17 @@ void Enemy::Render() {
     if (!IsActive) return;
     
     // Shadow sederhana
-    DrawEllipse((int)Position.x + 16, (int)Position.y + 28, 10, 4, {0, 0, 0, 80});
+    DrawEllipse((int)Position.x + 16, (int)Position.y + 30, 10, 4, {0, 0, 0, 80});
     
     // Render musuh (menggunakan texture enemies yang baru)
     DrawAnimation(Anim, TEXTURE_ENEMIES);
     
-    // Health Bar
-    DrawRectangle((int)Position.x + 4, (int)Position.y - 8, 24, 4, BLACK);
-    DrawRectangle((int)Position.x + 4, (int)Position.y - 8, (int)(24 * (Health / MaxHealth)), 4, RED);
-    
-    // Debug info jika state bukan IDLE
-    if (AIState == ENEMY_CHASE) {
-        DrawText("!", (int)Position.x + 12, (int)Position.y - 22, 20, RED);
+    // Health Bar (Muncul hanya saat Chase/Attack dan diletakkan di bawah musuh)
+    if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {
+        DrawRectangle((int)Position.x + 4.8, (int)Position.y + 38, 24, 4, BLACK);
+        DrawRectangle((int)Position.x + 4.8, (int)Position.y + 38, (int)(24 * (Health / MaxHealth)), 4, RED);
     }
+    
 
     // Fitur Debug Mode tambahan untuk Musuh
     if (isDebugMode) {

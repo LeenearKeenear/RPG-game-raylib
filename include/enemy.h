@@ -46,7 +46,9 @@ public:
     bool CheckPlayerLoS();
 
     EnemyAIState AIState = ENEMY_IDLE;
-    float DetectionRange = 160.0f; // Jarak deteksi pemain (pixel)
+    float BaseDetectionRange = 120.0f; // Jarak deteksi standar
+    float ChaseDetectionRange = 240.0f; // Jarak deteksi saat mengejar (lebih besar)
+    float DetectionRange = 120.0f;      // Jarak deteksi aktif
     float AttackRange = 16.0f;    // Jarak serangan (pixel)
     float Speed = 1.0f;           // Kecepatan gerak musuh
 
