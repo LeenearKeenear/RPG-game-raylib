@@ -26,7 +26,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
         ManaRegenTimer = 0.0f;
 
         Hotbar[0] = {ITEM_WEAPON, "Iron Sword", 1, 10, 0, 6, 4};
-        Hotbar[1] = {ITEM_WEAPON, "Wooden Bow", 1, 5, 0, 8, 4};
+        Hotbar[1] = {ITEM_WEAPON, "Iron Axe", 1, 5, 0, 7, 4};
         Hotbar[2] = {ITEM_POTION, "Health Potion", 3, 0, 20, 7, 8};
         Hotbar[3] = {ITEM_POTION, "Mana Bread", 5, 0, 15, 10, 8};
 
@@ -90,11 +90,14 @@ void Player::Update()
 
     Interaction::HandleInteractions(*this);
 
+    Combat::UpdateSwingAttack(*this, GetFrameTime());
     UpdateAnimation(Anim, GetFrameTime());
     Movement::UpdateCamera(*this);
 }
 
+
 void Player::Render(void)
 {
     DrawAnimation(Anim, TEXTURE_KNIGHT);
+    Combat::DrawSwingAttack(*this);
 }

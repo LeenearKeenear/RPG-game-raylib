@@ -32,12 +32,16 @@ namespace Inventory {
     void UsePotion(Player& player, int slotIndex);
 }
 
+#include "combat.h"
+
 class Player : public Entity
 {
 public:
     void Init(GameState* state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
     void Update() override;
     void Render(void) override;
+
+    SwingAttack Swing = {0};
 
     Vector2 Velocity = {0, 0};
     float Speed = 3.0f;

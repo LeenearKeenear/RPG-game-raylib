@@ -180,38 +180,32 @@ void Debug::DrawAttackOverlay(void)
         PlayerInstance.GetPosition().y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2};
 
     // Logika yang sama dengan Combat::PerformHitDetection
-    float attackRadius = 40.0f;
-    float attackAngleRange = 45.0f; // 1/8 lingkaran
-    
-    // Tentukan sudut pusat berdasarkan direction player
-    float centerAngle = 0.0f;
+    Rectangle attackHitbox;
+    float offset = 24.0f;
+    float size = 32.0f;
+
     switch (PlayerInstance.Anim.direction)
     {
-        case RIGHT: centerAngle = 0.0f;   break;
-        case DOWN:  centerAngle = 90.0f;  break;
-        case LEFT:  centerAngle = 180.0f; break;
-        case UP:    centerAngle = -90.0f; break;
+        case RIGHT:
+            attackHitbox = { playerCenter.x + offset - size/2, playerCenter.y - size/2, size, size };
+            break;
+        case LEFT:
+            attackHitbox = { playerCenter.x - offset - size/2, playerCenter.y - size/2, size, size };
+            break;
+        case DOWN:
+            attackHitbox = { playerCenter.x - size/2, playerCenter.y + offset - size/2, size, size };
+            break;
+        case UP:
+            attackHitbox = { playerCenter.x - size/2, playerCenter.y - offset - size/2, size, size };
+            break;
     }
     
-    float startAngle = centerAngle - attackAngleRange / 2.0f;
-    float endAngle = centerAngle + attackAngleRange / 2.0f;
-
-    // Gambar sector serangan
-    DrawCircleSector(playerCenter, attackRadius, startAngle, endAngle, 20, Fade(RED, 0.3f));
-    DrawCircleSectorLines(playerCenter, attackRadius, startAngle, endAngle, 20, RED);
+    // Gambar hitbox serangan
+    DrawRectangleLinesEx(attackHitbox, 2.0f, RED);
+    DrawRectangleRec(attackHitbox, Fade(RED, 0.3f));
     
-    // Label (Arah panah bantuan untuk label)
-    Vector2 dirVec = {0, 0};
-    if (centerAngle == 0.0f) dirVec = {1, 0};
-    else if (centerAngle == 90.0f) dirVec = {0, 1};
-    else if (centerAngle == 180.0f) dirVec = {-1, 0};
-    else if (centerAngle == -90.0f) dirVec = {0, -1};
-
-    Vector2 labelPos = {
-        playerCenter.x + dirVec.x * (attackRadius + 10),
-        playerCenter.y + dirVec.y * (attackRadius + 10)
-    };
-    DrawText("Attack Sector (Direction Based)", (int)labelPos.x - 40, (int)labelPos.y, 14, RED);
+    // Label
+    DrawText("Attack Area (Rect)", (int)attackHitbox.x, (int)attackHitbox.y - 14, 14, RED);
 }
 
 /*==============================================================================
