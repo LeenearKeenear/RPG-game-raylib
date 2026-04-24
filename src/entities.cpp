@@ -1,5 +1,7 @@
 #include "../include/entities.h"
 #include <vector>
+#include <algorithm>
+
 
 namespace Entities
 {
@@ -25,6 +27,14 @@ namespace Entities
 
     void Render()
     {
+        // Y-axis priority (Depth sorting)
+        // Sort entities by their Y position so that entities further down are drawn last (on top)
+        std::sort(Registry.begin(), Registry.end(), [](Entity *a, Entity *b) {
+            if (!a) return false;
+            if (!b) return true;
+            return a->Position.y < b->Position.y;
+        });
+
         for (auto entity : Registry)
         {
             if (entity && entity->IsActive)
@@ -33,6 +43,7 @@ namespace Entities
             }
         }
     }
+
 
     void Shutdown()
     {
