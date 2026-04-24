@@ -162,8 +162,8 @@ void Debug::DrawRaycastOverlay(void)
 
     DrawLineEx(playerCenter, rayEnd, 1.0f, GREEN);
 
-    // Gambar titik hit jika ray mengenai object
-    if (PlayerInstance.GetLastHit().hit)
+    // Gambar titik hit jika ray mengenai object (hanya saat debug mode aktif)
+    if (isDebugMode && PlayerInstance.GetLastHit().hit)
         DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, RED);
 }
 
@@ -179,13 +179,19 @@ void Debug::DrawAttackOverlay(void)
         PlayerInstance.GetPosition().x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2,
         PlayerInstance.GetPosition().y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2};
 
-    Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(gState), camera);
-    Vector2 attackDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
-    
     // Logika yang sama dengan Combat::PerformHitDetection
     float attackRadius = 40.0f;
     float attackAngleRange = 45.0f; // 1/8 lingkaran
-    float centerAngle = atan2(attackDir.y, attackDir.x) * (180.0f / PI);
+    
+    // Tentukan sudut pusat berdasarkan direction player
+    float centerAngle = 0.0f;
+    switch (PlayerInstance.Anim.direction)
+    {
+        case RIGHT: centerAngle = 0.0f;   break;
+        case DOWN:  centerAngle = 90.0f;  break;
+        case LEFT:  centerAngle = 180.0f; break;
+        case UP:    centerAngle = -90.0f; break;
+    }
     
     float startAngle = centerAngle - attackAngleRange / 2.0f;
     float endAngle = centerAngle + attackAngleRange / 2.0f;
@@ -194,12 +200,18 @@ void Debug::DrawAttackOverlay(void)
     DrawCircleSector(playerCenter, attackRadius, startAngle, endAngle, 20, Fade(RED, 0.3f));
     DrawCircleSectorLines(playerCenter, attackRadius, startAngle, endAngle, 20, RED);
     
-    // Label
+    // Label (Arah panah bantuan untuk label)
+    Vector2 dirVec = {0, 0};
+    if (centerAngle == 0.0f) dirVec = {1, 0};
+    else if (centerAngle == 90.0f) dirVec = {0, 1};
+    else if (centerAngle == 180.0f) dirVec = {-1, 0};
+    else if (centerAngle == -90.0f) dirVec = {0, -1};
+
     Vector2 labelPos = {
-        playerCenter.x + attackDir.x * (attackRadius + 10),
-        playerCenter.y + attackDir.y * (attackRadius + 10)
+        playerCenter.x + dirVec.x * (attackRadius + 10),
+        playerCenter.y + dirVec.y * (attackRadius + 10)
     };
-    DrawText("Attack Sector (1/8 Circle)", (int)labelPos.x - 40, (int)labelPos.y, 14, RED);
+    DrawText("Attack Sector (Direction Based)", (int)labelPos.x - 40, (int)labelPos.y, 14, RED);
 }
 
 /*==============================================================================
@@ -410,10 +422,14 @@ void Debug::DrawCollisionPanel(Rectangle bounds)
  */
 void Debug::DrawWorldOverlay(void)
 {
-    if (!isDebugMode)
+    if (tilesonMap == nullptr)
         return;
 
-    if (tilesonMap == nullptr)
+    // Selalu gambar raycast interaksi (sesuai permintaan user)
+    DrawRaycastOverlay();
+
+    // Sisa overlay hanya muncul saat debug mode aktif
+    if (!isDebugMode)
         return;
 
     // Hitbox player
@@ -436,7 +452,6 @@ void Debug::DrawWorldOverlay(void)
     // Overlay collision object
     DrawCollisionOverlay(COLLISION_LAYER_NAME, RED, GOLD, GOLD);
     DrawCollisionOverlay(OBJECT_LAYER_NAME, BLUE, BLUE, BLUE);
-    DrawRaycastOverlay();
     DrawAttackOverlay();
 
     // Batas luar map

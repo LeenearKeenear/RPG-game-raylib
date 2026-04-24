@@ -13,7 +13,7 @@ namespace Combat
     /**
      * @brief Melakukan deteksi tabrakan serangan terhadap semua entitas di registry
      */
-    void PerformHitDetection(Player &player, Vector2 attackDir)
+    void PerformHitDetection(Player &player)
     {
         Vector2 playerCenter = {
             player.Position.x + player.HitboxOffsetX + player.HitboxWidth / 2,
@@ -22,7 +22,16 @@ namespace Combat
         
         float attackRadius = 40.0f;
         float attackAngleRange = 45.0f; // 1/8 lingkaran
-        float centerAngle = atan2(attackDir.y, attackDir.x) * (180.0f / PI);
+        
+        // Tentukan sudut pusat berdasarkan direction player
+        float centerAngle = 0.0f;
+        switch (player.Anim.direction)
+        {
+            case RIGHT: centerAngle = 0.0f;   break;
+            case DOWN:  centerAngle = 90.0f;  break;
+            case LEFT:  centerAngle = 180.0f; break;
+            case UP:    centerAngle = -90.0f; break;
+        }
 
         for (auto entity : Entities::GetRegistry())
         {
@@ -132,8 +141,8 @@ namespace Combat
                     player.Anim.isAttacking = true;
                     */
 
-                    // Langsung lakukan deteksi hit sesuai arah kursor
-                    PerformHitDetection(player, attackDir);
+                    // Langsung lakukan deteksi hit sesuai arah hadap pemain
+                    PerformHitDetection(player);
 
                     player.Mana -= player.AttackManaCost;
                     player.ManaRegenTimer = player.ManaRegenDelay;
