@@ -108,6 +108,10 @@ void Player::Update()
     Interaction::HandleInteractions(*this);
 
     Combat::UpdateSwingAttack(*this, GetFrameTime());
+    
+    // Sinkronisasi posisi animasi dengan posisi entitas (WAJIB setiap frame agar tidak tertinggal saat knockback/attack)
+    Anim.position = Position;
+
     UpdateAnimation(Anim, GetFrameTime());
     Movement::UpdateCamera(*this);
 }
@@ -119,8 +123,15 @@ void Player::TakeDamage(float amount, Vector2 knockback) {
     HitFlashTimer = 0.15f;
     
     // Trigger Knockback
-    KnockbackVelocity = Vector2Scale(knockback, 3.0f); // Sedikit lebih kuat buat player biar berasa
+    KnockbackVelocity = Vector2Scale(knockback, 6.0f); // Intensitas knockback diperbesar
     
+    // Solusi bug: langsung akhiri attack player jika sedang menyerang
+    if (Anim.isAttacking) {
+        Swing.active = false;
+        Anim.isAttacking = false;
+        PlayAnimation(Anim, IDLE, Anim.direction, PlayerAnimationSet);
+    }
+
     // Tambahkan Damage Popup
     Vector2 center = { Position.x + 16, Position.y + 16 };
     Combat::AddDamagePopup(center, amount);

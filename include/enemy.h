@@ -81,7 +81,7 @@ private:
     RayCast Ray;
 
     float AttackCooldownTimer = 0.0f;
-    const float AttackCooldown = 1.5f;
+    const float AttackCooldown = 1.0f;
     bool PlayerWasInRange = false;
 
     // Feedback visual/physics

@@ -207,6 +207,7 @@ namespace Combat
             PlayAnimation(player.Anim, IDLE, player.Anim.direction, PlayerAnimationSet);
             player.Health = player.MaxHealth;
             player.Mana = player.MaxMana;
+            player.KnockbackVelocity = {0, 0}; // Riset knockback saat revive
             TraceLog(LOG_INFO, "PLAYER: Revived!");
         }
     }
@@ -214,6 +215,20 @@ namespace Combat
     void UpdateSwingAttack(Player &player, float dt)
     {
         if (!player.Swing.active) return;
+
+        // Update center agar mengikuti player (solusi bug sprite tertinggal saat knockback)
+        Vector2 playerCenter = {
+            player.Position.x + player.HitboxOffsetX + player.HitboxWidth / 2,
+            player.Position.y + player.HitboxOffsetY + player.HitboxHeight / 2
+        };
+        player.Swing.center = playerCenter;
+        switch (player.Anim.direction)
+        {
+            case UP:    player.Swing.center.y -= 8; break;
+            case DOWN:  player.Swing.center.y += 8; break;
+            case LEFT:  player.Swing.center.x -= 8; break;
+            case RIGHT: player.Swing.center.x += 8; break;
+        }
 
         player.Swing.timer += dt;
         if (player.Swing.timer >= player.Swing.duration)

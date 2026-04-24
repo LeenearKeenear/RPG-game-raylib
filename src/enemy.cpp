@@ -228,6 +228,14 @@ void Enemy::HandlePatrol() {
 }
 
 void Enemy::HandleChase() {
+    // Jika masih dalam cooldown serangan, jangan mengejar (diam dulu)
+    if (AttackCooldownTimer > 0) {
+        if (Anim.state != IDLE) {
+            PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
+        }
+        return;
+    }
+
     Vector2 playerPos = PlayerInstance.GetPosition();
     
     Vector2 enemyCenter = {
@@ -322,7 +330,7 @@ void Enemy::TakeDamage(float amount, Vector2 knockback) {
     HitFlashTimer = 0.15f;
     
     // Trigger Knockback (Jangan timpa, tapi tambahkan jika perlu, atau set yang baru)
-    KnockbackVelocity = Vector2Scale(knockback, 2.0f); // Intensitas knockback
+    KnockbackVelocity = Vector2Scale(knockback, 6.0f); // Intensitas knockback diperbesar
     
     TraceLog(LOG_INFO, "ENEMY: %s took %.1f damage. Remaining HP: %.1f", Name.c_str(), amount, Health);
 }
