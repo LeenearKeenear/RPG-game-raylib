@@ -167,6 +167,41 @@ void Debug::DrawRaycastOverlay(void)
         DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, RED);
 }
 
+/**
+ * @brief Gambar overlay area serangan player
+ */
+void Debug::DrawAttackOverlay(void)
+{
+    // Hanya gambar jika mouse kiri sedang ditekan (saat attack)
+    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) return;
+
+    Vector2 playerCenter = {
+        PlayerInstance.GetPosition().x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2,
+        PlayerInstance.GetPosition().y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2};
+
+    Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(gState), camera);
+    Vector2 attackDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+    
+    // Logika yang sama dengan Combat::PerformHitDetection
+    float attackRadius = 40.0f;
+    float attackAngleRange = 45.0f; // 1/8 lingkaran
+    float centerAngle = atan2(attackDir.y, attackDir.x) * (180.0f / PI);
+    
+    float startAngle = centerAngle - attackAngleRange / 2.0f;
+    float endAngle = centerAngle + attackAngleRange / 2.0f;
+
+    // Gambar sector serangan
+    DrawCircleSector(playerCenter, attackRadius, startAngle, endAngle, 20, Fade(RED, 0.3f));
+    DrawCircleSectorLines(playerCenter, attackRadius, startAngle, endAngle, 20, RED);
+    
+    // Label
+    Vector2 labelPos = {
+        playerCenter.x + attackDir.x * (attackRadius + 10),
+        playerCenter.y + attackDir.y * (attackRadius + 10)
+    };
+    DrawText("Attack Sector (1/8 Circle)", (int)labelPos.x - 40, (int)labelPos.y, 14, RED);
+}
+
 /*==============================================================================
  * Public Methods
  *==============================================================================*/
@@ -402,6 +437,7 @@ void Debug::DrawWorldOverlay(void)
     DrawCollisionOverlay(COLLISION_LAYER_NAME, RED, GOLD, GOLD);
     DrawCollisionOverlay(OBJECT_LAYER_NAME, BLUE, BLUE, BLUE);
     DrawRaycastOverlay();
+    DrawAttackOverlay();
 
     // Batas luar map
     Rectangle mapBounds = {

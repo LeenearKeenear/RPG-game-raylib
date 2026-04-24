@@ -20,19 +20,39 @@ namespace Combat
             player.Position.y + player.HitboxOffsetY + player.HitboxHeight / 2
         };
         
-        // Letakkan hitbox serangan di depan pemain sesuai arah bidikan kursor
-        Vector2 hitboxCenter = Vector2Add(playerCenter, Vector2Scale(attackDir, 24.0f));
-        Rectangle attackHitbox = { hitboxCenter.x - 16, hitboxCenter.y - 16, 32, 32 };
+        float attackRadius = 40.0f;
+        float attackAngleRange = 45.0f; // 1/8 lingkaran
+        float centerAngle = atan2(attackDir.y, attackDir.x) * (180.0f / PI);
 
         for (auto entity : Entities::GetRegistry())
         {
             if (entity == &player) continue;
             if (!entity->IsActive || entity->Health <= 0) continue;
 
-            if (CheckCollisionRecs(attackHitbox, entity->GetHitbox()))
+            Rectangle enemyHitbox = entity->GetHitbox();
+            Vector2 enemyCenter = {
+                enemyHitbox.x + enemyHitbox.width / 2,
+                enemyHitbox.y + enemyHitbox.height / 2
+            };
+
+            // 1. Cek jarak (Radius)
+            float dist = Vector2Distance(playerCenter, enemyCenter);
+            if (dist <= attackRadius)
             {
-                entity->Health -= 25.0f; // Damage dasar
-                TraceLog(LOG_INFO, "COMBAT: Player hit enemy! Damage: 25. Enemy HP: %.1f", entity->Health);
+                // 2. Cek sudut (Angle)
+                Vector2 toEnemy = Vector2Subtract(enemyCenter, playerCenter);
+                float angleToEnemy = atan2(toEnemy.y, toEnemy.x) * (180.0f / PI);
+                
+                // Normalisasi selisih sudut agar berada di rentang [-180, 180]
+                float angleDiff = angleToEnemy - centerAngle;
+                while (angleDiff > 180) angleDiff -= 360;
+                while (angleDiff < -180) angleDiff += 360;
+
+                if (fabs(angleDiff) <= attackAngleRange / 2.0f)
+                {
+                    entity->Health -= 25.0f; // Damage dasar
+                    TraceLog(LOG_INFO, "COMBAT: Player hit enemy with Sector Attack! Damage: 25. Enemy HP: %.1f", entity->Health);
+                }
             }
         }
     }
