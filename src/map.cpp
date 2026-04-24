@@ -16,6 +16,8 @@
 #include "../include/map.h"
 #include "../include/animation.h"
 #include "../include/player.h"
+#include "../include/enemy.h"
+#include "../include/item.h"
 #include "../include/mapstack.h"
 #include "../include/propsbehavior.h"
 #include <memory>
@@ -207,6 +209,8 @@ void UnloadMap(void)
         tilesonMap = nullptr;
     }
 
+    ClearEnemies();
+    ClearItems();
     parsedMap.reset();
 }
 
@@ -231,7 +235,17 @@ void InitMap(void)
     // LoadMap("world_json/floorC.json");
 
     // Map yang aktif saat ini
-    // LoadMap("world_json/tutorial.json");
+    // currentMapPath = "world_json/tutorial.json";
+    LoadMap(currentMapPath.c_str());
+
+    if (!LoadEnemiesForMap(currentMapPath))
+    {
+        SpawnRandomWave();
+    }
+
+    if (!LoadItemsforMap(currentMapPath)){
+        SpawnItemWave();
+    }
     BuildMapObjectIndex();
 
     SpawnObject();
@@ -371,6 +385,15 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         return;
     }
 
+    // Simpan musuh map lama sebelum ganti path
+    if (!currentMapPath.empty())
+        SaveEnemiesForMap(currentMapPath);
+
+    if (!currentMapPath.empty())
+        SaveItemsForMap(currentMapPath);
+    
+    // Push map sekarang ke stack sebelum pindah
+
     // Simpan map sekarang ke history sebelum pindah
     if (!currentMapPath.empty())
         mapHistoryStack.Push(currentMapPath, "");
@@ -391,8 +414,18 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         return;
     }
 
-    // Re-init player berdasarkan target spawn di map baru
-    PlayerInstance.Init(gState, targetDoorName);
+    // Re-init player berdasarkan target door di map baru
+    PlayerInstance.Init(targetDoorName);
+
+    // Load musuh yang sudah ada atau spawn baru
+    if (!LoadEnemiesForMap(currentMapPath))
+    {
+        SpawnRandomWave();
+    }
+
+    if (!LoadItemsforMap(currentMapPath)){
+        SpawnItemWave();
+    }
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
@@ -419,7 +452,12 @@ void GoBack(void)
         return;
     }
 
-    // Ambil map terakhir dari history
+    // Simpan musuh map sekarang
+    SaveEnemiesForMap(currentMapPath);
+
+    SaveItemsForMap(currentMapPath);
+
+    // Ambil history teratas dan pop dari stack
     MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();
     currentMapPath = prev.mapPath;
 
@@ -437,6 +475,16 @@ void GoBack(void)
 
     // Init player di spawn point map sebelumnya
     PlayerInstance.Init(gState, prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
+
+    // Load musuh dari history
+    if (!LoadEnemiesForMap(currentMapPath))
+    {
+        SpawnRandomWave();
+    }
+
+    if (!LoadItemsforMap(currentMapPath)){
+        SpawnItemWave();
+    }
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();

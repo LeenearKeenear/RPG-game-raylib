@@ -19,6 +19,8 @@
 
 /** Array tombol menu utama (Start, Load, Options, Quit) */
 static std::array<buttonTxt, 4> buttons;
+
+/** Popup buat fitur "Coming Soon" (Options & Load sementara) */
 static Popup menuOptionsPopup;
 
 /*==============================================================================

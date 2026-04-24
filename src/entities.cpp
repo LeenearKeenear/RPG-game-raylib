@@ -8,6 +8,8 @@
 
 #include "../include/entities.h"
 #include "../include/player.h"
+#include "../include/enemy.h"
+#include "../include/item.h"
 
 /*==============================================================================
  * Public Functions
@@ -22,7 +24,8 @@ void RenderEntities(void)
 {
     // Render player terlebih dahulu (paling bawah/layer terbawah)
     PlayerInstance.Render();
-
     // TODO: RenderEnemies();  // nanti tambahin pas enemy udah diimplementasi
+    RenderAllEnemies();
     // TODO: RenderItems();    // nanti tambahin pas item udah diimplementasi
+    RenderAllItems();
 }

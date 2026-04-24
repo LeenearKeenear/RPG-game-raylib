@@ -18,6 +18,8 @@ static Popup savePopup("Game Saved!", "OK", 0.7F);
 
 /** Popup notifikasi buat load game */
 static Popup loadPopup("Game Loaded!", "OK", 0.7F);
+
+/** Popup notifikasi buat fitur "Coming Soon" (Options) */
 static Popup pauseOptionsPopup("Coming Soon!", "OK", 0.7F);
 
 /*==============================================================================
@@ -154,28 +156,29 @@ void PauseMenu::CalculateDimensions()
  */
 void PauseMenu::HandleButtonClick(int buttonIndex, GameState *state)
 {
-    switch (buttonIndex) {
-        case 0:  // Resume
-            Hide();
-            break;
-        case 1:  // Save Game
-            savePopup.Show();
-            break;
-        case 2:  // Load Game
-            loadPopup.Show();
-            break;
-        case 3:  // Options
-            pauseOptionsPopup.Show();
-            break;
-        case 4:  // Return to Main Menu
-            state->currentScreen = MAIN_MENU;
-            Hide();
-            break;
-        case 5:  // Close Game
-            CloseWindow();
-            break;
-        default:
-            break;
+    switch (buttonIndex)
+    {
+    case 0: // Resume - lanjut main
+        Hide();
+        break;
+    case 1: // Save Game - tampilin popup notifikasi
+        savePopup.Show();
+        break;
+    case 2: // Load Game - tampilin popup notifikasi
+        loadPopup.Show();
+        break;
+    case 3: // Options - tampilin popup "Coming Soon"
+        pauseOptionsPopup.Show();
+        break;
+    case 4: // Return to Main Menu - balik ke menu utama
+        state->currentScreen = MAIN_MENU;
+        Hide();
+        break;
+    case 5: // Close Game - keluar dari aplikasi
+        CloseWindow();
+        break;
+    default:
+        break;
     }
 }
 
