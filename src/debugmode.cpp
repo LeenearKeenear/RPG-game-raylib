@@ -172,8 +172,9 @@ void Debug::DrawRaycastOverlay(void)
  */
 void Debug::DrawAttackOverlay(void)
 {
-    // Hanya gambar jika mouse kiri sedang ditekan (saat attack)
-    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) return;
+    // Hanya gambar jika player sedang menyerang
+    if (!PlayerInstance.Anim.isAttacking)
+        return;
 
     Vector2 playerCenter = {
         PlayerInstance.GetPosition().x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2,
@@ -181,32 +182,34 @@ void Debug::DrawAttackOverlay(void)
 
     // Logika yang sama dengan Combat::PerformHitDetection
     Rectangle attackHitbox;
-    float offset = 24.0f;
-    float size = 32.0f;
+    float reach = 32.0f;   // Jangkauan serangan ke depan
+    float breadth = 64.0f; // Lebar serangan ke samping (tegak lurus) - Rasio 2:1
 
     switch (PlayerInstance.Anim.direction)
     {
-        case RIGHT:
-            attackHitbox = { playerCenter.x + offset - size/2, playerCenter.y - size/2, size, size };
-            break;
-        case LEFT:
-            attackHitbox = { playerCenter.x - offset - size/2, playerCenter.y - size/2, size, size };
-            break;
-        case DOWN:
-            attackHitbox = { playerCenter.x - size/2, playerCenter.y + offset - size/2, size, size };
-            break;
-        case UP:
-            attackHitbox = { playerCenter.x - size/2, playerCenter.y - offset - size/2, size, size };
-            break;
+    case RIGHT:
+        attackHitbox = {playerCenter.x + PlayerInstance.GetHitboxWidth() / 2, playerCenter.y - breadth / 2, reach, breadth};
+        break;
+    case LEFT:
+        attackHitbox = {playerCenter.x - PlayerInstance.GetHitboxWidth() / 2 - reach, playerCenter.y - breadth / 2, reach, breadth};
+        break;
+    case DOWN:
+        attackHitbox = {playerCenter.x - breadth / 2, playerCenter.y + PlayerInstance.GetHitboxHeight() / 2, breadth, reach};
+        break;
+    case UP:
+        attackHitbox = {playerCenter.x - breadth / 2, playerCenter.y - PlayerInstance.GetHitboxHeight() / 2 - reach, breadth, reach};
+        break;
     }
-    
+
+
     // Gambar hitbox serangan
     DrawRectangleLinesEx(attackHitbox, 2.0f, RED);
     DrawRectangleRec(attackHitbox, Fade(RED, 0.3f));
-    
+
     // Label
-    DrawText("Attack Area (Rect)", (int)attackHitbox.x, (int)attackHitbox.y - 14, 14, RED);
+    DrawText("Attack Area (2:1 Rect)", (int)attackHitbox.x, (int)attackHitbox.y - 14, 14, RED);
 }
+
 
 /*==============================================================================
  * Public Methods

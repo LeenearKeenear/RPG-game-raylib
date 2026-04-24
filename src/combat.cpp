@@ -21,24 +21,26 @@ namespace Combat
         };
         
         Rectangle attackHitbox;
-        float offset = 24.0f;
-        float size = 32.0f;
+        float reach = 32.0f;   // Jangkauan serangan ke depan
+        float breadth = 64.0f; // Lebar serangan ke samping (tegak lurus)
 
         switch (player.Anim.direction)
         {
             case RIGHT:
-                attackHitbox = { playerCenter.x + offset - size/2, playerCenter.y - size/2, size, size };
+                attackHitbox = { playerCenter.x + player.HitboxWidth / 2, playerCenter.y - breadth / 2, reach, breadth };
                 break;
             case LEFT:
-                attackHitbox = { playerCenter.x - offset - size/2, playerCenter.y - size/2, size, size };
+                attackHitbox = { playerCenter.x - player.HitboxWidth / 2 - reach, playerCenter.y - breadth / 2, reach, breadth };
                 break;
             case DOWN:
-                attackHitbox = { playerCenter.x - size/2, playerCenter.y + offset - size/2, size, size };
+                attackHitbox = { playerCenter.x - breadth / 2, playerCenter.y + player.HitboxHeight / 2, breadth, reach };
                 break;
             case UP:
-                attackHitbox = { playerCenter.x - size/2, playerCenter.y - offset - size/2, size, size };
+                attackHitbox = { playerCenter.x - breadth / 2, playerCenter.y - player.HitboxHeight / 2 - reach, breadth, reach };
                 break;
         }
+
+
 
         for (auto entity : Entities::GetRegistry())
         {
