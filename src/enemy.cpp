@@ -47,7 +47,21 @@ void Enemy::Init(Vector2 pos, const char* name, EnemyType type) {
 }
 
 void Enemy::Update() {
-    if (!IsActive || Health <= 0) return;
+    if (!IsActive) return;
+
+    // Handle kematian musuh
+    if (Health <= 0) {
+        if (Anim.state != DEAD) {
+            PlayAnimation(Anim, DEAD, Anim.direction, *AnimSet);
+            AIState = ENEMY_IDLE; // Reset AI state agar tidak lagi dianggap mengejar (memperbaiki bug raycast)
+            DetectionRange = BaseDetectionRange; // Reset jangkauan pandangan ke standar
+        }
+        
+        // Tetap update animasi agar frame kematian terlihat (jika ada)
+        Anim.position = Position;
+        UpdateAnimation(Anim, GetFrameTime());
+        return;
+    }
 
     if (AttackCooldownTimer > 0) AttackCooldownTimer -= GetFrameTime();
 
@@ -59,6 +73,15 @@ void Enemy::Update() {
 }
 
 void Enemy::UpdateAI() {
+    // Jika Player mati, hentikan pengejaran/serangan
+    if (!PlayerInstance.IsAlive()) {
+        if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {
+            AIState = ENEMY_IDLE;
+            PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
+            return;
+        }
+    }
+
     // Update jangkauan deteksi dinamis
     if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {
         DetectionRange = ChaseDetectionRange;
@@ -75,7 +98,7 @@ void Enemy::UpdateAI() {
 }
 
 bool Enemy::CheckPlayerLoS() {
-    if (!tilesonMap) return false;
+    if (!tilesonMap || !PlayerInstance.IsAlive()) return false;
 
     Vector2 enemyCenter = {
         Position.x + HitboxOffsetX + HitboxWidth / 2.0f,
@@ -267,7 +290,7 @@ void Enemy::HandleAttack() {
 }
 
 void Enemy::PerformAttack() {
-    PlayerInstance.SetHealth(PlayerInstance.GetHealth() - 5.0f);
+    PlayerInstance.TakeDamage(5.0f);
     TraceLog(LOG_INFO, "ENEMY: Hit Player! Remaining HP: %.1f", PlayerInstance.GetHealth());
     
     // Trigger animasi attack

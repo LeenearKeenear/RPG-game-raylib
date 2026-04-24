@@ -7,7 +7,7 @@ class Player;
 struct SwingAttack {
     bool active = false;
     float timer = 0.0f;
-    float duration = 0.75f;      // Durasi ayunan lebih lambat (0.75 detik)
+    float duration = 0.7f;      // Durasi ayunan lebih lambat (0.7 detik)
     float startAngle = 0.0f;
     float currentAngle = 0.0f;
     float sweepAngle = 180.0f;  // Ayunan 180 derajat

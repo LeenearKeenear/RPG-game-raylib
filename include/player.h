@@ -89,7 +89,11 @@ public:
     float GetINTERACT_RANGE() { return INTERACT_RANGE; }
     InventoryItem GetHotbarItem(int index) { return Hotbar[index]; }
 
-    void SetHealth(float h) { Health = h; }
+    void SetHealth(float h) { 
+        Health = h; 
+        if (Health < 0) Health = 0;
+        if (Health > MaxHealth) Health = MaxHealth;
+    }
     void SetMana(float m) { Mana = m; }
     void SetHotbarItem(int index, InventoryItem item) { Hotbar[index] = item; }
 

@@ -61,7 +61,7 @@ namespace Combat
 
             if (CheckCollisionRecs(attackHitbox, entity->GetHitbox()))
             {
-                entity->Health -= 25.0f; // Damage dasar
+                entity->TakeDamage(25.0f); // Damage dasar
                 player.Swing.damagedEntities.push_back((void*)entity);
                 TraceLog(LOG_INFO, "COMBAT: Player hit enemy with Rectangle Attack! Damage: 25. Enemy HP: %.1f", entity->Health);
             }
@@ -105,9 +105,7 @@ namespace Combat
 
         if (InputInstance.IsTestLoseHP())
         {
-            player.Health -= 10.0f;
-            if (player.Health < 0)
-                player.Health = 0;
+            player.TakeDamage(10.0f);
             TraceLog(LOG_INFO, "PLAYER: Test Health Decrease (%.1f)", player.Health);
         }
 
