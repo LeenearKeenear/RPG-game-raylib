@@ -8,7 +8,8 @@ typedef enum {
     ITEM_WEAPON,
     ITEM_POTION,
     ITEM_POISON,
-    ITEM_ARMOR
+    ITEM_ARMOR,
+    ITEM_NONE
 } ItemCategory;
 
 // Enum untuk kelangkaan (Rarity)

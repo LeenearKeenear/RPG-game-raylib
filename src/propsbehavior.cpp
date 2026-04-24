@@ -9,11 +9,10 @@ Vector2 SnapToTileGrid(Vector2 rawPos)
         std::floor(rawPos.y / TILE_SIZE) * TILE_SIZE};
 }
 
-
-void SpawnObject(){
+void SpawnObject()
+{
     auto chestObjs = TiledHelper::GetObjectsByType(CHEST_TYPE_OBJECT_NAME);
     chestManager.SpawnChests(chestObjs);
-
 }
 
 void ChestManager::SpawnChests(const std::vector<MapObject *> &chestObjects)
@@ -37,53 +36,37 @@ void ChestManager::SpawnChests(const std::vector<MapObject *> &chestObjects)
     }
 }
 
-TileObject *ChestManager::FindChest(const std::string &name)
+TileObject *ChestManager::FindChest(Vector2 hitPos, float threshold)
 {
-    for (auto &c : chests)
-    {
-        TraceLog(LOG_INFO, "Checking chest: '%s'", c.name.c_str());
-        if (c.name == name)
-            return &c;
-    }
+    TileObject *closest = nullptr;
+    float minDist = threshold;
 
-    return nullptr;
+    for (auto &chest : chests)
+    {
+        float dist = Vector2Distance(hitPos, chest.position);
+        if (dist < minDist)
+        {
+            minDist = dist;
+            closest = &chest;
+        }
+    }
+    return closest; // nullptr kalau gak ada dalam threshold
 }
 
-void ChestManager::Interact(const std::string &chestName)
+void ChestManager::Interact(Vector2 hitPos)
 {
-    TraceLog(LOG_INFO, "Looking for chest: '%s', total chests: %d", chestName.c_str(), (int)chests.size());
-    TileObject *chest = FindChest(chestName);
-
+    TraceLog(LOG_INFO, "Looking for chest at (%.1f, %.1f), total chests: %d", hitPos.x, hitPos.y, (int)chests.size());
+    TileObject *chest = FindChest(hitPos);
     if (!chest || chest->state == ObjectState::Open)
         return;
-
     chest->state = ObjectState::Open;
-    TriggerLoot(chestName);
+    TriggerLoot(*chest);
 }
 
-void ChestManager::TriggerLoot(const std::string &chestName)
+void ChestManager::TriggerLoot(TileObject &chest)
 {
-    // TODO: ganti keyword rarity sesuai kesepakatan nama dengan temen
-    if (chestName.find("common") != std::string::npos)
-    {
-        // TODO: spawn common loot
-        TraceLog(LOG_INFO, "Spawning common loot for: %s", chestName.c_str());
-    }
-    else if (chestName.find("rare") != std::string::npos)
-    {
-        // TODO: spawn rare loot
-        TraceLog(LOG_INFO, "Spawning rare loot for: %s", chestName.c_str());
-    }
-    else if (chestName.find("epic") != std::string::npos)
-    {
-        // TODO: spawn epic loot
-        TraceLog(LOG_INFO, "Spawning epic loot for: %s", chestName.c_str());
-    }
-    else
-    {
-        // TODO: fallback jika nama chest tidak mengandung rarity keyword
-        TraceLog(LOG_WARNING, "Unknown rarity for chest: %s", chestName.c_str());
-    }
+    // placeholder, rarity system nyusul
+    TraceLog(LOG_INFO, "Chest opened at (%.1f, %.1f)", chest.position.x, chest.position.y);
 }
 
 void ChestManager::Render()

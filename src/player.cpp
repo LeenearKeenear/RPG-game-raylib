@@ -747,9 +747,9 @@ void Player::CheckPropInteraction(void)
 
     if (type == CHEST_TYPE_OBJECT_NAME)
     {
-        TraceLog(LOG_INFO, "Opening chest: '%s'", LastHit.object->name.c_str());
-        chestManager.Interact(LastHit.object->name);
-    }
+        TraceLog(LOG_INFO, "Opening chest at (%.1f, %.1f)", LastHit.object->bounds.x, LastHit.object->bounds.y);
+        chestManager.Interact({LastHit.object->bounds.x, LastHit.object->bounds.y});
+    } 
     else if (type == "npc")
     {
     }

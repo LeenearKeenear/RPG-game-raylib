@@ -230,12 +230,12 @@ void InitMap(void)
     // LoadMap("world_json/inside.json");
     // LoadMap("world_json/light.json");
 
-    LoadMap("world_json/floorA.json");
+    // LoadMap("world_json/floorA.json");
     // LoadMap("world_json/floorB.json");
     // LoadMap("world_json/floorC.json");
 
     // Map yang aktif saat ini
-    // currentMapPath = "world_json/tutorial.json";
+    currentMapPath = "world_json/floorA.json";
     LoadMap(currentMapPath.c_str());
 
     if (!LoadEnemiesForMap(currentMapPath))
@@ -415,7 +415,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     }
 
     // Re-init player berdasarkan target door di map baru
-    PlayerInstance.Init(targetDoorName);
+    PlayerInstance.Init(gState, targetDoorName);
 
     // Load musuh yang sudah ada atau spawn baru
     if (!LoadEnemiesForMap(currentMapPath))

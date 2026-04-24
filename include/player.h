@@ -14,6 +14,7 @@
 #include "animation.h"
 #include "input.h"
 #include "inventory.h"
+#include "mapLogic.h"
 
 // ================================================================
 // Player Class

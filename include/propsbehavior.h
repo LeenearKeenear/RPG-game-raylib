@@ -16,10 +16,10 @@ enum class ObjectState
 // struct universal buat semua proeperti
 struct TileObject
 {
-    Vector2 position;      // posisi final (sudah dikoreksi ke tile grid)
-    Rectangle bounds;      // bounds asli dari MapObject
+    Vector2 position; // posisi final (sudah dikoreksi ke tile grid)
+    Rectangle bounds; // bounds asli dari MapObject
     ObjectState state;
-    std::string name;      // nama dari Tiled (buat identifikasi)
+    std::string name; // nama dari Tiled (buat identifikasi)
 };
 
 // entry buat nge spawn semua jenis tile
@@ -29,16 +29,16 @@ void SpawnObject(void);
 class ChestManager
 {
 public:
-    void SpawnChests(const std::vector<MapObject*>& chestObjects);
-    void Interact(const std::string& chestName);
+    void SpawnChests(const std::vector<MapObject *> &chestObjects);
+    void Interact(Vector2 hitPos);
     void Render();
     void Clear();
 
 private:
     std::vector<TileObject> chests;
 
-    TileObject* FindChest(const std::string& name);
-    void TriggerLoot(const std::string& chestName); // placeholder
+    TileObject *FindChest(Vector2 hitPos, float threshold = 32.0f);
+    void TriggerLoot(TileObject &chest);
 };
 
 extern ChestManager chestManager;
