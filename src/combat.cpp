@@ -137,8 +137,8 @@ namespace Combat
                     player.Swing.startAngle = targetAngle - 90.0f; // Mulai dari 90 derajat di belakang target
                     player.Swing.sweepAngle = 180.0f;              // Ayunan 180 derajat
                     
-                    // Aktifkan animasi attack pada sprite player
-                    PlayAnimation(player.Anim, ATTACK, attackFaceDir, PlayerAnimationSet);
+                    // Gunakan animasi IDLE saat menyerang (sesuai permintaan user)
+                    PlayAnimation(player.Anim, IDLE, attackFaceDir, PlayerAnimationSet);
                     player.Anim.isAttacking = true;
 
                     TraceLog(LOG_INFO, "PLAYER: Attack aimed at (%.2f, %.2f)", attackDir.x, attackDir.y);
@@ -173,6 +173,7 @@ namespace Combat
         {
             player.Swing.active = false;
             player.Swing.timer = 0;
+            player.Anim.isAttacking = false; // Reset status attacking agar bisa bergerak lagi
         }
         else
         {

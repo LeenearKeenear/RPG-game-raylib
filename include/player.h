@@ -71,7 +71,7 @@ public:
 
     RayCast Ray;
     RayHitResult LastHit;
-    const float INTERACT_RANGE = 32 * 2.0f;
+    const float INTERACT_RANGE = 32.0f;
 
     Vector2 GetPosition() { return Position; }
     float GetSpeed() { return Speed; }
