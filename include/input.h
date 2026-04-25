@@ -3,6 +3,9 @@
 #include "../lib/raylib/include/raylib.h"
 #include "inputLinkedlist.h"
 
+/**
+ * @brief Aksi tingkat tinggi yang dipetakan dari input mentah.
+ */
 enum PlayerAction
 {
     ACTION_NONE,
@@ -11,6 +14,9 @@ enum PlayerAction
     ACTION_EQUIP_UNEQUIP
 };
 
+/**
+ * @brief Cuplikan (snapshot) status input mentah untuk satu frame.
+ */
 struct InputState
 {
     bool moveUp;
@@ -37,15 +43,26 @@ struct InputState
     float mouseWheel;
 };
 
+/**
+ * @brief Kelas manajer untuk mengambil dan menguraikan input pemain.
+ * Mengabstraksi status tombol/mouse mentah menjadi aksi dan status khusus game.
+ */
 class PlayerInput
 {
 public:
     PlayerInput();
 
+    /**
+     * @brief Membaca input mentah dari hardware melalui Raylib.
+     */
     void PollInput(void);
 
+    /**
+     * @brief Mendapatkan snapshot status input mentah.
+     */
     const InputState &GetState() const { return Current; }
 
+    // Pemeriksaan boolean untuk status pergerakan/aksi umum
     bool IsMoveUp() const { return Current.moveUp; }
     bool IsMoveDown() const { return Current.moveDown; }
     bool IsMoveLeft() const { return Current.moveLeft; }
@@ -71,8 +88,14 @@ public:
     bool IsInventoryOpen() const { return InventoryOpen; }
     bool IsMapOpen() const { return MapOpen; }
 
+    /**
+     * @brief Menentukan aksi tingkat tinggi mana yang harus dipicu pada frame ini.
+     */
     PlayerAction ResolveAction() const;
 
+    /**
+     * @brief Memproses toggle dan logika input persisten.
+     */
     void UpdateState(void);
 
 private:
@@ -81,7 +104,7 @@ private:
     bool InventoryOpen = false;
     bool MapOpen = false;
 
-    HotbarList doubleLinkedList;
+    HotbarList doubleLinkedList; ///< Mengelola perputaran hotbar melalui scroll mouse
 };
 
-extern PlayerInput InputInstance;
+extern PlayerInput InputInstance;

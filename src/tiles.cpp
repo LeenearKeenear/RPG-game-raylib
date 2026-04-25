@@ -2,6 +2,10 @@
 
 Texture2D TexturesMap[MAX_TEXTURES];
 
+/**
+ * Memuat tekstur dari penyimpanan (disk) ke slot tekstur GPU tertentu.
+ * Memastikan data gambar di CPU dihapus setelah ditransfer ke GPU.
+ */
 void LoadTileTexture(TextureAsset Slot, const char *Path)
 {
     Image img = LoadImage(Path);
@@ -9,8 +13,14 @@ void LoadTileTexture(TextureAsset Slot, const char *Path)
     UnloadImage(img);
 }
 
+/**
+ * Me-render tipe tile tertentu pada posisi yang diberikan.
+ * Fungsi ini menggunakan tabel pemetaan lokal (TileProperty) untuk menerjemahkan
+ * enum TileType menjadi koordinat sumber pada tekstur tileset.
+ */
 void RenderTilePNG(int posX, int posY, TileType Type, float Rotation, TextureAsset Slot)
 {
+    // Pemetaan TileType ke properti dan koordinat tileset-nya
     TileDefinition TileProperty[] = {
         [TILE_CLU_WALL] = {{0, 0}, false, false},
         [TILE_CMU_WALL] = {{1, 0}, false, false},
@@ -29,6 +39,7 @@ void RenderTilePNG(int posX, int posY, TileType Type, float Rotation, TextureAss
         [TILE_DOOR_CLOSE] = {{5, 2}, false, true},
         [TILE_PLAYER_NEW] = {{3, 2}, false, false}};
 
+    // Menghitung rectangle sumber pada tekstur tileset
     Rectangle Source = {
         (float)(TileProperty[Type].CoordID.x * (TILE_SIZE + TILE_GAP)),
         (float)(TileProperty[Type].CoordID.y * (TILE_SIZE + TILE_GAP)),
@@ -40,6 +51,10 @@ void RenderTilePNG(int posX, int posY, TileType Type, float Rotation, TextureAss
     DrawTexturePro(TexturesMap[Slot], Source, Destination, Origin, Rotation, WHITE);
 }
 
+/**
+ * Fungsi pembantu untuk menghitung rectangle sumber dari koordinat berbasis grid.
+ * Berguna untuk animasi dan perenderan tile secara manual.
+ */
 Rectangle GetFrame(int frameX, int frameY)
 {
     return {

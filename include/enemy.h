@@ -6,16 +6,19 @@
 #include <string>
 
 /**
- * @brief State AI untuk Musuh
+ * @brief Status AI untuk perilaku Musuh (FSM).
  */
 enum EnemyAIState {
-    ENEMY_IDLE,
-    ENEMY_PATROL,
-    ENEMY_CHASE,
-    ENEMY_ATTACK,
-    ENEMY_RETURN
+    ENEMY_IDLE,    ///< Berdiri diam atau menunggu
+    ENEMY_PATROL,  ///< Bergerak antar titik acak di sekitar titik spawn
+    ENEMY_CHASE,   ///< Mengejar pemain
+    ENEMY_ATTACK,  ///< Menjalankan animasi/logika serangan
+    ENEMY_RETURN   ///< Kembali ke titik spawn setelah kehilangan pemain
 };
 
+/**
+ * @brief Berbagai jenis musuh dengan visual/statistik unik.
+ */
 enum EnemyType {
     SLIME,
     SKELETON,
@@ -23,8 +26,8 @@ enum EnemyType {
 };
 
 /**
- * @brief Kelas Musuh yang mewarisi Entity
- * Memiliki sistem FSM (Finite State Machine) sederhana untuk perilaku AI.
+ * @brief Kelas Musuh yang mengimplementasikan logika AI dan manajemen status.
+ * Mewarisi dari Entity untuk properti dasar.
  */
 class Enemy : public Entity {
 public:
@@ -32,11 +35,12 @@ public:
     virtual ~Enemy();
 
     /**
-     * @brief Inisialisasi musuh di posisi tertentu
-     * @param pos Posisi awal world space
-     * @param name Nama musuh
-     * @param type Tipe musuh (Slime, Skeleton, Wolf)
-     * @param radius Jarak patroli maksimal dari titik spawn
+     * @brief Inisialisasi musuh dalam koordinat dunia (world space).
+     * @param pos Posisi awal
+     * @param name Nama tampilan atau pengidentifikasi
+     * @param mapId ID dari map Tiled untuk persistensi data
+     * @param type Varian musuh (Slime, Skeleton, Wolf)
+     * @param radius Jarak patroli maksimum dari titik spawn
      */
     void Init(Vector2 pos, const char* name, int mapId, EnemyType type = SLIME, float radius = 128.0f);
 
@@ -44,31 +48,30 @@ public:
     void Render() override;
     void TakeDamage(float amount, Vector2 knockback = {0, 0}) override;
 
-    // Logic AI
-    void UpdateAI();
-    bool CheckPlayerLoS();
+    void UpdateAI();         ///< Titik masuk utama logika AI
+    bool CheckPlayerLoS();   ///< Memeriksa Line of Sight (jarak pandang) ke pemain menggunakan raycasting
 
     EnemyAIState AIState = ENEMY_IDLE;
-    float BaseDetectionRange = 120.0f; // Jarak deteksi standar
-    float ChaseDetectionRange = 240.0f; // Jarak deteksi saat mengejar (lebih besar)
-    float DetectionRange = 120.0f;      // Jarak deteksi aktif
-    float AttackRange = 16.0f;    // Jarak serangan (pixel)
-    float Damage = 5.0f;          // Damage serangan ke player
-    float Speed = 1.0f;           // Kecepatan gerak musuh (Patrol/Return)
-    float ChaseSpeed = 1.5f;      // Kecepatan gerak saat mengejar player
-    float HealthRegenRate = 10.0f; // Kecepatan pengisian darah (sama dengan rate player)
+    float BaseDetectionRange = 120.0f; ///< Jarak deteksi saat idle/patroli
+    float ChaseDetectionRange = 240.0f; ///< Jarak deteksi saat sedang mengejar (lebih sulit kabur)
+    float DetectionRange = 120.0f;      ///< Jarak pandang aktif
+    float AttackRange = 16.0f;          ///< Jarak yang dibutuhkan untuk memicu serangan
+    float Damage = 5.0f;                ///< Damage yang dihasilkan per pukulan
+    float Speed = 1.0f;                 ///< Kecepatan gerak saat patroli/kembali
+    float ChaseSpeed = 1.5f;            ///< Kecepatan gerak saat mengejar
+    float HealthRegenRate = 10.0f;      ///< HP yang pulih per detik saat tidak dalam pertempuran
 
-    Animation Anim;
-    std::string Name;
-    int MapObjectID = -1;         // ID asal dari Tiled untuk persistensi
+    Animation Anim;                     ///< Pengontrol animasi
+    std::string Name;                   ///< Nama musuh
+    int MapObjectID = -1;               ///< ID Objek Tiled untuk persistensi kematian
 
-    Vector2 PatrolTarget;         // Titik tujuan patroli
-    Vector2 SpawnPoint;           // Titik pusat spawn/area patroli
-    float PatrolRadius = 128.0f;  // Radius maksimal dari SpawnPoint
-    float PatrolTimer = 0.0f;     // Timer untuk jeda patroli
+    Vector2 PatrolTarget;               ///< Koordinat tujuan patroli saat ini
+    Vector2 SpawnPoint;                 ///< Lokasi spawn awal (pusat area patroli)
+    float PatrolRadius = 128.0f;        ///< Seberapa jauh musuh bisa berkeliaran
+    float PatrolTimer = 0.0f;           ///< Timer untuk menunggu di titik patroli
     const float PatrolWaitTime = 2.0f;
 
-    // Hitbox data
+    // Konfigurasi Hitbox
     float HitboxWidth = 16.0f;
     float HitboxHeight = 12.0f;
     float HitboxOffsetX = 8.0f;
@@ -79,6 +82,7 @@ public:
     const AnimationSet* AnimSet = &SlimeAnimationSet;
 
 private:
+    // Metode penanganan status (state handlers)
     void HandleIdle();
     void HandlePatrol();
     void HandleChase();
@@ -86,13 +90,13 @@ private:
     void HandleReturn();
     void PerformAttack();
 
-    RayCast Ray;
+    RayCast Ray;                        ///< Raycast untuk pemeriksaan LoS dan pergerakan
 
     float AttackCooldownTimer = 0.0f;
     const float AttackCooldown = 1.0f;
     bool PlayerWasInRange = false;
 
-    // Feedback visual/physics
+    // Feedback dan status kematian
     float HitFlashTimer = 0.0f;
     Vector2 KnockbackVelocity = {0, 0};
     float DeathTimer = 0.0f;

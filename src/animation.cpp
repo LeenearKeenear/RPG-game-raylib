@@ -1,5 +1,8 @@
 #include "../include/animation.h"
 
+// --- Definisi Data Animasi ---
+// Setiap AnimationSet mendefinisikan baris, kolom, kecepatan, dan pola untuk setiap Status dan Arah.
+
 const AnimationSet PlayerAnimationSet = {
     .configs = {
         [IDLE] = {
@@ -56,6 +59,10 @@ const AnimationSet WolfAnimationSet = {
     }
 };
 
+/**
+ * Memajukan status animasi yang aktif berdasarkan selisih waktu (dt).
+ * Menangani urutan pola, pengulangan (looping), dan transisi status (contoh: ATTACK -> IDLE).
+ */
 void UpdateAnimation(Animation &anim, float dt)
 {
     if (!anim.currentConfig) return;
@@ -66,6 +73,7 @@ void UpdateAnimation(Animation &anim, float dt)
         anim.timer = 0;
         anim.walkFrameIndex++;
 
+        // Reset atau selesaikan urutan jika sudah di akhir pola
         if (anim.walkFrameIndex >= anim.currentConfig->patternCount)
         {
             if (anim.currentConfig->loop)
@@ -75,28 +83,28 @@ void UpdateAnimation(Animation &anim, float dt)
             else
             {
                 anim.walkFrameIndex = anim.currentConfig->patternCount - 1;
+                
+                // Kasus Khusus: Otomatis kembali ke IDLE setelah animasi serangan one-shot selesai
                 if (anim.state == ATTACK)
                 {
                     anim.isAttacking = false;
                     if (anim.animSet) {
                         PlayAnimation(anim, IDLE, anim.direction, *anim.animSet);
                     } else {
-                        // Fallback to PlayerAnimationSet if no set is assigned (should not happen for well-initialized entities)
                         PlayAnimation(anim, IDLE, anim.direction, PlayerAnimationSet);
                     }
                 }
             }
         }
         
+        // Memetakan indeks urutan saat ini ke offset frame aktual yang ditentukan dalam pola
         anim.currentFrame = anim.currentConfig->pattern[anim.walkFrameIndex];
-        
-        if (anim.state == ATTACK && anim.walkFrameIndex == 1)
-        {
-            TraceLog(LOG_INFO, "HIT!");
-        }
     }
 }
 
+/**
+ * Me-render frame animasi saat ini.
+ */
 void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint)
 {
     if (!anim.currentConfig) return;
@@ -108,8 +116,13 @@ void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint)
     DrawTextureRec(TexturesMap[texture], src, anim.position, tint);
 }
 
+/**
+ * Berpindah ke status animasi yang baru.
+ * Mereset timer dan frame ke awal urutan yang baru.
+ */
 void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set)
 {
+    // Jangan restart jika sudah memainkan status/arah yang sama
     if (anim.state == newState && anim.direction == newDir && anim.currentConfig) return;
 
     anim.state = newState;

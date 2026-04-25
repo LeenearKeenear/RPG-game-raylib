@@ -12,21 +12,36 @@
 
 class Player;
 
+/**
+ * @brief Namespace untuk logika pergerakan pemain dan kamera.
+ */
 namespace Movement {
     void HandleMovement(Player& player);
     void UpdateCamera(Player& player);
     bool CanMove(Player& player, Vector2 newPos);
 }
+
+/**
+ * @brief Namespace untuk logika pertarungan dan manajemen kesehatan pemain.
+ */
 namespace Combat {
     void HandleCombat(Player& player);
     void HandleRevive(Player& player);
 }
+
+/**
+ * @brief Namespace untuk interaksi lingkungan dan raycasting.
+ */
 namespace Interaction {
     void HandleInteractions(Player& player);
     void UpdateRaycast(Player& player);
     void CheckDoors(Player& player);
     void CheckProps(Player& player);
 }
+
+/**
+ * @brief Namespace untuk hotbar dan penggunaan item.
+ */
 namespace Inventory {
     void HandleInventoryActions(Player& player);
     void UsePotion(Player& player, int slotIndex);
@@ -34,31 +49,39 @@ namespace Inventory {
 
 #include "combat.h"
 
+/**
+ * @brief Kelas utama karakter pemain.
+ * Menangani integrasi input, pergerakan, status pertarungan, dan data interaksi.
+ */
 class Player : public Entity
 {
 public:
+    /**
+     * @brief Inisialisasi status pemain dan lokasi spawn.
+     */
     void Init(GameState* state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
+    
     void Update() override;
     void Render(void) override;
     void TakeDamage(float amount, Vector2 knockback = {0, 0}) override;
 
-    SwingAttack Swing = {0};
+    SwingAttack Swing = {0};     ///< Data status serangan saat ini
 
-    Vector2 Velocity = {0, 0};
-    float Speed = 3.0f;
-    float Mana = 100.0f;
-    float MaxMana = 100.0f;
-    float ManaRegenTimer = 0.0f;
+    Vector2 Velocity = {0, 0};   ///< Vektor kecepatan gerak saat ini
+    float Speed = 3.0f;          ///< Kecepatan gerak dasar
+    float Mana = 100.0f;         ///< Poin mana saat ini
+    float MaxMana = 100.0f;      ///< Poin mana maksimum
+    float ManaRegenTimer = 0.0f; ///< Timer untuk jeda pemulihan mana
     const float ManaRegenDelay = 2.0f;
     const float ManaRegenRate = 10.0f;
     const float AttackManaCost = 10.0f;
 
-    Animation Anim;
-    bool pendingSwitchMap = false;
-    std::string pendingMapPath;
-    std::string pendingDoorName;
-    bool pendingGoBack = false;
-    InventoryItem Hotbar[4];
+    Animation Anim;              ///< Pengontrol animasi
+    bool pendingSwitchMap = false;   ///< Flag untuk memicu transisi map
+    std::string pendingMapPath;      ///< Path map tujuan
+    std::string pendingDoorName;     ///< Nama pintu tujuan di map baru
+    bool pendingGoBack = false;      ///< Flag untuk kembali ke map sebelumnya
+    InventoryItem Hotbar[4];         ///< Item akses cepat (hotbar) pemain
 
     float HitboxWidth = 16.0f;
     float HitboxHeight = 12.0f;
@@ -67,13 +90,14 @@ public:
 
     Rectangle GetHitbox() const override { return { Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight }; }
 
-    std::vector<Rectangle> CollisionRects;
-    std::vector<std::vector<Vector2>> CollisionPolygons;
+    std::vector<Rectangle> CollisionRects;              ///< Tile tabrakan yang aktif
+    std::vector<std::vector<Vector2>> CollisionPolygons; ///< Bentuk poligon tabrakan yang aktif
 
-    RayCast Ray;
-    RayHitResult LastHit;
+    RayCast Ray;                 ///< Raycast untuk interaksi
+    RayHitResult LastHit;        ///< Data dari tabrakan raycast terakhir
     const float INTERACT_RANGE = 32.0f;
 
+    // Getter untuk modul logika eksternal
     Vector2 GetPosition() { return Position; }
     float GetSpeed() { return Speed; }
     bool IsAlive() const override { return !Anim.isDead; }
@@ -90,6 +114,9 @@ public:
     float GetINTERACT_RANGE() { return INTERACT_RANGE; }
     InventoryItem GetHotbarItem(int index) { return Hotbar[index]; }
 
+    /**
+     * @brief Memperbarui kesehatan dengan pemeriksaan batas.
+     */
     void SetHealth(float h) { 
         Health = h; 
         if (Health < 0) Health = 0;
@@ -98,11 +125,11 @@ public:
     void SetMana(float m) { Mana = m; }
     void SetHotbarItem(int index, InventoryItem item) { Hotbar[index] = item; }
 
-    GameState* State = nullptr;
+    GameState* State = nullptr;  ///< Pointer ke status game global
 
-    // Feedback visual/physics
-    float HitFlashTimer = 0.0f;
-    Vector2 KnockbackVelocity = {0, 0};
+    // Feedback visual/fisika
+    float HitFlashTimer = 0.0f;  ///< Durasi efek kilatan saat terkena hit
+    Vector2 KnockbackVelocity = {0, 0}; ///< Gaya dorong balik (knockback) yang sedang diterapkan
 
 private:
     const char *Name = "Player Name";
