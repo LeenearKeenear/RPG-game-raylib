@@ -24,8 +24,8 @@ namespace Combat
         };
         
         Rectangle attackHitbox;
-        float reach = 32.0f;   // Jangkauan serangan ke depan
-        float breadth = 48.0f; // Lebar serangan ke samping (tegak lurus)
+        float reach = player.Swing.reach;     // Jangkauan serangan ke depan
+        float breadth = player.Swing.breadth; // Lebar serangan ke samping (tegak lurus)
 
         switch (player.Anim.direction)
         {
@@ -42,8 +42,6 @@ namespace Combat
                 attackHitbox = { playerCenter.x - breadth / 2, playerCenter.y - player.HitboxHeight / 2 - reach, breadth, reach };
                 break;
         }
-
-
 
         for (auto entity : Entities::GetRegistry())
         {
@@ -181,8 +179,27 @@ namespace Combat
                         case UP:    baseAngle = -90.0f; break;
                     }
 
-                    player.Swing.startAngle = baseAngle + 55.0f;
-                    player.Swing.sweepAngle = -95.0f;
+                    player.Swing.baseAngle = baseAngle;
+                    ItemSlot activeSlot = InputInstance.GetActiveSlot();
+
+                    if (activeSlot == SLOT_WEAPON_1) // Sword - Thrust
+                    {
+                        player.Swing.type = ATTACK_THRUST;
+                        player.Swing.duration = 0.35f;
+                        player.Swing.reach = 40.0f;
+                        player.Swing.breadth = 16.0f;
+                        player.Swing.startAngle = baseAngle;
+                        player.Swing.sweepAngle = 0.0f; // No sweep for thrust
+                    }
+                    else // Axe or default - Slash
+                    {
+                        player.Swing.type = ATTACK_SLASH;
+                        player.Swing.duration = 0.75f;
+                        player.Swing.reach = 32.0f;
+                        player.Swing.breadth = 52.0f;
+                        player.Swing.startAngle = baseAngle + 55.0f;
+                        player.Swing.sweepAngle = -95.0f;
+                    }
                     
                     // Gunakan animasi IDLE saat menyerang (sesuai permintaan user)
                     PlayAnimation(player.Anim, IDLE, attackFaceDir, PlayerAnimationSet);
@@ -241,9 +258,20 @@ namespace Combat
         {
             // Progress ayunan dari 0 ke 1
             float progress = player.Swing.timer / player.Swing.duration;
-            // Gunakan sine easing untuk swing yang lebih mulus (cepat di tengah)
-            float easedProgress = sinf(progress * PI / 2.0f); 
-            player.Swing.currentAngle = player.Swing.startAngle + (easedProgress * player.Swing.sweepAngle);
+
+            if (player.Swing.type == ATTACK_THRUST)
+            {
+                // Animasi tusukan: maju dan mundur menggunakan sine wave
+                player.Swing.thrustOffset = sinf(progress * PI) * 16.0f;
+                player.Swing.currentAngle = player.Swing.startAngle;
+            }
+            else
+            {
+                // Gunakan sine easing untuk swing yang lebih mulus (cepat di tengah)
+                float easedProgress = sinf(progress * PI / 2.0f); 
+                player.Swing.currentAngle = player.Swing.startAngle + (easedProgress * player.Swing.sweepAngle);
+                player.Swing.thrustOffset = 0.0f;
+            }
 
             // Deteksi hit setiap frame selama ayunan aktif
             PerformHitDetection(player);
@@ -283,8 +311,18 @@ namespace Combat
         if (item.type == ITEM_WEAPON)
         {
             Rectangle src = GetFrame(item.iconX, item.iconY);
-            Rectangle dest = { player.Swing.center.x, player.Swing.center.y, 20, 20 };
-            // Origin {0, 20} untuk tile diagonal 20x20 (handle di pojok kiri bawah)
+            
+            // Tentukan posisi visual dengan offset thrust
+            Vector2 visualPos = player.Swing.center;
+            if (player.Swing.type == ATTACK_THRUST)
+            {
+                float rad = player.Swing.baseAngle * (PI / 180.0f);
+                visualPos.x += cosf(rad) * player.Swing.thrustOffset;
+                visualPos.y += sinf(rad) * player.Swing.thrustOffset;
+            }
+
+            Rectangle dest = { visualPos.x, visualPos.y, 20, 20 };
+            // Origin {0, 24} untuk tile diagonal (handle di pojok kiri bawah)
             Vector2 origin = { 0, 24 }; 
             
             // Render dengan rotasi (ditambah 45 karena sprite sudah miring 45 derajat secara default)

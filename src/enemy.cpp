@@ -314,12 +314,12 @@ void Enemy::HandleChase() {
         PlayerWasInRange = false;
     }
 
-    // Jika pemain keluar dari Line of Sight atau terlalu jauh
-    if (!CheckPlayerLoS()) {
+    // Jika pemain keluar dari jangkauan deteksi (LOS tidak berpengaruh saat sudah mengejar)
+    if (dist > DetectionRange) {
         AIState = ENEMY_RETURN; // Kembali ke titik spawn sebelum patroli lagi
         PatrolTarget = SpawnPoint;
         PlayAnimation(Anim, WALK, Anim.direction, *AnimSet); // Tetap animasi jalan
-        TraceLog(LOG_INFO, "ENEMY: Lost Player. Returning to Spawn Point.");
+        TraceLog(LOG_INFO, "ENEMY: Lost Player (Out of Range). Returning to Spawn Point.");
         return;
     }
 
