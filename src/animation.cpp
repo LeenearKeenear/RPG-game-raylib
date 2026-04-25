@@ -61,22 +61,13 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
     // mapping TileType ke koordinat di spritesheet
     // NOTE: Koordinat ini berdasarkan layout spritesheet tileset
     TileDefinition TileProperty[] = {
-        [TILE_CLU_WALL] = {{0, 0}, false, false},
-        [TILE_CMU_WALL] = {{1, 0}, false, false},
-        [TILE_CRU_WALL] = {{3, 0}, false, false},
-        [TILE_CML_WALL] = {{0, 1}, false, false},
-        [TILE_M_WALL] = {{1, 1}, false, false},
-        [TILE_CMR_WALL] = {{3, 1}, false, false},
-        [TILE_CLD_WALL] = {{0, 2}, false, false},
-        [TILE_CMD_WALL] = {{1, 2}, false, false},
-        [TILE_CRD_WALL] = {{3, 2}, false, false},
-        [TILE_POOL] = {{12, 8}, false, false},
-        [TILE_BIGMAN] = {{7, 0}, false, false},
-        [TILE_GRASS1] = {{4, 4}, true, false},
-        [TILE_GRASS2] = {{5, 4}, true, false},
-        [TILE_DOOR_OPEN] = {{4, 2}, true, true},
-        [TILE_DOOR_CLOSE] = {{5, 2}, false, true},
-        [TILE_PLAYER_NEW] = {{3, 2}, false, false}};
+        [TILE_PLAYER_NEW] = {{3, 2}, false, false},
+        [TILE_ENEMY_SLIME] = {{0, 0}, false, true},
+        [TILE_ENEMY_SKELETON] = {{0, 1}, false, true},
+        [TILE_ENEMY_WOLF] = {{0, 2}, false, true},
+        [TILE_ITEM_POTION] = {{7, 8}, false, true},
+        [TILE_WEAPON] = {{6, 4}, false, true}
+    };
 
     // hitung posisi source di spritesheet pake koordinat + ukuran tile + gap
     // Formula: X = (kolom * (TILE_SIZE + TILE_GAP))
@@ -89,6 +80,45 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
     Rectangle Destination = {(float)pos_x, (float)pos_y, (float)TILE_SIZE, (float)TILE_SIZE};
     Vector2 origin = {0, 0};
     DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
+}
+
+/*==============================================================================
+ * Tile Rendering for small sprites
+ *==============================================================================*/
+
+// ================================================================
+// DrawSmallSprite()
+// Render satu tile dari spritesheet ke posisi world dengan size yang lebih kecil dari tile pada umumnya.
+//
+// Cara kerja:
+// 1. Lookup TileProperty berdasarkan Type — dapet koordinat di spritesheet
+// 2. Hitung Source rectangle dari koordinat itu
+// 3. DrawTexturePro ke posisi Destination di world
+// ================================================================
+void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale) {
+    // 1. Source (Ambil potongan dari spritesheet)
+    Rectangle source = {
+        sheetCoord.x * (TILE_SIZE + TILE_GAP),
+        sheetCoord.y * (TILE_SIZE + TILE_GAP),
+        (float)TILE_SIZE,
+        (float)TILE_SIZE
+    };
+
+    // 2. Destination (Scaling & Centering)
+    float smallSize = TILE_SIZE * scale;
+    float offset = (TILE_SIZE - smallSize) / 2.0f;
+
+    Rectangle dest = {
+        worldPos.x + offset,
+        worldPos.y + offset,
+        smallSize,
+        smallSize
+    };
+
+    // 3. Render
+    // Gunakan TexturesMap yang sudah ada di animation.cpp atau extern-kan
+    extern Texture2D TexturesMap[]; 
+    DrawTexturePro(TexturesMap[slot], source, dest, (Vector2){0,0}, 0.0f, WHITE);
 }
 
 // ================================================================

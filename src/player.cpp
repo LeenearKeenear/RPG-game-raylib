@@ -13,6 +13,7 @@
 #include "../include/animation.h"
 #include "../include/input.h"
 #include "../lib/raylib/include/raymath.h"
+#include "../include/propsbehavior.h"
 #include <cmath>
 
 /*==============================================================================
@@ -300,6 +301,7 @@ void Player::Update()
 // ================================================================
 void Player::Render(void)
 {
+    DrawAimIndicator();
     DrawPlayer(Anim);
 }
 
@@ -464,6 +466,63 @@ void Player::RayCasting()
 
     LastHit = Ray.Cast(playerCenter, aimDir, INTERACT_RANGE, propObjects);
 }
+
+// crosshair buat ngasih tau player ngarah kemana
+void Player::DrawAimIndicator(void)
+{
+    Vector2 playerCenter = {
+        Position.x + HitboxOffsetX + HitboxWidth / 2,
+        Position.y + HitboxOffsetY + HitboxHeight / 2};
+
+    // Convert facing direction ke Vector2
+    Vector2 facingDir = {0, 0};
+    switch (Anim.direction)
+    {
+    case UP:
+        facingDir = {0, -1};
+        break;
+    case DOWN:
+        facingDir = {0, 1};
+        break;
+    case LEFT:
+        facingDir = {-1, 0};
+        break;
+    case RIGHT:
+        facingDir = {1, 0};
+        break;
+    }
+
+    Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(State), camera);
+    Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+    Vector2 rayEnd = {
+        playerCenter.x + aimDir.x * INTERACT_RANGE,
+        playerCenter.y + aimDir.y * INTERACT_RANGE};
+
+    // Dot product: 0.0 = 90 derajat, 1.0 = sama persis
+    // threshold 0.5 = sekitar 60 derajat toleransi
+    float dot = Vector2DotProduct(facingDir, aimDir);
+
+    // TODO: ganti DrawLineEx + kepala panah dengan sprite dari temen
+    DrawLineEx(playerCenter, rayEnd, 2.0f, WHITE);
+
+    // ini place holder doang
+    float arrowSize = 10.0f;
+    Vector2 perpDir = {-aimDir.y, aimDir.x};
+    Vector2 arrowLeft = {
+        rayEnd.x - aimDir.x * arrowSize + perpDir.x * arrowSize,
+        rayEnd.y - aimDir.y * arrowSize + perpDir.y * arrowSize};
+    Vector2 arrowRight = {
+        rayEnd.x - aimDir.x * arrowSize - perpDir.x * arrowSize,
+        rayEnd.y - aimDir.y * arrowSize - perpDir.y * arrowSize};
+    // TODO: jangan hapus logic angle yang diperbolehkan (dot >= RayCastAngle) kalo mau ganti indicatornya pake texture pack
+    Color indicatorColor = (dot >= RayCastAngle) ? GREEN : WHITE;
+
+    // ini juga placeholder
+    DrawLineEx(playerCenter, rayEnd, 2.0f, indicatorColor);
+    DrawLineEx(rayEnd, arrowLeft, 2.0f, indicatorColor);
+    DrawLineEx(rayEnd, arrowRight, 2.0f, indicatorColor);
+}
+
 /*==============================================================================
  * Action Handlers
  *==============================================================================*/
@@ -598,8 +657,16 @@ void Player::CheckDoorInteraction(void)
     for (const auto &door : doors)
     {
         // Cek apakah player nabrak pintu
-        if (!CheckCollisionRecs(playerHitbox, door->bounds))
-            continue;
+        if (door->hasPolygon)
+        {
+            if (!CheckCollisionAgainstPolygons(playerHitbox, {door->polygonPoints}))
+                continue;
+        }
+        else
+        {
+            if (!CheckCollisionAgainstRects(playerHitbox, {door->bounds}))
+                continue;
+        }
 
         // Kalo nabrak tapi gak tekan E, gak terjadi apa-apa
         if (!InputInstance.IsInteract())
@@ -645,16 +712,46 @@ void Player::CheckPropInteraction(void)
     if (!InputInstance.IsInteract())
         return;
 
+    // Convert facing direction ke Vector2
+    Vector2 facingDir = {0, 0};
+    switch (Anim.direction)
+    {
+    case UP:
+        facingDir = {0, -1};
+        break;
+    case DOWN:
+        facingDir = {0, 1};
+        break;
+    case LEFT:
+        facingDir = {-1, 0};
+        break;
+    case RIGHT:
+        facingDir = {1, 0};
+        break;
+    }
+
+    // Hitung aimDir
+    Vector2 playerCenter = {
+        Position.x + HitboxOffsetX + HitboxWidth / 2,
+        Position.y + HitboxOffsetY + HitboxHeight / 2};
+    Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(State), camera);
+    Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+
+    // Dot product: 0.0 = 90 derajat, 1.0 = sama persis
+    // threshold 0.5 = sekitar 60 derajat toleransi
+    float dot = Vector2DotProduct(facingDir, aimDir);
+    if (dot < RayCastAngle)
+        return;
     const std::string &type = LastHit.object->type;
     TraceLog(LOG_INFO, "Interacting with: '%s' (type: %s)", LastHit.object->name.c_str(), type.c_str());
 
     if (type == CHEST_TYPE_OBJECT_NAME)
     {
-        TraceLog(LOG_INFO, "Opening chest: '%s'", LastHit.object->name.c_str());
-    }
+        TraceLog(LOG_INFO, "Opening chest at (%.1f, %.1f)", LastHit.object->bounds.x, LastHit.object->bounds.y);
+        chestManager.Interact({LastHit.object->bounds.x, LastHit.object->bounds.y});
+    } 
     else if (type == "npc")
     {
-        // TODO: trigger dialog
     }
     else
     {

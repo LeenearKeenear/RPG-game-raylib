@@ -16,7 +16,7 @@
  *==============================================================================*/
 
 /** Jumlah maksimum slot texture PNG yang bisa di-load */
-#define MAX_TEXTURES 3
+#define MAX_TEXTURES 6
 
 /**
  * @brief Enum buat milih slot texture
@@ -26,7 +26,8 @@ typedef enum
 {
     TEXTURE_TILEMAP = 0,
     TEXTURE_KNIGHT,
-    TEXTURE_ITEMS // test menambahkan texture untuk player slot
+    TEXTURE_ITEMS,   // test menambahkan texture untuk player slot
+    TEXTURE_ENEMIES, /**< Slot buat sprite enemy slime */
 } TextureAsset;
 
 /** Global texture array - diakses dari file lain pake extern */
@@ -51,22 +52,14 @@ typedef struct
  */
 typedef enum
 {
-    TILE_CLU_WALL,   /**< Dinding kiri atas (corner left up) */
-    TILE_CMU_WALL,   /**< Dinding tengah atas (corner middle up) */
-    TILE_CRU_WALL,   /**< Dinding kanan atas (corner right up) */
-    TILE_CML_WALL,   /**< Dinding kiri tengah (corner middle left) */
-    TILE_M_WALL,     /**< Dinding tengah */
-    TILE_CMR_WALL,   /**< Dinding kanan tengah (corner middle right) */
-    TILE_CLD_WALL,   /**< Dinding kiri bawah (corner left down) */
-    TILE_CMD_WALL,   /**< Dinding tengah bawah (corner middle down) */
-    TILE_CRD_WALL,   /**< Dinding kanan bawah (corner right down) */
-    TILE_POOL,       /**< Kolam air */
-    TILE_BIGMAN,     /**< Tile buat karakter besar */
-    TILE_GRASS1,     /**< Rumput varian 1 */
-    TILE_GRASS2,     /**< Rumput varian 2 */
-    TILE_DOOR_OPEN,  /**< Pintu kebuka */
-    TILE_DOOR_CLOSE, /**< Pintu ketutup */
-    TILE_PLAYER_NEW  /**< @deprecated Cuma placeholder, gak dipake */
+    TILE_PLAYER_NEW,
+    TILE_CHEST_OPEN,
+    TILE_CHEST_CLOSED,   /**< @deprecated Cuma placeholder, gak dipake */
+    TILE_ENEMY_SLIME,    /**< Slime */
+    TILE_ENEMY_SKELETON, /**< Skeleton */
+    TILE_ENEMY_WOLF,     /**< Wolf */
+    TILE_ITEM_POTION,
+    TILE_WEAPON
 } TileType;
 
 /**
@@ -106,6 +99,16 @@ void LoadTileTexture(TextureAsset Slot, const char *Path);
  * @param Slot Texture asset yang dipake
  */
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
+
+/**
+ * @brief Render satu tile dari spritesheet ke posisi world dengan ukuran kecil
+ * @param Slot Texture asset yang dipake
+ * @param sheetCoord Koordinat dalam png texture
+ * @param worldPos Posisi dalam world
+ * @param scale Skala pengecilan untuk texture
+ * @param
+ */
+void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale);
 
 /**
  * @brief Ambil source rectangle dari spritesheet berdasarkan frame koordinat
@@ -190,3 +193,35 @@ void UpdateAnimation(AnimationPlayer &p, float dt);
  * @param p AnimationPlayer dengan state animasi saat ini
  */
 void DrawPlayer(AnimationPlayer &p);
+
+/**
+ * @brief State animasi buat enemy entity
+ */
+enum EnemyState
+{
+    EnIDLE,   /**< Diam/standby */
+    EnROAM,   /**< Jalan */
+    EnCHASE,  /**< Mengejar */
+    EnATTACK, /**< Nyerang */
+    EnDEAD    /**< Mati */
+};
+
+/**
+ *
+ *
+ */
+struct AnimationEnemy
+{
+    Vector2 position; /**< Posisi entity di world (pixel) */
+
+    EnemyState EnState; /**< State animasi saat ini (IDLE/WALK/CHASE/ATTACK/DEAD) */
+
+    int frame;        /**< Index frame animasi yang ditampilin (wrapper dari walkFrameIndex) */
+    float frameTime;  /**< Akumulator waktu buat timing animasi (dalam detik) */
+    float frameSpeed; /**< Kecepatan ganti frame (durasi per frame, misal 0.1 = 10 FPS) */
+
+    int walkFrameIndex; /**< Index frame buat mapping gambar dari texture pack */
+
+    bool isAttacking; /**< Flag ngecek apakah entity sedang attack */
+    bool isDead;      /**< Flag ngecek apakah entity udah mati */
+};

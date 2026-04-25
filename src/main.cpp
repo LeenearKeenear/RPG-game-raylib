@@ -9,6 +9,8 @@
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/player.h"
+#include "../include/enemy.h"
+#include "../include/item.h"
 #include "../include/mainMenu.h"
 #include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"

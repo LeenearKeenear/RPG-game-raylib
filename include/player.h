@@ -14,6 +14,7 @@
 #include "animation.h"
 #include "input.h"
 #include "inventory.h"
+#include "mapLogic.h"
 
 // ================================================================
 // Player Class
@@ -60,7 +61,7 @@ public:
      * @param spawnObjectName Nama object spawn point di Tiled (default: SPAWN_OBJECT_NAME)
      * @note Load texture, baca spawn & collision dari Tiled, setup animasi awal
      */
-    void Init(GameState* state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
+    void Init(GameState *state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
 
     // ================================================================
     // Update & Render
@@ -128,6 +129,18 @@ public:
     RayHitResult GetLastHit() { return LastHit; }
     float GetINTERACT_RANGE() { return INTERACT_RANGE; }
 
+    // pickup getters
+    float GetMagnetRadius() { return MagnetRadius; }
+    float GetItemSpeed() { return ItemSpeed; }
+
+    // hitbox getter
+    Vector2 GetCenter()
+    {
+        return {
+            Position.x + HitboxOffsetX + HitboxWidth / 2,
+            Position.y + HitboxOffsetY + HitboxHeight / 2};
+    }
+
     // info getters
     const char *GetName() { return Name; }
 
@@ -166,7 +179,11 @@ private:
      */
     bool CanMove(Vector2 NewPos);
 
-    void RayCasting();
+    // raycasting buat player
+    void RayCasting(void);
+
+    // indicator raycastingnya TODO: ubah pake gambar biar enak diliat
+    void DrawAimIndicator(void);
 
     /**
      * @brief Cek interaksi dengan door/pintu dan trigger switch map kalo perlu
@@ -191,12 +208,12 @@ private:
     // Private Members
     // ================================================================
 
-    GameState* State = nullptr;
+    GameState *State = nullptr;
 
     Vector2 Position;      /**< Posisi player di world (pixel) */
     Vector2 Velocity;      /**< Kecepatan player (belum dipake maksimal) */
     int TileSize = 32;     /**< Ukuran tile dalam pixel */
-    float Speed = 4.0f;    /**< Kecepatan gerak player (pixel per frame) */
+    float Speed = 6.0f;    /**< Kecepatan gerak player (pixel per frame) */
     Texture2D CharTexture; /**< Texture sprite player */
     const char *Name = "Player Name";
 
@@ -231,10 +248,15 @@ private:
     void HandleAction(void);
 
     // raycasting
-    RayCast Ray; // class buat raycast nya
+    RayCast Ray;          // class buat raycast nya
     RayHitResult LastHit; // hasil ray frame ini, bisa dicek fungsi lain
 
-    const float INTERACT_RANGE = TILE_SIZE * 2.0f; // TODO: set nilai yang bener
+    // fungsi gather item bentuk "magnet"
+    float MagnetRadius = 80.0f; // size "magnet"
+    float ItemSpeed = 400.0f;   // speed itemnya
+
+    const float INTERACT_RANGE = TILE_SIZE * 1.0f; // TODO: set nilai yang bener
+    const float RayCastAngle = 0.3f;               // angle maksimum buat raycast interactionnya. makin gede makin sempit anglenya
     // Hotbar slots (1-4)
     InventoryItem Hotbar[4];
 };

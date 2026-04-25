@@ -18,12 +18,14 @@
 #include "../include/map.h"
 #include "../include/animation.h"
 #include "../include/player.h"
+#include "../include/enemy.h"
 #include "../include/entities.h"
 #include "../include/debug.h"
 #include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../include/hud.h"
+#include "../include/propsbehavior.h"
 
 /*==============================================================================
  * External Variables & Macros
@@ -59,6 +61,12 @@ void InitAll()
 {
     // init player — spawn point dibaca otomatis dari object layer Tiled
     PlayerInstance.Init(gState, SPAWN_OBJECT_NAME);
+
+    // init enemy
+    InitEnemy();
+
+    // Testing spawn item
+    InitItems();
 
     // set camera ke tengah posisi spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
@@ -140,6 +148,16 @@ void UpdateGame(GameState *state)
 void UpdateLogicAll()
 {
     PlayerInstance.Tick();
+    UpdateAllEnemies();
+
+    Vector2 center = PlayerInstance.GetCenter();
+    Rectangle pHitbox = {
+        center.x - PlayerInstance.GetHitboxWidth() / 2,
+        center.y - PlayerInstance.GetHitboxHeight() / 2,
+        PlayerInstance.GetHitboxWidth(),
+        PlayerInstance.GetHitboxHeight()};
+
+        UpdateItems(center, pHitbox, PlayerInstance.GetMagnetRadius(), PlayerInstance.GetItemSpeed());
 }
 
 /*==============================================================================
@@ -166,8 +184,11 @@ void DrawRenderTexture(GameState *state)
     RenderMap();
 
     // layer 2: entity dan debug overlay dalam world space
+    // (urutan fungsi sangat penting disini)
     BeginMode2D(camera);
+    chestManager.Render();
     RenderEntities();
+
     DebugInstance.DrawWorldOverlay();
     EndMode2D();
 
