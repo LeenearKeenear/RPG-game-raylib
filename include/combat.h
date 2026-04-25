@@ -29,6 +29,8 @@ struct SwingAttack {
     float breadth = 48.0f;
     float thrustOffset = 0.0f;
     float baseAngle = 0.0f;
+    float damage = 25.0f;
+    float knockbackForce = 1.0f;
 };
 
 

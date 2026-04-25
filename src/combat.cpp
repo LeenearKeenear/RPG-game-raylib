@@ -76,8 +76,9 @@ namespace Combat
                 Vector2 knockDir =
                     Vector2Normalize(Vector2Subtract(entityCenter, playerCenter));
 
-                float damage = 25.0f;
-                entity->TakeDamage(damage, knockDir);
+                float damage = player.Swing.damage;
+                Vector2 knockback = Vector2Scale(knockDir, player.Swing.knockbackForce);
+                entity->TakeDamage(damage, knockback);
 
                 // Tambahkan Damage Popup
                 AddDamagePopup(entityCenter, damage);
@@ -251,6 +252,8 @@ namespace Combat
                         player.Swing.breadth = 16.0f;
                         player.Swing.startAngle = baseAngle;
                         player.Swing.sweepAngle = 0.0f; // No sweep for thrust
+                        player.Swing.damage = 15.0f;    // Damage lebih kecil
+                        player.Swing.knockbackForce = 0.6f; // Knockback lebih kecil
                     }
                     else // Axe or default - Slash
                     {
@@ -260,6 +263,8 @@ namespace Combat
                         player.Swing.breadth = 56.0f;
                         player.Swing.startAngle = baseAngle + 55.0f;
                         player.Swing.sweepAngle = -95.0f;
+                        player.Swing.damage = 25.0f;    // Damage tetap
+                        player.Swing.knockbackForce = 1.8f; // Knockback diperbesar
                     }
 
                     // Gunakan animasi IDLE saat menyerang (sesuai permintaan user)
