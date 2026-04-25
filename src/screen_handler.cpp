@@ -260,7 +260,7 @@ void UpdateLogicAll()
 void DrawRenderTexture(GameState *state)
 {
     BeginTextureMode(state->Dungeon);
-    ClearBackground(RAYWHITE);
+    ClearBackground(BLACK);
 
     // layer 1: tile map
     RenderMap();

@@ -20,6 +20,7 @@
 #include "../include/player.h"
 #include "../include/mapstack.h"
 #include "../include/entities.h"
+#include "../include/movement.h"
 #include <memory>
 #include <string>
 
@@ -403,6 +404,9 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     camera.rotation = 0;
     camera.zoom = 1.0F;
 
+    // Sinkronisasi kamera segera agar tidak ada blink/jump zoom di frame pertama
+    Movement::UpdateCamera(PlayerInstance);
+
     TraceLog(LOG_INFO, "SwitchMap: switched to map: %s via door: %s",
              newMapPath,
              (targetDoorName != nullptr && targetDoorName[0] != '\0') ? targetDoorName : SPAWN_OBJECT_NAME);
@@ -449,6 +453,9 @@ void GoBack(void)
     camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
     camera.rotation = 0;
     camera.zoom = 1.0F;
+
+    // Sinkronisasi kamera segera agar tidak ada blink/jump zoom di frame pertama
+    Movement::UpdateCamera(PlayerInstance);
 
     TraceLog(LOG_INFO, "GoBack: returned to map: %s", prev.mapPath.c_str());
 }
