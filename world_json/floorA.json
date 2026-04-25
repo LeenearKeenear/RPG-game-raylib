@@ -11,7 +11,7 @@
          "name":"ground",
          "opacity":1,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":80,
          "x":0,
          "y":0
@@ -988,7 +988,7 @@
                          "y":-204.25
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"map_bound",
                  "visible":true,
                  "width":0,
                  "x":946.75,

@@ -4,7 +4,8 @@
 #include <string>
 
 // Enum untuk membedakan kategori item
-typedef enum {
+typedef enum
+{
     ITEM_WEAPON,
     ITEM_POTION,
     ITEM_POISON,
@@ -13,20 +14,22 @@ typedef enum {
 } ItemCategory;
 
 // Enum untuk kelangkaan (Rarity)
-typedef enum {
+typedef enum
+{
     RARITY_COMMON,
     RARITY_RARE
 } ItemRarity;
 
 // Struktur data Item
-typedef struct {
+typedef struct
+{
     std::string name;
     ItemCategory category;
     ItemRarity rarity;
     Vector2 position;
-    Rectangle hitbox;    // Buat interaksi (diambil player)
-    int textureID;       // Index texture di atlas
-    bool isPickedUp;     // Status apakah sudah diambil
+    Rectangle hitbox;     // Buat interaksi (diambil player)
+    int textureID;        // Index texture di atlas
+    bool isPickedUp;      // Status apakah sudah diambil
     float statMultiplier; // Multiplier spawn (misal: damage x2)
 } Item;
 
@@ -40,12 +43,13 @@ void InitItems();
 void SpawnItemWave();
 
 void SpawnRandomItem();
+
 // Fungsi utama untuk spawn
 Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity rarity);
 
-void SaveItemsForMap(const std::string& mapPath);
+void SaveItemsForMap(const std::string &mapPath);
 
-bool LoadItemsforMap(const std::string& mapPath);
+bool LoadItemsforMap(const std::string &mapPath);
 
 void ClearItems();
 
@@ -54,7 +58,7 @@ void SpawnWeapon(Vector2 pos, float multiplier, ItemRarity rarity);
 void SpawnPotion(Vector2 pos, float multiplier, ItemRarity rarity);
 
 // Fungsi Render & Update
-void UpdateItems(Rectangle playerHitbox);
+void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadius, float itemSpeed);
 void RenderItems(Item &item);
 
 void RenderAllItems();

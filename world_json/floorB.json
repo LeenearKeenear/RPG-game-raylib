@@ -31,6 +31,7 @@
          "y":0
         }, 
         {
+         "class":"map_bound",
          "draworder":"topdown",
          "id":6,
          "name":"obstacle",

@@ -62,6 +62,12 @@ void InitAll()
     // init player — spawn point dibaca otomatis dari object layer Tiled
     PlayerInstance.Init(gState, SPAWN_OBJECT_NAME);
 
+    // init enemy
+    InitEnemy();
+
+    // Testing spawn item
+    InitItems();
+
     // set camera ke tengah posisi spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
     camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
@@ -142,7 +148,15 @@ void UpdateLogicAll()
 {
     PlayerInstance.Tick();
     UpdateAllEnemies();
-    
+
+    Vector2 center = PlayerInstance.GetCenter();
+    Rectangle pHitbox = {
+        center.x - PlayerInstance.GetHitboxWidth() / 2,
+        center.y - PlayerInstance.GetHitboxHeight() / 2,
+        PlayerInstance.GetHitboxWidth(),
+        PlayerInstance.GetHitboxHeight()};
+
+        UpdateItems(center, pHitbox, PlayerInstance.GetMagnetRadius(), PlayerInstance.GetItemSpeed());
 }
 
 /*==============================================================================
@@ -168,7 +182,7 @@ void DrawRenderTexture(GameState *state)
     // layer 1: tile map
     RenderMap();
 
-    // layer 2: entity dan debug overlay dalam world space 
+    // layer 2: entity dan debug overlay dalam world space
     // (urutan fungsi sangat penting disini)
     BeginMode2D(camera);
     chestManager.Render();

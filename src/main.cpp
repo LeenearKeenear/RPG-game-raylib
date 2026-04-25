@@ -45,12 +45,6 @@ int main()
     // Step 4: init elemen UI main menu
     InitMainMenu(&state);
 
-    //Step 5: init enemy
-    InitEnemy();
-
-    //Testing spawn item
-    InitItems();
-
     // ================================================================
     // Main Game Loop
     while (!WindowShouldClose())

@@ -17,6 +17,7 @@
 #include "../include/mapLogic.h"
 #include "../include/animation.h"
 #include "../include/player.h"
+#include "../include/item.h"
 
 /*==============================================================================
  * Global Variables
@@ -77,10 +78,10 @@ std::vector<Debug::DebugPanelEntry> Debug::BuildActivePanels(void) const
     // Daftar panel aktif yang akan dirender
     // panels.push_back({"Map", &Debug::DrawMapPanel, true});
     // panels.push_back({"Camera", &Debug::DrawCameraPanel, true});
-    panels.push_back({"Player", &Debug::DrawPlayerPanel, true});
+    // panels.push_back({"Player", &Debug::DrawPlayerPanel, true});
     panels.push_back({"Zoom", &Debug::DrawZoomPanel, true});
-    panels.push_back({"Frustum", &Debug::DrawFrustumPanel, true});
-    panels.push_back({"Collision", &Debug::DrawCollisionPanel, true});
+    // panels.push_back({"Frustum", &Debug::DrawFrustumPanel, true});
+    // panels.push_back({"Collision", &Debug::DrawCollisionPanel, true});
 
     return panels;
 }
@@ -391,6 +392,10 @@ void Debug::DrawWorldOverlay(void)
 
     DrawRectangleLinesEx(playerHitbox, 2.0f, LIME);
 
+    // Magnet radius overlay
+    Vector2 playerCenter = PlayerInstance.GetCenter();
+    DrawCircleLinesV(playerCenter, PlayerInstance.GetMagnetRadius(), ORANGE);
+
     // Titik sudut hitbox player
     DrawCircleV({playerHitbox.x, playerHitbox.y}, 2.5f, GREEN);
     DrawCircleV({playerHitbox.x + playerHitbox.width, playerHitbox.y}, 2.5f, GREEN);
@@ -410,6 +415,16 @@ void Debug::DrawWorldOverlay(void)
         (float)tilesonMap->height * TILE_SIZE};
 
     DrawRectangleLinesEx(mapBounds, 2.0f, SKYBLUE);
+
+    // Hitbox items
+    for (auto &item : activeItems)
+    {
+        if (!item.isPickedUp)
+        {
+            DrawRectangleLinesEx(item.hitbox, 1.5f, YELLOW);
+            DrawText(item.name.c_str(), (int)item.hitbox.x, (int)item.hitbox.y - 12, 10, YELLOW);
+        }
+    }
 
     // Label kecil untuk hitbox
     DrawText("Hitbox", (int)playerHitbox.x, (int)playerHitbox.y - 14, 14, LIME);
