@@ -133,25 +133,31 @@ void SpawnEnemiesFromMap()
             // 2. Tentukan Jumlah Musuh (Default: 1, atau dari properti 'count')
             int count = 1;
             if (obj.properties.count("count")) {
-                // Tiled bisa menyimpan sebagai int atau float
                 auto prop = obj.properties.at("count");
                 if (prop.getType() == tson::Type::Int) count = prop.getValue<int>();
                 else if (prop.getType() == tson::Type::Float) count = (int)prop.getValue<float>();
             }
 
-            // 3. Spawn Musuh sebanyak 'count'
+            // 3. Tentukan Radius Patroli (Default: 128, atau dari properti 'radius')
+            float radius = 128.0f;
+            if (obj.properties.count("radius")) {
+                auto prop = obj.properties.at("radius");
+                if (prop.getType() == tson::Type::Int) radius = (float)prop.getValue<int>();
+                else if (prop.getType() == tson::Type::Float) radius = prop.getValue<float>();
+            }
+
+            // 4. Spawn Musuh sebanyak 'count'
             for (int i = 0; i < count; i++) {
-                Vector2 spawnPos = { obj.bounds.x, obj.bounds.y };
+                Vector2 spawnPos = { obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f };
                 
                 // Tambahkan offset acak jika spawn lebih dari satu agar tidak menumpuk sempurna
-                // Gunakan spread yang lebih luas dan pasti berbeda tiap instance
                 if (count > 1) {
                     spawnPos.x += (float)GetRandomValue(-32, 32);
                     spawnPos.y += (float)GetRandomValue(-32, 32);
                 }
 
                 Enemy *enemy = new Enemy();
-                enemy->Init(spawnPos, obj.name.c_str(), type);
+                enemy->Init(spawnPos, obj.name.c_str(), type, radius);
                 Entities::AddDynamic(enemy);
             }
             

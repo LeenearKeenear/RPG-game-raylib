@@ -256,11 +256,15 @@ void Debug::DrawEnemySpawnOverlay(void)
                 DrawText(TextFormat("Count: %d", count), (int)pos.x + 10, (int)pos.y + 10, 10, MAGENTA);
             }
             
-            // Tampilkan tipe jika ada properti 'enemy_type'
-            if (obj.properties.count("enemy_type")) {
-                std::string enemyType = obj.properties.at("enemy_type").getValue<std::string>();
-                DrawText(TextFormat("Type: %s", enemyType.c_str()), (int)pos.x + 10, (int)pos.y + 22, 10, MAGENTA);
+            // Tampilkan radius patroli (Lingkaran besar transparan)
+            float radius = 128.0f;
+            if (obj.properties.count("radius")) {
+                auto prop = obj.properties.at("radius");
+                if (prop.getType() == tson::Type::Int) radius = (float)prop.getValue<int>();
+                else if (prop.getType() == tson::Type::Float) radius = prop.getValue<float>();
             }
+            DrawCircleLinesV(pos, radius, Fade(PURPLE, 0.2f));
+            DrawText(TextFormat("Rad: %.0f", radius), (int)pos.x + 10, (int)pos.y + 34, 10, MAGENTA);
         }
     }
 }

@@ -12,7 +12,8 @@ enum EnemyAIState {
     ENEMY_IDLE,
     ENEMY_PATROL,
     ENEMY_CHASE,
-    ENEMY_ATTACK
+    ENEMY_ATTACK,
+    ENEMY_RETURN
 };
 
 enum EnemyType {
@@ -35,8 +36,9 @@ public:
      * @param pos Posisi awal world space
      * @param name Nama musuh
      * @param type Tipe musuh (Slime, Skeleton, Wolf)
+     * @param radius Jarak patroli maksimal dari titik spawn
      */
-    void Init(Vector2 pos, const char* name, EnemyType type = SLIME);
+    void Init(Vector2 pos, const char* name, EnemyType type = SLIME, float radius = 128.0f);
 
     void Update() override;
     void Render() override;
@@ -58,6 +60,8 @@ public:
     std::string Name;
 
     Vector2 PatrolTarget;         // Titik tujuan patroli
+    Vector2 SpawnPoint;           // Titik pusat spawn/area patroli
+    float PatrolRadius = 128.0f;  // Radius maksimal dari SpawnPoint
     float PatrolTimer = 0.0f;     // Timer untuk jeda patroli
     const float PatrolWaitTime = 2.0f;
 
@@ -76,6 +80,7 @@ private:
     void HandlePatrol();
     void HandleChase();
     void HandleAttack();
+    void HandleReturn();
     void PerformAttack();
 
     RayCast Ray;

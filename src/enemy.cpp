@@ -12,27 +12,44 @@ Enemy::Enemy() {
 
 Enemy::~Enemy() {}
 
-void Enemy::Init(Vector2 pos, const char* name, EnemyType type) {
+void Enemy::Init(Vector2 pos, const char* name, EnemyType type, float radius) {
     Type = type;
+    SpawnPoint = pos; // Titik tengah spawn sebagai pusat patroli
+    PatrolRadius = radius;
     
-    // Tentukan AnimationSet berdasarkan tipe
+    // 1. Tentukan Konfigurasi (Hitbox & AnimSet) berdasarkan tipe
     switch (Type) {
-        case SLIME:    AnimSet = &SlimeAnimationSet; break;
-        case SKELETON: AnimSet = &SkeletonAnimationSet; break;
-        case WOLF:     AnimSet = &WolfAnimationSet; break;
-        default:       AnimSet = &SlimeAnimationSet; break;
+        case SKELETON:
+            AnimSet = &SkeletonAnimationSet;
+            HitboxWidth = 20.0f; HitboxHeight = 16.0f;
+            HitboxOffsetX = 6.0f; HitboxOffsetY = 12.0f;
+            Health = 70.0f; MaxHealth = 70.0f;
+            break;
+        case WOLF:
+            AnimSet = &WolfAnimationSet;
+            HitboxWidth = 24.0f; HitboxHeight = 16.0f;
+            HitboxOffsetX = 4.0f; HitboxOffsetY = 12.0f;
+            Health = 60.0f; MaxHealth = 60.0f;
+            break;
+        case SLIME:
+        default:
+            AnimSet = &SlimeAnimationSet;
+            HitboxWidth = 16.0f; HitboxHeight = 12.0f;
+            HitboxOffsetX = 8.0f; HitboxOffsetY = 14.0f;
+            Health = 40.0f; MaxHealth = 40.0f;
+            break;
     }
 
-    // Validasi posisi sebelum inisialisasi
+    // 2. Adjust Position agar titik TENGAH hitbox berada tepat di titik 'pos' (spawn point)
+    Position.x = pos.x - (HitboxWidth / 2.0f) - HitboxOffsetX;
+    Position.y = pos.y - (HitboxHeight / 2.0f) - HitboxOffsetY;
+
+    // Validasi posisi setelah penyesuaian (opsional, tapi bagus untuk logging)
     if (!IsPositionSafe(pos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
         TraceLog(LOG_WARNING, "ENEMY: Spawn position (%.1f, %.1f) for '%s' is unsafe! Proceeding anyway...", pos.x, pos.y, name);
     }
 
-    Position = pos;
-
     Name = name;
-    Health = 50.0f;
-    MaxHealth = 50.0f;
     AIState = ENEMY_IDLE;
     DetectionRange = BaseDetectionRange;
     PatrolTarget = pos;
@@ -118,6 +135,7 @@ void Enemy::UpdateAI() {
         case ENEMY_PATROL: HandlePatrol(); break;
         case ENEMY_CHASE: HandleChase(); break;
         case ENEMY_ATTACK: HandleAttack(); break;
+        case ENEMY_RETURN: HandleReturn(); break;
     }
 }
 
@@ -169,20 +187,34 @@ void Enemy::HandleIdle() {
     if (PatrolTimer >= PatrolWaitTime) {
         PatrolTimer = 0;
         
-        // Pilih titik patroli acak di sekitar posisi sekarang
-        // Coba beberapa kali untuk mendapatkan posisi yang aman
+        // Pilih titik patroli acak di sekitar TITIK SPAWN (bukan posisi sekarang)
+        // Coba beberapa kali untuk mendapatkan posisi yang aman dan di dalam map
         for (int i = 0; i < 10; i++) {
             float angle = (float)GetRandomValue(0, 360) * DEG2RAD;
-            float radius = (float)GetRandomValue(48, 128);
-            Vector2 potentialTarget = Vector2Add(Position, {cosf(angle) * radius, sinf(angle) * radius});
+            float r = (float)GetRandomValue(32, (int)PatrolRadius);
+            Vector2 potentialTarget = Vector2Add(SpawnPoint, {cosf(angle) * r, sinf(angle) * r});
             
-            if (IsPositionSafe(potentialTarget, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+            // 1. Cek apakah aman (tidak menabrak tembok)
+            // 2. Cek apakah di dalam batas map
+            bool safe = IsPositionSafe(potentialTarget, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY);
+            
+            bool inMap = true;
+            if (tilesonMap) {
+                float mapW = tilesonMap->width * 32.0f;
+                float mapH = tilesonMap->height * 32.0f;
+                if (potentialTarget.x < 0 || potentialTarget.x > mapW || 
+                    potentialTarget.y < 0 || potentialTarget.y > mapH) {
+                    inMap = false;
+                }
+            }
+
+            if (safe && inMap) {
                 PatrolTarget = potentialTarget;
                 break;
             }
             
-            // Jika percobaan terakhir masih gagal, tetap di tempat
-            if (i == 9) PatrolTarget = Position;
+            // Jika percobaan terakhir masih gagal, kembali ke titik spawn saja
+            if (i == 9) PatrolTarget = SpawnPoint;
         }
         
         AIState = ENEMY_PATROL;
@@ -260,9 +292,10 @@ void Enemy::HandleChase() {
 
     // Jika pemain keluar dari Line of Sight atau terlalu jauh
     if (!CheckPlayerLoS()) {
-        AIState = ENEMY_IDLE;
-        PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
-        TraceLog(LOG_INFO, "ENEMY: Lost Player LoS. Returning to IDLE.");
+        AIState = ENEMY_RETURN; // Kembali ke titik spawn sebelum patroli lagi
+        PatrolTarget = SpawnPoint;
+        PlayAnimation(Anim, WALK, Anim.direction, *AnimSet); // Tetap animasi jalan
+        TraceLog(LOG_INFO, "ENEMY: Lost Player. Returning to Spawn Point.");
         return;
     }
 
@@ -318,6 +351,53 @@ void Enemy::HandleAttack() {
             PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
             return;
         }
+    }
+}
+
+void Enemy::HandleReturn() {
+    // Jika melihat pemain lagi saat kembali, langsung kejar
+    if (CheckPlayerLoS()) {
+        AIState = ENEMY_CHASE;
+        TraceLog(LOG_INFO, "ENEMY: Spotted Player while returning! Chasing again.");
+        return;
+    }
+
+    Vector2 enemyCenter = {
+        Position.x + HitboxOffsetX + HitboxWidth / 2.0f,
+        Position.y + HitboxOffsetY + HitboxHeight / 2.0f
+    };
+
+    float dist = Vector2Distance(enemyCenter, SpawnPoint);
+    
+    // Jika sudah cukup dekat dengan titik spawn, kembali ke IDLE
+    if (dist < 5.0f) {
+        AIState = ENEMY_IDLE;
+        PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
+        TraceLog(LOG_INFO, "ENEMY: Returned to Spawn Point. Resuming IDLE.");
+        return;
+    }
+
+    Vector2 dir = Vector2Normalize(Vector2Subtract(SpawnPoint, enemyCenter));
+    Vector2 nextPos = Vector2Add(Position, Vector2Scale(dir, Speed));
+    
+    if (IsPositionSafe(nextPos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        Position = nextPos;
+    } else {
+        // Jika terhalang saat kembali, anggap sudah sampai atau stop
+        AIState = ENEMY_IDLE;
+        PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
+        return;
+    }
+
+    // Update arah animasi
+    if (std::abs(dir.x) > std::abs(dir.y)) {
+        Anim.direction = (dir.x > 0) ? RIGHT : LEFT;
+    } else {
+        Anim.direction = (dir.y > 0) ? DOWN : UP;
+    }
+    
+    if (Anim.state != WALK) {
+        PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
     }
 }
 
