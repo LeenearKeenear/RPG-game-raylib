@@ -27,7 +27,7 @@ typedef enum
     TEXTURE_TILEMAP = 0,
     TEXTURE_KNIGHT,
     TEXTURE_ITEMS,   // test menambahkan texture untuk player slot
-    TEXTURE_ENEMIES, /**< Slot buat sprite enemy slime */
+    TEXTURE_ENEMIES, 
 } TextureAsset;
 
 /** Global texture array - diakses dari file lain pake extern */
