@@ -140,8 +140,8 @@ void SpawnEnemiesFromMap()
                 else if (nameLower.find("wolf") != std::string::npos) type = WOLF;
                 else if (nameLower.find("slime") != std::string::npos) type = SLIME;
                 else {
-                    // Gunakan ID objek sebagai seed deterministik agar tipe tidak berubah saat pindah map
-                    type = (EnemyType)(obj.id % 3);
+                    // Gunakan GetRandomValue (cara lama) untuk menentukan tipe musuh secara acak tanpa srand()
+                    type = (EnemyType)GetRandomValue(0, 2);
                 }
             }
 

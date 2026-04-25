@@ -81,12 +81,14 @@ void Enemy::Update() {
             PlayAnimation(Anim, DEAD, Anim.direction, *AnimSet);
             AIState = ENEMY_IDLE;
             DetectionRange = BaseDetectionRange;
+            
+            // Daftarkan kematian seketika agar tetap tersimpan meski player langsung pindah map
+            Entities::RegisterDeath(GetCurrentMapPath(), MapObjectID);
         }
         
         DeathTimer += GetFrameTime();
         if (DeathTimer >= DeathDuration) {
             IsActive = false; // Musuh benar-benar hilang setelah durasi mati selesai
-            Entities::RegisterDeath(GetCurrentMapPath(), MapObjectID);
         }
 
         // Tetap update animasi agar frame kematian terlihat (jika ada)
