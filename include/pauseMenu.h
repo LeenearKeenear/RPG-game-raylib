@@ -14,76 +14,209 @@
 #include "screen.h"
 #include <array>
 #include <cstdint>
+#include <vector>
+
+/*==============================================================================
+ * Video Settings Constants
+ *==============================================================================*/
+
+/**
+ * @struct ResOption
+ * @brief Struktur untuk menyimpan resolusi yang tersedia
+ * 
+ * Setiap opsi berisi lebar, tinggi, dan label tampilan.
+ */
+struct ResOption {
+    int width;
+    int height;
+    const char* label;
+};
+
+/*==============================================================================
+ * OptionsScreen Class
+ *==============================================================================*/
+
+/**
+ * @class OptionsScreen
+ * @brief Class untuk menangani layar Options standalone
+ * 
+ * Memiliki 3 tab: Video, Audio, Keybinds.
+ * Dapat diakses dari Main Menu atau Pause Menu.
+ */
+class OptionsScreen {
+public:
+    /**
+     * @brief Constructor
+     * 
+     * Menginisialisasi semua tombol dan dimensi awal.
+     */
+    OptionsScreen();
+
+    /**
+     * @brief Destructor
+     */
+    ~OptionsScreen();
+
+    /**
+     * @brief Menampilkan layar options
+     */
+    void Show();
+
+    /**
+     * @brief Menyembunyikan layar options
+     */
+    void Hide();
+
+    /**
+     * @brief Memeriksa apakah layar options sedang aktif
+     * @return true jika aktif, false jika tidak
+     */
+    bool IsActive() const;
+
+    /**
+     * @brief Memperbarui handling input
+     * @param state Pointer ke GameState
+     * @param mousePosition Posisi mouse saat ini
+     * @param mouseClicked Status klik mouse
+     */
+    void Update(GameState* state, Vector2 mousePosition, bool mouseClicked);
+
+    /**
+     * @brief Me-render layar options
+     * @param mousePosition Posisi mouse untuk efek hover
+     */
+    void Draw(Vector2 mousePosition);
+
+    /**
+     * @brief Mengatur layar kembali (layar tujuan saat tombol BACK diklik)
+     * @param screen Layar tujuan
+     */
+    void SetReturnScreen(ScreenState screen);
+
+private:
+    /**
+     * @brief Menghitung dimensi dan membuat elemen UI
+     */
+    void CalculateDimensions();
+
+    /// Status aktif layar options
+    bool active;
+
+    /// Layar tujuan saat tombol BACK diklik
+    ScreenState returnScreen;
+
+    /// Tab yang sedang dipilih (0=Video, 1=Audio, 2=Keybinds)
+    int selectedTab;
+
+    /// Array tombol tab (VIDEO, AUDIO, KEYBINDS)
+    std::array<buttonTxt, 3> tabButtons;
+
+    /// Tombol BACK untuk kembali ke layar sebelumnya
+    buttonTxt backButton;
+
+    /// Tombol toggle fullscreen (ON/OFF)
+    buttonTxt fullscreenButton;
+
+    /// Tombol toggle FPS display (ON/OFF)
+    buttonTxt fpsButton;
+
+    /// Status tampilan FPS (disinkronkan dengan GameState)
+    bool showFPS;
+
+    /// Lebar area options
+    int width;
+
+    /// Tinggi area options
+    int height;
+
+    /// Posisi X awal area options
+    int startX;
+
+    /// Posisi Y awal area options
+    int startY;
+
+    /// Rectangle background area options
+    Rectangle backgroundRect;
+
+    /// Vektor opsi resolusi yang tersedia
+    std::vector<ResOption> resolutionOptions;
+};
 
 /*==============================================================================
  * PauseMenu Class
  *==============================================================================*/
 
 /**
- * @brief Class buat handle pause menu
+ * @class PauseMenu
+ * @brief Class untuk menangani pause menu
  * 
- * Menu yang muncul pas player pause game.
- * Render di atas game screen (overlay) dengan background semi-transparan.
+ * Menu yang muncul saat player menjeda game.
+ * Di-render di atas game screen (overlay) dengan background semi-transparan.
  * 
  * Tombol-tombol yang tersedia:
- * - Resume      → lanjutin game
- * - Save        → save game state
- * - Load        → load game state
- * - Options     → buka menu options
- * - Controls    → liat kontrol
- * - Quit        → balik ke main menu
+ * - Resume      → melanjutkan game
+ * - Save        → menyimpan state game
+ * - Load        → memuat state game
+ * - Options     → membuka menu options
+ * - Controls    → melihat kontrol
+ * - Quit        → kembali ke main menu
  */
 class PauseMenu {
 public:
-    /** @brief Constructor - inisialisasi menu dan semua tombol */
+    /**
+     * @brief Constructor
+     * 
+     * Menginisialisasi menu dan semua tombol.
+     */
     PauseMenu();
     
-    /** @brief Destructor - bersihin resource kalo perlu */
+    /**
+     * @brief Destructor
+     */
     ~PauseMenu();
 
     /**
-     * @brief Tampilin pause menu
+     * @brief Menampilkan pause menu
      * @note Set active = true, game logic harus berhenti
      */
     void Show();
     
     /**
-     * @brief Sembunyiin pause menu
+     * @brief Menyembunyikan pause menu
      * @note Set active = false, game logic lanjut lagi
      */
     void Hide();
     
     /**
-     * @brief Cek apakah pause menu lagi aktif
-     * @return true kalo menu muncul, false kalo gak
+     * @brief Memeriksa apakah pause menu sedang aktif
+     * @return true jika menu muncul, false jika tidak
      */
     bool IsActive() const;
 
     /**
-     * @brief Update logic pause menu (handle input & button clicks)
-     * @param state GameState pointer - buat akses ke data game
+     * @brief Memperbarui logic pause menu
+     * @param state Pointer ke GameState
      * @param mousePosition Posisi mouse saat ini
-     * @param mouseClicked Apakah tombol mouse diteken
+     * @param mouseClicked Apakah tombol mouse ditekan
      */
     void Update(GameState* state, Vector2 mousePosition, bool mouseClicked);
     
     /**
-     * @brief Render pause menu ke layar
-     * @param mousePosition Posisi mouse saat ini (buat efek hover)
+     * @brief Me-render pause menu ke layar
+     * @param mousePosition Posisi mouse saat ini untuk efek hover
      */
     void Draw(Vector2 mousePosition);
 
 private:
     /**
-     * @brief Hitung dimensi menu berdasarkan layar
-     * @note Nentuin width, height, dan posisi biar centered
+     * @brief Menghitung dimensi menu berdasarkan layar
      */
     void CalculateDimensions();
     
     /**
      * @brief Handle klik pada tombol berdasarkan index
      * @param buttonIndex Index tombol yang diklik (0-5)
-     * @param state GameState pointer - buat eksekusi aksi
+     * @param state Pointer ke GameState
      */
     void HandleButtonClick(int buttonIndex, GameState* state);
 
@@ -91,12 +224,24 @@ private:
      * Private Members
      *==========================================================================*/
     
-    bool active;                                    /**< Flag apakah menu aktif/tampil */
-    std::array<buttonTxt, 6> buttons;              /**< Array tombol-tombol menu (6 buah) */
-    std::array<const char*, 6> buttonTexts;        /**< Teks buat masing-masing tombol */
+    /// Status aktif menu
+    bool active;
 
-    Vector2 position;                               /**< Posisi menu di layar (centered) */
-    int width;                                      /**< Lebar menu dalam pixel */
-    int height;                                     /**< Tinggi menu dalam pixel */
-    Rectangle backgroundRect;                       /**< Rectangle buat background menu */
+    /// Array tombol-tombol menu (6 buah)
+    std::array<buttonTxt, 6> buttons;
+
+    /// Teks untuk masing-masing tombol
+    std::array<const char*, 6> buttonTexts;
+
+    /// Posisi menu di layar
+    Vector2 position;
+
+    /// Lebar menu dalam pixel
+    int width;
+
+    /// Tinggi menu dalam pixel
+    int height;
+
+    /// Rectangle untuk background menu
+    Rectangle backgroundRect;
 };

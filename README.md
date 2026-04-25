@@ -36,22 +36,12 @@ Ini akan:
 3. Link dengan library
 4. Copy raylib.dll ke folder output
 
-## Build
-
-```bash
-# Build release (default)
-cmake --build --preset ninja
-
-# Build debug
-cmake --build --preset ninja-debug
-```
-
 ### Jalankan Game
 
 ```bash
 ./build/bin/main.exe
 ```
 
-## Catatan
+### Build
 
-Untuk panduan lengkap (termasuk cara setup alat per-platform, command reference CMD/PowerShell, troubleshooting), lihat [CONTRIBUTING.md](./CONTRIBUTING.md).
+Untuk instruksi build, lihat [Halaman Build](docs/build.md)
