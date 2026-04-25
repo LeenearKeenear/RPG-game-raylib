@@ -14,6 +14,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/tileson/tileson.hpp"
 #include "../include/map.h"
+#include "../include/tiles.h"
 
 /*==============================================================================
  * Global Variables

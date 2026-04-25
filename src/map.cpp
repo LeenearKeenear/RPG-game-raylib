@@ -125,6 +125,7 @@ void LoadMap(const char *mapPath)
             for (auto &obj : layer.getObjects())
             {
                 MapObject mapObj;
+                mapObj.id = obj.getId();
                 mapObj.name = obj.getName();
                 mapObj.type = obj.getType();
                 mapObj.layerName = layer.getName();
@@ -450,4 +451,9 @@ void GoBack(void)
     camera.zoom = 1.0F;
 
     TraceLog(LOG_INFO, "GoBack: returned to map: %s", prev.mapPath.c_str());
+}
+
+const char* GetCurrentMapPath(void)
+{
+    return currentMapPath.c_str();
 }

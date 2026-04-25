@@ -25,6 +25,7 @@
 #include "../include/mapLogic.h"
 #include "../include/pauseMenu.h"
 #include "../include/combat.h"
+#include "../include/interaction.h"
 
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
@@ -70,8 +71,6 @@ void InitAll()
     // init player — spawn point dibaca otomatis dari object layer Tiled
     PlayerInstance.Init(gState, SPAWN_OBJECT_NAME);
 
-    // spawn enemies dari data map
-    Entities::SpawnEnemies();
 
     // set camera ke tengah posisi spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
@@ -118,6 +117,13 @@ void SpawnEnemiesFromMap()
 
         if (isEnemySpawn)
         {
+            // 0. Cek apakah musuh ini sudah pernah dibunuh (persistence antar pindah map)
+            if (Entities::IsAlreadyDead(GetCurrentMapPath(), obj.id))
+            {
+                TraceLog(LOG_INFO, "ENEMY: Object ID %d is already dead. Skipping spawn.", obj.id);
+                continue;
+            }
+
             // 1. Tentukan Tipe Musuh (Prioritas: Properti 'enemy_type' -> Nama Objek)
             EnemyType type = SLIME;
             bool typeFound = false;
@@ -134,9 +140,8 @@ void SpawnEnemiesFromMap()
                 else if (nameLower.find("wolf") != std::string::npos) type = WOLF;
                 else if (nameLower.find("slime") != std::string::npos) type = SLIME;
                 else {
-                    // Randomize between SLIME (0), SKELETON (1), and WOLF (2)
-                    int randVal = GetRandomValue(0, 2);
-                    type = (EnemyType)randVal;
+                    // Gunakan ID objek sebagai seed deterministik agar tipe tidak berubah saat pindah map
+                    type = (EnemyType)(obj.id % 3);
                 }
             }
 
@@ -152,10 +157,10 @@ void SpawnEnemiesFromMap()
             Vector2 spawnPos = { obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f };
             
             Enemy *enemy = new Enemy();
-            enemy->Init(spawnPos, obj.name.c_str(), type, radius);
+            enemy->Init(spawnPos, obj.name.c_str(), obj.id, type, radius);
             Entities::AddDynamic(enemy);
             
-            TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %d) from spawn point '%s'", (int)type, obj.name.c_str());
+            TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %d, ID: %d) from spawn point '%s'", (int)type, obj.id, obj.name.c_str());
         }
     }
 }
@@ -233,6 +238,7 @@ void UpdateGame(GameState *state)
 void UpdateLogicAll()
 {
     Entities::Update();
+    Interaction::ExecutePendingTransitions(PlayerInstance);
     Combat::UpdateDamagePopups(GetFrameTime());
 }
 

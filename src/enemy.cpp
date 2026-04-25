@@ -3,6 +3,7 @@
 #include "../include/map.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../include/debug.h"
+#include "../include/entities.h"
 #include <cmath>
 
 
@@ -12,8 +13,9 @@ Enemy::Enemy() {
 
 Enemy::~Enemy() {}
 
-void Enemy::Init(Vector2 pos, const char* name, EnemyType type, float radius) {
+void Enemy::Init(Vector2 pos, const char* name, int mapId, EnemyType type, float radius) {
     Type = type;
+    MapObjectID = mapId;
     SpawnPoint = pos; // Titik tengah spawn sebagai pusat patroli
     PatrolRadius = radius;
     
@@ -24,18 +26,18 @@ void Enemy::Init(Vector2 pos, const char* name, EnemyType type, float radius) {
             HitboxWidth = 20.0f; HitboxHeight = 16.0f;
             HitboxOffsetX = 6.0f; HitboxOffsetY = 12.0f;
             Health = 100.0f; MaxHealth = 100.0f;
-            Damage = 15.0f;
+            Damage = 10.0f;
             AttackRange = 32.0f;
-            ChaseSpeed = 2.0f;
+            ChaseSpeed = 1.75f;
             break;
         case WOLF:
             AnimSet = &WolfAnimationSet;
             HitboxWidth = 24.0f; HitboxHeight = 16.0f;
             HitboxOffsetX = 4.0f; HitboxOffsetY = 12.0f;
             Health = 150.0f; MaxHealth = 150.0f;
-            Damage = 25.0f;
+            Damage = 20.0f;
             AttackRange = 16.0f;
-            ChaseSpeed = 3.0f;
+            ChaseSpeed = 2.5f;
             break;
         case SLIME:
         default:
@@ -84,6 +86,7 @@ void Enemy::Update() {
         DeathTimer += GetFrameTime();
         if (DeathTimer >= DeathDuration) {
             IsActive = false; // Musuh benar-benar hilang setelah durasi mati selesai
+            Entities::RegisterDeath(GetCurrentMapPath(), MapObjectID);
         }
 
         // Tetap update animasi agar frame kematian terlihat (jika ada)

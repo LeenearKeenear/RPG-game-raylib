@@ -38,7 +38,7 @@ public:
      * @param type Tipe musuh (Slime, Skeleton, Wolf)
      * @param radius Jarak patroli maksimal dari titik spawn
      */
-    void Init(Vector2 pos, const char* name, EnemyType type = SLIME, float radius = 128.0f);
+    void Init(Vector2 pos, const char* name, int mapId, EnemyType type = SLIME, float radius = 128.0f);
 
     void Update() override;
     void Render() override;
@@ -60,6 +60,7 @@ public:
 
     Animation Anim;
     std::string Name;
+    int MapObjectID = -1;         // ID asal dari Tiled untuk persistensi
 
     Vector2 PatrolTarget;         // Titik tujuan patroli
     Vector2 SpawnPoint;           // Titik pusat spawn/area patroli

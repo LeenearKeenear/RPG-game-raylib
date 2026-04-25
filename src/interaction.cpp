@@ -13,7 +13,10 @@ namespace Interaction
         UpdateRaycast(player);
         CheckDoors(player);
         CheckProps(player);
+    }
 
+    void ExecutePendingTransitions(Player &player)
+    {
         if (player.pendingGoBack)
         {
             player.pendingGoBack = false;

@@ -35,6 +35,7 @@ extern Camera2D camera;
  */
 struct MapObject
 {
+    int id;                                           // ID unik dari Tiled
     std::string name;                                 // Nama object di Tiled
     std::string type;                                 // Type object di Tiled
     std::string layerName;                            // Nama layer asal object
@@ -158,3 +159,4 @@ void SwitchMap(const char *newMapPath, const char *targetSpawnName);
  * @brief Kembali ke map sebelumnya
  */
 void GoBack(void);
+const char* GetCurrentMapPath(void);

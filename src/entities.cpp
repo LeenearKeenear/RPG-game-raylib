@@ -1,12 +1,14 @@
 #include "../include/entities.h"
 #include <vector>
 #include <algorithm>
-
+#include <set>
+#include <string>
 
 namespace Entities
 {
     static std::vector<Entity *> Registry;
     static std::vector<Entity *> DynamicRegistry;
+    static std::set<std::string> DeadEntities;
 
     void Init()
     {
@@ -16,11 +18,11 @@ namespace Entities
 
     void Update()
     {
-        for (auto entity : Registry)
+        for (size_t i = 0; i < Registry.size(); i++)
         {
-            if (entity && entity->IsActive)
+            if (Registry[i] && Registry[i]->IsActive)
             {
-                entity->Update();
+                Registry[i]->Update();
             }
         }
     }
@@ -28,7 +30,6 @@ namespace Entities
     void Render()
     {
         // Y-axis priority (Depth sorting)
-        // Sort entities by their Y position so that entities further down are drawn last (on top)
         std::sort(Registry.begin(), Registry.end(), [](Entity *a, Entity *b) {
             if (!a) return false;
             if (!b) return true;
@@ -43,7 +44,6 @@ namespace Entities
             }
         }
     }
-
 
     void Shutdown()
     {
@@ -85,5 +85,15 @@ namespace Entities
     const std::vector<Entity *> &GetRegistry()
     {
         return Registry;
+    }
+
+    void RegisterDeath(const std::string& mapPath, int objectId)
+    {
+        DeadEntities.insert(mapPath + "_" + std::to_string(objectId));
+    }
+
+    bool IsAlreadyDead(const std::string& mapPath, int objectId)
+    {
+        return DeadEntities.find(mapPath + "_" + std::to_string(objectId)) != DeadEntities.end();
     }
 }

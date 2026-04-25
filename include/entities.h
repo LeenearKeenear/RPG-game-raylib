@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 #include "entity.h"
 
 namespace Entities
@@ -12,4 +13,7 @@ namespace Entities
     void AddDynamic(Entity *entity);
     void Clear();
     const std::vector<Entity *> &GetRegistry();
+
+    void RegisterDeath(const std::string& mapPath, int objectId);
+    bool IsAlreadyDead(const std::string& mapPath, int objectId);
 }
