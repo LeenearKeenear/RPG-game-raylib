@@ -11,6 +11,8 @@ enum State
     DEAD
 };
 
+struct AnimationSet;
+
 enum Direction
 {
     LEFT,
@@ -43,7 +45,7 @@ struct Animation
     bool isAttacking;
     bool isDead;
     const AnimationConfig *currentConfig;
-    const AnimationSet *set;
+    const AnimationSet *animSet;
 };
 
 struct AnimationSet
@@ -52,7 +54,7 @@ struct AnimationSet
 };
 
 void UpdateAnimation(Animation &anim, float dt);
-void DrawAnimation(const Animation &anim, TextureAsset texture);
+void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint = WHITE);
 void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set);
 
 extern const AnimationSet PlayerAnimationSet;

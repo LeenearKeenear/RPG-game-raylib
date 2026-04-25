@@ -1,70 +1,89 @@
 #include "../include/entities.h"
-#include "../include/player.h"
-#include "../include/enemy.h"
-#include "../include/mapLogic.h"
-#include "../include/map.h"
-#include "../include/tiles.h"
 #include <vector>
+#include <algorithm>
 
-namespace Entities {
 
-    static std::vector<Enemy*> enemies;
+namespace Entities
+{
+    static std::vector<Entity *> Registry;
+    static std::vector<Entity *> DynamicRegistry;
 
-    void Init() {
-        LoadTileTexture(TEXTURE_ENEMY, "texture/enemies.png");
+    void Init()
+    {
+        Registry.clear();
+        DynamicRegistry.clear();
     }
 
-    void SpawnEnemies() {
-        for (auto e : enemies) delete e;
-        enemies.clear();
-
-        if (tilesonMap == nullptr) return;
-
-        std::vector<MapObject*> spawnPoints = TiledHelperFunction.GetObjectsByType("spawn");
-        for (auto obj : spawnPoints) {
-            if (obj->name == "spawn_enemy") {
-                Vector2 pos = { obj->bounds.x, obj->bounds.y };
-                
-                const AnimationSet* animSet = &SlimeAnimationSet;
-                std::string enemyName = "Slime";
-
-                auto it = obj->properties.find("enemy_type");
-                if (it != obj->properties.end()) {
-                    std::string type = it->second.getValue<std::string>();
-                    if (type == "skeleton") {
-                        animSet = &SkeletonAnimationSet;
-                        enemyName = "Skeleton";
-                    } else if (type == "wolf") {
-                        animSet = &WolfAnimationSet;
-                        enemyName = "Wolf";
-                    }
-                }
-
-                enemies.push_back(new Enemy(pos, enemyName, *animSet));
-                TraceLog(LOG_INFO, "Entities: Spawned %s at (%.1f, %.1f)", enemyName.c_str(), pos.x, pos.y);
+    void Update()
+    {
+        for (auto entity : Registry)
+        {
+            if (entity && entity->IsActive)
+            {
+                entity->Update();
             }
         }
     }
 
-    void Update() {
-        PlayerInstance.Tick();
+    void Render()
+    {
+        // Y-axis priority (Depth sorting)
+        // Sort entities by their Y position so that entities further down are drawn last (on top)
+        std::sort(Registry.begin(), Registry.end(), [](Entity *a, Entity *b) {
+            if (!a) return false;
+            if (!b) return true;
+            return a->Position.y < b->Position.y;
+        });
 
-        float dt = GetFrameTime();
-        for (auto e : enemies) {
-            e->Update(dt);
+        for (auto entity : Registry)
+        {
+            if (entity && entity->IsActive)
+            {
+                entity->Render();
+            }
         }
     }
 
-    void Render() {
-        PlayerInstance.Render();
 
-        for (auto e : enemies) {
-            e->Render();
+    void Shutdown()
+    {
+        for (auto entity : DynamicRegistry)
+        {
+            delete entity;
+        }
+        DynamicRegistry.clear();
+        Registry.clear();
+    }
+
+    void Add(Entity *entity)
+    {
+        if (entity)
+        {
+            Registry.push_back(entity);
         }
     }
 
-    void Shutdown() {
-        for (auto e : enemies) delete e;
-        enemies.clear();
+    void AddDynamic(Entity *entity)
+    {
+        if (entity)
+        {
+            DynamicRegistry.push_back(entity);
+            Registry.push_back(entity);
+        }
     }
-}
+
+    void Clear()
+    {
+        for (auto entity : DynamicRegistry)
+        {
+            delete entity;
+        }
+        DynamicRegistry.clear();
+        Registry.clear();
+    }
+
+    const std::vector<Entity *> &GetRegistry()
+    {
+        return Registry;
+    }
+}

@@ -20,11 +20,17 @@
 #include "../include/tiles.h"
 #include "../include/animation.h"
 #include "../include/entities.h"
+#include "../include/enemy.h"
 #include "../include/debug.h"
+#include "../include/mapLogic.h"
 #include "../include/pauseMenu.h"
+#include "../include/combat.h"
+
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
-#include "../include/hud.h"
+#include <string>
+#include <algorithm>
+#include <cctype>
 
 /*==============================================================================
  * External Variables & Macros
@@ -58,8 +64,8 @@ extern const int GameScreenHeight = 720;
  */
 void InitAll()
 {
-    // init resources
-    Entities::Init();
+    // Bersihkan seluruh entitas sebelum inisialisasi ulang
+    Entities::Clear();
 
     // init player — spawn point dibaca otomatis dari object layer Tiled
     PlayerInstance.Init(gState, SPAWN_OBJECT_NAME);
@@ -73,7 +79,88 @@ void InitAll()
     camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
     camera.rotation = 0;
     camera.zoom = 1.0F;
+
+    // Daftarkan player ke sistem entitas agar diupdate & dirender otomatis (Index 0)
+    Entities::Add(&PlayerInstance);
+
+    // Spawn musuh dari map aktif
+    SpawnEnemiesFromMap();
 }
+
+/**
+ * @brief Fungsi pembantu untuk mengubah string menjadi lowercase
+ */
+static std::string ToLower(std::string str) {
+    std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c){ return std::tolower(c); });
+    return str;
+}
+
+// fungsi ini bingung ingin ditaruh dimana, jadi sementara disini aja
+// soalnya butuh data object dari map, tapi masih berhubungan dengan entities dan enemy
+void SpawnEnemiesFromMap()
+{
+    if (!tilesonMap) return;
+
+    TraceLog(LOG_INFO, "ENEMY: Spawning enemies for current map...");
+
+    for (auto &obj : tilesonMap->Objects)
+    {
+        std::string nameLower = ToLower(obj.name);
+        std::string typeLower = ToLower(obj.type);
+
+        // Cek apakah ini adalah titik spawn musuh
+        bool isEnemySpawn = (nameLower.find("enemy") != std::string::npos || 
+                             nameLower.find("slime") != std::string::npos || 
+                             nameLower.find("skeleton") != std::string::npos || 
+                             nameLower.find("wolf") != std::string::npos ||
+                             obj.name == ENEMY_SPAWN_OBJECT_NAME ||
+                             typeLower == "enemy_spawn");
+
+        if (isEnemySpawn)
+        {
+            // 1. Tentukan Tipe Musuh (Prioritas: Properti 'enemy_type' -> Nama Objek)
+            EnemyType type = SLIME;
+            bool typeFound = false;
+
+            if (obj.properties.count("enemy_type")) {
+                std::string typeStr = ToLower(obj.properties.at("enemy_type").getValue<std::string>());
+                if (typeStr == "skeleton") { type = SKELETON; typeFound = true; }
+                else if (typeStr == "wolf") { type = WOLF; typeFound = true; }
+                else if (typeStr == "slime") { type = SLIME; typeFound = true; }
+            }
+            
+            if (!typeFound) {
+                if (nameLower.find("skeleton") != std::string::npos) type = SKELETON;
+                else if (nameLower.find("wolf") != std::string::npos) type = WOLF;
+                else if (nameLower.find("slime") != std::string::npos) type = SLIME;
+                else {
+                    // Randomize between SLIME (0), SKELETON (1), and WOLF (2)
+                    int randVal = GetRandomValue(0, 2);
+                    type = (EnemyType)randVal;
+                }
+            }
+
+            // 2. Tentukan Radius Patroli (Default: 128, atau dari properti 'radius')
+            float radius = 128.0f;
+            if (obj.properties.count("radius")) {
+                auto prop = obj.properties.at("radius");
+                if (prop.getType() == tson::Type::Int) radius = (float)prop.getValue<int>();
+                else if (prop.getType() == tson::Type::Float) radius = prop.getValue<float>();
+            }
+
+            // 3. Spawn tepat 1 musuh di tengah objek spawn
+            Vector2 spawnPos = { obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f };
+            
+            Enemy *enemy = new Enemy();
+            enemy->Init(spawnPos, obj.name.c_str(), type, radius);
+            Entities::AddDynamic(enemy);
+            
+            TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %d) from spawn point '%s'", (int)type, obj.name.c_str());
+        }
+    }
+}
+
+
 
 /**
  * @brief Inisialisasi window, audio, dan render texture virtual
@@ -146,6 +233,7 @@ void UpdateGame(GameState *state)
 void UpdateLogicAll()
 {
     Entities::Update();
+    Combat::UpdateDamagePopups(GetFrameTime());
 }
 
 /*==============================================================================
@@ -173,6 +261,7 @@ void DrawRenderTexture(GameState *state)
 
     BeginMode2D(camera);
     Entities::Render();
+    Combat::DrawDamagePopups();
     DebugInstance.DrawWorldOverlay();
     EndMode2D();
 

@@ -12,7 +12,7 @@ enum TextureAsset
     TEXTURE_TILEMAP = 0,
     TEXTURE_KNIGHT,
     TEXTURE_ITEMS,
-    TEXTURE_ENEMY
+    TEXTURE_ENEMIES
 };
 
 struct TileCoordinate

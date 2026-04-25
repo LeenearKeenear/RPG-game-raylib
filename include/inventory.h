@@ -16,3 +16,10 @@ struct InventoryItem {
     int iconX = 0;
     int iconY = 0;
 };
+
+class Player;
+
+namespace Inventory {
+    void HandleInventoryActions(Player& player);
+    void UsePotion(Player& player, int slotIndex);
+}

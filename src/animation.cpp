@@ -31,88 +31,28 @@ const AnimationSet PlayerAnimationSet = {
 
 const AnimationSet SlimeAnimationSet = {
     .configs = {
-        [IDLE] = {
-            [LEFT]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {0, 0, 2, 0.5f, true, {0, 1}, 2}
-        },
-        [WALK] = {
-            [LEFT]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {0, 0, 2, 0.5f, true, {0, 1}, 2}
-        },
-        [ATTACK] = {
-            [LEFT]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {0, 0, 2, 0.5f, true, {0, 1}, 2}
-        },
-        [DEAD] = {
-            [LEFT]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {0, 0, 2, 0.5f, true, {0, 1}, 2}
-        }
+        [IDLE]   = { {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2} },
+        [WALK]   = { {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2} },
+        [ATTACK] = { {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2} },
+        [DEAD]   = { {0, 2, 1, 1.0f, false, {0}, 1},   {0, 2, 1, 1.0f, false, {0}, 1},   {0, 2, 1, 1.0f, false, {0}, 1},   {0, 2, 1, 1.0f, false, {0}, 1} }
     }
 };
 
 const AnimationSet SkeletonAnimationSet = {
     .configs = {
-        [IDLE] = {
-            [LEFT]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {1, 0, 2, 0.5f, true, {0, 1}, 2}
-        },
-        [WALK] = {
-            [LEFT]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {1, 0, 2, 0.5f, true, {0, 1}, 2}
-        },
-        [ATTACK] = {
-            [LEFT]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {1, 0, 2, 0.5f, true, {0, 1}, 2}
-        },
-        [DEAD] = {
-            [LEFT]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {1, 0, 2, 0.5f, true, {0, 1}, 2}
-        }
+        [IDLE]   = { {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2} },
+        [WALK]   = { {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2} },
+        [ATTACK] = { {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2} },
+        [DEAD]   = { {1, 2, 1, 1.0f, false, {0}, 1},   {1, 2, 1, 1.0f, false, {0}, 1},   {1, 2, 1, 1.0f, false, {0}, 1},   {1, 2, 1, 1.0f, false, {0}, 1} }
     }
 };
 
 const AnimationSet WolfAnimationSet = {
     .configs = {
-        [IDLE] = {
-            [LEFT]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {2, 0, 2, 0.5f, true, {0, 1}, 2}
-        },
-        [WALK] = {
-            [LEFT]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {2, 0, 2, 0.5f, true, {0, 1}, 2}
-        },
-        [ATTACK] = {
-            [LEFT]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {2, 0, 2, 0.5f, true, {0, 1}, 2}
-        },
-        [DEAD] = {
-            [LEFT]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {2, 0, 2, 0.5f, true, {0, 1}, 2}
-        }
+        [IDLE]   = { {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2} },
+        [WALK]   = { {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2} },
+        [ATTACK] = { {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2} },
+        [DEAD]   = { {2, 2, 1, 1.0f, false, {0}, 1},   {2, 2, 1, 1.0f, false, {0}, 1},   {2, 2, 1, 1.0f, false, {0}, 1},   {2, 2, 1, 1.0f, false, {0}, 1} }
     }
 };
 
@@ -138,7 +78,12 @@ void UpdateAnimation(Animation &anim, float dt)
                 if (anim.state == ATTACK)
                 {
                     anim.isAttacking = false;
-                    if (anim.set) PlayAnimation(anim, IDLE, anim.direction, *anim.set);
+                    if (anim.animSet) {
+                        PlayAnimation(anim, IDLE, anim.direction, *anim.animSet);
+                    } else {
+                        // Fallback to PlayerAnimationSet if no set is assigned (should not happen for well-initialized entities)
+                        PlayAnimation(anim, IDLE, anim.direction, PlayerAnimationSet);
+                    }
                 }
             }
         }
@@ -152,7 +97,7 @@ void UpdateAnimation(Animation &anim, float dt)
     }
 }
 
-void DrawAnimation(const Animation &anim, TextureAsset texture)
+void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint)
 {
     if (!anim.currentConfig) return;
 
@@ -160,7 +105,7 @@ void DrawAnimation(const Animation &anim, TextureAsset texture)
     int row = anim.currentConfig->row;
 
     Rectangle src = GetFrame(frameX, row);
-    DrawTextureRec(TexturesMap[texture], src, anim.position, WHITE);
+    DrawTextureRec(TexturesMap[texture], src, anim.position, tint);
 }
 
 void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set)
@@ -169,7 +114,7 @@ void PlayAnimation(Animation &anim, State newState, Direction newDir, const Anim
 
     anim.state = newState;
     anim.direction = newDir;
-    anim.set = &set;
+    anim.animSet = &set;
     anim.currentConfig = &set.configs[newState][newDir];
     
     anim.timer = 0;

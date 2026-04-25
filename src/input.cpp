@@ -26,6 +26,7 @@ void PlayerInput::PollInput(void)
     Current.toggleMap       = IsKeyPressed(KEY_M);
     
     Current.leftClickPressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    Current.leftClickDown    = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
 
     Current.selectSlot1 = IsKeyPressed(KEY_ONE);
     Current.selectSlot2 = IsKeyPressed(KEY_TWO);
