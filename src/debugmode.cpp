@@ -481,12 +481,12 @@ void Debug::DrawWorldOverlay(void)
     if (tilesonMap == nullptr)
         return;
 
-    // Selalu gambar raycast interaksi (sesuai permintaan user)
-    DrawRaycastOverlay();
-
-    // Sisa overlay hanya muncul saat debug mode aktif
+    // Overlay hanya muncul saat debug mode aktif
     if (!isDebugMode)
         return;
+
+    // Gambar raycast interaksi
+    DrawRaycastOverlay();
 
     // Hitbox player
     Vector2 playerPos = PlayerInstance.GetPosition();

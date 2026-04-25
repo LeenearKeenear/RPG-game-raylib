@@ -100,9 +100,15 @@ void Enemy::Update() {
 
     // Update Knockback
     if (Vector2Length(KnockbackVelocity) > 0.1f) {
-        Vector2 nextPos = Vector2Add(Position, Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f));
-        if (IsPositionSafe(nextPos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
-            Position = nextPos;
+        Vector2 move = Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f);
+        Vector2 nextX = { Position.x + move.x, Position.y };
+        Vector2 nextY = { Position.x, Position.y + move.y };
+
+        if (IsPositionSafe(nextX, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+            Position.x = nextX.x;
+        }
+        if (IsPositionSafe(nextY, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+            Position.y = nextY.y;
         }
         // Decay knockback
         KnockbackVelocity = Vector2Scale(KnockbackVelocity, 0.85f);
@@ -249,11 +255,15 @@ void Enemy::HandlePatrol() {
     }
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(PatrolTarget, Position));
-    Vector2 nextPos = Vector2Add(Position, Vector2Scale(dir, Speed));
-    
-    // Gunakan logic IsPositionSafe (sama seperti player) untuk menahan musuh
-    if (IsPositionSafe(nextPos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
-        Position = nextPos;
+    Vector2 move = Vector2Scale(dir, Speed);
+    Vector2 nextX = { Position.x + move.x, Position.y };
+    Vector2 nextY = { Position.x, Position.y + move.y };
+
+    if (IsPositionSafe(nextX, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        Position.x = nextX.x;
+    }
+    if (IsPositionSafe(nextY, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        Position.y = nextY.y;
     }
 
 
@@ -312,11 +322,15 @@ void Enemy::HandleChase() {
     }
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(playerPos, Position));
-    Vector2 nextPos = Vector2Add(Position, Vector2Scale(dir, ChaseSpeed));
-    
-    // Gunakan logic IsPositionSafe (sama seperti player) untuk menahan musuh
-    if (IsPositionSafe(nextPos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
-        Position = nextPos;
+    Vector2 move = Vector2Scale(dir, ChaseSpeed);
+    Vector2 nextX = { Position.x + move.x, Position.y };
+    Vector2 nextY = { Position.x, Position.y + move.y };
+
+    if (IsPositionSafe(nextX, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        Position.x = nextX.x;
+    }
+    if (IsPositionSafe(nextY, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        Position.y = nextY.y;
     }
 
 
@@ -390,15 +404,22 @@ void Enemy::HandleReturn() {
     }
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(SpawnPoint, enemyCenter));
-    Vector2 nextPos = Vector2Add(Position, Vector2Scale(dir, Speed));
-    
-    if (IsPositionSafe(nextPos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
-        Position = nextPos;
+    Vector2 move = Vector2Scale(dir, Speed);
+    Vector2 nextX = { Position.x + move.x, Position.y };
+    Vector2 nextY = { Position.x, Position.y + move.y };
+
+    if (IsPositionSafe(nextX, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        Position.x = nextX.x;
     } else {
-        // Jika terhalang saat kembali, anggap sudah sampai atau stop
-        AIState = ENEMY_IDLE;
-        PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
-        return;
+        if (!IsPositionSafe(nextY, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+            AIState = ENEMY_IDLE;
+            PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
+            return;
+        }
+    }
+
+    if (IsPositionSafe(nextY, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        Position.y = nextY.y;
     }
 
     // Update arah animasi

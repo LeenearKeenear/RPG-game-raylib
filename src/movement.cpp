@@ -49,13 +49,17 @@ namespace Movement
             player.Velocity.y /= Length;
         }
 
-        Vector2 NewPos = {
-            player.Position.x + player.Velocity.x * player.Speed,
-            player.Position.y + player.Velocity.y * player.Speed};
+        // Sliding Collision: Cek sumbu X dan Y secara terpisah agar tidak menyangkut saat diagonal
+        Vector2 nextX = { player.Position.x + player.Velocity.x * player.Speed, player.Position.y };
+        Vector2 nextY = { player.Position.x, player.Position.y + player.Velocity.y * player.Speed };
 
-        if (CanMove(player, NewPos))
+        if (CanMove(player, nextX))
         {
-            player.Position = NewPos;
+            player.Position.x = nextX.x;
+        }
+        if (CanMove(player, nextY))
+        {
+            player.Position.y = nextY.y;
         }
 
         player.Anim.position = player.Position;
