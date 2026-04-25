@@ -54,6 +54,9 @@ void BuildMapObjectIndex()
         if (!obj.layerName.empty())
             g_mapIndex.byLayer[obj.layerName].push_back(&obj);
     }
+
+    for (auto &[type, objs] : g_mapIndex.byType)
+        TraceLog(LOG_INFO, "byType: '%s' -> %d objects", type.c_str(), (int)objs.size());
 }
 
 /*==============================================================================

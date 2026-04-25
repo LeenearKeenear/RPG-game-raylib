@@ -222,9 +222,14 @@ void InitMap(void)
     // LoadMap("world_json/testermap.tmj");
     // LoadMap("world_json/cave.json");
     // LoadMap("world_json/inside.json");
+    // LoadMap("world_json/light.json");
+
+    // LoadMap("world_json/floorA.json");
+    // LoadMap("world_json/floorB.json");
+    // LoadMap("world_json/floorC.json");
 
     // Map yang aktif saat ini
-    LoadMap("world_json/light.json");
+    LoadMap("world_json/tutorial.json");
     BuildMapObjectIndex();
 }
 
