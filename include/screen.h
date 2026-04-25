@@ -41,11 +41,13 @@ typedef enum
  */
 typedef struct
 {
-    RenderTexture2D Dungeon;   // Render texture virtual utama
-    float ScaleMultiplier;     // Rasio scale virtual screen ke window
-    int WindowScreenWidth;     // Lebar window aktif
-    int WindowScreenHeight;    // Tinggi window aktif
-    ScreenState currentScreen; // State game yang sedang aktif
+    RenderTexture2D Dungeon;   /**< Render texture virtual (1280x720) - target rendering semua game */
+    float ScaleMultiplier;     /**< Rasio scale layar virtual ke window asli (dihitung tiap frame) */
+    int WindowScreenWidth;     /**< Ukuran window asli saat ini (bisa berubah kalo resize) */
+    int WindowScreenHeight;    /**< Ukuran window asli saat ini (bisa berubah kalo resize) */
+    ScreenState currentScreen; /**< State game yang aktif (MAIN_MENU / PLAY / OPTIONS) */
+    ScreenState previousScreen;/**< Screen sebelum OPTIONS - buat return button */
+    bool showFPS;              /**< Tampilkan FPS counter di HUD */
 } GameState;
 
 // Pointer global ke GameState aktif
@@ -107,3 +109,42 @@ void DrawRenderWindows(GameState *state);
  * @param state Pointer ke GameState aktif
  */
 void GameShutDown(GameState *state);
+
+/*==============================================================================
+ * Window & Video Settings Functions
+ *==============================================================================*/
+
+/**
+ * @brief ToggleFullscreenMode()
+ * Toggle antara fullscreen dan windowed mode.
+ */
+void ToggleFullscreenMode(void);
+
+/**
+ * @brief SetResolution()
+ * Set ukuran window ke resolusi tertentu.
+ * @param width Lebar window baru
+ * @param height Tinggi window baru
+ */
+void SetResolution(int width, int height);
+
+/**
+ * @brief GetCurrentResolution()
+ * Ambil resolusi saat ini.
+ * @return Rectangle berisi width dan height
+ */
+Rectangle GetCurrentResolution(void);
+
+/**
+ * @brief GetMonitorResolution()
+ * Ambil resolusi monitor utama.
+ * @return Rectangle berisi width dan height monitor
+ */
+Rectangle GetMonitorResolution(void);
+
+/**
+ * @brief IsFullscreen()
+ * Cek apakah sedang dalam mode fullscreen.
+ * @return true kalo fullscreen
+ */
+bool IsFullscreen(void);

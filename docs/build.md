@@ -1,4 +1,4 @@
-# Kontribusi
+# Instruksi Build
 
 ## Pengaturan Pengembangan
 
@@ -90,3 +90,4 @@ File `.cpp` baru di `src/` akan otomatis ditemukan pada saat CMake berjalan ulan
 
 - **Error "No such file or directory"**: Jalankan `.\setup.ps1` untuk mengunduh dependensi
 - **Build error setelah menambah file**: Jalankan `cmake --preset ninja` untuk mengkonfigurasi ulang
+- **Game crash**: Pastikan untuk menjalankan file dari root directory, dan tidak mengklik file `.exe` secara langsung karena program tidak bisa mencari file yang dibutuhkan. Apabila error masih terjadi, jalankan build prosess ulang atau lakukan `git fetch --origin && git pull --ff` untuk mendapatkan versi terbaru.
