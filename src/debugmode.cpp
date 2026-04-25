@@ -245,7 +245,7 @@ void Debug::DrawEnemySpawnOverlay(void)
             DrawCircleLinesV(pos, 8.0f, Fade(PURPLE, 0.5f));
             
             // Label nama objek
-            DrawText(obj.name.c_str(), (int)pos.x + 10, (int)pos.y - 5, 12, PURPLE);
+            DrawText(obj.name.c_str(), (int)pos.x - 35, (int)pos.y - 28, 12, PURPLE);
             
             // Tampilkan jumlah jika ada properti 'count'
             if (obj.properties.count("count")) {
@@ -264,7 +264,7 @@ void Debug::DrawEnemySpawnOverlay(void)
                 else if (prop.getType() == tson::Type::Float) radius = prop.getValue<float>();
             }
             DrawCircleLinesV(pos, radius, Fade(PURPLE, 0.2f));
-            DrawText(TextFormat("Rad: %.0f", radius), (int)pos.x + 10, (int)pos.y + 34, 10, MAGENTA);
+            DrawText(TextFormat("Rad: %.0f", radius), (int)pos.x - 20, (int)pos.y + 15, 10, MAGENTA);
         }
     }
 }

@@ -92,6 +92,8 @@ static std::string ToLower(std::string str) {
     return str;
 }
 
+// fungsi ini bingung ingin ditaruh dimana, jadi sementara disini aja
+// soalnya butuh data object dari map, tapi masih berhubungan dengan entities dan enemy
 void SpawnEnemiesFromMap()
 {
     if (!tilesonMap) return;
@@ -127,18 +129,15 @@ void SpawnEnemiesFromMap()
             if (!typeFound) {
                 if (nameLower.find("skeleton") != std::string::npos) type = SKELETON;
                 else if (nameLower.find("wolf") != std::string::npos) type = WOLF;
-                else type = SLIME;
+                else if (nameLower.find("slime") != std::string::npos) type = SLIME;
+                else {
+                    // Randomize between SLIME (0), SKELETON (1), and WOLF (2)
+                    int randVal = GetRandomValue(0, 2);
+                    type = (EnemyType)randVal;
+                }
             }
 
-            // 2. Tentukan Jumlah Musuh (Default: 1, atau dari properti 'count')
-            int count = 1;
-            if (obj.properties.count("count")) {
-                auto prop = obj.properties.at("count");
-                if (prop.getType() == tson::Type::Int) count = prop.getValue<int>();
-                else if (prop.getType() == tson::Type::Float) count = (int)prop.getValue<float>();
-            }
-
-            // 3. Tentukan Radius Patroli (Default: 128, atau dari properti 'radius')
+            // 2. Tentukan Radius Patroli (Default: 128, atau dari properti 'radius')
             float radius = 128.0f;
             if (obj.properties.count("radius")) {
                 auto prop = obj.properties.at("radius");
@@ -146,22 +145,14 @@ void SpawnEnemiesFromMap()
                 else if (prop.getType() == tson::Type::Float) radius = prop.getValue<float>();
             }
 
-            // 4. Spawn Musuh sebanyak 'count'
-            for (int i = 0; i < count; i++) {
-                Vector2 spawnPos = { obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f };
-                
-                // Tambahkan offset acak jika spawn lebih dari satu agar tidak menumpuk sempurna
-                if (count > 1) {
-                    spawnPos.x += (float)GetRandomValue(-32, 32);
-                    spawnPos.y += (float)GetRandomValue(-32, 32);
-                }
-
-                Enemy *enemy = new Enemy();
-                enemy->Init(spawnPos, obj.name.c_str(), type, radius);
-                Entities::AddDynamic(enemy);
-            }
+            // 3. Spawn tepat 1 musuh di tengah objek spawn
+            Vector2 spawnPos = { obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f };
             
-            TraceLog(LOG_INFO, "ENEMY: Created %d enemies (Type: %d) from spawn point '%s'", count, (int)type, obj.name.c_str());
+            Enemy *enemy = new Enemy();
+            enemy->Init(spawnPos, obj.name.c_str(), type, radius);
+            Entities::AddDynamic(enemy);
+            
+            TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %d) from spawn point '%s'", (int)type, obj.name.c_str());
         }
     }
 }

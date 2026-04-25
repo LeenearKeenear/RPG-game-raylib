@@ -53,7 +53,9 @@ public:
     float ChaseDetectionRange = 240.0f; // Jarak deteksi saat mengejar (lebih besar)
     float DetectionRange = 120.0f;      // Jarak deteksi aktif
     float AttackRange = 16.0f;    // Jarak serangan (pixel)
-    float Speed = 1.0f;           // Kecepatan gerak musuh
+    float Damage = 5.0f;          // Damage serangan ke player
+    float Speed = 1.0f;           // Kecepatan gerak musuh (Patrol/Return)
+    float ChaseSpeed = 1.5f;      // Kecepatan gerak saat mengejar player
     float HealthRegenRate = 10.0f; // Kecepatan pengisian darah (sama dengan rate player)
 
     Animation Anim;

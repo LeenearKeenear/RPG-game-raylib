@@ -23,20 +23,29 @@ void Enemy::Init(Vector2 pos, const char* name, EnemyType type, float radius) {
             AnimSet = &SkeletonAnimationSet;
             HitboxWidth = 20.0f; HitboxHeight = 16.0f;
             HitboxOffsetX = 6.0f; HitboxOffsetY = 12.0f;
-            Health = 70.0f; MaxHealth = 70.0f;
+            Health = 100.0f; MaxHealth = 100.0f;
+            Damage = 15.0f;
+            AttackRange = 32.0f;
+            ChaseSpeed = 2.0f;
             break;
         case WOLF:
             AnimSet = &WolfAnimationSet;
             HitboxWidth = 24.0f; HitboxHeight = 16.0f;
             HitboxOffsetX = 4.0f; HitboxOffsetY = 12.0f;
-            Health = 60.0f; MaxHealth = 60.0f;
+            Health = 150.0f; MaxHealth = 150.0f;
+            Damage = 25.0f;
+            AttackRange = 16.0f;
+            ChaseSpeed = 3.0f;
             break;
         case SLIME:
         default:
             AnimSet = &SlimeAnimationSet;
             HitboxWidth = 16.0f; HitboxHeight = 12.0f;
             HitboxOffsetX = 8.0f; HitboxOffsetY = 14.0f;
-            Health = 40.0f; MaxHealth = 40.0f;
+            Health = 100.0f; MaxHealth = 100.0f;
+            Damage = 5.0f;
+            AttackRange = 16.0f;
+            ChaseSpeed = 1.5f;
             break;
     }
 
@@ -300,7 +309,7 @@ void Enemy::HandleChase() {
     }
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(playerPos, Position));
-    Vector2 nextPos = Vector2Add(Position, Vector2Scale(dir, Speed * 1.5f));
+    Vector2 nextPos = Vector2Add(Position, Vector2Scale(dir, ChaseSpeed));
     
     // Gunakan logic IsPositionSafe (sama seperti player) untuk menahan musuh
     if (IsPositionSafe(nextPos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
@@ -420,7 +429,7 @@ void Enemy::PerformAttack() {
     Vector2 playerCenter = { playerPos.x + 16, playerPos.y + 16 };
     Vector2 knockDir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
 
-    PlayerInstance.TakeDamage(5.0f, knockDir);
+    PlayerInstance.TakeDamage(Damage, knockDir);
     TraceLog(LOG_INFO, "ENEMY: Hit Player! Remaining HP: %.1f", PlayerInstance.GetHealth());
     
     // Trigger animasi attack
