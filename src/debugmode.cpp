@@ -18,6 +18,8 @@
 #include "../include/tiles.h"
 #include "../include/animation.h"
 #include "../include/player.h"
+#include <algorithm>
+#include <cctype>
 
 /*==============================================================================
  * Global Variables
@@ -208,6 +210,59 @@ void Debug::DrawAttackOverlay(void)
 
     // Label
     DrawText("Attack Area (2:1 Rect)", (int)attackHitbox.x, (int)attackHitbox.y - 14, 14, RED);
+}
+
+/**
+ * @brief Gambar titik spawn musuh yang terdeteksi dari data map
+ */
+void Debug::DrawEnemySpawnOverlay(void)
+{
+    if (tilesonMap == nullptr)
+        return;
+
+    for (auto &obj : tilesonMap->Objects)
+    {
+        // Deteksi sederhana apakah ini objek musuh
+        std::string nameLower = obj.name;
+        std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), [](unsigned char c){ return std::tolower(c); });
+        
+        std::string typeLower = obj.type;
+        std::transform(typeLower.begin(), typeLower.end(), typeLower.begin(), [](unsigned char c){ return std::tolower(c); });
+
+        bool isEnemySpawn = (nameLower.find("enemy") != std::string::npos || 
+                             nameLower.find("slime") != std::string::npos || 
+                             nameLower.find("skeleton") != std::string::npos || 
+                             nameLower.find("wolf") != std::string::npos ||
+                             obj.name == "spawn_enemy" ||
+                             typeLower == "enemy_spawn");
+
+        if (isEnemySpawn)
+        {
+            Vector2 pos = { obj.bounds.x, obj.bounds.y };
+            
+            // Gambar lingkaran di titik spawn
+            DrawCircleV(pos, 5.0f, PURPLE);
+            DrawCircleLinesV(pos, 8.0f, Fade(PURPLE, 0.5f));
+            
+            // Label nama objek
+            DrawText(obj.name.c_str(), (int)pos.x + 10, (int)pos.y - 5, 12, PURPLE);
+            
+            // Tampilkan jumlah jika ada properti 'count'
+            if (obj.properties.count("count")) {
+                int count = 1;
+                auto prop = obj.properties.at("count");
+                if (prop.getType() == tson::Type::Int) count = prop.getValue<int>();
+                else if (prop.getType() == tson::Type::Float) count = (int)prop.getValue<float>();
+                DrawText(TextFormat("Count: %d", count), (int)pos.x + 10, (int)pos.y + 10, 10, MAGENTA);
+            }
+            
+            // Tampilkan tipe jika ada properti 'enemy_type'
+            if (obj.properties.count("enemy_type")) {
+                std::string enemyType = obj.properties.at("enemy_type").getValue<std::string>();
+                DrawText(TextFormat("Type: %s", enemyType.c_str()), (int)pos.x + 10, (int)pos.y + 22, 10, MAGENTA);
+            }
+        }
+    }
 }
 
 
@@ -450,6 +505,7 @@ void Debug::DrawWorldOverlay(void)
     DrawCollisionOverlay(COLLISION_LAYER_NAME, RED, GOLD, GOLD);
     DrawCollisionOverlay(OBJECT_LAYER_NAME, BLUE, BLUE, BLUE);
     DrawAttackOverlay();
+    DrawEnemySpawnOverlay();
 
     // Batas luar map
     Rectangle mapBounds = {

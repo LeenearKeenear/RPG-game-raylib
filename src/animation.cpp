@@ -78,7 +78,12 @@ void UpdateAnimation(Animation &anim, float dt)
                 if (anim.state == ATTACK)
                 {
                     anim.isAttacking = false;
-                    PlayAnimation(anim, IDLE, anim.direction, PlayerAnimationSet);
+                    if (anim.animSet) {
+                        PlayAnimation(anim, IDLE, anim.direction, *anim.animSet);
+                    } else {
+                        // Fallback to PlayerAnimationSet if no set is assigned (should not happen for well-initialized entities)
+                        PlayAnimation(anim, IDLE, anim.direction, PlayerAnimationSet);
+                    }
                 }
             }
         }
@@ -109,6 +114,7 @@ void PlayAnimation(Animation &anim, State newState, Direction newDir, const Anim
 
     anim.state = newState;
     anim.direction = newDir;
+    anim.animSet = &set;
     anim.currentConfig = &set.configs[newState][newDir];
     
     anim.timer = 0;

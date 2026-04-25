@@ -11,6 +11,8 @@ enum State
     DEAD
 };
 
+struct AnimationSet;
+
 enum Direction
 {
     LEFT,
@@ -41,6 +43,7 @@ struct Animation
     bool isAttacking;
     bool isDead;
     const AnimationConfig *currentConfig;
+    const AnimationSet *animSet;
 };
 
 struct AnimationSet

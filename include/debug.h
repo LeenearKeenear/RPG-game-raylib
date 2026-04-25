@@ -93,6 +93,7 @@ private:
      */
     void DrawRaycastOverlay(void);
     void DrawAttackOverlay(void);
+    void DrawEnemySpawnOverlay(void);
 
     /**
      * @brief Gambar frame panel debug

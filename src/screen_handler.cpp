@@ -28,6 +28,9 @@
 
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
+#include <string>
+#include <algorithm>
+#include <cctype>
 
 /*==============================================================================
  * External Variables & Macros
@@ -61,6 +64,9 @@ extern const int GameScreenHeight = 720;
  */
 void InitAll()
 {
+    // Bersihkan seluruh entitas sebelum inisialisasi ulang
+    Entities::Clear();
+
     // init player — spawn point dibaca otomatis dari object layer Tiled
     PlayerInstance.Init(gState, SPAWN_OBJECT_NAME);
 
@@ -71,26 +77,85 @@ void InitAll()
     camera.rotation = 0;
     camera.zoom = 1.0F;
 
-    // Daftarkan player ke sistem entitas agar diupdate & dirender otomatis
+    // Daftarkan player ke sistem entitas agar diupdate & dirender otomatis (Index 0)
     Entities::Add(&PlayerInstance);
 
-    // Spawn musuh dari data map (Berdasarkan nama objek: slime, skeleton, wolf, atau spawn_enemy)
+    // Spawn musuh dari map aktif
+    SpawnEnemiesFromMap();
+}
+
+/**
+ * @brief Fungsi pembantu untuk mengubah string menjadi lowercase
+ */
+static std::string ToLower(std::string str) {
+    std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c){ return std::tolower(c); });
+    return str;
+}
+
+void SpawnEnemiesFromMap()
+{
+    if (!tilesonMap) return;
+
+    TraceLog(LOG_INFO, "ENEMY: Spawning enemies for current map...");
+
     for (auto &obj : tilesonMap->Objects)
     {
-        bool isEnemy = false;
-        EnemyType type = SLIME;
+        std::string nameLower = ToLower(obj.name);
+        std::string typeLower = ToLower(obj.type);
 
-        if (obj.name.find("slime") != std::string::npos) { isEnemy = true; type = SLIME; }
-        else if (obj.name.find("skeleton") != std::string::npos) { isEnemy = true; type = SKELETON; }
-        else if (obj.name.find("wolf") != std::string::npos) { isEnemy = true; type = WOLF; }
-        else if (obj.name == ENEMY_SPAWN_OBJECT_NAME) { isEnemy = true; type = SLIME; }
+        // Cek apakah ini adalah titik spawn musuh
+        bool isEnemySpawn = (nameLower.find("enemy") != std::string::npos || 
+                             nameLower.find("slime") != std::string::npos || 
+                             nameLower.find("skeleton") != std::string::npos || 
+                             nameLower.find("wolf") != std::string::npos ||
+                             obj.name == ENEMY_SPAWN_OBJECT_NAME ||
+                             typeLower == "enemy_spawn");
 
-        if (isEnemy)
+        if (isEnemySpawn)
         {
-            Enemy *enemy = new Enemy();
-            enemy->Init({obj.bounds.x, obj.bounds.y}, obj.name.c_str(), type);
-            Entities::AddDynamic(enemy);
-            TraceLog(LOG_INFO, "Spawned enemy: %s (Type: %d) at (%.1f, %.1f)", obj.name.c_str(), (int)type, obj.bounds.x, obj.bounds.y);
+            // 1. Tentukan Tipe Musuh (Prioritas: Properti 'enemy_type' -> Nama Objek)
+            EnemyType type = SLIME;
+            bool typeFound = false;
+
+            if (obj.properties.count("enemy_type")) {
+                std::string typeStr = ToLower(obj.properties.at("enemy_type").getValue<std::string>());
+                if (typeStr == "skeleton") { type = SKELETON; typeFound = true; }
+                else if (typeStr == "wolf") { type = WOLF; typeFound = true; }
+                else if (typeStr == "slime") { type = SLIME; typeFound = true; }
+            }
+            
+            if (!typeFound) {
+                if (nameLower.find("skeleton") != std::string::npos) type = SKELETON;
+                else if (nameLower.find("wolf") != std::string::npos) type = WOLF;
+                else type = SLIME;
+            }
+
+            // 2. Tentukan Jumlah Musuh (Default: 1, atau dari properti 'count')
+            int count = 1;
+            if (obj.properties.count("count")) {
+                // Tiled bisa menyimpan sebagai int atau float
+                auto prop = obj.properties.at("count");
+                if (prop.getType() == tson::Type::Int) count = prop.getValue<int>();
+                else if (prop.getType() == tson::Type::Float) count = (int)prop.getValue<float>();
+            }
+
+            // 3. Spawn Musuh sebanyak 'count'
+            for (int i = 0; i < count; i++) {
+                Vector2 spawnPos = { obj.bounds.x, obj.bounds.y };
+                
+                // Tambahkan offset acak jika spawn lebih dari satu agar tidak menumpuk sempurna
+                // Gunakan spread yang lebih luas dan pasti berbeda tiap instance
+                if (count > 1) {
+                    spawnPos.x += (float)GetRandomValue(-32, 32);
+                    spawnPos.y += (float)GetRandomValue(-32, 32);
+                }
+
+                Enemy *enemy = new Enemy();
+                enemy->Init(spawnPos, obj.name.c_str(), type);
+                Entities::AddDynamic(enemy);
+            }
+            
+            TraceLog(LOG_INFO, "ENEMY: Created %d enemies (Type: %d) from spawn point '%s'", count, (int)type, obj.name.c_str());
         }
     }
 }

@@ -12,6 +12,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../include/screen.h"
+#include "../include/entities.h"
 #include "../include/mapLogic.h"
 #include "../include/map.h"
 #include "../include/tiles.h"
@@ -388,6 +389,11 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     // Re-init player berdasarkan target spawn di map baru
     PlayerInstance.Init(gState, targetDoorName);
 
+    // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
+    Entities::Clear();
+    Entities::Add(&PlayerInstance);
+    SpawnEnemiesFromMap();
+
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
     camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
@@ -429,6 +435,11 @@ void GoBack(void)
 
     // Init player di spawn point map sebelumnya
     PlayerInstance.Init(gState, prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
+
+    // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
+    Entities::Clear();
+    Entities::Add(&PlayerInstance);
+    SpawnEnemiesFromMap();
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();

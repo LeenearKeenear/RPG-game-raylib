@@ -25,9 +25,7 @@ void Enemy::Init(Vector2 pos, const char* name, EnemyType type) {
 
     // Validasi posisi sebelum inisialisasi
     if (!IsPositionSafe(pos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
-        TraceLog(LOG_WARNING, "ENEMY: Spawn position (%.1f, %.1f) for '%s' is unsafe! Adjusting...", pos.x, pos.y, name);
-        // Fallback sederhana: jika tidak aman, coba posisi player
-        pos = PlayerInstance.GetPosition();
+        TraceLog(LOG_WARNING, "ENEMY: Spawn position (%.1f, %.1f) for '%s' is unsafe! Proceeding anyway...", pos.x, pos.y, name);
     }
 
     Position = pos;
@@ -332,7 +330,7 @@ void Enemy::TakeDamage(float amount, Vector2 knockback) {
     // Trigger Knockback (Jangan timpa, tapi tambahkan jika perlu, atau set yang baru)
     KnockbackVelocity = Vector2Scale(knockback, 6.0f); // Intensitas knockback diperbesar
     
-    TraceLog(LOG_INFO, "ENEMY: %s took %.1f damage. Remaining HP: %.1f", Name.c_str(), amount, Health);
+    TraceLog(LOG_INFO, "ENEMY [%p]: %s took %.1f damage. Remaining HP: %.1f", (void*)this, Name.c_str(), amount, Health);
 }
 
 void Enemy::PerformAttack() {
