@@ -8,6 +8,7 @@
 #include "../lib/raylib/include/raymath.h"
 #include <iostream>
 #include <vector>
+#include <string>
 
 static std::vector<Item> currentItems;
 static std::map<std::string, std::vector<Item>> savedMapItems;
@@ -155,7 +156,14 @@ void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadiu
 
         if (CheckCollisionRecs(playerHitbox, item.hitbox))
         {
-            item.isPickedUp = true;
+            if (Inventory::AddToInventory(PlayerInstance, item)) {
+                item.isPickedUp = true;
+                std::string logMsg = "Picked up: " + item.name;
+                MessageLog::AddLog(logMsg.c_str());
+            } else {
+                // Optional: Log if inventory is full
+                // MessageLog::AddLog("Inventory Full!");
+            }
         }
     }
 }

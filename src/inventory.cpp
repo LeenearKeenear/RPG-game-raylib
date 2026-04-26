@@ -45,4 +45,49 @@ void UsePotion(Player& player, int slotIndex) {
     }
 }
 
+bool AddToInventory(Player& player, const Item& item) {
+    // Cari slot kosong di Hotbar dulu
+    for (int i = 0; i < 4; i++) {
+        if (player.Hotbar[i].type == ITEM_NONE) {
+            player.Hotbar[i].type = item.category;
+            player.Hotbar[i].name = item.name;
+            player.Hotbar[i].amount = 1;
+            
+            // Set icon berdasarkan kategori (sama dengan item.cpp)
+            if (item.category == ITEM_POTION) {
+                player.Hotbar[i].iconX = 7;
+                player.Hotbar[i].iconY = 8;
+                player.Hotbar[i].healValue = 20; // Default heal value
+            } else if (item.category == ITEM_WEAPON) {
+                player.Hotbar[i].iconX = 6;
+                player.Hotbar[i].iconY = 4;
+                player.Hotbar[i].damage = 10; // Default damage
+            }
+            return true;
+        }
+    }
+
+    // Jika Hotbar penuh, cari di Bag
+    for (int i = 0; i < 49; i++) {
+        if (player.Bag[i].type == ITEM_NONE) {
+            player.Bag[i].type = item.category;
+            player.Bag[i].name = item.name;
+            player.Bag[i].amount = 1;
+            
+            if (item.category == ITEM_POTION) {
+                player.Bag[i].iconX = 7;
+                player.Bag[i].iconY = 8;
+                player.Bag[i].healValue = 20;
+            } else if (item.category == ITEM_WEAPON) {
+                player.Bag[i].iconX = 6;
+                player.Bag[i].iconY = 4;
+                player.Bag[i].damage = 10;
+            }
+            return true;
+        }
+    }
+
+    return false; // Inventory penuh
+}
+
 }

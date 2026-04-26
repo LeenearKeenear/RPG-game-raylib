@@ -18,4 +18,10 @@ class Player;
 namespace Inventory {
     void HandleInventoryActions(Player& player);
     void UsePotion(Player& player, int slotIndex);
+    bool AddToInventory(Player& player, const Item& item);
+}
+
+namespace MessageLog {
+    void AddLog(const char* message);
+    void UpdateAndDraw();
 }

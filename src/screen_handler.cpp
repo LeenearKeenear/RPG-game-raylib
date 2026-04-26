@@ -289,6 +289,7 @@ void DrawRenderTexture(GameState *state)
     RenderAllItems();
     Entities::Render();
     Combat::DrawDamagePopups();
+    MessageLog::UpdateAndDraw();
     DebugInstance.DrawWorldOverlay();
     EndMode2D();
 
@@ -312,7 +313,7 @@ void DrawRenderTexture(GameState *state)
  */
 void DrawUIOverlay(GameState *state)
 {
-DrawPlayerHUD();
+    DrawPlayerHUD();
 
     // 2. FPS Counter (if enabled)
     if (state->showFPS) {

@@ -1,7 +1,13 @@
 #include "../include/hud.h"
 #include "../include/player.h"
 #include "../include/animation.h"
+#include "../include/inventory.h"
 #include <cstdio>
+#include <vector>
+#include <string>
+
+extern const int GameScreenWidth;
+extern const int GameScreenHeight;
 
 /**
  * @brief Helper untuk menggambar teks dengan shadow (bayangan) agar terbaca di background terang/gelap.
@@ -36,9 +42,6 @@ void DrawInventory()
         selectedSlot = -1;
         return;
     }
-
-    extern const int GameScreenWidth;
-    extern const int GameScreenHeight;
 
     // Overlay gelap
     DrawRectangle(0, 0, GameScreenWidth, GameScreenHeight, ColorAlpha(BLACK, 0.7f));
@@ -144,9 +147,6 @@ static void DrawStatBar(Vector2 pos, float width, float height, float ratio, Col
 
 void DrawHotbar()
 {
-    extern const int GameScreenWidth;
-    extern const int GameScreenHeight;
-
     const float slotSize = 55.0f;
     const float padding = 10.0f;
     const float screenPadding = 30.0f;
@@ -230,8 +230,6 @@ void DrawPlayerHUD()
     float manaRatio = (maxMana > 0) ? mana / maxMana : 0;
 
     Color healthColor = RED;
-
-    extern const int GameScreenHeight; 
     const float barWidth = 220.0f;
     const float barHeight = 22.0f;
     const float padding = 30.0f;
@@ -268,4 +266,52 @@ void DrawPlayerHUD()
 
     DrawHotbar();
     DrawInventory();
+}
+
+namespace MessageLog {
+    struct LogEntry {
+        std::string text;
+        float timer;
+        float verticalOffset;
+    };
+
+    static std::vector<LogEntry> logs;
+    static const float LOG_DURATION = 1.5f;
+    static const float UP_SPEED = 30.0f;
+
+    void AddLog(const char* message) {
+        logs.push_back({message, LOG_DURATION, -20.0f}); // Start slightly above center
+        if (logs.size() > 5) {
+            logs.erase(logs.begin());
+        }
+    }
+
+    void UpdateAndDraw() {
+        float dt = GetFrameTime();
+        Vector2 playerCenter = PlayerInstance.GetCenter();
+
+        for (size_t i = 0; i < logs.size(); i++) {
+            logs[i].timer -= dt;
+            if (logs[i].timer <= 0) {
+                logs.erase(logs.begin() + i);
+                i--;
+                continue;
+            }
+
+            logs[i].verticalOffset -= UP_SPEED * dt;
+
+            float alpha = logs[i].timer / LOG_DURATION;
+            int fontSize = 10;
+            int textWidth = MeasureText(logs[i].text.c_str(), fontSize);
+            
+            // Calculate screen position relative to player head
+            int x = (int)playerCenter.x - textWidth / 2;
+            int y = (int)(playerCenter.y + logs[i].verticalOffset);
+
+            // Draw shadow
+            DrawText(logs[i].text.c_str(), x + 1, y + 1, fontSize, ColorAlpha(BLACK, alpha * 0.7f));
+            // Draw main text
+            DrawText(logs[i].text.c_str(), x, y, fontSize, ColorAlpha(WHITE, alpha));
+        }
+    }
 }
