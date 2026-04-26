@@ -58,7 +58,7 @@ struct SavedItemState {
  * @brief Struktur data untuk menyimpan state map (chest, dll)
  */
 struct SavedMapState {
-    std::vector<bool> chestOpened; /**< Status opened/closed tiap chest */
+    std::vector<unsigned char> chestOpened; /**< Status opened/closed tiap chest */
 };
 
 /*==============================================================================
