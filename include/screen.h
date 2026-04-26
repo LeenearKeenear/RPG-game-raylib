@@ -52,10 +52,21 @@ using GameState = struct
     ScreenState previousScreen;/**< Screen sebelum OPTIONS - buat return button */
     bool showFPS;              /**< Tampilkan FPS counter di HUD */
     
-    // Loading state variables
-    int loadingProgress;       /**< Current loading progress (0-100) */
-    const char* loadingText;   /**< Current loading status text */
-    bool loadingComplete;      /**< Flag to indicate when loading is done */
+    /*==============================================================================
+     * Loading State Variables
+     *==============================================================================*/
+    /**
+     * @brief Current loading progress percentage (0-100)
+     */
+    int loadingProgress;
+    /**
+     * @brief Current loading status text to display
+     */
+    const char* loadingText;
+    /**
+     * @brief Flag indicating when asset loading is complete
+     */
+    bool loadingComplete;
 };
 
 // Pointer global ke GameState aktif

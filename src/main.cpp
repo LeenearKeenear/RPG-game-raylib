@@ -30,7 +30,7 @@ OptionsScreen optionsScreen;
 int main()
 {
     // Inisialisasi
-    // Urutan penting: InitScreen dulu → InitMap → InitAll → InitMainMenu
+    // Urutan penting: InitScreen dulu → (loading screen will handle InitMap, InitAll, InitMainMenu)
     // InitMap harus sebelum InitAll karena player butuh data map buat spawn
 
     // Step 1: buat window, audio, dan render texture virtual (1280x720)
@@ -38,14 +38,10 @@ int main()
     state.previousScreen = MAIN_MENU; // Default return to main menu
     gState = &state;
 
-    // Step 2: load map dari JSON Tiled
-    InitMap();
-
-    // Step 3: init player dan camera — spawn point dibaca dari map
-    InitAll();
-
-    // Step 4: init elemen UI main menu
-    InitMainMenu(&state);
+    // Initialize loading state variables
+    state.loadingProgress = 0;
+    state.loadingText = "";
+    state.loadingComplete = false;
 
     // Step 5: init options screen (hidden initially)
     optionsScreen.Show();
@@ -62,22 +58,44 @@ int main()
             RenderMainMenuToVirtualScreen(&state);
             DrawRenderWindows(&state);
          }
-          // State: LOADING
+          /*==============================================================================
+           * State: LOADING
+           *==============================================================================*/
+          /**
+           * @brief Handle loading state - shows loading screen and sequences asset loading
+           */
           else if (state.currentScreen == LOADING)
           {
+              /*==============================================================================
+               * Update
+               *==============================================================================*/
               UpdateGame(&state);
               
-              // Initialize loading state if not already done
+              /*==============================================================================
+               * Loading Initialization
+               *==============================================================================*/
+              /**
+               * @brief Initialize loading state variables on first entry
+               */
               if (state.loadingProgress == 0 && !state.loadingComplete) {
                   state.loadingText = "Starting asset loading...";
               }
               
-              // Loading sequence - load assets one by one
+              /*==============================================================================
+               * Asset Loading Sequence
+               *==============================================================================*/
+              /**
+               * @brief Simulate loading of game assets in sequence
+               * @note In a production implementation, this would load actual textures, sounds, etc.
+               */
               if (!state.loadingComplete) {
                   // Simple loading simulation for now
                   // In a real implementation, we would load actual assets here
                   state.loadingProgress += 2; // Increment progress
                   
+                  /*==============================================================================
+                   * Loading Progress Stages
+                   *==============================================================================*/
                   if (state.loadingProgress < 20) {
                       state.loadingText = "Loading tileset textures...";
                   } else if (state.loadingProgress < 40) {
@@ -94,13 +112,25 @@ int main()
                       // Transition to PLAY state after loading is complete
                       state.currentScreen = PLAY;
                       
-                      // Initialize game systems that should happen after loading
+                      /*==============================================================================
+                       * Post-Loading Initialization
+                       *==============================================================================*/
+                      /**
+                       * @brief Initialize game systems that should happen after asset loading
+                       * @note These were moved from the main initialization sequence to occur after loading
+                       */
                       InitMap();
                       InitAll();
                       InitMainMenu(&state);
                   }
               }
               
+              /*==============================================================================
+               * Rendering
+               *==============================================================================*/
+              /**
+               * @brief Render the loading screen with progress bar and status text
+               */
               // Render loading screen
               BeginTextureMode(state.Dungeon);
               ClearBackground(DARKGRAY);
