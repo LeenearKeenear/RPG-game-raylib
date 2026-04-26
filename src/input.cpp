@@ -21,7 +21,7 @@ void PlayerInput::PollInput(void)
     Current.moveRight = IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D);
 
     // --- Actions (KeyPressed — tap sekali / baru diteken) ---
-    Current.interact        = IsKeyPressed(KEY_E) || IsKeyPressed(KEY_F);
+    Current.interact        = IsKeyPressed(KEY_E);
     Current.revive          = IsKeyPressed(KEY_R);
     Current.toggleInventory = IsKeyPressed(KEY_I);
     Current.toggleMap       = IsKeyPressed(KEY_M);

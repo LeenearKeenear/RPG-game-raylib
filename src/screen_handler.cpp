@@ -249,7 +249,7 @@ void UpdateLogicAll()
     Entities::Update();
     Interaction::ExecutePendingTransitions(PlayerInstance);
     Combat::UpdateDamagePopups(GetFrameTime());
-    PlayerInstance.Update();
+
 
     Vector2 center = PlayerInstance.GetCenter();
     Rectangle pHitbox = {
