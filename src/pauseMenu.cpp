@@ -10,6 +10,7 @@
 #include "../include/videoTab.h"
 #include "../include/audioTab.h"
 #include "../include/keybindsTab.h"
+#include "../include/game_state_saver.h"
 
 /*==============================================================================
  * Static Variables (Popup Notifications)
@@ -357,6 +358,7 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             state->currentScreen = OPTIONS;
             break;
         case 4:
+            SaveGameState(state);
             state->currentScreen = MAIN_MENU;
             Hide();
             break;
