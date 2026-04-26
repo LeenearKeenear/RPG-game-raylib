@@ -212,16 +212,56 @@
          "name":"enemy",
          "objects":[
                 {
-                 "height":1414.30303030303,
-                 "id":18,
-                 "name":"enemy_spawn",
+                 "height":0,
+                 "id":24,
+                 "name":"enemy_sapwn",
                  "opacity":1,
+                 "point":true,
                  "rotation":0,
                  "type":"spawn",
                  "visible":true,
-                 "width":830.30303030303,
-                 "x":384,
-                 "y":704
+                 "width":0,
+                 "x":512,
+                 "y":1024
+                }, 
+                {
+                 "height":0,
+                 "id":25,
+                 "name":"enemy_sapwn",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"spawn",
+                 "visible":true,
+                 "width":0,
+                 "x":1088,
+                 "y":1024
+                }, 
+                {
+                 "height":0,
+                 "id":26,
+                 "name":"enemy_sapwn",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"spawn",
+                 "visible":true,
+                 "width":0,
+                 "x":512,
+                 "y":1760
+                }, 
+                {
+                 "height":0,
+                 "id":27,
+                 "name":"enemy_sapwn",
+                 "opacity":1,
+                 "point":true,
+                 "rotation":0,
+                 "type":"spawn",
+                 "visible":true,
+                 "width":0,
+                 "x":1088,
+                 "y":1760
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -260,7 +300,7 @@
                 {
                  "height":32,
                  "id":20,
-                 "name":"chest",
+                 "name":"floorCchest04_epic",
                  "opacity":1,
                  "rotation":0,
                  "type":"chest",
@@ -272,7 +312,7 @@
                 {
                  "height":32,
                  "id":21,
-                 "name":"chest",
+                 "name":"floorCchest03_epic",
                  "opacity":1,
                  "rotation":0,
                  "type":"chest",
@@ -284,7 +324,7 @@
                 {
                  "height":32,
                  "id":22,
-                 "name":"chest",
+                 "name":"floorCchest02_rare",
                  "opacity":1,
                  "rotation":0,
                  "type":"chest",
@@ -296,7 +336,7 @@
                 {
                  "height":32,
                  "id":23,
-                 "name":"chest",
+                 "name":"floorCchest01_rare",
                  "opacity":1,
                  "rotation":0,
                  "type":"chest",
@@ -361,7 +401,7 @@
          "y":0
         }],
  "nextlayerid":8,
- "nextobjectid":24,
+ "nextobjectid":28,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
