@@ -343,7 +343,7 @@ void Enemy::Render() {
     bool shouldDraw = true;
     if (Health <= 0) {
         float blinkFreq = (DeathTimer / DeathDuration) * 15.0f;
-        if ((int)(DeathTimer * blinkFreq * 10) % 2 == 0) shouldDraw = false;
+        shouldDraw = AnimEffects::ShouldBlink(DeathTimer, blinkFreq);
     }
 
     if (shouldDraw) {

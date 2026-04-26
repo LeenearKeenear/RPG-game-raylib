@@ -304,15 +304,12 @@ namespace Combat
 
             if (player.Swing.type == ATTACK_THRUST)
             {
-                // Penusukan: Menggunakan gelombang sinus untuk gerakan menusuk maju/mundur
-                player.Swing.thrustOffset = sinf(progress * PI) * 16.0f;
+                player.Swing.thrustOffset = AnimEffects::CalculateThrustOffset(progress, 16.0f);
                 player.Swing.currentAngle = player.Swing.startAngle;
             }
             else
             {
-                // Ayunan: Menggunakan easing untuk gerakan busur yang mulus
-                float easedProgress = sinf(progress * PI / 2.0f);
-                player.Swing.currentAngle = player.Swing.startAngle + (easedProgress * player.Swing.sweepAngle);
+                player.Swing.currentAngle = AnimEffects::CalculateSlashRotation(progress, player.Swing.startAngle, player.Swing.sweepAngle);
                 player.Swing.thrustOffset = 0.0f;
             }
 

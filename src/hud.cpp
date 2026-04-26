@@ -280,7 +280,7 @@ namespace MessageLog {
     static const float UP_SPEED = 30.0f;
 
     void AddLog(const char* message) {
-        logs.push_back({message, LOG_DURATION, -20.0f}); // Start slightly above center
+        logs.push_back({message, 0.0f, -20.0f}); // timer starts at 0 (elapsed)
         if (logs.size() > 5) {
             logs.erase(logs.begin());
         }
@@ -291,16 +291,16 @@ namespace MessageLog {
         Vector2 playerCenter = PlayerInstance.GetCenter();
 
         for (size_t i = 0; i < logs.size(); i++) {
-            logs[i].timer -= dt;
-            if (logs[i].timer <= 0) {
+            logs[i].timer += dt;
+            if (logs[i].timer >= LOG_DURATION) {
                 logs.erase(logs.begin() + i);
                 i--;
                 continue;
             }
 
-            logs[i].verticalOffset -= UP_SPEED * dt;
+            logs[i].verticalOffset = AnimEffects::CalculateFloatOffset(logs[i].verticalOffset, UP_SPEED, dt);
 
-            float alpha = logs[i].timer / LOG_DURATION;
+            float alpha = AnimEffects::CalculateFadeOut(logs[i].timer, LOG_DURATION);
             int fontSize = 10;
             int textWidth = MeasureText(logs[i].text.c_str(), fontSize);
             

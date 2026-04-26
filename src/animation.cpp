@@ -1,4 +1,5 @@
 #include "../include/animation.h"
+#include "../lib/raylib/include/raymath.h"
 
 // --- Definisi Data Animasi ---
 
@@ -135,4 +136,58 @@ void PlayAnimation(Animation &anim, State newState, Direction newDir, const Anim
     anim.timer = 0;
     anim.walkFrameIndex = 0;
     anim.currentFrame = anim.currentConfig->pattern[0];
+}
+
+/*==============================================================================
+ * AnimEffects Implementation
+ *==============================================================================*/
+
+float AnimEffects::CalculateFadeOut(float timer, float duration)
+{
+    if (duration <= 0.0f) return 0.0f;
+    float alpha = 1.0f - (timer / duration);
+    if (alpha < 0.0f) alpha = 0.0f;
+    if (alpha > 1.0f) alpha = 1.0f;
+    return alpha;
+}
+
+float AnimEffects::CalculateFloatOffset(float currentOffset, float speed, float dt)
+{
+    return currentOffset - (speed * dt);
+}
+
+bool AnimEffects::ShouldBlink(float timer, float frequency)
+{
+    if (frequency <= 0.0f) return true;
+    return (int)(timer * frequency * 10.0f) % 2 == 0;
+}
+
+void AnimEffects::ApplyPhysics(Vector2& pos, Vector2& vel, float gravity, float friction, float dt)
+{
+    // Update posisi berdasarkan velocity
+    pos = Vector2Add(pos, Vector2Scale(vel, dt * 60.0f)); // Skala ke 60 FPS
+    
+    // Terapkan gravitasi
+    vel.y += gravity;
+    
+    // Terapkan friksi horisontal
+    vel.x *= friction;
+}
+
+Vector2 AnimEffects::LerpTowards(Vector2 current, Vector2 target, float speed, float dt)
+{
+    Vector2 dir = Vector2Normalize(Vector2Subtract(target, current));
+    return Vector2Add(current, Vector2Scale(dir, speed * dt));
+}
+
+float AnimEffects::CalculateThrustOffset(float progress, float maxOffset)
+{
+    return sinf(progress * PI) * maxOffset;
+}
+
+float AnimEffects::CalculateSlashRotation(float progress, float startAngle, float sweepAngle)
+{
+    // Menggunakan easing (Sine Out) agar ayunan terasa lebih natural
+    float easedProgress = sinf(progress * PI / 2.0f);
+    return startAngle + (easedProgress * sweepAngle);
 }

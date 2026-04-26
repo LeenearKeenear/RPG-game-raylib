@@ -50,12 +50,8 @@ void DamageQueue::Update(float dt) {
             if (current->data.timer >= current->data.duration) {
                 current->data.active = false;
             } else {
-                // Move popup
-                current->data.position = Vector2Add(current->data.position, current->data.velocity);
-                // Gravity effect
-                current->data.velocity.y += 0.1f;
-                // Friction effect
-                current->data.velocity.x *= 0.95f;
+                // Move popup with physics (Gravity & Friction)
+                AnimEffects::ApplyPhysics(current->data.position, current->data.velocity, 0.1f, 0.95f, dt);
             }
         }
         current = current->next;
@@ -72,7 +68,7 @@ void DamageQueue::Draw() {
     DamageNode* current = head;
     while (current != nullptr) {
         if (current->data.active) {
-            float alpha = 1.0f - (current->data.timer / current->data.duration);
+            float alpha = AnimEffects::CalculateFadeOut(current->data.timer, current->data.duration);
             Color color = Fade(YELLOW, alpha);
             
             std::string dmgStr = std::to_string((int)current->data.damage);

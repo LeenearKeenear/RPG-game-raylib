@@ -147,9 +147,7 @@ void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadiu
 
         if (dist <= magnetRadius)
         {
-            Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, itemCenter));
-            item.position.x += dir.x * itemSpeed * GetFrameTime();
-            item.position.y += dir.y * itemSpeed * GetFrameTime();
+            item.position = AnimEffects::LerpTowards(item.position, playerCenter, itemSpeed, GetFrameTime());
             item.hitbox.x = item.position.x;
             item.hitbox.y = item.position.y;
         }

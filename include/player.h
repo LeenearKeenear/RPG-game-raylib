@@ -149,7 +149,7 @@ private:
 
     // magnet/pickup fields
     float MagnetRadius = 32.0f;
-    float ItemSpeed = 400.0f;
+    float ItemSpeed = 120.0f;
     const float RayCastAngle = 0.3f;
 };
 
