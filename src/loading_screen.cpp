@@ -20,7 +20,7 @@
  *==============================================================================*/
 
 /** @brief Total stage loading */
-#define TOTAL_LOADING_STAGES 7
+#define TOTAL_LOADING_STAGES 6
 
 /*==============================================================================
  * Public Functions
@@ -34,6 +34,7 @@
  */
 void InitLoadingScreen(GameState *state)
 {
+    state->enteredLoading = true;
     state->loadingStage = 0;
     state->loadingProgress = 0.0f;
     state->loadingComplete = false;
@@ -107,7 +108,8 @@ void UpdateLoadingScreen(GameState *state)
             break;
             
         case 4:
-            state->loadingText = "Loading game assets...";
+            state->loadingText = "Loading map data...";
+            InitMap();
             state->loadingStage++;
             state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0f;
             break;

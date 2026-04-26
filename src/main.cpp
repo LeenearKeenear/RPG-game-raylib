@@ -69,8 +69,10 @@ int main()
              *==============================================================================*/
 else if (state.currentScreen == LOADING)
             {
-                // Initialize loading screen (reset stage, progress)
-                InitLoadingScreen(&state);
+                // Initialize loading screen only on first entry
+                if (!state.enteredLoading) {
+                    InitLoadingScreen(&state);
+                }
                 
                 // Update and render loading screen
                 UpdateLoadingScreen(&state);

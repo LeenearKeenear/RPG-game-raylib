@@ -77,6 +77,11 @@ using GameState = struct
      * @details Jika true, Start Game berikutnya akan skip loading texture
      */
     bool assetsLoaded;
+    /**
+     * @brief Flag menandakan sudah pernah masuk LOADING state
+     * @details Dipakai agar InitLoadingScreen tidak dipanggil setiap frame
+     */
+    bool enteredLoading;
 };
 
 // Pointer global ke GameState aktif

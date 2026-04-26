@@ -163,16 +163,24 @@ void LoadMap(const char *mapPath)
         std::string imagePath = "texture/" + tileset->getImagePath().filename().u8string();
         TraceLog(LOG_INFO, "Tileson: Loading tileset: %s", imagePath.c_str());
 
-        Image img = LoadImage(imagePath.c_str());
         TilesetInfo info;
-        info.texture = LoadTextureFromImage(img);
+        
+        // Cek apakah texture tile utama sudah dimuat, reuse jika ada
+        if (TexturesMap[TEXTURE_TILEMAP].id != 0 && imagePath == "texture/tiles.png") {
+            info.texture = TexturesMap[TEXTURE_TILEMAP];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for tiles.png");
+        } else {
+            Image img = LoadImage(imagePath.c_str());
+            info.texture = LoadTextureFromImage(img);
+            UnloadImage(img);
+        }
+        
         info.cols = tileset->getColumns();
         info.spacing = tileset->getSpacing();
         info.firstgid = tileset->getFirstgid();
         info.lastgid = (i + 1 < (int)tilesetList.size())
                            ? tilesetList[i + 1].getFirstgid() - 1
                            : INT_MAX;
-        UnloadImage(img);
 
         tilesonMap->tilesets.push_back(info);
         TraceLog(LOG_INFO, "Tileson: Loaded tileset %s (gid %d-%d)", imagePath.c_str(), info.firstgid, info.lastgid);
