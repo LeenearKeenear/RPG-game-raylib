@@ -52,13 +52,13 @@ using GameState = struct
     ScreenState previousScreen;/**< Screen sebelum OPTIONS - buat return button */
     bool showFPS;              /**< Tampilkan FPS counter di HUD */
     
-    /*==============================================================================
+     /*==============================================================================
      * Loading State Variables
      *==============================================================================*/
     /**
      * @brief Current loading progress percentage (0-100)
      */
-    int loadingProgress;
+    float loadingProgress;
     /**
      * @brief Current loading status text to display
      */

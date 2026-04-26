@@ -13,6 +13,7 @@
 #include "../include/item.h"
 #include "../include/mainMenu.h"
 #include "../include/pauseMenu.h"
+#include "../include/loading_screen.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include <cstdio>
@@ -39,7 +40,7 @@ int main()
     gState = &state;
 
     // Initialize loading state variables
-    state.loadingProgress = 0;
+    state.loadingProgress = 0.0f;
     state.loadingText = "";
     state.loadingComplete = false;
 
@@ -57,105 +58,18 @@ int main()
             UpdateMainMenu(&state);
             RenderMainMenuToVirtualScreen(&state);
             DrawRenderWindows(&state);
-         }
-          /*==============================================================================
-           * State: LOADING
-           *==============================================================================*/
-          /**
-           * @brief Handle loading state - shows loading screen and sequences asset loading
-           */
-          else if (state.currentScreen == LOADING)
-          {
-              /*==============================================================================
-               * Update
-               *==============================================================================*/
-              UpdateGame(&state);
-              
-              /*==============================================================================
-               * Loading Initialization
-               *==============================================================================*/
-              /**
-               * @brief Initialize loading state variables on first entry
-               */
-              if (state.loadingProgress == 0 && !state.loadingComplete) {
-                  state.loadingText = "Starting asset loading...";
-              }
-              
-              /*==============================================================================
-               * Asset Loading Sequence
-               *==============================================================================*/
-              /**
-               * @brief Simulate loading of game assets in sequence
-               * @note In a production implementation, this would load actual textures, sounds, etc.
-               */
-              if (!state.loadingComplete) {
-                  // Simple loading simulation for now
-                  // In a real implementation, we would load actual assets here
-                  state.loadingProgress += 2; // Increment progress
-                  
-                  /*==============================================================================
-                   * Loading Progress Stages
-                   *==============================================================================*/
-                  if (state.loadingProgress < 20) {
-                      state.loadingText = "Loading tileset textures...";
-                  } else if (state.loadingProgress < 40) {
-                      state.loadingText = "Loading character sprites...";
-                  } else if (state.loadingProgress < 60) {
-                      state.loadingText = "Loading enemy textures...";
-                  } else if (state.loadingProgress < 80) {
-                      state.loadingText = "Loading item icons...";
-                  } else if (state.loadingProgress < 100) {
-                      state.loadingText = "Finalizing game assets...";
-                  } else {
-                      state.loadingComplete = true;
-                      state.loadingText = "Loading complete!";
-                      // Transition to PLAY state after loading is complete
-                      state.currentScreen = PLAY;
-                      
-                      /*==============================================================================
-                       * Post-Loading Initialization
-                       *==============================================================================*/
-                      /**
-                       * @brief Initialize game systems that should happen after asset loading
-                       * @note These were moved from the main initialization sequence to occur after loading
-                       */
-                      InitMap();
-                      InitAll();
-                      InitMainMenu(&state);
-                  }
-              }
-              
-              /*==============================================================================
-               * Rendering
-               *==============================================================================*/
-              /**
-               * @brief Render the loading screen with progress bar and status text
-               */
-              // Render loading screen
-              BeginTextureMode(state.Dungeon);
-              ClearBackground(DARKGRAY);
-              
-              // Draw loading text
-              int textWidth = MeasureText(state.loadingText, 20);
-              DrawText(state.loadingText, GameScreenWidth/2 - textWidth/2, GameScreenHeight/2 - 20, 20, WHITE);
-              
-              // Draw progress bar background
-              DrawRectangle(GameScreenWidth/2 - 150, GameScreenHeight/2 + 20, 300, 20, DARKGRAY);
-              
-              // Draw progress bar fill
-              DrawRectangle(GameScreenWidth/2 - 150, GameScreenHeight/2 + 20, state.loadingProgress * 3, 20, GREEN);
-              
-              // Draw progress percentage
-              char progressText[10];
-              sprintf(progressText, "%d%%", state.loadingProgress);
-              int progressTextWidth = MeasureText(progressText, 20);
-              DrawText(progressText, GameScreenWidth/2 - progressTextWidth/2, GameScreenHeight/2 + 50, 20, WHITE);
-              
-              EndTextureMode();
-              
-              DrawRenderWindows(&state);
           }
-         // State: OPTIONS
+           /*==============================================================================
+            * State: LOADING
+            *==============================================================================*/
+else if (state.currentScreen == LOADING)
+            {
+                // Update and render loading screen
+                UpdateLoadingScreen(&state);
+                RenderLoadingScreen(&state);
+                DrawRenderWindows(&state);
+            }
+          // State: OPTIONS
          else if (state.currentScreen == OPTIONS)
          {
             // Show options screen and set return screen on first entry
