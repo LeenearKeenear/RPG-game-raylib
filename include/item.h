@@ -53,6 +53,8 @@ bool LoadItemsforMap(const std::string &mapPath);
 
 void ClearItems();
 
+void SpawnItemAtLocation(Vector2 pos);
+
 // Fungsi pembantu untuk kategori spesifik
 void SpawnWeapon(Vector2 pos, float multiplier, ItemRarity rarity);
 void SpawnPotion(Vector2 pos, float multiplier, ItemRarity rarity);

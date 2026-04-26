@@ -172,6 +172,31 @@ Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity 
     return newItem;
 }
 
+// Di dalam item.cpp
+void SpawnItemAtLocation(Vector2 pos){
+    Item newItem;
+    
+    // Tentukan kategori secara random (Potion atau Weapon)
+    newItem.category = (GetRandomValue(0, 1) == 0) ? ITEM_POTION : ITEM_WEAPON;
+    
+    // Set posisi sesuai parameter dari chest tadi
+    newItem.position = pos;
+    newItem.isPickedUp = false;
+
+    if (newItem.category == ITEM_WEAPON) {
+        newItem.name = "Sword";
+        newItem.hitbox = { pos.x, pos.y, 32, 32 }; // Ukuran box pedang
+    } else {
+        newItem.name = "Health Potion";
+        newItem.hitbox = { pos.x, pos.y, 20, 20 }; // Ukuran box potion
+    }
+    
+    // Masukkan ke vector utama item kamu
+    activeItems.push_back(newItem);
+    
+    TraceLog(LOG_INFO, "ITEM: Spawned near chest at (%.1f, %.1f)", pos.x, pos.y);
+}
+
 void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadius, float itemSpeed)
 {
     for (auto &item : activeItems)
