@@ -9,6 +9,8 @@
  */
 
 #include "../lib/raylib/include/raylib.h"
+#include <atomic>
+#include <cstdint>
 
 /*==============================================================================
  * Virtual Screen Constants
@@ -25,12 +27,12 @@ extern const int GameScreenHeight;
 /**
  * @brief Daftar state utama game
  */
-typedef enum
+using ScreenState = enum : std::uint8_t
 {
     MAIN_MENU, // State menu utama
     PLAY,      // State gameplay aktif
     OPTIONS    // State menu pengaturan
-} ScreenState;
+};
 
 /*==============================================================================
  * GameState Struct
@@ -39,7 +41,7 @@ typedef enum
 /**
  * @brief Menyimpan data utama rendering dan state game
  */
-typedef struct
+using GameState = struct
 {
     RenderTexture2D Dungeon;   /**< Render texture virtual (1280x720) - target rendering semua game */
     float ScaleMultiplier;     /**< Rasio scale layar virtual ke window asli (dihitung tiap frame) */
@@ -48,7 +50,7 @@ typedef struct
     ScreenState currentScreen; /**< State game yang aktif (MAIN_MENU / PLAY / OPTIONS) */
     ScreenState previousScreen;/**< Screen sebelum OPTIONS - buat return button */
     bool showFPS;              /**< Tampilkan FPS counter di HUD */
-} GameState;
+};
 
 // Pointer global ke GameState aktif
 extern GameState *gState;
