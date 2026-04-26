@@ -31,7 +31,7 @@ void DrawKeybindsTab(
         "S / Arrow Down",
         "A / Arrow Left",
         "D / Arrow Right",
-        "E",
+        "F",
         "I",
         "M",
         "Mouse Left",
