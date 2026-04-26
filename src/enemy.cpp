@@ -363,6 +363,11 @@ void Enemy::Render() {
         DrawCircleLinesV(enemyCenter, AttackRange, RED);
         Rectangle enemyHitbox = GetHitbox();
         DrawRectangleLinesEx(enemyHitbox, 1.0f, VIOLET);
+
+        // Garis raycast ke player saat mengejar/menyerang
+        if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {
+            DrawLineEx(enemyCenter, PlayerInstance.GetCenter(), 1.0f, RED);
+        }
     }
 }
 
