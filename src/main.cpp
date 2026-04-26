@@ -15,6 +15,7 @@
 #include "../include/pauseMenu.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
+#include <cstdio>
 
 /**
  * @brief Global instances for menu systems
@@ -61,20 +62,69 @@ int main()
             RenderMainMenuToVirtualScreen(&state);
             DrawRenderWindows(&state);
          }
-         // State: LOADING
-         else if (state.currentScreen == LOADING)
-         {
-             // TODO: Implement loading screen and asset loading sequence
-             UpdateGame(&state);
-             
-             // For now, just show a simple loading screen
-             BeginTextureMode(state.Dungeon);
-             ClearBackground(DARKGRAY);
-             DrawText("Loading...", GameScreenWidth/2 - 50, GameScreenHeight/2, 20, WHITE);
-             EndTextureMode();
-             
-             DrawRenderWindows(&state);
-         }
+          // State: LOADING
+          else if (state.currentScreen == LOADING)
+          {
+              UpdateGame(&state);
+              
+              // Initialize loading state if not already done
+              if (state.loadingProgress == 0 && !state.loadingComplete) {
+                  state.loadingText = "Starting asset loading...";
+              }
+              
+              // Loading sequence - load assets one by one
+              if (!state.loadingComplete) {
+                  // Simple loading simulation for now
+                  // In a real implementation, we would load actual assets here
+                  state.loadingProgress += 2; // Increment progress
+                  
+                  if (state.loadingProgress < 20) {
+                      state.loadingText = "Loading tileset textures...";
+                  } else if (state.loadingProgress < 40) {
+                      state.loadingText = "Loading character sprites...";
+                  } else if (state.loadingProgress < 60) {
+                      state.loadingText = "Loading enemy textures...";
+                  } else if (state.loadingProgress < 80) {
+                      state.loadingText = "Loading item icons...";
+                  } else if (state.loadingProgress < 100) {
+                      state.loadingText = "Finalizing game assets...";
+                  } else {
+                      state.loadingComplete = true;
+                      state.loadingText = "Loading complete!";
+                      // Transition to PLAY state after loading is complete
+                      state.currentScreen = PLAY;
+                      
+                      // Initialize game systems that should happen after loading
+                      InitMap();
+                      InitAll();
+                      InitMainMenu(&state);
+                  }
+              }
+              
+              // Render loading screen
+              BeginTextureMode(state.Dungeon);
+              ClearBackground(DARKGRAY);
+              
+              // Draw loading text
+              int textWidth = MeasureText(state.loadingText, 20);
+              DrawText(state.loadingText, GameScreenWidth/2 - textWidth/2, GameScreenHeight/2 - 20, 20, WHITE);
+              
+              // Draw progress bar background
+              DrawRectangle(GameScreenWidth/2 - 150, GameScreenHeight/2 + 20, 300, 20, DARKGRAY);
+              
+              // Draw progress bar fill
+              DrawRectangle(GameScreenWidth/2 - 150, GameScreenHeight/2 + 20, state.loadingProgress * 3, 20, GREEN);
+              
+              // Draw progress percentage
+              char progressText[10];
+              sprintf(progressText, "%d%%", state.loadingProgress);
+              int progressTextWidth = MeasureText(progressText, 20);
+              DrawText(progressText, GameScreenWidth/2 - progressTextWidth/2, GameScreenHeight/2 + 50, 20, WHITE);
+              
+              EndTextureMode();
+              
+              DrawRenderWindows(&state);
+          }
          // State: OPTIONS
          else if (state.currentScreen == OPTIONS)
          {
