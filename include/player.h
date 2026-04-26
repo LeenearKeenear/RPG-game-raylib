@@ -133,12 +133,22 @@ public:
     float GetMagnetRadius() { return MagnetRadius; }
     float GetItemSpeed() { return ItemSpeed; }
 
-    // hitbox getter
+    // hitbox center getter
     Vector2 GetCenter()
     {
         return {
             Position.x + HitboxOffsetX + HitboxWidth / 2,
             Position.y + HitboxOffsetY + HitboxHeight / 2};
+    }
+
+    // hitbox player getter
+    Rectangle GetHitbox()
+    {
+        return {
+            GetPosition().x + HitboxOffsetX,
+            GetPosition().y + HitboxOffsetY,
+            HitboxWidth,
+            HitboxHeight};
     }
 
     // info getters

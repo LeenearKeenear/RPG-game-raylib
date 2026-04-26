@@ -117,9 +117,11 @@ extern TileRange currentVisibleRange;
 
 #define COLLISION_LAYER_NAME "obstacle" // Nama layer collision obstacle
 #define OBJECT_LAYER_NAME "object"      // Nama layer object placement
+#define TRAP_LAYER_NAME "trap"          // nama layer trap placement
 #define SPAWN_OBJECT_NAME "spawn"       // Nama object spawn player
 #define DOOR_TYPE_OBJECT_NAME "pass"    // Type object untuk pintu
 #define CHEST_TYPE_OBJECT_NAME "chest"  // Type object untuk chest
+#define SPIKE_TYPE_OBJECT_NAME "spike"  // Type object unutk spike
 
 /*==============================================================================
  * Map Functions

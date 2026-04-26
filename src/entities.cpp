@@ -7,6 +7,7 @@
  */
 
 #include "../include/entities.h"
+#include "../include/propsbehavior.h"
 #include "../include/player.h"
 #include "../include/enemy.h"
 #include "../include/item.h"
@@ -28,4 +29,11 @@ void RenderEntities(void)
     PlayerInstance.Render();
     // TODO: RenderEnemies();  // nanti tambahin pas enemy udah diimplementasi
     RenderAllEnemies();
+}
+
+// render tile object
+// semua tile object prop kayak chest, spike bomb dll disini entry pointnnya
+void RenderTileProps(void){
+    chestManager.Render();
+    spikeManager.Render();
 }

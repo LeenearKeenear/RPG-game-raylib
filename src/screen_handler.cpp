@@ -149,6 +149,7 @@ void UpdateLogicAll()
 {
     PlayerInstance.Tick();
     UpdateAllEnemies();
+    spikeManager.Update(GetFrameTime(), PlayerInstance.GetHitbox());
 
     Vector2 center = PlayerInstance.GetCenter();
     Rectangle pHitbox = {
@@ -186,7 +187,7 @@ void DrawRenderTexture(GameState *state)
     // layer 2: entity dan debug overlay dalam world space
     // (urutan fungsi sangat penting disini)
     BeginMode2D(camera);
-    chestManager.Render();
+    RenderTileProps();
     RenderEntities();
 
     DebugInstance.DrawWorldOverlay();

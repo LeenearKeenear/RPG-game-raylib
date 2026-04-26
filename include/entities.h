@@ -22,3 +22,6 @@
  * - Update logic enemy/item bakal masuk sini
  */
 void RenderEntities(void);
+
+// master render untuk object tile kek chest, trap dll
+void RenderTileProps(void);

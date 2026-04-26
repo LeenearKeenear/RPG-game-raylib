@@ -164,7 +164,7 @@ void Debug::DrawRaycastOverlay(void)
 
     // Gambar titik hit jika ray mengenai object
     if (PlayerInstance.GetLastHit().hit)
-        DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, RED);
+        DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, VIOLET);
 }
 
 /*==============================================================================
@@ -381,30 +381,24 @@ void Debug::DrawWorldOverlay(void)
     if (tilesonMap == nullptr)
         return;
 
-    // Hitbox player
-    Vector2 playerPos = PlayerInstance.GetPosition();
-
-    Rectangle playerHitbox = {
-        playerPos.x + PlayerInstance.GetHitboxOffsetX(),
-        playerPos.y + PlayerInstance.GetHitboxOffsetY(),
-        PlayerInstance.GetHitboxWidth(),
-        PlayerInstance.GetHitboxHeight()};
+    Rectangle playerHitbox = PlayerInstance.GetHitbox();
 
     DrawRectangleLinesEx(playerHitbox, 2.0f, LIME);
 
-    // Magnet radius overlay
+       // Magnet radius overlay
     Vector2 playerCenter = PlayerInstance.GetCenter();
-    DrawCircleLinesV(playerCenter, PlayerInstance.GetMagnetRadius(), ORANGE);
+    DrawCircleLinesV(playerCenter, PlayerInstance.GetMagnetRadius(), GOLD);
 
     // Titik sudut hitbox player
-    DrawCircleV({playerHitbox.x, playerHitbox.y}, 2.5f, GREEN);
-    DrawCircleV({playerHitbox.x + playerHitbox.width, playerHitbox.y}, 2.5f, GREEN);
-    DrawCircleV({playerHitbox.x, playerHitbox.y + playerHitbox.height}, 2.5f, GREEN);
-    DrawCircleV({playerHitbox.x + playerHitbox.width, playerHitbox.y + playerHitbox.height}, 2.5f, GREEN);
+    DrawCircleV({playerHitbox.x, playerHitbox.y}, 2.5f, LIME);
+    DrawCircleV({playerHitbox.x + playerHitbox.width, playerHitbox.y}, 2.5f, LIME);
+    DrawCircleV({playerHitbox.x, playerHitbox.y + playerHitbox.height}, 2.5f, LIME);
+    DrawCircleV({playerHitbox.x + playerHitbox.width, playerHitbox.y + playerHitbox.height}, 2.5f, LIME);
 
     // Overlay collision object
-    DrawCollisionOverlay(COLLISION_LAYER_NAME, RED, GOLD, GOLD);
-    DrawCollisionOverlay(OBJECT_LAYER_NAME, BLUE, BLUE, BLUE);
+    DrawCollisionOverlay(COLLISION_LAYER_NAME, RED, RED, LIGHTGRAY);
+    DrawCollisionOverlay(OBJECT_LAYER_NAME, SKYBLUE, SKYBLUE, LIGHTGRAY);
+    DrawCollisionOverlay(TRAP_LAYER_NAME, BEIGE, BEIGE, LIGHTGRAY);
     DrawRaycastOverlay();
 
     // Batas luar map
@@ -414,18 +408,15 @@ void Debug::DrawWorldOverlay(void)
         (float)tilesonMap->width * TILE_SIZE,
         (float)tilesonMap->height * TILE_SIZE};
 
-    DrawRectangleLinesEx(mapBounds, 2.0f, SKYBLUE);
+    DrawRectangleLinesEx(mapBounds, 2.0f, GREEN);
 
     // Hitbox items
     for (auto &item : activeItems)
     {
         if (!item.isPickedUp)
         {
-            DrawRectangleLinesEx(item.hitbox, 1.5f, YELLOW);
-            DrawText(item.name.c_str(), (int)item.hitbox.x, (int)item.hitbox.y - 12, 10, YELLOW);
+            DrawRectangleLinesEx(item.hitbox, 1.5f, PINK);
+            DrawText(item.name.c_str(), (int)item.hitbox.x, (int)item.hitbox.y - 12, 10, PINK);
         }
     }
-
-    // Label kecil untuk hitbox
-    DrawText("Hitbox", (int)playerHitbox.x, (int)playerHitbox.y - 14, 14, LIME);
 }
