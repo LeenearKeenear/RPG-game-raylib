@@ -2,6 +2,7 @@
 #include "../include/player.h"
 #include "../include/animation.h"
 #include "../include/inventory.h"
+#include "../include/effectQueue.h"
 #include <cstdio>
 #include <vector>
 #include <string>
@@ -266,52 +267,4 @@ void DrawPlayerHUD()
 
     DrawHotbar();
     DrawInventory();
-}
-
-namespace MessageLog {
-    struct LogEntry {
-        std::string text;
-        float timer;
-        float verticalOffset;
-    };
-
-    static std::vector<LogEntry> logs;
-    static const float LOG_DURATION = 1.5f;
-    static const float UP_SPEED = 30.0f;
-
-    void AddLog(const char* message) {
-        logs.push_back({message, 0.0f, -20.0f}); // timer starts at 0 (elapsed)
-        if (logs.size() > 5) {
-            logs.erase(logs.begin());
-        }
-    }
-
-    void UpdateAndDraw() {
-        float dt = GetFrameTime();
-        Vector2 playerCenter = PlayerInstance.GetCenter();
-
-        for (size_t i = 0; i < logs.size(); i++) {
-            logs[i].timer += dt;
-            if (logs[i].timer >= LOG_DURATION) {
-                logs.erase(logs.begin() + i);
-                i--;
-                continue;
-            }
-
-            logs[i].verticalOffset = AnimEffects::CalculateFloatOffset(logs[i].verticalOffset, UP_SPEED, dt);
-
-            float alpha = AnimEffects::CalculateFadeOut(logs[i].timer, LOG_DURATION);
-            int fontSize = 10;
-            int textWidth = MeasureText(logs[i].text.c_str(), fontSize);
-            
-            // Calculate screen position relative to player head
-            int x = (int)playerCenter.x - textWidth / 2;
-            int y = (int)(playerCenter.y + logs[i].verticalOffset);
-
-            // Draw shadow
-            DrawText(logs[i].text.c_str(), x + 1, y + 1, fontSize, ColorAlpha(BLACK, alpha * 0.7f));
-            // Draw main text
-            DrawText(logs[i].text.c_str(), x, y, fontSize, ColorAlpha(WHITE, alpha));
-        }
-    }
 }

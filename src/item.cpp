@@ -1,5 +1,6 @@
 #include "../include/item.h"
 #include "../include/animation.h"
+#include "../include/effects.h"
 #include "../include/screen.h"
 #include "../include/entities.h"
 #include "../include/player.h"
@@ -157,7 +158,7 @@ void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadiu
             if (Inventory::AddToInventory(PlayerInstance, item)) {
                 item.isPickedUp = true;
                 std::string logMsg = "Picked up: " + item.name;
-                MessageLog::AddLog(logMsg.c_str());
+                Effects::AddLog(logMsg.c_str());
             } else {
                 // Optional: Log if inventory is full
                 // MessageLog::AddLog("Inventory Full!");

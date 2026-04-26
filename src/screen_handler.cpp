@@ -21,12 +21,13 @@
 #include "../include/animation.h"
 #include "../include/enemy.h"
 #include "../include/entities.h"
-#include "../include/enemy.h"
-#include "../include/debug.h"
 #include "../include/mapLogic.h"
+#include "../include/effects.h"
+#include "../include/debug.h"
 #include "../include/pauseMenu.h"
 #include "../include/combat.h"
 #include "../include/interaction.h"
+#include <cstdio>
 
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
@@ -248,7 +249,8 @@ void UpdateLogicAll()
 {
     Entities::Update();
     Interaction::ExecutePendingTransitions(PlayerInstance);
-    Combat::UpdateDamagePopups(GetFrameTime());
+    // Update Effects (Popups, Logs, etc)
+    Effects::Update(GetFrameTime());
 
 
     Vector2 center = PlayerInstance.GetCenter();
@@ -288,8 +290,8 @@ void DrawRenderTexture(GameState *state)
     chestManager.Render();
     RenderAllItems();
     Entities::Render();
-    Combat::DrawDamagePopups();
-    MessageLog::UpdateAndDraw();
+    // Draw Effects
+    Effects::Draw();
     DebugInstance.DrawWorldOverlay();
     EndMode2D();
 

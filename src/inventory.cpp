@@ -1,6 +1,7 @@
 #include "../include/inventory.h"
 #include "../include/player.h"
 #include "../include/input.h"
+#include "../include/effects.h"
 
 namespace Inventory {
 
@@ -23,6 +24,7 @@ void UsePotion(Player& player, int slotIndex) {
     InventoryItem& item = player.Hotbar[slotIndex];
 
     if (item.type != ITEM_POTION || item.amount <= 0) {
+        Effects::AddLog("Potion telah habis!");
         TraceLog(LOG_INFO, "PLAYER: No potion in slot %d!", slotIndex + 1);
         return;
     }

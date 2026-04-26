@@ -6,6 +6,7 @@
 #include "../include/map.h"
 #include "../include/player.h"
 #include "../include/tiles.h"
+#include "../include/effects.h"
 #include "../lib/raylib/include/raymath.h"
 #include <algorithm>
 #include <cmath>
@@ -78,7 +79,7 @@ namespace Combat
                 entity->TakeDamage(damage, knockback);
 
                 // Umpan balik visual
-                AddDamagePopup(entityCenter, damage);
+                Effects::AddDamage(entityCenter, damage);
 
                 player.Swing.damagedEntities.push_back((void *)entity);
                 TraceLog(LOG_INFO, "COMBAT: Pemain mengenai musuh! Damage: %.1f", damage);
@@ -232,6 +233,8 @@ namespace Combat
                 }
                 else
                 {
+                    Effects::AddLog("Stamina tidak cukup!");
+                    player.Swing.pressRegistered = false; 
                     TraceLog(LOG_WARNING, "PLAYER: Serangan gagal! Mana habis.");
                 }
             }
@@ -349,21 +352,8 @@ namespace Combat
         }
     }
 
-    // --- Antarmuka Sistem Damage Popup ---
-    static DamageQueue Popups;
-
     void AddDamagePopup(Vector2 pos, float damage)
     {
-        DamagePopup p;
-        p.position = pos;
-        p.damage = damage;
-        p.timer = 0;
-        p.duration = 1.0f;
-        p.velocity = {(float)GetRandomValue(-20, 20) / 10.0f, -2.0f};
-        p.active = true;
-        Popups.Enqueue(p);
+        Effects::AddDamage(pos, damage);
     }
-
-    void UpdateDamagePopups(float dt) { Popups.Update(dt); }
-    void DrawDamagePopups() { Popups.Draw(); }
 } // namespace Combat

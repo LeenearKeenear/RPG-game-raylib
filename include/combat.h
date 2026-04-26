@@ -1,6 +1,6 @@
 #pragma once
 #include "raylib.h"
-#include "damageQueue.h"
+#include "effects.h"
 #include <vector>
 
 class Player;
@@ -65,8 +65,6 @@ namespace Combat
      */
     void DrawSwingAttack(Player &player);
 
-    // Sistem Damage Popup (wrapper untuk DamageQueue)
+    // Sistem Damage Popup (wrapper untuk Effects)
     void AddDamagePopup(Vector2 pos, float damage);
-    void UpdateDamagePopups(float dt);
-    void DrawDamagePopups();
 }
