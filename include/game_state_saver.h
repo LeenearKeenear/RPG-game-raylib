@@ -58,7 +58,10 @@ struct SavedItemState {
  * @brief Struktur data untuk menyimpan state map (chest, dll)
  */
 struct SavedMapState {
-    std::vector<unsigned char> chestOpened; /**< Status opened/closed tiap chest */
+    std::string mapPath;                              /**< Path map saat ini */
+    Vector2 cameraTarget;                          /**< Posisi camera target */
+    float cameraZoom;                            /**< Zoom camera */
+    std::vector<unsigned char> chestOpened;    /**< Status opened/closed tiap chest */
 };
 
 /*==============================================================================

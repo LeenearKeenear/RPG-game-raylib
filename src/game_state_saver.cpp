@@ -6,6 +6,7 @@
  */
 
 #include "../include/game_state_saver.h"
+#include "../include/map.h"
 
 /*==============================================================================
  * Global Saved State Variables
@@ -86,8 +87,12 @@ void SaveGameState(GameState *state)
     }
     
     /*==============================================================================
-     * Save Map State (Chest opened status)
+     * Save Map State (map path, camera, chest opened status)
      *==============================================================================*/
+    const char* mapPath = GetCurrentMapPath();
+    savedMapState.mapPath = (mapPath == nullptr || mapPath[0] == '\0') ? "world_json/tutorial.json" : std::string(mapPath);
+    savedMapState.cameraTarget = camera.target;
+    savedMapState.cameraZoom = camera.zoom;
     savedMapState.chestOpened.clear();
     if (tilesonMap != nullptr) {
         for (const MapObject& obj : tilesonMap->Objects) {
@@ -116,14 +121,11 @@ void RestoreGameState(GameState *state)
     if (hasSavedState) {
         PlayerInstance.SetHealth(savedPlayerState.health);
         PlayerInstance.SetMana(savedPlayerState.mana);
+        PlayerInstance.SetPosition(savedPlayerState.position);
         
         for (int i = 0; i < 4; i++) {
             PlayerInstance.SetHotbarItem(i, savedPlayerState.hotbar[i]);
         }
-        
-        // Player position akan di-set oleh InitAll() berdasarkan spawn point
-        // Jika ingin preserve posisi, kita perlu set langsung
-        // Untuk saat ini, kita biarkan InitAll() yang handle
     }
     
     /*==============================================================================
@@ -159,10 +161,14 @@ void RestoreGameState(GameState *state)
     }
     
     /*==============================================================================
-     * Restore Map State (Chest opened status)
+     * Restore Map State (camera, chest opened status)
      *==============================================================================*/
-    // Map state restoration skipped for now - requires more complex tileson handling
-    // Can be implemented in future when save/load system is fully designed
+    if (hasSavedState) {
+        // Restore camera position
+        camera.target = savedMapState.cameraTarget;
+        camera.zoom = savedMapState.cameraZoom;
+        // Chest state restoration skipped for now - requires more complex tileson handling
+    }
 }
 
 /**

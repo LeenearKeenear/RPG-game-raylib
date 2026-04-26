@@ -154,6 +154,12 @@ void InitMap(void);
 void SwitchMap(const char *newMapPath, const char *targetSpawnName);
 
 /**
+ * @brief Dapatkan path map yang sedang aktif
+ * @return Path map saat ini
+ */
+const char* GetCurrentMapPath(void);
+
+/**
  * @brief Kembali ke map sebelumnya
  */
 void GoBack(void);

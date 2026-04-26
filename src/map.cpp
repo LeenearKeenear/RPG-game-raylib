@@ -513,3 +513,12 @@ void GoBack(void)
 
     TraceLog(LOG_INFO, "GoBack: returned to map: %s", prev.mapPath.c_str());
 }
+
+/**
+ * @brief Dapatkan path map yang sedang aktif
+ * @return Path map saat ini (kosong jika tidak ada)
+ */
+const char* GetCurrentMapPath(void)
+{
+    return currentMapPath.c_str();
+}

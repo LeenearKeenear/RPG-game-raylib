@@ -109,7 +109,12 @@ void UpdateLoadingScreen(GameState *state)
             
         case 4:
             state->loadingText = "Loading map data...";
-            InitMap();
+            // Load saved map if resuming, otherwise default
+            if (HasSavedState() && !savedMapState.mapPath.empty()) {
+                LoadMap(savedMapState.mapPath.c_str());
+            } else {
+                InitMap();
+            }
             state->loadingStage++;
             state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0f;
             break;
@@ -126,8 +131,11 @@ void UpdateLoadingScreen(GameState *state)
             state->loadingText = "Loading complete!";
             state->currentScreen = PLAY;
             
-            RestoreGameState(state);
+            // Initialize everything first, then restore saved state
             InitAll();
+            if (HasSavedState()) {
+                RestoreGameState(state);
+            }
             InitMainMenu(state);
             break;
     }

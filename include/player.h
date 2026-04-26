@@ -98,6 +98,7 @@ public:
 
     /** @return Posisi player dalam pixel */
     Vector2 GetPosition() { return Position; }
+    void SetPosition(Vector2 pos) { Position = pos; }
 
     /** @return Speed player — dipake debug panel */
     float GetSpeed() { return Speed; }
