@@ -8,10 +8,8 @@
 
 #include "../include/mainMenu.h"
 #include "../include/screen.h"
-#include "../lib/raylib/include/raymath.h"
 #include "../lib/raylib/include/raylib.h"
 #include <array>
-#include <cstdint>
 
 /*==============================================================================
  * Static Variables

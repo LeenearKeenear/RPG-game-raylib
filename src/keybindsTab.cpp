@@ -8,7 +8,6 @@
 #include "../include/keybindsTab.h"
 #include "../lib/raylib/include/raylib.h"
 #include <array>
-#include <cstdint>
 
 /**
  * @brief Draw keybinds tab content
@@ -27,7 +26,7 @@ void DrawKeybindsTab(
     int col1X = startX + 40;
     int col2X = startX + 450;
 
-    static const std::array<const char*, 18> keys = {
+    static const std::array<const char *, 18> keys = {
         "W / Arrow Up",
         "S / Arrow Down",
         "A / Arrow Left",
@@ -48,7 +47,7 @@ void DrawKeybindsTab(
         "Scroll"
     };
     
-    static const std::array<const char*, 18> actions = {
+    static const std::array<const char *, 18> actions = {
         "Move Up",
         "Move Down",
         "Move Left",
@@ -66,7 +65,7 @@ void DrawKeybindsTab(
         "Revive",
         "Damage",
         "Prev Map",
-        "Zoom"
+        "Zoom",
     };
 
     for (int i = 0; i < 9; i++) {
