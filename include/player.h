@@ -147,7 +147,7 @@ private:
     bool CanMove(Vector2 NewPos);
 
     // magnet/pickup fields
-    float MagnetRadius = 80.0f;
+    float MagnetRadius = 32.0f;
     float ItemSpeed = 400.0f;
     const float RayCastAngle = 0.3f;
 };

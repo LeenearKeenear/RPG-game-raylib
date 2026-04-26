@@ -192,6 +192,8 @@ Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
 
 void Player::DrawAimIndicator(void)
 {
+    if (!isDebugMode) return;
+
     Vector2 playerCenter = GetCenter();
     Vector2 facingDir = {0, 0};
     switch (Anim.direction)
@@ -212,18 +214,6 @@ void Player::DrawAimIndicator(void)
     Color indicatorColor = (dot >= RayCastAngle) ? GREEN : WHITE;
 
     DrawLineEx(playerCenter, rayEnd, 2.0f, indicatorColor);
-    
-    float arrowSize = 6.0f;
-    Vector2 perpDir = {-aimDir.y, aimDir.x};
-    Vector2 arrowLeft = {
-        rayEnd.x - aimDir.x * arrowSize + perpDir.x * arrowSize,
-        rayEnd.y - aimDir.y * arrowSize + perpDir.y * arrowSize};
-    Vector2 arrowRight = {
-        rayEnd.x - aimDir.x * arrowSize - perpDir.x * arrowSize,
-        rayEnd.y - aimDir.y * arrowSize - perpDir.y * arrowSize};
-
-    DrawLineEx(rayEnd, arrowLeft, 2.0f, indicatorColor);
-    DrawLineEx(rayEnd, arrowRight, 2.0f, indicatorColor);
 }
 
 

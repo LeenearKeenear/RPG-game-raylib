@@ -124,9 +124,18 @@ void Enemy::UpdateAI() {
         DetectionRange = BaseDetectionRange;
     }
 
-    if ((AIState == ENEMY_IDLE || AIState == ENEMY_PATROL) && Health < MaxHealth) {
-        Health += HealthRegenRate * GetFrameTime();
-        if (Health > MaxHealth) Health = MaxHealth;
+    if (HealthRegenTimer > 0)
+    {
+        HealthRegenTimer -= GetFrameTime();
+    }
+    else
+    {
+        if (AIState != ENEMY_CHASE && AIState != ENEMY_ATTACK && Health < MaxHealth)
+        {
+            Health += HealthRegenRate * GetFrameTime();
+            if (Health > MaxHealth)
+                Health = MaxHealth;
+        }
     }
 
     switch (AIState) {
@@ -311,6 +320,7 @@ void Enemy::TakeDamage(float amount, Vector2 knockback) {
     Entity::TakeDamage(amount, knockback);
     HitFlashTimer = 0.15f;
     KnockbackVelocity = Vector2Scale(knockback, 6.0f); 
+    HealthRegenTimer = HealthRegenDelay; // Reset timer regen saat terkena damage
 }
 
 void Enemy::PerformAttack() {

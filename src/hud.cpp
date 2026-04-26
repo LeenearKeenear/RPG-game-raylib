@@ -109,9 +109,7 @@ void DrawPlayerHUD()
     float maxMana = PlayerInstance.GetMaxMana();
     float manaRatio = (maxMana > 0) ? mana / maxMana : 0;
 
-    Color healthColor = GREEN;
-    if (healthRatio < 0.25f) healthColor = RED;
-    else if (healthRatio < 0.5f) healthColor = ORANGE;
+    Color healthColor = RED;
 
     extern const int GameScreenHeight; 
     const float barWidth = 220.0f;
@@ -146,7 +144,7 @@ void DrawPlayerHUD()
     DrawTextHUD(PlayerInstance.GetName(), (int)healthPos.x + 7, (int)healthPos.y - 35, 20, WHITE);
 
     DrawStatBar(healthPos, barWidth, barHeight, healthRatio, healthColor, (int)health);
-    DrawStatBar(manaPos, barWidth, barHeight, manaRatio, SKYBLUE, (int)mana);
+    DrawStatBar(manaPos, barWidth, barHeight, manaRatio, GOLD, (int)mana);
 
     DrawHotbar();
 }

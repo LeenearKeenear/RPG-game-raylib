@@ -152,10 +152,17 @@ namespace Combat
                 // Mengunci arah karakter ke arah bidikan
                 PlayAnimation(player.Anim, IDLE, attackFaceDir, PlayerAnimationSet);
 
+                // Mengambil item aktif untuk menentukan statistik (uji coba sementara)
+                ItemSlot activeSlot = InputInstance.GetActiveSlot();
+                InventoryItem activeItem = player.Hotbar[(int)activeSlot - 1];
+
+                float manaCost = player.AttackManaCost;
+                if (activeItem.iconX == 7) manaCost = 15.0f; // Axe: cost diperbesar ke 15
+
                 // Pemeriksaan Resource (Mana)
-                if (player.Mana >= player.AttackManaCost)
+                if (player.Mana >= manaCost)
                 {
-                    player.Mana -= player.AttackManaCost;
+                    player.Mana -= manaCost;
                     player.ManaRegenTimer = player.ManaRegenDelay;
 
                     // Inisialisasi Status Serangan
@@ -165,7 +172,6 @@ namespace Combat
                     player.Swing.center = playerCenter;
 
                     // Logika Offset Senjata (Menyelaraskan sprite senjata dengan tangan/posisi)
-                    ItemSlot activeSlot = InputInstance.GetActiveSlot();
                     if (activeSlot == SLOT_WEAPON_1)
                     {
                         switch (attackFaceDir)
@@ -201,7 +207,7 @@ namespace Combat
                     if (activeSlot == SLOT_WEAPON_1) // Pedang (Tusukan/Thrusting)
                     {
                         player.Swing.type = ATTACK_THRUST;
-                        player.Swing.duration = 0.35f;
+                        player.Swing.duration = 0.25f;
                         player.Swing.reach = 40.0f;
                         player.Swing.breadth = 16.0f;
                         player.Swing.startAngle = baseAngle;
@@ -212,7 +218,7 @@ namespace Combat
                     else // Senjata Berat (Ayunan/Slashing)
                     {
                         player.Swing.type = ATTACK_SLASH;
-                        player.Swing.duration = 0.75f;
+                        player.Swing.duration = 0.5f; // Axe: dipercepat ke 0.5s
                         player.Swing.reach = 48.0f;
                         player.Swing.breadth = 56.0f;
                         player.Swing.startAngle = baseAngle + 55.0f;
