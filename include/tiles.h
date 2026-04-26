@@ -35,3 +35,8 @@ void LoadTileTexture(TextureAsset Slot, const char *Path);
  * @brief Helper untuk mendapatkan rectangle sumber dari koordinat grid.
  */
 Rectangle GetFrame(int frameX, int frameY);
+
+/**
+ * @brief Helper untuk merender tile langsung ke layar tanpa mengakses TexturesMap secara manual.
+ */
+void DrawTileTexture(TextureAsset slot, int frameX, int frameY, Rectangle dest, Vector2 origin = {0, 0}, float rotation = 0.0f, Color tint = WHITE);

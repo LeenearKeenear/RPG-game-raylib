@@ -25,3 +25,12 @@ Rectangle GetFrame(int frameX, int frameY)
         (float)TILE_SIZE,
         (float)TILE_SIZE};
 }
+
+/**
+ * Merender tile ke layar.
+ */
+void DrawTileTexture(TextureAsset slot, int frameX, int frameY, Rectangle dest, Vector2 origin, float rotation, Color tint)
+{
+    Rectangle src = GetFrame(frameX, frameY);
+    DrawTexturePro(TexturesMap[slot], src, dest, origin, rotation, tint);
+}

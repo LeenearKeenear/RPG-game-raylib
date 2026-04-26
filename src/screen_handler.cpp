@@ -286,6 +286,7 @@ void DrawRenderTexture(GameState *state)
 
     BeginMode2D(camera);
     chestManager.Render();
+    RenderAllItems();
     Entities::Render();
     Combat::DrawDamagePopups();
     DebugInstance.DrawWorldOverlay();

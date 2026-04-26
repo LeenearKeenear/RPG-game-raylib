@@ -327,7 +327,6 @@ namespace Combat
 
         if (item.type == ITEM_WEAPON)
         {
-            Rectangle src = GetFrame(item.iconX, item.iconY);
 
             // Menghitung posisi visual dengan offset tusukan searah
             Vector2 visualPos = player.Swing.center;
@@ -343,8 +342,7 @@ namespace Combat
             Vector2 origin = {0, 24};
 
             // Sprite dimiringkan 45 derajat di sumber, jadi kita sesuaikan
-            DrawTexturePro(TexturesMap[TEXTURE_ITEMS], src, dest, origin,
-                           player.Swing.currentAngle + 45.0f, WHITE);
+            DrawTileTexture(TEXTURE_ITEMS, item.iconX, item.iconY, dest, origin, player.Swing.currentAngle + 45.0f);
         }
     }
 

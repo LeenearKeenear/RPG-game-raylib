@@ -77,8 +77,6 @@ void DrawHotbar()
         InventoryItem item = PlayerInstance.Hotbar[i];
         if (item.type != ITEM_NONE)
         {
-            Rectangle src = GetFrame(item.iconX, item.iconY);
-            
             float iconDrawSize = 42.0f;
             Rectangle dest = {
                 slotRect.x + (slotRect.width - iconDrawSize) / 2.0f,
@@ -87,7 +85,7 @@ void DrawHotbar()
                 iconDrawSize
             };
             
-            DrawTexturePro(TexturesMap[TEXTURE_ITEMS], src, dest, {0, 0}, 0.0f, WHITE);
+            DrawTileTexture(TEXTURE_ITEMS, item.iconX, item.iconY, dest);
 
             if (item.amount > 0)
             {
@@ -129,7 +127,6 @@ void DrawPlayerHUD()
     DrawCircleV({ avatarPos.x + 2, avatarPos.y + 2 }, radius + 2, ColorAlpha(BLACK, 0.4f)); 
     DrawCircleV(avatarPos, radius, DARKGRAY);
     
-    Rectangle knightSrc = GetFrame(0, 2);
     float spriteSize = avatarSize - 10.0f; 
     Rectangle knightDest = { 
         (avatarPos.x - spriteSize/2.0f) + 1.0f, 
@@ -137,7 +134,7 @@ void DrawPlayerHUD()
         spriteSize, 
         spriteSize 
     };
-    DrawTexturePro(TexturesMap[TEXTURE_KNIGHT], knightSrc, knightDest, { 0, 0 }, 0.0f, WHITE);
+    DrawTileTexture(TEXTURE_KNIGHT, 0, 2, knightDest);
     
     DrawCircleLinesV(avatarPos, radius, ColorAlpha(GOLD, 0.6f));
     DrawCircleLinesV(avatarPos, radius + 1, ColorAlpha(GOLD, 0.3f)); 

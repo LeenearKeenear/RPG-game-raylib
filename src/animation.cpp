@@ -63,8 +63,6 @@ const AnimationSet WolfAnimationSet = {
  *==============================================================================*/
 
 void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale) {
-    Rectangle source = GetFrame((int)sheetCoord.x, (int)sheetCoord.y);
-
     float smallSize = TILE_SIZE * scale;
     float offset = (TILE_SIZE - smallSize) / 2.0f;
 
@@ -75,7 +73,7 @@ void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, fl
         smallSize
     };
 
-    DrawTexturePro(TexturesMap[slot], source, dest, (Vector2){0,0}, 0.0f, WHITE);
+    DrawTileTexture(slot, (int)sheetCoord.x, (int)sheetCoord.y, dest);
 }
 
 void UpdateAnimation(Animation &anim, float dt)
@@ -121,8 +119,8 @@ void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint)
     int frameX = anim.currentConfig->startFrame + anim.currentFrame;
     int row = anim.currentConfig->row;
 
-    Rectangle src = GetFrame(frameX, row);
-    DrawTextureRec(TexturesMap[texture], src, anim.position, tint);
+    Rectangle dest = { anim.position.x, anim.position.y, (float)TILE_SIZE, (float)TILE_SIZE };
+    DrawTileTexture(texture, frameX, row, dest, {0,0}, 0.0f, tint);
 }
 
 void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set)

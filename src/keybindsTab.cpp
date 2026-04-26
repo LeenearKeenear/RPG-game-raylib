@@ -28,7 +28,7 @@ void DrawKeybindsTab(
                              "Interact", "Inventory", "Map", "Action",
                              "Weapon 1", "Weapon 2", "Potion 1", "Potion 2",
                              "Pause", "Debug", "Revive", "Damage",
-                             "Prev Map", "Zoom"};
+                             "Prev Map", "Zoom / Hotbar Slot"};
 
     for (int i = 0; i < 9; i++) {
         int rowY = contentStartY + i * 28;
