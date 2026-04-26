@@ -39,6 +39,10 @@ void Player::Init(GameState *state, const char *spawnObjectName)
         Hotbar[2] = {ITEM_POTION, "Health Potion", 3, 0, 20, 7, 8};
         Hotbar[3] = {ITEM_POTION, "Mana Bread", 5, 0, 15, 10, 8};
 
+        for (int i = 0; i < 49; i++) {
+            Bag[i] = {ITEM_NONE, "", 0, 0, 0, 0, 0};
+        }
+
         isInitialized = true;
         TraceLog(LOG_INFO, "Player: Resource global dan statistik telah diinisialisasi");
     }

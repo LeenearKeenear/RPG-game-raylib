@@ -21,6 +21,102 @@ static void DrawTextHUD(const char* text, int x, int y, int fontSize, Color colo
     DrawText(text, x, y, fontSize, color);
 }
 
+static int selectedSlot = -1; // -1: none, 0-48: bag, 49-52: hotbar
+
+static InventoryItem& GetItemBySlotIndex(int index) {
+    if (index >= 0 && index < 49) return PlayerInstance.Bag[index];
+    if (index >= 49 && index < 53) return PlayerInstance.Hotbar[index - 49];
+    static InventoryItem empty = {ITEM_NONE, "", 0, 0, 0, 0, 0};
+    return empty;
+}
+
+void DrawInventory()
+{
+    if (!InputInstance.IsInventoryOpen()) {
+        selectedSlot = -1;
+        return;
+    }
+
+    extern const int GameScreenWidth;
+    extern const int GameScreenHeight;
+
+    // Overlay gelap
+    DrawRectangle(0, 0, GameScreenWidth, GameScreenHeight, ColorAlpha(BLACK, 0.7f));
+    DrawTextHUD("INVENTORY", GameScreenWidth / 2 - 90, 50, 30, GOLD);
+
+    const float slotSize = 50.0f;
+    const float padding = 6.0f;
+    const int gridSize = 7;
+    const float totalGridSize = (slotSize * gridSize) + (padding * (gridSize - 1));
+    
+    const float startX = (GameScreenWidth - totalGridSize) / 2.0f;
+    const float startY = (GameScreenHeight - totalGridSize) / 2.0f;
+
+    Vector2 mousePos = GetVirtualMousePosition(gState);
+    bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+    for (int i = 0; i < 49; i++)
+    {
+        int row = i / gridSize;
+        int col = i % gridSize;
+
+        Rectangle slotRect = {
+            startX + col * (slotSize + padding),
+            startY + row * (slotSize + padding),
+            slotSize,
+            slotSize
+        };
+
+        bool isHovered = CheckCollisionPointRec(mousePos, slotRect);
+        bool isSelected = (selectedSlot == i);
+
+        // Slot background
+        Color slotColor = isSelected ? ColorAlpha(GOLD, 0.4f) : (isHovered ? ColorAlpha(GRAY, 0.7f) : ColorAlpha(DARKGRAY, 0.6f));
+        DrawRectangleRounded(slotRect, 0.2f, 8, slotColor);
+        DrawRectangleRoundedLines(slotRect, 0.2f, 8, isSelected ? GOLD : ColorAlpha(WHITE, 0.3f));
+
+        // Item icon
+        InventoryItem& item = PlayerInstance.Bag[i];
+        if (item.type != ITEM_NONE)
+        {
+            float iconSize = 36.0f;
+            Rectangle dest = {
+                slotRect.x + (slotSize - iconSize) / 2.0f,
+                slotRect.y + (slotSize - iconSize) / 2.0f,
+                iconSize,
+                iconSize
+            };
+            DrawTileTexture(TEXTURE_ITEMS, item.iconX, item.iconY, dest);
+
+            if (item.amount > 1)
+            {
+                char amtBuf[12];
+                sprintf(amtBuf, "%d", item.amount);
+                DrawText(amtBuf, (int)slotRect.x + 35, (int)slotRect.y + 35, 12, WHITE);
+            }
+        }
+
+        // Logic Click
+        if (isHovered && mouseClicked)
+        {
+            if (selectedSlot == -1) 
+            {
+                if (item.type != ITEM_NONE) selectedSlot = i;
+            }
+            else 
+            {
+                // Swap
+                InventoryItem temp = GetItemBySlotIndex(i);
+                GetItemBySlotIndex(i) = GetItemBySlotIndex(selectedSlot);
+                GetItemBySlotIndex(selectedSlot) = temp;
+                selectedSlot = -1;
+            }
+        }
+    }
+
+    DrawTextHUD("Press 'I' to Close", GameScreenWidth / 2 - 85, GameScreenHeight - 60, 20, GRAY);
+}
+
 /**
  * @brief Helper untuk menggambar bar statistik (HP/MP) dengan teks di kanannya.
  */
@@ -65,13 +161,20 @@ void DrawHotbar()
     {
         Rectangle slotRect = {startX + (i * (slotSize + padding)), startY, slotSize, slotSize};
         bool isActive = (activeSlot == (int)(i + 1));
+        bool isInventoryOpen = InputInstance.IsInventoryOpen();
+
+        int globalIdx = 49 + i;
+        bool isHovered = isInventoryOpen && CheckCollisionPointRec(GetVirtualMousePosition(gState), slotRect);
+        bool isSelected = (selectedSlot == globalIdx);
 
         DrawRectangleRounded((Rectangle){slotRect.x + 2, slotRect.y + 2, slotRect.width, slotRect.height}, 0.2f, 8, ColorAlpha(BLACK, 0.4f));
 
-        Color bgColor = isActive ? ColorAlpha(GOLD, 0.3f) : ColorAlpha(DARKGRAY, 0.6f);
+        Color bgColor = isActive ? ColorAlpha(GOLD, 0.3f) : (isSelected ? ColorAlpha(GOLD, 0.4f) : ColorAlpha(DARKGRAY, 0.6f));
+        if (isHovered && !isSelected) bgColor = ColorAlpha(GRAY, 0.7f);
+        
         DrawRectangleRounded(slotRect, 0.4f, 8, bgColor);
 
-        Color borderColor = isActive ? GOLD : ColorAlpha(WHITE, 0.3f);
+        Color borderColor = (isActive || isSelected) ? GOLD : ColorAlpha(WHITE, 0.3f);
         DrawRectangleRoundedLines(slotRect, 0.4f, 8, borderColor);
 
         InventoryItem item = PlayerInstance.Hotbar[i];
@@ -94,6 +197,23 @@ void DrawHotbar()
                 int fontSize = 12;
                 int textW = MeasureText(amtBuf, fontSize);
                 DrawTextHUD(amtBuf, (int)(slotRect.x + slotRect.width - textW - 4), (int)(slotRect.y + slotRect.height - 13.5), fontSize, WHITE);
+            }
+        }
+
+        // Logic Click in Hotbar (when inventory open)
+        if (isHovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            if (selectedSlot == -1)
+            {
+                if (item.type != ITEM_NONE) selectedSlot = globalIdx;
+            }
+            else
+            {
+                // Swap
+                InventoryItem temp = GetItemBySlotIndex(globalIdx);
+                GetItemBySlotIndex(globalIdx) = GetItemBySlotIndex(selectedSlot);
+                GetItemBySlotIndex(selectedSlot) = temp;
+                selectedSlot = -1;
             }
         }
     }
@@ -147,4 +267,5 @@ void DrawPlayerHUD()
     DrawStatBar(manaPos, barWidth, barHeight, manaRatio, GOLD, (int)mana);
 
     DrawHotbar();
+    DrawInventory();
 }
