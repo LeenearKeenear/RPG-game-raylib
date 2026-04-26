@@ -48,6 +48,9 @@ int main()
     optionsScreen.Show();
     optionsScreen.Hide();
 
+    // Step 6: init main menu (needed for menu buttons to render)
+    InitMainMenu(&state);
+
     // Main Game Loop
     while (!WindowShouldClose())
     {
