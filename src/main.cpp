@@ -60,10 +60,24 @@ int main()
             UpdateMainMenu(&state);
             RenderMainMenuToVirtualScreen(&state);
             DrawRenderWindows(&state);
-        }
-        // State: OPTIONS
-        else if (state.currentScreen == OPTIONS)
-        {
+         }
+         // State: LOADING
+         else if (state.currentScreen == LOADING)
+         {
+             // TODO: Implement loading screen and asset loading sequence
+             UpdateGame(&state);
+             
+             // For now, just show a simple loading screen
+             BeginTextureMode(state.Dungeon);
+             ClearBackground(DARKGRAY);
+             DrawText("Loading...", GameScreenWidth/2 - 50, GameScreenHeight/2, 20, WHITE);
+             EndTextureMode();
+             
+             DrawRenderWindows(&state);
+         }
+         // State: OPTIONS
+         else if (state.currentScreen == OPTIONS)
+         {
             // Show options screen and set return screen on first entry
             if (!optionsScreen.IsActive()) {
                 optionsScreen.SetReturnScreen(state.previousScreen);
