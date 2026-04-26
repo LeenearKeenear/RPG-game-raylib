@@ -52,21 +52,31 @@ using GameState = struct
     ScreenState previousScreen;/**< Screen sebelum OPTIONS - buat return button */
     bool showFPS;              /**< Tampilkan FPS counter di HUD */
     
-     /*==============================================================================
+/*==============================================================================
      * Loading State Variables
      *==============================================================================*/
     /**
-     * @brief Current loading progress percentage (0-100)
+     * @brief Progress loading saat ini (0-100)
      */
     float loadingProgress;
     /**
-     * @brief Current loading status text to display
+     * @brief Teks status loading yang ditampilkan
      */
     const char* loadingText;
     /**
-     * @brief Flag indicating when asset loading is complete
+     * @brief Flag menandakan loading sudah selesai
      */
     bool loadingComplete;
+    /**
+     * @brief Stage loading saat ini (reset setiap masuk LOADING state)
+     * @details Dipakai untuk tracking switch statement di UpdateLoadingScreen()
+     */
+    int loadingStage;
+    /**
+     * @brief Flag menandakan asset sudah dimuat ke memori
+     * @details Jika true, Start Game berikutnya akan skip loading texture
+     */
+    bool assetsLoaded;
 };
 
 // Pointer global ke GameState aktif
