@@ -11,7 +11,7 @@
          "name":"ground",
          "opacity":1,
          "type":"tilelayer",
-         "visible":true,
+         "visible":false,
          "width":50,
          "x":0,
          "y":0
@@ -194,7 +194,7 @@
                          "y":160
                         }],
                  "rotation":0,
-                 "type":"",
+                 "type":"map_bound",
                  "visible":true,
                  "width":0,
                  "x":1280,
@@ -220,8 +220,8 @@
                  "type":"spawn",
                  "visible":true,
                  "width":830.30303030303,
-                 "x":393.939393939394,
-                 "y":718.181818181818
+                 "x":384,
+                 "y":704
                 }],
          "opacity":1,
          "type":"objectgroup",

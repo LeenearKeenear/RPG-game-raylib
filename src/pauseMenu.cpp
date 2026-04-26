@@ -1,36 +1,256 @@
 /**
  * @file pauseMenu.cpp
- * @brief Implementasi dari Pause Menu System Module
+ * @brief Implementasi dari Pause Menu System dan Options Screen
  *
- * Implementasi dari class PauseMenu yang dideklarasikan di pauseMenu.h
- * Handle pause menu UI, tombol-tombol, dan popup notifikasi.
+ * Handle pause menu UI dan standalone options screen dengan tabs.
  */
 
 #include "../include/pauseMenu.h"
 #include "../include/popup.h"
+#include "../include/videoTab.h"
+#include "../include/audioTab.h"
+#include "../include/keybindsTab.h"
 
 /*==============================================================================
  * Static Variables (Popup Notifications)
  *==============================================================================*/
 
-/** Popup notifikasi buat save game */
+/**
+ * @brief Popup notifikasi untuk save game
+ */
 static Popup savePopup("Game Saved!", "OK", 0.7F);
 
-/** Popup notifikasi buat load game */
+/**
+ * @brief Popup notifikasi untuk load game
+ */
 static Popup loadPopup("Game Loaded!", "OK", 0.7F);
-static Popup pauseOptionsPopup("Coming Soon!", "OK", 0.7F);
 
 /*==============================================================================
- * Constructor & Destructor
+ * OptionsScreen Implementation
  *==============================================================================*/
 
 /**
- * @brief Default constructor.
- * @note Inisialisasi semua tombol menu: Resume, Save, Load, Options, Return, Close
+ * @brief Constructor
+ * 
+ * Menginisialisasi semua tombol tab, tombol back, dan dimensi awal.
+ */
+OptionsScreen::OptionsScreen() 
+    : active(false), returnScreen(PLAY), selectedTab(0), 
+      showFPS(false), width(0), height(0), startX(0), startY(0)
+{
+    tabButtons = {buttonTxt("VIDEO", 0, 0, 30, WHITE, 0.7F),
+                buttonTxt("AUDIO", 0, 0, 30, WHITE, 0.7F),
+                buttonTxt("KEYBINDS", 0, 0, 30, WHITE, 0.7F)};
+    backButton = buttonTxt("BACK", 0, 0, 30, WHITE, 0.7F);
+}
+
+/**
+ * @brief Destructor
+ */
+OptionsScreen::~OptionsScreen()
+{
+}
+
+/**
+ * @brief Menampilkan layar options
+ */
+void OptionsScreen::Show()
+{
+    active = true;
+    CalculateDimensions();
+}
+
+/**
+ * @brief Menyembunyikan layar options
+ */
+void OptionsScreen::Hide()
+{
+    active = false;
+}
+
+/**
+ * @brief Memeriksa apakah layar options sedang aktif
+ * @return true jika aktif, false jika tidak
+ */
+bool OptionsScreen::IsActive() const
+{
+    return active;
+}
+
+/**
+ * @brief Mengatur layar kembali saat BACK diklik
+ * @param screen Layar tujuan
+ */
+void OptionsScreen::SetReturnScreen(ScreenState screen)
+{
+    returnScreen = screen;
+}
+
+/**
+ * @brief Mendapatkan daftar resolusi yang tersedia berdasarkan monitor
+ * @return Vektor berisi ResOption (width, height, label)
+ */
+std::vector<ResOption> GetAvailableResolutions()
+{
+    std::vector<ResOption> options;
+
+    Rectangle monitor = GetMonitorResolution();
+    int maxWidth = static_cast<int>(monitor.width);
+    int maxHeight = static_cast<int>(monitor.height);
+
+    if (1280 <= maxWidth && 720 <= maxHeight) {
+        options.push_back({1280, 720, "720p"});
+    }
+    if (1920 <= maxWidth && 1080 <= maxHeight) {
+        options.push_back({1920, 1080, "1080p"});
+    }
+    if (2560 <= maxWidth && 1440 <= maxHeight) {
+        options.push_back({2560, 1440, "1440p"});
+    }
+    if (3840 <= maxWidth && 2160 <= maxHeight) {
+        options.push_back({3840, 2160, "4K"});
+    }
+
+    if (options.empty()) {
+        options.push_back({1280, 720, "720p"});
+    }
+
+    return options;
+}
+
+/**
+ * @brief Menghitung dimensi dan membuat elemen UI
+ * 
+ * Menggunakan Approach B: selalu mulai dari opsi pertama (720p)
+ * tanpa melakukan auto-detect resolusi saat ini.
+ */
+void OptionsScreen::CalculateDimensions()
+{
+    const int fontSize = 30;
+    const int padding = 20;
+    const int tabWidth = 200;
+    const int tabSpacing = 10;
+
+    width = 800;
+    height = 600;
+    startX = (GameScreenWidth - width) / 2;
+    startY = (GameScreenHeight - height) / 2;
+
+    backgroundRect = {static_cast<float>(startX), static_cast<float>(startY),
+                   static_cast<float>(width), static_cast<float>(height)};
+
+    int tabStartX = startX + padding;
+    for (int i = 0; i < 3; i++) {
+        tabButtons[i] = buttonTxt(
+            i == 0 ? "VIDEO" : (i == 1 ? "AUDIO" : "KEYBINDS"),
+            tabStartX + i * (tabWidth + tabSpacing),
+            startY + padding,
+            fontSize,
+            (selectedTab == i) ? YELLOW : WHITE,
+            0.7F);
+    }
+
+    int backWidth = MeasureText("BACK", fontSize);
+    backButton = buttonTxt(
+        "BACK", 
+        startX + width - backWidth - padding - 20, 
+        startY + height - fontSize - padding - 20, 
+        fontSize, WHITE, 0.7F);
+
+    if (resolutionOptions.empty()) {
+        resolutionOptions = GetAvailableResolutions();
+    }
+
+    const int labelFontSize = 24;
+    int valueX = startX + 250;
+    int contentStartY = startY + 100;
+
+    bool isFullscreen = IsWindowFullscreen();
+    fullscreenButton = buttonTxt(
+        isFullscreen ? "ON" : "OFF",
+        valueX,
+        contentStartY + 15,
+        labelFontSize,
+        isFullscreen ? GREEN : RED,
+        0.7F);
+
+fpsButton = buttonTxt(
+        showFPS ? "ON" : "OFF",
+        valueX,
+        contentStartY + 75,
+        labelFontSize,
+        showFPS ? GREEN : GRAY,
+        0.7F);
+}
+
+/**
+ * @brief Memperbarui handling input
+ * @param state Pointer ke GameState
+ * @param mousePosition Posisi mouse saat ini
+ * @param mouseClicked Status klik mouse
+ */
+void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseClicked)
+{
+    if (!active) return;
+
+    if (backButton.isClicked(mousePosition, mouseClicked)) {
+        active = false;
+        state->currentScreen = returnScreen;
+        return;
+    }
+
+    for (int i = 0; i < 3; i++) {
+        if (tabButtons[i].isClicked(mousePosition, mouseClicked)) {
+            selectedTab = i;
+            CalculateDimensions();
+            return;
+        }
+    }
+
+    if (selectedTab == 0) {
+        if (UpdateVideoTab(fullscreenButton, fpsButton, state, mousePosition, mouseClicked)) {
+            showFPS = state->showFPS;
+            CalculateDimensions();
+        }
+    }
+}
+
+/**
+ * @brief Me-render layar options
+ * @param mousePosition Posisi mouse untuk efek hover
+ */
+void OptionsScreen::Draw(Vector2 mousePosition)
+{
+    if (!active) return;
+
+    Color bgColor = {40, 40, 40, 230};
+    DrawRectangleRec(backgroundRect, bgColor);
+    DrawRectangleLinesEx(backgroundRect, 2, WHITE);
+
+    for (int i = 0; i < 3; i++) {
+        tabButtons[i].Draw(mousePosition);
+    }
+
+    backButton.Draw(mousePosition);
+
+    switch (selectedTab) {
+        case 0: DrawVideoTab(fullscreenButton, fpsButton, mousePosition, startX, startY); break;
+        case 1: DrawAudioTab(mousePosition, startX, startY); break;
+        case 2: DrawKeybindsTab(mousePosition, startX, startY); break;
+    }
+}
+
+/*==============================================================================
+ * PauseMenu Implementation
+ *==============================================================================*/
+
+/**
+ * @brief Constructor
+ * 
+ * Menginisialisasi semua tombol menu: Resume, Save, Load, Options, Return, Close
  */
 PauseMenu::PauseMenu() : active(false), position({0, 0}), width(0), height(0)
 {
-    // Inisialisasi array teks tombol (6 buah)
     buttonTexts = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
     buttonTexts[0] = "Resume";
     buttonTexts[1] = "Save Game";
@@ -39,35 +259,27 @@ PauseMenu::PauseMenu() : active(false), position({0, 0}), width(0), height(0)
     buttonTexts[4] = "Return to Main Menu";
     buttonTexts[5] = "Close Game";
 
-    // Hitung dimensi menu berdasarkan teks
     CalculateDimensions();
 }
 
 /**
- * @brief Destructor.
- * @note Gak perlu cleanup khusus karena buttonTxt dan popup handle sendiri
+ * @brief Destructor
  */
 PauseMenu::~PauseMenu()
 {
 }
 
-/*==============================================================================
- * Public Methods - Show/Hide/Active
- *==============================================================================*/
-
 /**
- * @brief Show()
- * Tampilkan pause menu.
+ * @brief Menampilkan pause menu
  */
 void PauseMenu::Show()
 {
-    CalculateDimensions(); // Recalculate in case screen size changed
+    CalculateDimensions();
     active = true;
 }
 
 /**
- * @brief Hide()
- * Sembunyikan pause menu.
+ * @brief Menyembunyikan pause menu
  */
 void PauseMenu::Hide()
 {
@@ -75,103 +287,77 @@ void PauseMenu::Hide()
 }
 
 /**
- * @brief IsActive()
- * @return true jika pause menu sedang aktif.
+ * @brief Memeriksa apakah pause menu sedang aktif
+ * @return true jika aktif, false jika tidak
  */
 bool PauseMenu::IsActive() const
 {
     return active;
 }
 
-/*==============================================================================
- * Private Methods - UI Calculation
- *==============================================================================*/
-
 /**
- * @brief CalculateDimensions()
- * Hitung dimensi sidebar berdasarkan teks button.
- * @note Menu berbentuk sidebar di kiri layar dengan lebar 30% dari GameScreenWidth
+ * @brief Menghitung dimensi menu berdasarkan layar
  */
 void PauseMenu::CalculateDimensions()
 {
-    const int maxWidth = static_cast<int>(GameScreenWidth * 0.30F); // sidebar lebar 30% layar
     const int fontSize = 30;
-    const int paddingX = 20;
     const int paddingY = 20;
     const int buttonSpacing = 10;
-    const int separatorSpacing = 30; // spasi ekstra buat separator antar grup
+    const int separatorSpacing = 30;
 
-    // Step 1: Cari lebar tombol terpanjang buat acuan
     int maxButtonWidth = 0;
-    for (std::uint8_t i = 0; i < 6; i++)
-    {
+    for (std::uint8_t i = 0; i < 6; i++) {
         int btnWidth = MeasureText(buttonTexts[i], fontSize);
-        if (btnWidth > maxButtonWidth)
-        {
-            maxButtonWidth = btnWidth;
-        }
+        if (btnWidth > maxButtonWidth) maxButtonWidth = btnWidth;
     }
 
-    // Step 2: Set dimensi sidebar
-    width = maxWidth;
+    width = maxButtonWidth;
     height = GameScreenHeight;
-
-    position.x = 0; // sidebar nempel di kiri
-    position.y = 0; // sidebar dari atas sampe bawah
+    position.x = 0;
+    position.y = 0;
 
     backgroundRect = {position.x, position.y, static_cast<float>(width), static_cast<float>(height)};
 
-    // Step 3: Hitung posisi tiap tombol (centered horizontal di dalam sidebar)
-    for (std::uint8_t i = 0; i < 6; i++)
-    {
+    for (std::uint8_t i = 0; i < 6; i++) {
         int btnWidth = MeasureText(buttonTexts[i], fontSize);
-        int btnX = position.x + (width - btnWidth) / 2; // center horizontal
+        int btnX = position.x + (width - btnWidth) / 2;
 
-        // Hitung spasi tambahan buat separator antar grup
-        // Grup: Resume | Save+Load | Options+Return+Close
         int separatorCount = 0;
-        if (i > 0)
-            separatorCount++; // setelah Resume
-        if (i > 2)
-            separatorCount++; // setelah Save+Load
-        if (i > 4)
-            separatorCount++; // setelah Options+Return
+        if (i > 0) separatorCount++;
+        if (i > 2) separatorCount++;
+        if (i > 4) separatorCount++;
 
         int btnY = position.y + paddingY + i * (fontSize + buttonSpacing) + separatorCount * (separatorSpacing - buttonSpacing);
         buttons[i] = buttonTxt(buttonTexts[i], btnX, btnY, fontSize, WHITE, 0.7F);
     }
 }
 
-/*==============================================================================
- * Private Methods - Button Handlers
- *==============================================================================*/
-
 /**
- * @brief HandleButtonClick()
- * Handle klik tombol berdasarkan index.
+ * @brief Handle klik pada tombol berdasarkan index
  * @param buttonIndex Index tombol yang diklik (0-5)
- * @param state Game state saat ini (buat ganti screen atau keluar)
+ * @param state Pointer ke GameState
  */
-void PauseMenu::HandleButtonClick(int buttonIndex, GameState *state)
+void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
 {
     switch (buttonIndex) {
-        case 0:  // Resume
+        case 0:
             Hide();
             break;
-        case 1:  // Save Game
+        case 1:
             savePopup.Show();
             break;
-        case 2:  // Load Game
+        case 2:
             loadPopup.Show();
             break;
-        case 3:  // Options
-            pauseOptionsPopup.Show();
+        case 3:
+            state->previousScreen = PLAY;
+            state->currentScreen = OPTIONS;
             break;
-        case 4:  // Return to Main Menu
+        case 4:
             state->currentScreen = MAIN_MENU;
             Hide();
             break;
-        case 5:  // Close Game
+        case 5:
             CloseWindow();
             break;
         default:
@@ -179,71 +365,45 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState *state)
     }
 }
 
-/*==============================================================================
- * Public Methods - Update & Draw
- *==============================================================================*/
-
 /**
- * @brief Update()
- * Update state pause menu - handle klik tombol.
- * @param state Game state saat ini.
- * @param mousePosition Posisi mouse saat ini.
- * @param mouseClicked true jika tombol mouse diklik.
- * @note Popup bersifat modal - blocking interaksi menu selama aktif
+ * @brief Memperbarui logic pause menu
+ * @param state Pointer ke GameState
+ * @param mousePosition Posisi mouse saat ini
+ * @param mouseClicked Status klik mouse
  */
-void PauseMenu::Update(GameState *state, Vector2 mousePosition, bool mouseClicked)
+void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicked)
 {
-    if (!active)
-    {
-        return;
-    }
+    if (!active) return;
 
-    // Popup modal: kalo ada popup aktif, handle popup dulu, menu gak bisa diklik
-    if (savePopup.IsActive())
-    {
+    if (savePopup.IsActive()) {
         savePopup.Update(mousePosition, mouseClicked);
         return;
     }
 
-    if (loadPopup.IsActive())
-    {
+    if (loadPopup.IsActive()) {
         loadPopup.Update(mousePosition, mouseClicked);
         return;
     }
 
-    if (pauseOptionsPopup.IsActive()) {
-        pauseOptionsPopup.Update(mousePosition, mouseClicked);
-        return;
-    }
-
-    // Loop semua tombol, cek mana yang diklik
-    for (std::uint8_t i = 0; i < 6; i++)
-    {
-        if (buttons[i].isClicked(mousePosition, mouseClicked))
-        {
+    for (std::uint8_t i = 0; i < 6; i++) {
+        if (buttons[i].isClicked(mousePosition, mouseClicked)) {
             HandleButtonClick(i, state);
         }
     }
 }
 
 /**
- * @brief Draw()
- * Render pause menu: background dan button.
- * @param mousePosition Posisi mouse saat ini (buat efek hover tombol)
+ * @brief Me-render pause menu ke layar
+ * @param mousePosition Posisi mouse untuk efek hover
  */
 void PauseMenu::Draw(Vector2 mousePosition)
 {
-    if (!active)
-    {
-        return;
-    }
+    if (!active) return;
 
-    // Overlay gelap di seluruh layar (20% opacity)
     Rectangle fullScreen = {0, 0, static_cast<float>(GameScreenWidth), static_cast<float>(GameScreenHeight)};
     Color dimColor = {0, 0, 0, static_cast<unsigned char>(255 * 0.2F)};
     DrawRectangleRec(fullScreen, dimColor);
 
-    // Sidebar background
     Color bgColor = DARKGRAY;
     DrawRectangleRec(backgroundRect, bgColor);
     DrawRectangleLines(
@@ -253,24 +413,10 @@ void PauseMenu::Draw(Vector2 mousePosition)
         static_cast<int>(backgroundRect.height),
         WHITE);
 
-    // Render semua tombol
-    for (std::uint8_t i = 0; i < 6; i++)
-    {
+    for (std::uint8_t i = 0; i < 6; i++) {
         buttons[i].Draw(mousePosition);
     }
 
-    // Render popup kalo aktif (di atas menu)
-    if (savePopup.IsActive())
-    {
-        savePopup.Draw(mousePosition);
-    }
-
-    if (loadPopup.IsActive())
-    {
-        loadPopup.Draw(mousePosition);
-    }
-
-    if (pauseOptionsPopup.IsActive()) {
-        pauseOptionsPopup.Draw(mousePosition);
-    }
+    if (savePopup.IsActive()) savePopup.Draw(mousePosition);
+    if (loadPopup.IsActive()) loadPopup.Draw(mousePosition);
 }

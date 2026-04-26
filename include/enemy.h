@@ -36,11 +36,6 @@ public:
 
     /**
      * @brief Inisialisasi musuh dalam koordinat dunia (world space).
-     * @param pos Posisi awal
-     * @param name Nama tampilan atau pengidentifikasi
-     * @param mapId ID dari map Tiled untuk persistensi data
-     * @param type Varian musuh (Slime, Skeleton, Wolf)
-     * @param radius Jarak patroli maksimum dari titik spawn
      */
     void Init(Vector2 pos, const char* name, int mapId, EnemyType type = SLIME, float radius = 128.0f);
 
@@ -102,3 +97,13 @@ private:
     float DeathTimer = 0.0f;
     const float DeathDuration = 1.2f;
 };
+
+// Utility functions
+int GetRandomDamage(int min, int max);
+void InitEnemy();
+void InitEnemyTextures();
+void SpawnRandomWave();
+void SpawnRandomEnemy();
+void SaveEnemiesForMap(const std::string& mapPath);
+bool LoadEnemiesForMap(const std::string& mapPath);
+void ClearEnemies();

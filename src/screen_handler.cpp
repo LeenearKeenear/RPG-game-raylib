@@ -19,6 +19,7 @@
 #include "../include/player.h"
 #include "../include/tiles.h"
 #include "../include/animation.h"
+#include "../include/enemy.h"
 #include "../include/entities.h"
 #include "../include/enemy.h"
 #include "../include/debug.h"
@@ -32,6 +33,8 @@
 #include <string>
 #include <algorithm>
 #include <cctype>
+#include "../include/hud.h"
+#include "../include/propsbehavior.h"
 
 /*==============================================================================
  * External Variables & Macros
@@ -71,6 +74,11 @@ void InitAll()
     // init player — spawn point dibaca otomatis dari object layer Tiled
     PlayerInstance.Init(gState, SPAWN_OBJECT_NAME);
 
+    // init enemy
+    InitEnemy();
+
+    // Testing spawn item
+    InitItems();
 
     // set camera ke tengah posisi spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
@@ -204,6 +212,7 @@ GameState InitScreen()
     SetTargetFPS(FPS);
 
     state.currentScreen = MAIN_MENU;
+    state.showFPS = false;
 
     return state;
 }
@@ -240,6 +249,16 @@ void UpdateLogicAll()
     Entities::Update();
     Interaction::ExecutePendingTransitions(PlayerInstance);
     Combat::UpdateDamagePopups(GetFrameTime());
+    PlayerInstance.Update();
+
+    Vector2 center = PlayerInstance.GetCenter();
+    Rectangle pHitbox = {
+        center.x - PlayerInstance.GetHitboxWidth() / 2,
+        center.y - PlayerInstance.GetHitboxHeight() / 2,
+        PlayerInstance.GetHitboxWidth(),
+        PlayerInstance.GetHitboxHeight()};
+
+        UpdateItems(center, pHitbox, PlayerInstance.GetMagnetRadius(), PlayerInstance.GetItemSpeed());
 }
 
 /*==============================================================================
@@ -266,6 +285,7 @@ void DrawRenderTexture(GameState *state)
     RenderMap();
 
     BeginMode2D(camera);
+    chestManager.Render();
     Entities::Render();
     Combat::DrawDamagePopups();
     DebugInstance.DrawWorldOverlay();
@@ -291,9 +311,18 @@ void DrawRenderTexture(GameState *state)
  */
 void DrawUIOverlay(GameState *state)
 {
-    DrawPlayerHUD();
+DrawPlayerHUD();
 
-    if (pauseMenu.IsActive())
+    // 2. FPS Counter (if enabled)
+    if (state->showFPS) {
+        int fps = GetFPS();
+        char fpsText[16];
+        snprintf(fpsText, sizeof(fpsText), "FPS: %d", fps);
+        DrawText(fpsText, 10, 10, 20, GREEN);
+    }
+
+    // 3. Menus
+if (pauseMenu.IsActive())
     {
         Vector2 mousePos = GetVirtualMousePosition(state);
         pauseMenu.Draw(mousePos);
@@ -379,4 +408,72 @@ void GameShutDown(GameState *state)
 
     CloseAudioDevice();
     CloseWindow();
+}
+
+/*==============================================================================
+ * Window & Video Settings Functions
+ *==============================================================================*/
+
+/**
+ * @brief ToggleFullscreenMode()
+ * Toggle antara fullscreen dan windowed mode.
+ * @note Setelah toggle,UpdateGame() akan recalculate scale
+ */
+void ToggleFullscreenMode(void)
+{
+    if (IsWindowFullscreen())
+    {
+        ToggleFullscreen();
+    }
+    else
+    {
+        ToggleFullscreen();
+    }
+}
+
+/**
+ * @brief SetResolution()
+ * Set ukuran window ke resolusi tertentu.
+ * @param width Lebar window baru
+ * @param height Tinggi window baru
+ */
+void SetResolution(int width, int height)
+{
+    SetWindowSize(width, height);
+}
+
+/**
+ * @brief GetCurrentResolution()
+ * Ambil resolusi saat ini.
+ * @return Rectangle berisi x=width, y=height
+ */
+Rectangle GetCurrentResolution(void)
+{
+    Rectangle res = {0};
+    res.width = static_cast<float>(GetScreenWidth());
+    res.height = static_cast<float>(GetScreenHeight());
+    return res;
+}
+
+/**
+ * @brief GetMonitorResolution()
+ * Ambil resolusi monitor utama.
+ * @return Rectangle berisi x=monitorWidth, y=monitorHeight
+ */
+Rectangle GetMonitorResolution(void)
+{
+    Rectangle res = {0};
+    res.width = static_cast<float>(GetMonitorWidth(0));
+    res.height = static_cast<float>(GetMonitorHeight(0));
+    return res;
+}
+
+/**
+ * @brief IsFullscreen()
+ * Cek apakah sedang dalam mode fullscreen.
+ * @return true kalo fullscreen
+ */
+bool IsFullscreen(void)
+{
+    return IsWindowFullscreen();
 }

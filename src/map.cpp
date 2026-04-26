@@ -18,9 +18,12 @@
 #include "../include/tiles.h"
 #include "../include/animation.h"
 #include "../include/player.h"
+#include "../include/enemy.h"
+#include "../include/item.h"
 #include "../include/mapstack.h"
 #include "../include/entities.h"
 #include "../include/movement.h"
+#include "../include/propsbehavior.h"
 #include <memory>
 #include <string>
 
@@ -198,6 +201,7 @@ void UnloadMap(void)
             delete[] tilesonMap->tiles[i];
         delete[] tilesonMap->tiles;
 
+        chestManager.Clear();
         tilesonMap->Objects.clear();
 
         // Unload texture tileset dari GPU
@@ -210,6 +214,8 @@ void UnloadMap(void)
         tilesonMap = nullptr;
     }
 
+    ClearEnemies();
+    ClearItems();
     parsedMap.reset();
 }
 
@@ -236,7 +242,18 @@ void InitMap(void)
     // Map yang aktif saat ini
     currentMapPath = "world_json/tutorial.json";
     LoadMap(currentMapPath.c_str());
+
+    if (!LoadEnemiesForMap(currentMapPath))
+    {
+        SpawnRandomWave();
+    }
+
+    if (!LoadItemsforMap(currentMapPath)){
+        SpawnItemWave();
+    }
     BuildMapObjectIndex();
+
+    SpawnObject();
 }
 
 /*==============================================================================
@@ -359,6 +376,7 @@ TileRange GetVisibleTileRange(void)
  * @brief Pindah ke map baru dan spawn di pintu atau titik tujuan tertentu
  *
  * Map aktif saat ini akan disimpan ke history sebelum map baru dimuat.
+ * entry point untuk semua logic map setelah inimap();
  *
  * @param newMapPath Path file map tujuan
  * @param targetDoorName Nama pintu atau spawn point pada map tujuan
@@ -372,6 +390,15 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         return;
     }
 
+    // Simpan musuh map lama sebelum ganti path
+    if (!currentMapPath.empty())
+        SaveEnemiesForMap(currentMapPath);
+
+    if (!currentMapPath.empty())
+        SaveItemsForMap(currentMapPath);
+    
+    // Push map sekarang ke stack sebelum pindah
+
     // Simpan map sekarang ke history sebelum pindah
     if (!currentMapPath.empty())
         mapHistoryStack.Push(currentMapPath, "");
@@ -383,6 +410,8 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     LoadMap(newMapPath);
     BuildMapObjectIndex();
 
+    SpawnObject();
+
     // Stop kalau load map gagal
     if (tilesonMap == nullptr)
     {
@@ -390,13 +419,22 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         return;
     }
 
-    // Re-init player berdasarkan target spawn di map baru
+    // Re-init player berdasarkan target door di map baru
     PlayerInstance.Init(gState, targetDoorName);
 
     // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
     Entities::Clear();
     Entities::Add(&PlayerInstance);
     SpawnEnemiesFromMap();
+    // Load musuh yang sudah ada atau spawn baru
+    if (!LoadEnemiesForMap(currentMapPath))
+    {
+        SpawnRandomWave();
+    }
+
+    if (!LoadItemsforMap(currentMapPath)){
+        SpawnItemWave();
+    }
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
@@ -426,13 +464,20 @@ void GoBack(void)
         return;
     }
 
-    // Ambil map terakhir dari history
+    // Simpan musuh map sekarang
+    SaveEnemiesForMap(currentMapPath);
+
+    SaveItemsForMap(currentMapPath);
+
+    // Ambil history teratas dan pop dari stack
     MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();
     currentMapPath = prev.mapPath;
 
     // Muat kembali map sebelumnya
     UnloadMap();
     LoadMap(prev.mapPath.c_str());
+    BuildMapObjectIndex();
+    SpawnObject();
 
     if (tilesonMap == nullptr)
     {
@@ -447,6 +492,15 @@ void GoBack(void)
     Entities::Clear();
     Entities::Add(&PlayerInstance);
     SpawnEnemiesFromMap();
+    // Load musuh dari history
+    if (!LoadEnemiesForMap(currentMapPath))
+    {
+        SpawnRandomWave();
+    }
+
+    if (!LoadItemsforMap(currentMapPath)){
+        SpawnItemWave();
+    }
 
     // Set camera ke tengah spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();

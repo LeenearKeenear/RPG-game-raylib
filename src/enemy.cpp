@@ -12,16 +12,12 @@ Enemy::Enemy() {
 
 Enemy::~Enemy() {}
 
-/**
- * Menginisialisasi statistik musuh dan konfigurasi visual berdasarkan tipenya.
- */
 void Enemy::Init(Vector2 pos, const char* name, int mapId, EnemyType type, float radius) {
     Type = type;
     MapObjectID = mapId;
-    SpawnPoint = pos; // Menggunakan titik spawn sebagai pusat area patroli
+    SpawnPoint = pos;
     PatrolRadius = radius;
     
-    // 1. Konfigurasi Statistik, Hitbox, dan Set Animasi berdasarkan Tipe Musuh
     switch (Type) {
         case SKELETON:
             AnimSet = &SkeletonAnimationSet;
@@ -53,13 +49,8 @@ void Enemy::Init(Vector2 pos, const char* name, int mapId, EnemyType type, float
             break;
     }
 
-    // 2. Sesuaikan posisi agar titik TENGAH hitbox sejajar dengan titik spawn 'pos'
     Position.x = pos.x - (HitboxWidth / 2.0f) - HitboxOffsetX;
     Position.y = pos.y - (HitboxHeight / 2.0f) - HitboxOffsetY;
-
-    if (!IsPositionSafe(pos, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
-        TraceLog(LOG_WARNING, "ENEMY: Posisi spawn (%.1f, %.1f) untuk '%s' tidak aman! Tetap dilanjutkan...", pos.x, pos.y, name);
-    }
 
     Name = name;
     AIState = ENEMY_IDLE;
@@ -72,27 +63,20 @@ void Enemy::Init(Vector2 pos, const char* name, int mapId, EnemyType type, float
     Anim.position = Position;
 }
 
-/**
- * Loop update utama untuk musuh.
- * Menangani lifecycle (kematian), fisika (knockback), dan logika AI.
- */
 void Enemy::Update() {
     if (!IsActive) return;
 
-    // Menangani Logika Kematian
     if (Health <= 0) {
         if (Anim.state != DEAD) {
             PlayAnimation(Anim, DEAD, Anim.direction, *AnimSet);
             AIState = ENEMY_IDLE;
             DetectionRange = BaseDetectionRange;
-            
-            // Mencatat status kematian di registri map
             Entities::RegisterDeath(GetCurrentMapPath(), MapObjectID);
         }
         
         DeathTimer += GetFrameTime();
         if (DeathTimer >= DeathDuration) {
-            IsActive = false; // Entitas dihapus setelah animasi kematian/fading selesai
+            IsActive = false; 
         }
 
         Anim.position = Position;
@@ -100,11 +84,9 @@ void Enemy::Update() {
         return;
     }
 
-    // Memperbarui Timer
     if (HitFlashTimer > 0) HitFlashTimer -= GetFrameTime();
     if (AttackCooldownTimer > 0) AttackCooldownTimer -= GetFrameTime();
 
-    // Memproses Fisika Knockback
     if (Vector2Length(KnockbackVelocity) > 0.1f) {
         Vector2 move = Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f);
         Vector2 nextX = { Position.x + move.x, Position.y };
@@ -116,7 +98,7 @@ void Enemy::Update() {
         if (IsPositionSafe(nextY, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
             Position.y = nextY.y;
         }
-        KnockbackVelocity = Vector2Scale(KnockbackVelocity, 0.85f); // Gesekan
+        KnockbackVelocity = Vector2Scale(KnockbackVelocity, 0.85f);
     } else {
         KnockbackVelocity = {0, 0};
     }
@@ -127,11 +109,7 @@ void Enemy::Update() {
     UpdateAnimation(Anim, GetFrameTime());
 }
 
-/**
- * Dispatcher Mesin Status (FSM) AI.
- */
 void Enemy::UpdateAI() {
-    // Berhenti agresif jika pemain mati
     if (!PlayerInstance.IsAlive()) {
         if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {
             AIState = ENEMY_IDLE;
@@ -140,14 +118,12 @@ void Enemy::UpdateAI() {
         }
     }
 
-    // Jarak Deteksi Dinamis: Perbesar jarak saat pemain terlihat untuk mencegah "leashing" yang terlalu mudah
     if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {
         DetectionRange = ChaseDetectionRange;
     } else {
         DetectionRange = BaseDetectionRange;
     }
 
-    // Regenerasi Kesehatan Pasif saat status non-tempur
     if ((AIState == ENEMY_IDLE || AIState == ENEMY_PATROL) && Health < MaxHealth) {
         Health += HealthRegenRate * GetFrameTime();
         if (Health > MaxHealth) Health = MaxHealth;
@@ -162,29 +138,18 @@ void Enemy::UpdateAI() {
     }
 }
 
-/**
- * Menjalankan raycast untuk memeriksa apakah pemain terlihat dan berada dalam jangkauan.
- */
 bool Enemy::CheckPlayerLoS() {
     if (!tilesonMap || !PlayerInstance.IsAlive()) return false;
 
-    Vector2 enemyCenter = {
-        Position.x + HitboxOffsetX + HitboxWidth / 2.0f,
-        Position.y + HitboxOffsetY + HitboxHeight / 2.0f
-    };
-    
+    Vector2 enemyCenter = GetCenter();
     Vector2 playerPos = PlayerInstance.GetPosition();
-    Vector2 playerCenter = {
-        playerPos.x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2.0f,
-        playerPos.y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2.0f
-    };
+    Vector2 playerCenter = PlayerInstance.GetCenter();
 
     float dist = Vector2Distance(enemyCenter, playerCenter);
     if (dist > DetectionRange) return false;
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
     
-    // Periksa tabrakan tembok di sepanjang garis menuju pemain
     std::vector<MapObject> obstacles;
     for (auto &obj : tilesonMap->Objects) {
         if (obj.layerName == COLLISION_LAYER_NAME) {
@@ -193,18 +158,12 @@ bool Enemy::CheckPlayerLoS() {
     }
 
     RayHitResult hit = Ray.Cast(enemyCenter, dir, DetectionRange, obstacles);
-    
-    // Jika tidak ada rintangan yang terkena, atau rintangan lebih jauh dari pemain, LoS bersih
     return (!hit.hit || hit.distance >= dist);
 }
 
-/**
- * Status Idle: Menunggu timer atau deteksi pemain.
- */
 void Enemy::HandleIdle() {
     if (CheckPlayerLoS()) {
         AIState = ENEMY_CHASE;
-        TraceLog(LOG_INFO, "ENEMY: Melihat Pemain! Mengejar...");
         return;
     }
 
@@ -212,26 +171,16 @@ void Enemy::HandleIdle() {
     if (PatrolTimer >= PatrolWaitTime) {
         PatrolTimer = 0;
         
-        // Pilih titik patroli acak dalam PatrolRadius dari TITIK SPAWN
         for (int i = 0; i < 10; i++) {
             float angle = (float)GetRandomValue(0, 360) * DEG2RAD;
             float r = (float)GetRandomValue(32, (int)PatrolRadius);
             Vector2 potentialTarget = Vector2Add(SpawnPoint, {cosf(angle) * r, sinf(angle) * r});
             
-            bool safe = IsPositionSafe(potentialTarget, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY);
-            bool inMap = true;
-            if (tilesonMap) {
-                float mapW = tilesonMap->width * 32.0f;
-                float mapH = tilesonMap->height * 32.0f;
-                if (potentialTarget.x < 0 || potentialTarget.x > mapW || 
-                    potentialTarget.y < 0 || potentialTarget.y > mapH) inMap = false;
-            }
-
-            if (safe && inMap) {
+            if (IsPositionSafe(potentialTarget, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
                 PatrolTarget = potentialTarget;
                 break;
             }
-            if (i == 9) PatrolTarget = SpawnPoint; // Kembali ke spawn jika gagal menemukan titik aman
+            if (i == 9) PatrolTarget = SpawnPoint;
         }
         
         AIState = ENEMY_PATROL;
@@ -239,9 +188,6 @@ void Enemy::HandleIdle() {
     }
 }
 
-/**
- * Status Patroli: Bergerak menuju target yang dipilih secara acak.
- */
 void Enemy::HandlePatrol() {
     if (CheckPlayerLoS()) {
         AIState = ENEMY_CHASE;
@@ -258,7 +204,6 @@ void Enemy::HandlePatrol() {
     Vector2 dir = Vector2Normalize(Vector2Subtract(PatrolTarget, Position));
     Vector2 move = Vector2Scale(dir, Speed);
     
-    // Mencoba bergerak di sumbu X dan Y secara independen (Sliding movement)
     if (IsPositionSafe({ Position.x + move.x, Position.y }, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
         Position.x += move.x;
     }
@@ -266,30 +211,24 @@ void Enemy::HandlePatrol() {
         Position.y += move.y;
     }
 
-    // Perbarui arah animasi
     if (std::abs(dir.x) > std::abs(dir.y)) Anim.direction = (dir.x > 0) ? RIGHT : LEFT;
     else Anim.direction = (dir.y > 0) ? DOWN : UP;
     
     if (Anim.state != WALK) PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
 }
 
-/**
- * Status Chase (Mengejar): Mengikuti pemain secara terus-menerus.
- */
 void Enemy::HandleChase() {
-    // Jeda serangan: Jangan bergerak saat timer cooldown serangan aktif
     if (AttackCooldownTimer > 0) {
         if (Anim.state != IDLE) PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
         return;
     }
 
     Vector2 playerPos = PlayerInstance.GetPosition();
-    Vector2 enemyCenter = { Position.x + HitboxOffsetX + HitboxWidth / 2.0f, Position.y + HitboxOffsetY + HitboxHeight / 2.0f };
-    Vector2 playerCenter = { playerPos.x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2.0f, playerPos.y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2.0f };
+    Vector2 enemyCenter = GetCenter();
+    Vector2 playerCenter = PlayerInstance.GetCenter();
 
     float dist = Vector2Distance(enemyCenter, playerCenter);
 
-    // Transisi ke serangan jika sudah cukup dekat
     if (dist <= AttackRange) {
         if (!PlayerWasInRange) PerformAttack();
         AIState = ENEMY_ATTACK;
@@ -299,12 +238,10 @@ void Enemy::HandleChase() {
         PlayerWasInRange = false;
     }
 
-    // Kehilangan target jika di luar jangkauan
     if (dist > DetectionRange) {
         AIState = ENEMY_RETURN;
         PatrolTarget = SpawnPoint;
         PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
-        TraceLog(LOG_INFO, "ENEMY: Kehilangan Pemain (Di luar jangkauan). Kembali ke Titik Spawn.");
         return;
     }
 
@@ -320,13 +257,10 @@ void Enemy::HandleChase() {
     if (Anim.state != WALK) PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
 }
 
-/**
- * Status Serangan: Melakukan serangan terhadap pemain.
- */
 void Enemy::HandleAttack() {
     Vector2 playerPos = PlayerInstance.GetPosition();
-    Vector2 enemyCenter = { Position.x + HitboxOffsetX + HitboxWidth / 2.0f, Position.y + HitboxOffsetY + HitboxHeight / 2.0f };
-    Vector2 playerCenter = { playerPos.x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2.0f, playerPos.y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2.0f };
+    Vector2 enemyCenter = GetCenter();
+    Vector2 playerCenter = PlayerInstance.GetCenter();
 
     float dist = Vector2Distance(enemyCenter, playerCenter);
     
@@ -335,32 +269,25 @@ void Enemy::HandleAttack() {
         PlayerWasInRange = true;
     } else {
         PlayerWasInRange = false;
-        // Buffer histeresis untuk mencegah perubahan status yang berulang-ulang (flickering)
         if (dist > AttackRange * 1.2f) {
             AIState = ENEMY_CHASE;
             PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
-            return;
         }
     }
 }
 
-/**
- * Status Return (Kembali): Bergerak kembali ke titik spawn setelah kehilangan pemain.
- */
 void Enemy::HandleReturn() {
     if (CheckPlayerLoS()) {
         AIState = ENEMY_CHASE;
-        TraceLog(LOG_INFO, "ENEMY: Melihat Pemain saat kembali! Mengejar lagi.");
         return;
     }
 
-    Vector2 enemyCenter = { Position.x + HitboxOffsetX + HitboxWidth / 2.0f, Position.y + HitboxOffsetY + HitboxHeight / 2.0f };
+    Vector2 enemyCenter = GetCenter();
     float dist = Vector2Distance(enemyCenter, SpawnPoint);
     
     if (dist < 5.0f) {
         AIState = ENEMY_IDLE;
         PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
-        TraceLog(LOG_INFO, "ENEMY: Telah kembali ke Titik Spawn. Melanjutkan IDLE.");
         return;
     }
 
@@ -369,16 +296,10 @@ void Enemy::HandleReturn() {
     
     if (IsPositionSafe({ Position.x + move.x, Position.y }, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
         Position.x += move.x;
-    } else {
-        // Jika terjebak saat kembali, cukup beralih ke status idle
-        if (!IsPositionSafe({ Position.x, Position.y + move.y }, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
-            AIState = ENEMY_IDLE;
-            PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
-            return;
-        }
     }
-
-    if (IsPositionSafe({ Position.x, Position.y + move.y }, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) Position.y += move.y;
+    if (IsPositionSafe({ Position.x, Position.y + move.y }, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY)) {
+        Position.y += move.y;
+    }
 
     if (std::abs(dir.x) > std::abs(dir.y)) Anim.direction = (dir.x > 0) ? RIGHT : LEFT;
     else Anim.direction = (dir.y > 0) ? DOWN : UP;
@@ -386,44 +307,29 @@ void Enemy::HandleReturn() {
     if (Anim.state != WALK) PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
 }
 
-/**
- * Menangani damage yang diterima oleh musuh.
- */
 void Enemy::TakeDamage(float amount, Vector2 knockback) {
     Entity::TakeDamage(amount, knockback);
     HitFlashTimer = 0.15f;
     KnockbackVelocity = Vector2Scale(knockback, 6.0f); 
-    
-    TraceLog(LOG_INFO, "ENEMY [%p]: %s menerima %.1f damage. Sisa HP: %.1f", (void*)this, Name.c_str(), amount, Health);
 }
 
-/**
- * Menjalankan aksi yang memberikan damage kepada pemain.
- */
 void Enemy::PerformAttack() {
-    Vector2 enemyCenter = { Position.x + 16, Position.y + 16 };
-    Vector2 playerPos = PlayerInstance.GetPosition();
-    Vector2 playerCenter = { playerPos.x + 16, playerPos.y + 16 };
+    Vector2 enemyCenter = GetCenter();
+    Vector2 playerCenter = PlayerInstance.GetCenter();
     Vector2 knockDir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
 
     PlayerInstance.TakeDamage(Damage, knockDir);
-    TraceLog(LOG_INFO, "ENEMY: Memukul Pemain! Sisa HP: %.1f", PlayerInstance.GetHealth());
     
     PlayAnimation(Anim, ATTACK, Anim.direction, *AnimSet);
     Anim.isAttacking = true;
     AttackCooldownTimer = AttackCooldown;
 }
 
-/**
- * Me-render sprite musuh, health bar, dan overlay debug.
- */
 void Enemy::Render() {
     if (!IsActive) return;
     
-    // Shadow sederhana
     DrawEllipse((int)Position.x + 16, (int)Position.y + 30, 10, 4, {0, 0, 0, 80});
     
-    // Efek berkedip saat mendekati kematian (atau saat animasi kematian)
     bool shouldDraw = true;
     if (Health <= 0) {
         float blinkFreq = (DeathTimer / DeathDuration) * 15.0f;
@@ -432,37 +338,74 @@ void Enemy::Render() {
 
     if (shouldDraw) {
         Color tint = WHITE;
-        if (HitFlashTimer > 0) tint = RED; // Menerapkan flash Merah saat terkena hit
+        if (HitFlashTimer > 0) tint = RED;
         DrawAnimation(Anim, TEXTURE_ENEMIES, tint);
     }
     
-    // Health Bar Melayang (Hanya terlihat saat sedang agresif)
     if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {
-        DrawRectangle((int)Position.x + 4.8, (int)Position.y + 38, 24, 4, BLACK);
-        DrawRectangle((int)Position.x + 4.8, (int)Position.y + 38, (int)(24 * (Health / MaxHealth)), 4, RED);
+        DrawRectangle((int)Position.x + 4, (int)Position.y + 38, 24, 4, BLACK);
+        DrawRectangle((int)Position.x + 4, (int)Position.y + 38, (int)(24 * (Health / MaxHealth)), 4, RED);
     }
     
-    // --- Visualisasi Debug ---
     if (isDebugMode) {
-        Vector2 enemyCenter = { Position.x + HitboxOffsetX + HitboxWidth / 2.0f, Position.y + HitboxOffsetY + HitboxHeight / 2.0f };
-
-        // 1. Radius Deteksi/Chase (Abu-abu)
+        Vector2 enemyCenter = GetCenter();
         DrawCircleLinesV(enemyCenter, DetectionRange, Fade(GRAY, 0.6f));
-
-        // 2. Radius Serangan (Merah)
         DrawCircleLinesV(enemyCenter, AttackRange, RED);
-
-        // 3. Raycast Line-of-Sight (Hijau)
-        if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK) {
-            Vector2 playerPos = PlayerInstance.GetPosition();
-            Vector2 playerCenter = { playerPos.x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2.0f, playerPos.y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2.0f };
-            DrawLineEx(enemyCenter, playerCenter, 1.0f, GREEN);
-        }
-
-        // 4. Hitbox Tabrakan (Violet)
-        Rectangle enemyHitbox = { Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight };
+        Rectangle enemyHitbox = GetHitbox();
         DrawRectangleLinesEx(enemyHitbox, 1.0f, VIOLET);
-        DrawText("Enemy", (int)enemyHitbox.x, (int)enemyHitbox.y - 12, 10, VIOLET);
     }
 }
 
+// Global functions implementation
+int GetRandomDamage(int min, int max) {
+    return GetRandomValue(min, max);
+}
+
+void InitEnemy() {
+    LoadTileTexture(TEXTURE_ENEMIES, "texture/Enemies.png");
+}
+
+void InitEnemyTextures() {
+    InitEnemy();
+}
+
+void SpawnRandomWave() {
+    int count = GetRandomValue(4, 7);
+    for (int i = 0; i < count; i++) SpawnRandomEnemy();
+}
+
+void SpawnRandomEnemy() {
+    if (!tilesonMap) return;
+
+    Vector2 randomPos;
+    bool validPos = false;
+    float mapW = tilesonMap->width * 32.0f;
+    float mapH = tilesonMap->height * 32.0f;
+
+    for (int i = 0; i < 100; i++) {
+        randomPos = {(float)GetRandomValue(32, (int)mapW - 32), (float)GetRandomValue(32, (int)mapH - 32)};
+        if (IsPositionSafe(randomPos, 16, 12, 8, 14)) {
+            validPos = true;
+            break;
+        }
+    }
+
+    if (validPos) {
+        EnemyType t = (EnemyType)GetRandomValue(0, 2);
+        Enemy* en = new Enemy();
+        en->Init(randomPos, "Random Enemy", -1, t);
+        Entities::AddDynamic(en);
+    }
+}
+
+void SaveEnemiesForMap(const std::string& mapPath) {
+    // Note: Entities::RegisterDeath already handles persistence of dead enemies
+}
+
+bool LoadEnemiesForMap(const std::string& mapPath) {
+    return true; // Managed by map loading logic and Entities registry
+}
+
+void ClearEnemies() {
+    Entities::Clear();
+}

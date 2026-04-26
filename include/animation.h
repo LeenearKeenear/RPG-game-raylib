@@ -3,6 +3,10 @@
 #include "raylib.h"
 #include "tiles.h"
 
+/*==============================================================================
+ * Animation Logic (Data-Driven)
+ *==============================================================================*/
+
 /**
  * @brief Status animasi yang mungkin untuk suatu entitas.
  */
@@ -14,8 +18,6 @@ enum State
     DEAD
 };
 
-struct AnimationSet;
-
 /**
  * @brief Arah mata angin untuk orientasi animasi.
  */
@@ -26,6 +28,8 @@ enum Direction
     DOWN,
     UP
 };
+
+struct AnimationSet;
 
 /**
  * @brief Konfigurasi untuk urutan animasi tertentu.
@@ -66,6 +70,15 @@ struct AnimationSet
     AnimationConfig configs[4][4]; // [Status][Arah]
 };
 
+/*==============================================================================
+ * Animation Functions
+ *==============================================================================*/
+
+/**
+ * @brief Render satu tile dari spritesheet ke posisi world dengan ukuran kecil
+ */
+void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale);
+
 /**
  * @brief Melanjutkan progres status animasi berdasarkan langkah waktu (dt).
  */
@@ -85,4 +98,5 @@ void PlayAnimation(Animation &anim, State newState, Direction newDir, const Anim
 extern const AnimationSet PlayerAnimationSet;
 extern const AnimationSet SlimeAnimationSet;
 extern const AnimationSet SkeletonAnimationSet;
-extern const AnimationSet WolfAnimationSet;
+extern const AnimationSet WolfAnimationSet;
+

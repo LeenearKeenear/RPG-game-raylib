@@ -7,7 +7,6 @@
  */
 
 #include "../include/mainMenu.h"
-#include "../include/popup.h"
 #include "../include/screen.h"
 #include "../lib/raylib/include/raymath.h"
 #include <array>
@@ -19,7 +18,6 @@
 
 /** Array tombol menu utama (Start, Load, Options, Quit) */
 static std::array<buttonTxt, 4> buttons;
-static Popup menuOptionsPopup;
 
 /*==============================================================================
  * Public Functions
@@ -48,25 +46,17 @@ void InitMainMenu(GameState *state)
     {
         buttons[i] = buttonTxt(texts[i], centerX, startY + (i * buttonSpacing), fontSize, WHITE, 0.6F);
     }
-
-    menuOptionsPopup = Popup("COMING SOON", "OK", 0.6F);
 }
 
 /**
  * @brief UpdateMainMenu()
  * Tangani input mouse dan klik tombol untuk navigasi menu.
  * @param state GameState pointer - buat ngubah currentScreen
- * @note Popup bersifat modal - blokir interaksi menu saat popup aktif
  */
 void UpdateMainMenu(GameState *state)
 {
     Vector2 mousePosition = GetVirtualMousePosition(state);
     bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-
-    if (menuOptionsPopup.IsActive()) {
-        menuOptionsPopup.Update(mousePosition, mouseClicked);
-        return;
-    }
 
     for (int i = 0; i < 4; i++) {
         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
@@ -75,7 +65,8 @@ void UpdateMainMenu(GameState *state)
                     state->currentScreen = PLAY;
                     break;
                 case 2:  // Options
-                    menuOptionsPopup.Show();
+                    state->previousScreen = MAIN_MENU;
+                    state->currentScreen = OPTIONS;
                     break;
                 case 3:  // Quit
                     CloseWindow();
@@ -105,10 +96,6 @@ void RenderMainMenuToVirtualScreen(GameState *state)
     for (int i = 0; i < 4; i++)
     {
         buttons[i].Draw(virtualMouse);
-    }
-
-    if (menuOptionsPopup.IsActive()) {
-        menuOptionsPopup.Draw(virtualMouse);
     }
 
     EndTextureMode();

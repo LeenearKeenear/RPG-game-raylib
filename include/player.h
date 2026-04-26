@@ -98,8 +98,6 @@ public:
     const float INTERACT_RANGE = 32.0f;
 
     // Getter untuk modul logika eksternal
-    Vector2 GetPosition() { return Position; }
-    float GetSpeed() { return Speed; }
     bool IsAlive() const override { return !Anim.isDead; }
     float GetHealth() { return Health; }
     float GetMaxHealth() { return MaxHealth; }
@@ -112,6 +110,13 @@ public:
     float GetHitboxOffsetX() { return HitboxOffsetX; }
     float GetHitboxOffsetY() { return HitboxOffsetY; }
     float GetINTERACT_RANGE() { return INTERACT_RANGE; }
+    float GetSpeed() { return Speed; }
+
+    // pickup getters
+    float GetMagnetRadius() { return MagnetRadius; }
+    float GetItemSpeed() { return ItemSpeed; }
+
+
     InventoryItem GetHotbarItem(int index) { return Hotbar[index]; }
 
     /**
@@ -131,9 +136,20 @@ public:
     float HitFlashTimer = 0.0f;  ///< Durasi efek kilatan saat terkena hit
     Vector2 KnockbackVelocity = {0, 0}; ///< Gaya dorong balik (knockback) yang sedang diterapkan
 
+    // Logic methods
+    void DrawAimIndicator();
+
 private:
     const char *Name = "Player Name";
     bool isInitialized = false;
+
+    Rectangle GetPlayerHitboxAtPosition(Vector2 position);
+    bool CanMove(Vector2 NewPos);
+
+    // magnet/pickup fields
+    float MagnetRadius = 80.0f;
+    float ItemSpeed = 400.0f;
+    const float RayCastAngle = 0.3f;
 };
 
 extern Player PlayerInstance;

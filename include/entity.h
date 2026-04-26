@@ -44,11 +44,21 @@ public:
     virtual Rectangle GetHitbox() const { return { Position.x, Position.y, 32, 32 }; }
 
     /**
+     * @brief Mendapatkan titik tengah (center) dari entitas berdasarkan hitbox-nya.
+     * @return Vector2 titik tengah
+     */
+    virtual Vector2 GetCenter() const {
+        Rectangle hb = GetHitbox();
+        return { hb.x + hb.width / 2.0f, hb.y + hb.height / 2.0f };
+    }
+
+    /**
      * @brief Memberikan damage ke entitas.
      * @param amount Nilai damage yang akan dikurangi
      * @param knockback Vektor opsional untuk gaya dorong balik (knockback)
      */
     virtual void TakeDamage(float amount, Vector2 knockback = {0, 0}) {
+        (void)knockback;
         Health -= amount;
         if (Health < 0) Health = 0;
         if (Health > MaxHealth) Health = MaxHealth;

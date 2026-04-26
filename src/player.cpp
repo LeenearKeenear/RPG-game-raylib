@@ -6,6 +6,8 @@
 #include "../include/mapLogic.h"
 #include "../include/debug.h"
 #include "../lib/raylib/include/raymath.h"
+#include "../include/propsbehavior.h"
+#include <cmath>
 
 Player PlayerInstance;
 
@@ -73,7 +75,6 @@ void Player::Init(GameState *state, const char *spawnObjectName)
 
 /**
  * Loop update utama untuk pemain.
- * Mengirimkan tugas ke modul khusus (Pergerakan, Pertarungan, Interaksi, dll.)
  */
 void Player::Update()
 {
@@ -109,7 +110,19 @@ void Player::Update()
         pendingGoBack = true;
     }
 
-    // Memblokir pergerakan selama animasi serangan untuk memberikan efek "berat" pada pertarungan
+    // Handle map transitions immediately or queue them
+    if (pendingGoBack) {
+        pendingGoBack = false;
+        GoBack();
+        return;
+    }
+    if (pendingSwitchMap) {
+        pendingSwitchMap = false;
+        SwitchMap(pendingMapPath.c_str(), pendingDoorName.c_str());
+        return;
+    }
+
+    // Memblokir pergerakan selama animasi serangan
     if (!Anim.isAttacking) {
         Movement::HandleMovement(*this);
     }
@@ -122,37 +135,13 @@ void Player::Update()
 
     // 6. Update Animasi & Kamera
     Combat::UpdateSwingAttack(*this, GetFrameTime());
-    Anim.position = Position; // Sinkronisasi asal animasi dengan posisi fisika
+    Anim.position = Position; 
     UpdateAnimation(Anim, GetFrameTime());
     Movement::UpdateCamera(*this);
 }
 
-/**
- * Menangani damage yang diterima dan menerapkan umpan balik visual/fisika.
- */
-void Player::TakeDamage(float amount, Vector2 knockback) {
-    Entity::TakeDamage(amount, knockback);
-    
-    HitFlashTimer = 0.15f;
-    KnockbackVelocity = Vector2Scale(knockback, 6.0f);
-    
-    // Batalkan serangan saat ini jika terkena hit untuk mencegah spam "tukar damage"
-    if (Anim.isAttacking) {
-        Swing.active = false;
-        Anim.isAttacking = false;
-        PlayAnimation(Anim, IDLE, Anim.direction, PlayerAnimationSet);
-    }
 
-    // Munculkan angka damage di titik tengah pemain
-    Vector2 center = { Position.x + 16, Position.y + 16 };
-    Combat::AddDamagePopup(center, amount);
 
-    TraceLog(LOG_INFO, "PLAYER: Menerima %.1f damage. Sisa HP: %.1f", amount, Health);
-}
-
-/**
- * Me-render sprite pemain dan efek visual terkait.
- */
 void Player::Render(void)
 {
     // Bayangan (Drop shadow)
@@ -165,5 +154,76 @@ void Player::Render(void)
     }
 
     DrawAnimation(Anim, TEXTURE_KNIGHT, tint);
-    Combat::DrawSwingAttack(*this); // Render efek serangan yang aktif
+    Combat::DrawSwingAttack(*this); 
+    DrawAimIndicator();
 }
+
+void Player::TakeDamage(float amount, Vector2 knockback) {
+    Entity::TakeDamage(amount, knockback);
+    
+    HitFlashTimer = 0.15f;
+    KnockbackVelocity = Vector2Scale(knockback, 6.0f);
+    
+    if (Anim.isAttacking) {
+        Swing.active = false;
+        Anim.isAttacking = false;
+        PlayAnimation(Anim, IDLE, Anim.direction, PlayerAnimationSet);
+    }
+
+    Vector2 center = { Position.x + 16, Position.y + 16 };
+    Combat::AddDamagePopup(center, amount);
+
+    TraceLog(LOG_INFO, "PLAYER: Menerima %.1f damage. Sisa HP: %.1f", amount, Health);
+}
+
+
+
+bool Player::CanMove(Vector2 newPosition)
+{
+    return Movement::CanMove(*this, newPosition);
+}
+
+Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
+{
+    return { position.x + HitboxOffsetX, position.y + HitboxOffsetY, HitboxWidth, HitboxHeight };
+}
+
+
+
+void Player::DrawAimIndicator(void)
+{
+    Vector2 playerCenter = GetCenter();
+    Vector2 facingDir = {0, 0};
+    switch (Anim.direction)
+    {
+        case UP:    facingDir = {0, -1}; break;
+        case DOWN:  facingDir = {0, 1};  break;
+        case LEFT:  facingDir = {-1, 0}; break;
+        case RIGHT: facingDir = {1, 0};  break;
+    }
+
+    Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(State), camera);
+    Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+    Vector2 rayEnd = {
+        playerCenter.x + aimDir.x * INTERACT_RANGE,
+        playerCenter.y + aimDir.y * INTERACT_RANGE};
+
+    float dot = Vector2DotProduct(facingDir, aimDir);
+    Color indicatorColor = (dot >= RayCastAngle) ? GREEN : WHITE;
+
+    DrawLineEx(playerCenter, rayEnd, 2.0f, indicatorColor);
+    
+    float arrowSize = 6.0f;
+    Vector2 perpDir = {-aimDir.y, aimDir.x};
+    Vector2 arrowLeft = {
+        rayEnd.x - aimDir.x * arrowSize + perpDir.x * arrowSize,
+        rayEnd.y - aimDir.y * arrowSize + perpDir.y * arrowSize};
+    Vector2 arrowRight = {
+        rayEnd.x - aimDir.x * arrowSize - perpDir.x * arrowSize,
+        rayEnd.y - aimDir.y * arrowSize - perpDir.y * arrowSize};
+
+    DrawLineEx(rayEnd, arrowLeft, 2.0f, indicatorColor);
+    DrawLineEx(rayEnd, arrowRight, 2.0f, indicatorColor);
+}
+
+

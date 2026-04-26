@@ -456,7 +456,7 @@
                  "y":256
                 }, 
                 {
-                 "height":34,
+                 "height":60,
                  "id":15,
                  "name":"goInside",
                  "opacity":1,
@@ -474,9 +474,9 @@
                  "rotation":0,
                  "type":"pass",
                  "visible":true,
-                 "width":26,
-                 "x":334,
-                 "y":183
+                 "width":63,
+                 "x":278,
+                 "y":211
                 }],
          "opacity":1,
          "type":"objectgroup",
