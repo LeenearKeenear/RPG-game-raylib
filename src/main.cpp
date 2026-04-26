@@ -43,6 +43,8 @@ int main()
     state.loadingProgress = 0.0f;
     state.loadingText = "";
     state.loadingComplete = false;
+    state.loadingStage = 0;
+    state.assetsLoaded = false;
 
     // Step 5: init options screen (hidden initially)
     optionsScreen.Show();
@@ -62,11 +64,14 @@ int main()
             RenderMainMenuToVirtualScreen(&state);
             DrawRenderWindows(&state);
           }
-           /*==============================================================================
-            * State: LOADING
-            *==============================================================================*/
+/*==============================================================================
+             * State: LOADING
+             *==============================================================================*/
 else if (state.currentScreen == LOADING)
             {
+                // Initialize loading screen (reset stage, progress)
+                InitLoadingScreen(&state);
+                
                 // Update and render loading screen
                 UpdateLoadingScreen(&state);
                 RenderLoadingScreen(&state);
