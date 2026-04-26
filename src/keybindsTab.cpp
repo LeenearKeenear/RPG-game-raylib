@@ -39,7 +39,7 @@ void DrawKeybindsTab(
         "2",
         "3",
         "4",
-        "P",
+        "`",
         "TAB",
         "R",
         "K",

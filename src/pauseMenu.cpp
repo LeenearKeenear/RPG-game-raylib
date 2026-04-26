@@ -358,6 +358,10 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             state->currentScreen = OPTIONS;
             break;
         case 4:
+            state->enteredLoading = false;
+            state->loadingStage = 0;
+            state->loadingProgress = 0.0f;
+            state->loadingComplete = false;
             SaveGameState(state);
             state->currentScreen = MAIN_MENU;
             Hide();

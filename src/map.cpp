@@ -208,9 +208,19 @@ void UnloadMap(void)
         tilesonMap->Objects.clear();
 
         // Unload texture tileset dari GPU
-        for (auto &ts : tilesonMap->tilesets)
-            if (ts.texture.id != 0)
+        // Jangan unload jika texture sudah ada di cache (TexturesMap)
+        for (auto &ts : tilesonMap->tilesets) {
+            bool isCached = false;
+            for (int i = 0; i < MAX_TEXTURES; i++) {
+                if (TexturesMap[i].id == ts.texture.id && ts.texture.id != 0) {
+                    isCached = true;
+                    break;
+                }
+            }
+            if (!isCached && ts.texture.id != 0) {
                 UnloadTexture(ts.texture);
+            }
+        }
         tilesonMap->tilesets.clear();
 
         delete tilesonMap;

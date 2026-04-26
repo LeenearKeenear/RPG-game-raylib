@@ -108,7 +108,7 @@ else if (state.currentScreen == LOADING)
             }
 
             // toggle pause menu dengan tombol P
-            if (IsKeyPressed(KEY_P))
+            if (IsKeyPressed(KEY_GRAVE))
             {
                 if (pauseMenu.IsActive())
                 {
