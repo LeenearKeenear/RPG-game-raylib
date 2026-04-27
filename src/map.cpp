@@ -209,7 +209,8 @@ void UnloadMap(void)
             delete[] tilesonMap->tiles[i];
         delete[] tilesonMap->tiles;
 
-        chestManager.Clear();
+        ClearTileProps();
+
         tilesonMap->Objects.clear();
 
         // Unload texture tileset dari GPU

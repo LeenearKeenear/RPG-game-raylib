@@ -250,6 +250,8 @@ void UpdateLogicAll()
 
     // Update Effects (Popups, Logs, etc)
     Effects::Update(GetFrameTime());
+    spikeManager.Update(GetFrameTime(), PlayerInstance.GetHitbox(), &PlayerInstance);
+    bombManager.Update(GetFrameTime(), PlayerInstance.GetHitbox(), &PlayerInstance);
 
     // Update item magnet/pickup
     Vector2 center = PlayerInstance.GetCenter();
@@ -285,7 +287,7 @@ void DrawRenderTexture(GameState *state)
 
     // layer 2: entities, items, effects & world overlay (world space)
     BeginMode2D(camera);
-    chestManager.Render();
+    RenderTileProps();
     RenderAllItems();
     Entities::Render();
     Effects::Draw();

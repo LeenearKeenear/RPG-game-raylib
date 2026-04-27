@@ -41,3 +41,9 @@ namespace Entities
      */
     bool IsAlreadyDead(const std::string& mapPath, int objectId);
 }
+
+// master render untuk object tile kek chest, trap dll
+void RenderTileProps(void);
+
+// master clear untuk object tile kek chest, trap dll
+void ClearTileProps(void);

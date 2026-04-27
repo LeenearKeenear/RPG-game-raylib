@@ -347,6 +347,17 @@
                          "x":-192,
                          "y":0
                         }],
+                 "properties":[
+                        {
+                         "name":"target_door",
+                         "type":"string",
+                         "value":"spawn"
+                        }, 
+                        {
+                         "name":"target_map",
+                         "type":"string",
+                         "value":"world_json\/tutorial.json"
+                        }],
                  "rotation":0,
                  "type":"finish",
                  "visible":true,
