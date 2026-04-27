@@ -182,6 +182,7 @@ void SpawnItemAtLocation(Vector2 pos){
     // Set posisi sesuai parameter dari chest tadi
     newItem.position = pos;
     newItem.isPickedUp = false;
+    newItem.spawnTime = (float)GetTime();
 
     if (newItem.category == ITEM_WEAPON) {
         newItem.name = "Sword";
@@ -197,11 +198,22 @@ void SpawnItemAtLocation(Vector2 pos){
     TraceLog(LOG_INFO, "ITEM: Spawned near chest at (%.1f, %.1f)", pos.x, pos.y);
 }
 
+/**
+ * @brief Update semua item aktif: magnet pull dan pickup.
+ * Menggunakan AnimEffects::LerpTowards untuk smooth magnet pull.
+ * Menggunakan Inventory::AddToInventory untuk pickup system.
+ * Definisi: src/item.cpp (file ini)
+ */
 void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadius, float itemSpeed)
 {
+    float currentTime = (float)GetTime();
+
     for (auto &item : activeItems)
     {
         if (item.isPickedUp)
+            continue;
+
+        if (currentTime - item.spawnTime < 1.0f)
             continue;
 
         Vector2 itemCenter = {

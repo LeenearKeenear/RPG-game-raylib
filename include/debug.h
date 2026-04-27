@@ -92,6 +92,8 @@ private:
      * @brief Gambar overlay raycast debug
      */
     void DrawRaycastOverlay(void);
+    void DrawAttackOverlay(void);
+    void DrawEnemySpawnOverlay(void);
 
     /**
      * @brief Gambar frame panel debug

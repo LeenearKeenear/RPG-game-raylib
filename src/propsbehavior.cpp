@@ -37,6 +37,11 @@ void ChestManager::SpawnChests(const std::vector<MapObject *> &chestObjects)
     }
 }
 
+/**
+ * @brief Cari chest terdekat dari titik hit
+ * Menggunakan expanded bounds agar titik di tepi tetap terdeteksi.
+ * Definisi: src/propsbehavior.cpp (file ini)
+ */
 TileObject *ChestManager::FindChest(Vector2 hitPos, float threshold)
 {
     TileObject *closest = nullptr;
@@ -44,11 +49,25 @@ TileObject *ChestManager::FindChest(Vector2 hitPos, float threshold)
 
     for (auto &chest : chests)
     {
-        float dist = Vector2Distance(hitPos, chest.position);
-        if (dist < minDist)
+        // Expand bounds sedikit agar titik di tepi tetap terdeteksi
+        Rectangle expanded = {
+            chest.bounds.x - threshold,
+            chest.bounds.y - threshold,
+            chest.bounds.width + threshold * 2,
+            chest.bounds.height + threshold * 2};
+
+        if (CheckCollisionPointRec(hitPos, expanded))
         {
-            minDist = dist;
-            closest = &chest;
+            // Gunakan jarak ke center bounds untuk memilih yang terdekat
+            Vector2 center = {
+                chest.bounds.x + chest.bounds.width / 2,
+                chest.bounds.y + chest.bounds.height / 2};
+            float dist = Vector2Distance(hitPos, center);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closest = &chest;
+            }
         }
     }
     return closest; // nullptr kalau gak ada dalam threshold
@@ -76,8 +95,8 @@ void ChestManager::TriggerLoot(TileObject &chest)
         // Kasih sedikit offset random (misal sejauh -20 sampai 20 pixel)
         // Biar itemnya mencar di sekitar chest
         Vector2 spawnPos = {
-            chest.position.x + (float)GetRandomValue(-20, 20),
-            chest.position.y + (float)GetRandomValue(-20, 20)
+            chest.position.x + (float)GetRandomValue(-60, 60),
+            chest.position.y + (float)GetRandomValue(-60, 60)
         };
         
         SpawnItemAtLocation(spawnPos);

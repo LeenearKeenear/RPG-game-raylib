@@ -31,26 +31,21 @@ typedef struct
     int textureID;        // Index texture di atlas
     bool isPickedUp;      // Status apakah sudah diambil
     float statMultiplier; // Multiplier spawn (misal: damage x2)
+    float spawnTime;      // Waktu sebelum item bisa diambil
 } Item;
 
 // Global list untuk item yang ada di map
 extern std::vector<Item> activeItems;
 
+// Definisi: src/item.cpp
 void InitItemTextures();
-
 void InitItems();
-
 void SpawnItemWave();
-
 void SpawnRandomItem();
-
-// Fungsi utama untuk spawn
 Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity rarity);
 
 void SaveItemsForMap(const std::string &mapPath);
-
 bool LoadItemsforMap(const std::string &mapPath);
-
 void ClearItems();
 
 void SpawnItemAtLocation(Vector2 pos);
@@ -59,12 +54,7 @@ void SpawnItemAtLocation(Vector2 pos);
 void SpawnWeapon(Vector2 pos, float multiplier, ItemRarity rarity);
 void SpawnPotion(Vector2 pos, float multiplier, ItemRarity rarity);
 
-// Fungsi Render & Update
+// Fungsi Render & Update (definisi: src/item.cpp)
 void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadius, float itemSpeed);
 void RenderItems(Item &item);
-
 void RenderAllItems();
-
-extern void InitItemTextures();
-extern void RenderAllItems();
-extern void RenderItems(Item &item);

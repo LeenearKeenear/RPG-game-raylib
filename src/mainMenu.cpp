@@ -7,9 +7,9 @@
  */
 
 #include "../include/mainMenu.h"
-#include "../include/popup.h"
 #include "../include/screen.h"
 #include "../lib/raylib/include/raymath.h"
+#include "../lib/raylib/include/raylib.h"
 #include <array>
 #include <cstdint>
 
@@ -20,8 +20,8 @@
 /** Array tombol menu utama (Start, Load, Options, Quit) */
 static std::array<buttonTxt, 4> buttons;
 
-/** Popup buat fitur "Coming Soon" (Options & Load sementara) */
-static Popup menuOptionsPopup;
+/** Logo texture untuk main menu */
+static Texture2D logoTexture;
 
 /*==============================================================================
  * Public Functions
@@ -36,39 +36,39 @@ void InitMainMenu(GameState *state)
 {
     (void)state; // unused parameter, buat future use
 
+    // Load dan resize logo
+    Image logoImg = LoadImage("texture/logo.png");
+    int targetWidth = static_cast<int>(3840 * 0.13F);
+    int targetHeight = static_cast<int>(2160 * 0.13F);
+    ImageResize(&logoImg, targetWidth, targetHeight);
+    logoTexture = LoadTextureFromImage(logoImg);
+    UnloadImage(logoImg);
+
     // Daftar teks tombol sesuai urutan enum MenuButton
     std::array<const char *, 4> texts = {"Start Game", "Load Game", "Options", "Quit"};
 
     // Hitung posisi tengah layar virtual
     int centerX = (GameScreenWidth / 2) - 50;
-    int startY = (GameScreenHeight / 2) - 100;
+    int startY = (GameScreenHeight / 2) + 20;
     int buttonSpacing = 70;
     int fontSize = 30;
 
-    // Looping bikin 4 tombol dengan posisi vertikal berurutan
+    // Looping bilang 4 tombol dengan posisi vertikal berurutan
     for (int i = 0; i < 4; i++)
     {
         buttons[i] = buttonTxt(texts[i], centerX, startY + (i * buttonSpacing), fontSize, WHITE, 0.6F);
     }
-
-    menuOptionsPopup = Popup("COMING SOON", "OK", 0.6F);
 }
 
 /**
  * @brief UpdateMainMenu()
  * Tangani input mouse dan klik tombol untuk navigasi menu.
  * @param state GameState pointer - buat ngubah currentScreen
- * @note Popup bersifat modal - blokir interaksi menu saat popup aktif
  */
 void UpdateMainMenu(GameState *state)
 {
     Vector2 mousePosition = GetVirtualMousePosition(state);
     bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-
-    if (menuOptionsPopup.IsActive()) {
-        menuOptionsPopup.Update(mousePosition, mouseClicked);
-        return;
-    }
 
     for (int i = 0; i < 4; i++) {
         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
@@ -77,7 +77,8 @@ void UpdateMainMenu(GameState *state)
                     state->currentScreen = PLAY;
                     break;
                 case 2:  // Options
-                    menuOptionsPopup.Show();
+                    state->previousScreen = MAIN_MENU;
+                    state->currentScreen = OPTIONS;
                     break;
                 case 3:  // Quit
                     CloseWindow();
@@ -103,14 +104,14 @@ void RenderMainMenuToVirtualScreen(GameState *state)
     BeginTextureMode(state->Dungeon);
     ClearBackground(DARKGRAY);
 
+    // Render logo
+    int logoX = (GameScreenWidth / 2) - (logoTexture.width / 2);
+    DrawTexture(logoTexture, logoX, 60, WHITE);
+
     // Render semua tombol menu
     for (int i = 0; i < 4; i++)
     {
         buttons[i].Draw(virtualMouse);
-    }
-
-    if (menuOptionsPopup.IsActive()) {
-        menuOptionsPopup.Draw(virtualMouse);
     }
 
     EndTextureMode();
