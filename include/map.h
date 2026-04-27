@@ -122,6 +122,7 @@ extern TileRange currentVisibleRange;
 #define DOOR_TYPE_OBJECT_NAME "pass"    // Type object untuk pintu
 #define CHEST_TYPE_OBJECT_NAME "chest"  // Type object untuk chest
 #define SPIKE_TYPE_OBJECT_NAME "spike"  // Type object unutk spike
+#define BOMB_TYPE_OBJECT_NAME "bomb"    // type object untuk bomb
 
 /*==============================================================================
  * Map Functions

@@ -1,7 +1,5 @@
 #include "../include/propsbehavior.h"
 
-ChestManager chestManager;
-
 Vector2 SnapToTileGrid(Vector2 rawPos)
 {
     return {
@@ -16,9 +14,14 @@ void SpawnObject()
 
     auto spikeObjs = TiledHelper::GetObjectsByType(SPIKE_TYPE_OBJECT_NAME);
     spikeManager.SpawnSpikes(spikeObjs);
+
+    auto bombObjs = TiledHelper::GetObjectsByType(BOMB_TYPE_OBJECT_NAME);
+    bombManager.SpawnBombs(bombObjs);
 }
 
 // chest
+ChestManager chestManager;
+
 void ChestManager::SpawnChests(const std::vector<MapObject *> &chestObjects)
 {
     chests.clear();
@@ -220,4 +223,169 @@ void SpikeManager::Render()
 void SpikeManager::Clear()
 {
     spikes.clear();
+}
+
+// bomb
+BombManager bombManager;
+
+void BombManager::SpawnBombs(const std::vector<MapObject *> &bombObjects)
+{
+    bombs.clear();
+    spawnPoints.clear();
+    for (auto *obj : bombObjects)
+    {
+        BombData data;
+        data.tile.name = obj->name;
+        data.tile.bounds = obj->bounds;
+        data.tile.state = ObjectState::Active;
+        data.tile.position = SnapToTileGrid({obj->bounds.x, obj->bounds.y});
+
+        TraceLog(LOG_INFO, "Bomb '%s': raw=(%.1f,%.1f) snap=(%.1f,%.1f) size=(%.1f,%.1f)",
+                 obj->name.c_str(),
+                 obj->bounds.x, obj->bounds.y,
+                 data.tile.position.x, data.tile.position.y,
+                 obj->bounds.width, obj->bounds.height);
+
+        data.isAlive = true;
+        data.isExploding = false;
+        data.explosionTimer = 0.0f;
+
+        SetupCallbacks(data);
+        bombs.push_back(data);
+        spawnPoints.push_back(data.tile.position);
+    }
+}
+
+void BombManager::SetupCallbacks(Bomb &bomb)
+{
+    bomb.onHit = [](TileObject &tile)
+    {
+        TraceLog(LOG_INFO, "Bomb '%s' hit at (%.1f, %.1f)", tile.name.c_str(), tile.position.x, tile.position.y);
+    };
+
+    bomb.onExplode = [](TileObject &tile, float radius)
+    {
+        TraceLog(LOG_INFO, "Bomb '%s' exploded! radius=%.1f at (%.1f, %.1f)", tile.name.c_str(), radius, tile.position.x, tile.position.y);
+    };
+
+    bomb.onDamagePlayer = [](TileObject &tile)
+    {
+        TraceLog(LOG_INFO, "Bomb '%s' damaged player", tile.name.c_str());
+    };
+}
+
+void BombManager::Explode(Bomb &bomb, Rectangle playerBounds)
+{
+    bomb.tile.state = ObjectState::Inactive;
+    bomb.isExploding = true;
+    bomb.explosionTimer = BOMB_EXPLOSION_DURATION;
+
+    if (bomb.onExplode)
+        bomb.onExplode(bomb.tile, BOMB_EXPLOSION_RADIUS);
+
+    if (IsInExplosionRadius(bomb.tile.position, playerBounds))
+        if (bomb.onDamagePlayer)
+            bomb.onDamagePlayer(bomb.tile);
+
+    // enemy nanti ditambah di sini
+}
+
+bool BombManager::IsInExplosionRadius(Vector2 bombPos, Rectangle target)
+{
+    // cek titik terdekat di rectangle target ke pusat bomb
+    float nearestX = Clamp(bombPos.x, target.x, target.x + target.width);
+    float nearestY = Clamp(bombPos.y, target.y, target.y + target.height);
+    float dist = Vector2Distance(bombPos, {nearestX, nearestY});
+    return dist <= BOMB_EXPLOSION_RADIUS;
+}
+
+void BombManager::Update(float deltaTime, Rectangle playerBounds)
+{
+    for (auto &b : bombs)
+    {
+        if (!b.isAlive)
+            continue;
+
+        if (b.isExploding)
+        {
+            b.explosionTimer -= deltaTime;
+            if (b.explosionTimer <= 0.0f)
+                b.isAlive = false;
+        }
+    }
+
+    // hapus bomb yang udah mati
+    bombs.erase(
+        std::remove_if(bombs.begin(), bombs.end(), [](const Bomb &b)
+                       { return !b.isAlive; }),
+        bombs.end());
+}
+
+void BombManager::Interact(Vector2 hitPos, Rectangle playerBounds)
+{
+    TraceLog(LOG_INFO, "Looking for bomb at (%.1f, %.1f), total bombs: %d", hitPos.x, hitPos.y, (int)bombs.size());
+    TileObject *tile = FindBomb(hitPos);
+    if (!tile || tile->state == ObjectState::Inactive)
+        return;
+
+    // cari bomb yang matching buat di-explode
+    for (auto &b : bombs)
+    {
+        if (&b.tile == tile)
+        {
+            if (b.onHit)
+                b.onHit(b.tile);
+            Explode(b, playerBounds);
+            break;
+        }
+    }
+}
+
+TileObject *BombManager::FindBomb(Vector2 hitPos, float threshold)
+{
+    TileObject *closest = nullptr;
+    float minDist = threshold;
+
+    for (auto &b : bombs)
+    {
+        if (!b.isAlive)
+            continue;
+        float dist = Vector2Distance(hitPos, b.tile.position);
+        if (dist < minDist)
+        {
+            minDist = dist;
+            closest = &b.tile;
+        }
+    }
+    return closest;
+}
+
+void BombManager::Render()
+{
+    for (auto &b : bombs)
+    {
+        if (!b.isAlive)
+            continue;
+
+        if (b.isExploding)
+            DrawCircleV(b.tile.position, BOMB_EXPLOSION_RADIUS, Fade(ORANGE, 0.4f));
+        else
+            DrawRectangleRec(b.tile.bounds, RED); // placeholder, ganti sprite
+    }
+}
+
+void BombManager::Clear()
+{
+    bombs.clear();
+}
+
+void BombManager::SpawnAll()
+{
+    // debug: spawn ulang semua bomb dari spawnPoints
+    bombs.clear();
+    for (size_t i = 0; i < spawnPoints.size(); i++)
+    {
+        std::string name = "bomb_debug_" + std::to_string(i);
+        Spawn(spawnPoints[i], name);
+    }
 }

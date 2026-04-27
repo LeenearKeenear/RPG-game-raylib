@@ -81,6 +81,48 @@ private:
     void SetupCallbacks(SpikeData &spike);
 };
 
+// class buat trap bomb
+using BombCallback = std::function<void(TileObject &)>;
+using BombExplodeCallback = std::function<void(TileObject &, float)>;
+
+class BombManager
+{
+public:
+    void SpawnBombs(const std::vector<MapObject *> &bombObjects);
+    void Update(float deltaTime, Rectangle playerBounds);
+    void Render();
+    void Clear();
+    void SpawnAll(); // debug
+
+    // Dipanggil dari combat system, sama persis polanya kayak Chest
+    TileObject *FindBomb(Vector2 hitPos, float threshold = 50.0f);
+    void Interact(Vector2 hitPos, Rectangle playerBounds);
+
+private:
+    struct BombData
+    {
+        TileObject tile;
+        bool isAlive;
+        bool isExploding;
+        float explosionTimer;
+        BombCallback onHit;
+        BombExplodeCallback onExplode;
+        BombCallback onDamagePlayer;
+    };
+
+#define BOMB_EXPLOSION_RADIUS 80.0f  // nilai radius bom nya
+#define BOMB_DAMAGE 25.0f            // damage bom
+#define BOMB_EXPLOSION_DURATION 0.3f // timer buat durasi meledaknya
+
+    std::vector<BombdData> bombs;
+    std::vector<Vector2> spawnPoints;
+
+    void SetupCallbacks(BombData &bomb);
+    void Explode(BombData &bomb, Rectangle playerBounds);
+    bool IsInExplosionRadius(Vector2 bombPos, Rectangle target);
+};
+
 // naming untuk tile
 extern ChestManager chestManager;
 extern SpikeManager spikeManager;
+extern BombManager bombManager;
