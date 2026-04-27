@@ -7,7 +7,6 @@
 
 #include "../include/videoTab.h"
 #include "../include/screen.h"
-#include "../include/buttonTxt.h"
 #include "../lib/raylib/include/raylib.h"
 
 void DrawVideoTab(
@@ -35,7 +34,7 @@ bool UpdateVideoTab(
     Vector2 mousePosition,
     bool mouseClicked)
 {
-    GameState* state = static_cast<GameState*>(stateVoid);
+    auto* state = static_cast<GameState*>(stateVoid);
 
     if (fullscreenButton.isClicked(mousePosition, mouseClicked)) {
         if (IsWindowFullscreen()) {

@@ -89,8 +89,12 @@ public:
     float HitboxOffsetX = 8.0f;
     float HitboxOffsetY = 14.0f;
 
-    Rectangle GetHitbox() const override { return { Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight }; }
+Rectangle GetHitbox() const override { return { Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight }; }
 
+    /** @return Posisi player dalam pixel */
+    Vector2 GetPosition() { return Position; }
+    void SetPosition(Vector2 pos) { Position = pos; }
+    
     std::vector<Rectangle> CollisionRects;              ///< Tile tabrakan yang aktif
     std::vector<std::vector<Vector2>> CollisionPolygons; ///< Bentuk poligon tabrakan yang aktif
 

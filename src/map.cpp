@@ -168,16 +168,24 @@ void LoadMap(const char *mapPath)
         std::string imagePath = "texture/" + tileset->getImagePath().filename().u8string();
         TraceLog(LOG_INFO, "Tileson: Loading tileset: %s", imagePath.c_str());
 
-        Image img = LoadImage(imagePath.c_str());
         TilesetInfo info;
-        info.texture = LoadTextureFromImage(img);
+        
+        // Cek apakah texture tile utama sudah dimuat, reuse jika ada
+        if (TexturesMap[TEXTURE_TILEMAP].id != 0 && imagePath == "texture/tiles.png") {
+            info.texture = TexturesMap[TEXTURE_TILEMAP];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for tiles.png");
+        } else {
+            Image img = LoadImage(imagePath.c_str());
+            info.texture = LoadTextureFromImage(img);
+            UnloadImage(img);
+        }
+        
         info.cols = tileset->getColumns();
         info.spacing = tileset->getSpacing();
         info.firstgid = tileset->getFirstgid();
         info.lastgid = (i + 1 < (int)tilesetList.size())
                            ? tilesetList[i + 1].getFirstgid() - 1
                            : INT_MAX;
-        UnloadImage(img);
 
         tilesonMap->tilesets.push_back(info);
         TraceLog(LOG_INFO, "Tileson: Loaded tileset %s (gid %d-%d)", imagePath.c_str(), info.firstgid, info.lastgid);
@@ -205,9 +213,19 @@ void UnloadMap(void)
         tilesonMap->Objects.clear();
 
         // Unload texture tileset dari GPU
-        for (auto &ts : tilesonMap->tilesets)
-            if (ts.texture.id != 0)
+        // Jangan unload jika texture sudah ada di cache (TexturesMap)
+        for (auto &ts : tilesonMap->tilesets) {
+            bool isCached = false;
+            for (int i = 0; i < MAX_TEXTURES; i++) {
+                if (TexturesMap[i].id == ts.texture.id && ts.texture.id != 0) {
+                    isCached = true;
+                    break;
+                }
+            }
+            if (!isCached && ts.texture.id != 0) {
                 UnloadTexture(ts.texture);
+            }
+        }
         tilesonMap->tilesets.clear();
 
         delete tilesonMap;
@@ -515,6 +533,10 @@ void GoBack(void)
     TraceLog(LOG_INFO, "GoBack: returned to map: %s", prev.mapPath.c_str());
 }
 
+/**
+ * @brief Dapatkan path map yang sedang aktif
+ * @return Path map saat ini (kosong jika tidak ada)
+ */
 const char* GetCurrentMapPath(void)
 {
     return currentMapPath.c_str();
