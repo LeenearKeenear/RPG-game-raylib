@@ -153,12 +153,7 @@ namespace Combat
                 // Mengunci arah karakter ke arah bidikan
                 PlayAnimation(player.Anim, IDLE, attackFaceDir, PlayerAnimationSet);
 
-                // Mengambil item aktif untuk menentukan statistik (uji coba sementara)
-                ItemSlot activeSlot = InputInstance.GetActiveSlot();
-                InventoryItem activeItem = player.Hotbar[(int)activeSlot - 1];
-
-                float manaCost = player.AttackManaCost;
-                if (activeItem.iconX == 7) manaCost = 15.0f; // Axe: cost diperbesar ke 15
+                float manaCost = Inventory::GetAttackManaCost(player);
 
                 // Pemeriksaan Resource (Mana)
                 if (player.Mana >= manaCost)
@@ -172,61 +167,7 @@ namespace Combat
                     player.Swing.damagedEntities.clear();
                     player.Swing.center = playerCenter;
 
-                    // Logika Offset Senjata (Menyelaraskan sprite senjata dengan tangan/posisi)
-                    if (activeSlot == SLOT_WEAPON_1)
-                    {
-                        switch (attackFaceDir)
-                        {
-                        case UP:    player.Swing.center.y -= 8; player.Swing.center.x += 4; break;
-                        case DOWN:  player.Swing.center.y += 8; player.Swing.center.x -= 4; break;
-                        case LEFT:  player.Swing.center.x -= 8; player.Swing.center.y -= 4; break;
-                        case RIGHT: player.Swing.center.x += 8; player.Swing.center.y += 4; break;
-                        }
-                    }
-                    else
-                    {
-                        switch (attackFaceDir)
-                        {
-                        case UP:    player.Swing.center.y -= 20; break;
-                        case DOWN:  player.Swing.center.y += 20; break;
-                        case LEFT:  player.Swing.center.x -= 20; break;
-                        case RIGHT: player.Swing.center.x += 20; break;
-                        }
-                    }
-
-                    float baseAngle = 0.0f;
-                    switch (attackFaceDir)
-                    {
-                    case RIGHT: baseAngle = 0.0f; break;
-                    case DOWN:  baseAngle = 90.0f; break;
-                    case LEFT:  baseAngle = 180.0f; break;
-                    case UP:    baseAngle = -90.0f; break;
-                    }
-                    player.Swing.baseAngle = baseAngle;
-
-                    // Diferensiasi Arketipe Senjata
-                    if (activeSlot == SLOT_WEAPON_1) // Pedang (Tusukan/Thrusting)
-                    {
-                        player.Swing.type = ATTACK_THRUST;
-                        player.Swing.duration = 0.25f;
-                        player.Swing.reach = 40.0f;
-                        player.Swing.breadth = 16.0f;
-                        player.Swing.startAngle = baseAngle;
-                        player.Swing.sweepAngle = 0.0f;
-                        player.Swing.damage = 15.0f;
-                        player.Swing.knockbackForce = 0.6f;
-                    }
-                    else // Senjata Berat (Ayunan/Slashing)
-                    {
-                        player.Swing.type = ATTACK_SLASH;
-                        player.Swing.duration = 0.5f; // Axe: dipercepat ke 0.5s
-                        player.Swing.reach = 48.0f;
-                        player.Swing.breadth = 56.0f;
-                        player.Swing.startAngle = baseAngle + 55.0f;
-                        player.Swing.sweepAngle = -95.0f;
-                        player.Swing.damage = 25.0f;
-                        player.Swing.knockbackForce = 1.8f;
-                    }
+                    Inventory::SetupAttackStats(player, attackFaceDir);
 
                     player.Anim.isAttacking = true;
                     TraceLog(LOG_INFO, "PLAYER: Serangan diarahkan ke (%.2f, %.2f)", attackDir.x, attackDir.y);
@@ -328,8 +269,7 @@ namespace Combat
     {
         if (!player.Swing.active) return;
 
-        ItemSlot activeSlot = InputInstance.GetActiveSlot();
-        InventoryItem item = player.Hotbar[(int)activeSlot - 1];
+        InventoryItem item = Inventory::GetActiveHotbarItem(player);
 
         if (item.type == ITEM_WEAPON)
         {

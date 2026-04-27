@@ -92,4 +92,78 @@ bool AddToInventory(Player& player, const Item& item) {
     return false; // Inventory penuh
 }
 
+InventoryItem GetActiveHotbarItem(const Player& player) {
+    ItemSlot activeSlot = InputInstance.GetActiveSlot();
+    int idx = (int)activeSlot - 1;
+    if (idx >= 0 && idx < 4) {
+        return player.Hotbar[idx];
+    }
+    return {ITEM_NONE, "", 0, 0, 0, 0, 0};
+}
+
+void SetupAttackStats(Player& player, Direction attackFaceDir) {
+    ItemSlot activeSlot = InputInstance.GetActiveSlot();
+    InventoryItem activeItem = GetActiveHotbarItem(player);
+    
+    float baseAngle = 0.0f;
+    switch (attackFaceDir)
+    {
+    case RIGHT: baseAngle = 0.0f; break;
+    case DOWN:  baseAngle = 90.0f; break;
+    case LEFT:  baseAngle = 180.0f; break;
+    case UP:    baseAngle = -90.0f; break;
+    }
+    player.Swing.baseAngle = baseAngle;
+
+    // Logika Offset Senjata (Menyelaraskan sprite senjata dengan tangan/posisi)
+    if (activeSlot == SLOT_WEAPON_1)
+    {
+        switch (attackFaceDir)
+        {
+        case UP:    player.Swing.center.y -= 8; player.Swing.center.x += 4; break;
+        case DOWN:  player.Swing.center.y += 8; player.Swing.center.x -= 4; break;
+        case LEFT:  player.Swing.center.x -= 8; player.Swing.center.y -= 4; break;
+        case RIGHT: player.Swing.center.x += 8; player.Swing.center.y += 4; break;
+        }
+    }
+    else
+    {
+        switch (attackFaceDir)
+        {
+        case UP:    player.Swing.center.y -= 20; break;
+        case DOWN:  player.Swing.center.y += 20; break;
+        case LEFT:  player.Swing.center.x -= 20; break;
+        case RIGHT: player.Swing.center.x += 20; break;
+        }
+    }
+
+    // Diferensiasi Arketipe Senjata
+    if (activeSlot == SLOT_WEAPON_1) { // Pedang (Tusukan/Thrusting)
+        player.Swing.type = ATTACK_THRUST;
+        player.Swing.duration = 0.25f;
+        player.Swing.reach = 40.0f;
+        player.Swing.breadth = 16.0f;
+        player.Swing.startAngle = baseAngle;
+        player.Swing.sweepAngle = 0.0f;
+        player.Swing.damage = 15.0f;
+        player.Swing.knockbackForce = 0.6f;
+    } else { // Senjata Berat (Ayunan/Slashing)
+        player.Swing.type = ATTACK_SLASH;
+        player.Swing.duration = 0.5f; // Axe: dipercepat ke 0.5s
+        player.Swing.reach = 48.0f;
+        player.Swing.breadth = 56.0f;
+        player.Swing.startAngle = baseAngle + 55.0f;
+        player.Swing.sweepAngle = -95.0f;
+        player.Swing.damage = 25.0f;
+        player.Swing.knockbackForce = 1.8f;
+    }
+}
+
+float GetAttackManaCost(const Player& player) {
+    InventoryItem activeItem = GetActiveHotbarItem(player);
+    float manaCost = player.AttackManaCost;
+    if (activeItem.iconX == 7) manaCost = 15.0f; // Axe: cost diperbesar ke 15
+    return manaCost;
+}
+
 }
