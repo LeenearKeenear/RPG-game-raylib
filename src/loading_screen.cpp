@@ -69,8 +69,12 @@ void UpdateLoadingScreen(GameState *state)
         state->loadingComplete = true;
         state->currentScreen = PLAY;
         
-        RestoreGameState(state);
+        // Init first, then restore saved state - order matters!
+        // InitAll() sets position to spawn, then RestoreGameState overwrites it
         InitAll();
+        if (HasSavedState()) {
+            RestoreGameState(state);
+        }
         InitMainMenu(state);
         return;
     }
