@@ -250,7 +250,8 @@ void UpdateLogicAll()
 
     // Update Effects (Popups, Logs, etc)
     Effects::Update(GetFrameTime());
-    spikeManager.Update(GetFrameTime(), PlayerInstance.GetHitbox());
+    spikeManager.Update(GetFrameTime(), PlayerInstance.GetHitbox(), &PlayerInstance);
+    bombManager.Update(GetFrameTime(), PlayerInstance.GetHitbox(), &PlayerInstance);
 
     // Update item magnet/pickup
     Vector2 center = PlayerInstance.GetCenter();

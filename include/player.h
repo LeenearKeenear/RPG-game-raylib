@@ -105,8 +105,8 @@ public:
     /** @return Posisi player dalam pixel */
     Vector2 GetPosition() { return Position; }
     void SetPosition(Vector2 pos) { Position = pos; }
-    
-    std::vector<Rectangle> CollisionRects;              ///< Tile tabrakan yang aktif
+
+    std::vector<Rectangle> CollisionRects;               ///< Tile tabrakan yang aktif
     std::vector<std::vector<Vector2>> CollisionPolygons; ///< Bentuk poligon tabrakan yang aktif
 
     RayCast Ray;          ///< Raycast untuk interaksi
@@ -140,7 +140,7 @@ public:
             Position.y + HitboxOffsetY + HitboxHeight / 2};
     }
 
-      // Hotbar management
+    // Hotbar management
     InventoryItem GetHotbarItem(int index) { return Hotbar[index]; }
 
     /**
@@ -175,8 +175,8 @@ private:
     bool CanMove(Vector2 NewPos);
 
     // magnet/pickup fields
-    float MagnetRadius = 20.0f;
-    float ItemSpeed = 120.0f;
+    float MagnetRadius = 70.0f;        // default 70
+    float ItemSpeed = 300.0f;          // default 300
     const float RayCastAngle = 0.600f; ///< cos(45°) — area pandang ±45° dari arah hadap
 
     // Action handler — definisi: src/player.cpp

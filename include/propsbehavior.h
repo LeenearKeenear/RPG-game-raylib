@@ -3,6 +3,7 @@
 #include "map.h"
 #include "mapLogic.h"
 #include "animation.h"
+#include "player.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include <random>
@@ -51,7 +52,7 @@ class SpikeManager
 {
 public:
     void SpawnSpikes(const std::vector<MapObject *> &spikeObjects);
-    void Update(float deltaTime, Rectangle playerBounds);
+    void Update(float deltaTime, Rectangle playerBounds, Player *player);
     void Render();
     void Clear();
 
@@ -74,7 +75,9 @@ private:
 #define SPIKE_ACTIVE_MIN 3.0f      // nilai minimum pas spike aktif (adjustable)
 #define SPIKE_INACTIVE_MAX 7.0f    // nilai maksimun pas spike gak aktif (adjustable)
 #define SPIKE_INACTIVE_MIN 4.0f    // nilai minimum pas spike gak aktif (adjustable)
-#define SPIKE_DAMAGE_COOLDOWN 0.5f // adjustable
+
+float SpikeDamage = 10.0f;
+float globalDamageCooldown = 1.0f;
 
     std::vector<SpikeData> spikes;
     unsigned int SeedFromName(const std::string &name);
@@ -89,13 +92,12 @@ class BombManager
 {
 public:
     void SpawnBombs(const std::vector<MapObject *> &bombObjects);
-    void Update(float deltaTime, Rectangle playerBounds);
+    void Update(float deltaTime, Rectangle playerBounds, Player* player);
     void Render();
     void Clear();
     void SpawnAll(); // debug
 
-    // Dipanggil dari combat system, sama persis polanya kayak Chest
-    TileObject *FindBomb(Vector2 hitPos, float threshold = 50.0f);
+    TileObject *FindBomb(Vector2 hitPos, float threshold = 32.0f);
     void Interact(Vector2 hitPos, Rectangle playerBounds);
 
 private:
@@ -126,3 +128,5 @@ private:
 extern ChestManager chestManager;
 extern SpikeManager spikeManager;
 extern BombManager bombManager;
+
+extern void SpawnItemAtLocation(Vector2 pos);

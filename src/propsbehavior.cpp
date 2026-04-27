@@ -1,13 +1,34 @@
 #include "../include/propsbehavior.h"
-
-extern void SpawnItemAtLocation(Vector2 pos);
-ChestManager chestManager;
+#include "../include/item.h"
 
 Vector2 SnapToTileGrid(Vector2 rawPos)
 {
     return {
         std::floor(rawPos.x / TILE_SIZE) * TILE_SIZE,
         std::floor(rawPos.y / TILE_SIZE) * TILE_SIZE};
+}
+
+bool IsHitInBounds(Vector2 hitPos, Rectangle bounds, float threshold, Vector2 *outCenter = nullptr)
+{
+    Rectangle expanded = {
+        bounds.x - threshold,
+        bounds.y - threshold,
+        bounds.width + threshold * 2,
+        bounds.height + threshold * 2};
+
+    if (outCenter)
+    {
+        outCenter->x = bounds.x + bounds.width / 2;
+        outCenter->y = bounds.y + bounds.height / 2;
+    }
+
+    return CheckCollisionPointRec(hitPos, expanded);
+}
+
+float DistToCenter(Vector2 hitPos, Rectangle bounds)
+{
+    Vector2 center = {bounds.x + bounds.width / 2, bounds.y + bounds.height / 2};
+    return Vector2Distance(hitPos, center);
 }
 
 void SpawnObject()
@@ -58,20 +79,9 @@ TileObject *ChestManager::FindChest(Vector2 hitPos, float threshold)
 
     for (auto &chest : chests)
     {
-        // Expand bounds sedikit agar titik di tepi tetap terdeteksi
-        Rectangle expanded = {
-            chest.bounds.x - threshold,
-            chest.bounds.y - threshold,
-            chest.bounds.width + threshold * 2,
-            chest.bounds.height + threshold * 2};
-
-        if (CheckCollisionPointRec(hitPos, expanded))
+        if (IsHitInBounds(hitPos, chest.bounds, threshold))
         {
-            // Gunakan jarak ke center bounds untuk memilih yang terdekat
-            Vector2 center = {
-                chest.bounds.x + chest.bounds.width / 2,
-                chest.bounds.y + chest.bounds.height / 2};
-            float dist = Vector2Distance(hitPos, center);
+            float dist = DistToCenter(hitPos, chest.bounds);
             if (dist < minDist)
             {
                 minDist = dist;
@@ -90,24 +100,23 @@ void ChestManager::Interact(Vector2 hitPos)
         return;
     chest->state = ObjectState::Open;
     TriggerLoot(*chest);
-} 
+}
 
 void ChestManager::TriggerLoot(TileObject &chest)
 {
     // placeholder, rarity system nyusul
     TraceLog(LOG_INFO, "Chest opened at (%.1f, %.1f)", chest.position.x, chest.position.y);
 
-     int jumlahLoot = GetRandomValue(1, 3);
-    
+    int jumlahLoot = GetRandomValue(1, 3);
+
     for (int i = 0; i < jumlahLoot; i++)
     {
         // Kasih sedikit offset random (misal sejauh -20 sampai 20 pixel)
         // Biar itemnya mencar di sekitar chest
         Vector2 spawnPos = {
             chest.position.x + (float)GetRandomValue(-60, 60),
-            chest.position.y + (float)GetRandomValue(-60, 60)
-        };
-        
+            chest.position.y + (float)GetRandomValue(-60, 60)};
+
         SpawnItemAtLocation(spawnPos);
     }
 }
@@ -201,8 +210,10 @@ void SpikeManager::SetupCallbacks(SpikeData &spike)
     };
 }
 
-void SpikeManager::Update(float deltaTime, Rectangle playerBounds)
+void SpikeManager::Update(float deltaTime, Rectangle playerBounds, Player *player)
 {
+    globalDamageCooldown -= deltaTime;
+
     for (auto &spike : spikes)
     {
         if (spike.tile.state == ObjectState::Inactive)
@@ -214,34 +225,29 @@ void SpikeManager::Update(float deltaTime, Rectangle playerBounds)
                 spike.inactiveTimer = 0.0f;
                 spike.onActivate(spike.tile);
             }
+            continue; // skip sisanya
         }
-        else // Active
+
+        // dari sini udah pasti Active
+        spike.activeTimer -= deltaTime;
+        if (spike.activeTimer <= 0.0f)
         {
-            spike.activeTimer -= deltaTime;
-            if (spike.activeTimer <= 0.0f)
-            {
-                spike.inactiveTimer = spike.inactiveDuration;
-                spike.activeTimer = 0.0f;
-                spike.onDeactivate(spike.tile);
-            }
-            else
-            {
-                // cek overlap player
-                if (CheckCollisionRecs(playerBounds, spike.tile.bounds))
-                {
-                    spike.damageCooldown -= deltaTime;
-                    if (spike.damageCooldown <= 0.0f)
-                    {
-                        spike.damageCooldown = 0.5f; // reset cooldown (adjustable)
-                        spike.onDamagePlayer(spike.tile);
-                    }
-                }
-                else
-                {
-                    spike.damageCooldown = 0.0f; // reset kalo player keluar
-                }
-            }
+            spike.inactiveTimer = spike.inactiveDuration;
+            spike.activeTimer = 0.0f;
+            spike.onDeactivate(spike.tile);
+            continue;
         }
+
+        // cek damage
+        if (!CheckCollisionRecs(playerBounds, spike.tile.bounds))
+            continue;
+        if (globalDamageCooldown > 0.0f)
+            continue;
+        if (!player)
+            continue;
+
+        globalDamageCooldown = 1.0f;
+        player->TakeDamage(SpikeDamage);
     }
 }
 
@@ -335,25 +341,25 @@ bool BombManager::IsInExplosionRadius(Vector2 bombPos, Rectangle target)
     return dist <= BOMB_EXPLOSION_RADIUS;
 }
 
-void BombManager::Update(float deltaTime, Rectangle playerBounds)
+void BombManager::Update(float deltaTime, Rectangle playerBounds, Player *player)
 {
-    for (auto &b : bombs)
+    for (auto &bomb : bombs)
     {
-        if (!b.isAlive)
+        if (!bomb.isAlive)
             continue;
 
-        if (b.isExploding)
+        if (bomb.isExploding)
         {
-            b.explosionTimer -= deltaTime;
-            if (b.explosionTimer <= 0.0f)
-                b.isAlive = false;
+            bomb.explosionTimer -= deltaTime;
+            if (bomb.explosionTimer <= 0.0f)
+                bomb.isAlive = false;
         }
     }
 
     // hapus bomb yang udah mati
     bombs.erase(
-        std::remove_if(bombs.begin(), bombs.end(), [](const BombData &b)
-                       { return !b.isAlive; }),
+        std::remove_if(bombs.begin(), bombs.end(), [](const BombData &bomb)
+                       { return !bomb.isAlive; }),
         bombs.end());
 }
 
@@ -365,13 +371,13 @@ void BombManager::Interact(Vector2 hitPos, Rectangle playerBounds)
         return;
 
     // cari bomb yang matching buat di-explode
-    for (auto &b : bombs)
+    for (auto &bomb : bombs)
     {
-        if (&b.tile == tile)
+        if (&bomb.tile == tile)
         {
-            if (b.onHit)
-                b.onHit(b.tile);
-            Explode(b, playerBounds);
+            if (bomb.onHit)
+                bomb.onHit(bomb.tile);
+            Explode(bomb, playerBounds);
             break;
         }
     }
@@ -382,15 +388,18 @@ TileObject *BombManager::FindBomb(Vector2 hitPos, float threshold)
     TileObject *closest = nullptr;
     float minDist = threshold;
 
-    for (auto &b : bombs)
+    for (auto &bomb : bombs)
     {
-        if (!b.isAlive)
+        if (!bomb.isAlive)
             continue;
-        float dist = Vector2Distance(hitPos, b.tile.position);
-        if (dist < minDist)
+        if (IsHitInBounds(hitPos, bomb.tile.bounds, threshold))
         {
-            minDist = dist;
-            closest = &b.tile;
+            float dist = DistToCenter(hitPos, bomb.tile.bounds);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closest = &bomb.tile;
+            }
         }
     }
     return closest;
@@ -398,15 +407,15 @@ TileObject *BombManager::FindBomb(Vector2 hitPos, float threshold)
 
 void BombManager::Render()
 {
-    for (auto &b : bombs)
+    for (auto &bomb : bombs)
     {
-        if (!b.isAlive)
+        if (!bomb.isAlive)
             continue;
 
-        if (b.isExploding)
-            DrawCircleV(b.tile.position, BOMB_EXPLOSION_RADIUS, Fade(ORANGE, 0.4f));
+        if (bomb.isExploding)
+            DrawCircleV(bomb.tile.position, BOMB_EXPLOSION_RADIUS, Fade(ORANGE, 0.4f));
         else
-            DrawRectangleRec(b.tile.bounds, RED); // placeholder, ganti sprite
+            DrawRectangleRec(bomb.tile.bounds, RED); // placeholder, ganti sprite
     }
 }
 
