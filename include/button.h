@@ -39,7 +39,7 @@ struct TextPolicy
         textWidth = MeasureText(text, fontSize);
     }
 
-    Rectangle GetBounds() const
+    [[nodiscard]] Rectangle GetBounds() const
     {
         return {static_cast<float>(posX), static_cast<float>(posY), 
                 static_cast<float>(textWidth), static_cast<float>(fontSize)};
@@ -70,12 +70,12 @@ struct ImagePolicy
         hoverAmount = hover;
     }
 
-    void Unload()
+    void Unload() const
     {
         UnloadTexture(texture);
     }
 
-    Rectangle GetBounds() const
+    [[nodiscard]] Rectangle GetBounds() const
     {
         return {position.x, position.y, 
                 static_cast<float>(texture.width), static_cast<float>(texture.height)};

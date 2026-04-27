@@ -8,10 +8,8 @@
 
 #include "../include/mainMenu.h"
 #include "../include/screen.h"
-#include "../lib/raylib/include/raymath.h"
 #include "../lib/raylib/include/raylib.h"
 #include <array>
-#include <cstdint>
 
 /*==============================================================================
  * Static Variables
@@ -74,7 +72,7 @@ void UpdateMainMenu(GameState *state)
         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
             switch (i) {
                 case 0:  // Start Game
-                    state->currentScreen = PLAY;
+                    state->currentScreen = LOADING;
                     break;
                 case 2:  // Options
                     state->previousScreen = MAIN_MENU;

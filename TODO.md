@@ -66,6 +66,7 @@ Usahakan diurutkan berdasarkan prioritas; dari yang paling penting ke kurang pen
 - [ ] Desain Layout menu secara kasar
 - [ ] Implementasi pertama tile map sama player movement
 - [x] Migrasi projek menggunakan `Cmake`
+- [x] Implementasi loading screen dengan progresive asset loading
 
 ## Todo Multi-Map - Phase 2: File Format & Parsing
 

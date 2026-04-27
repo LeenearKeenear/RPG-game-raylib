@@ -13,8 +13,10 @@
 #include "../include/item.h"
 #include "../include/mainMenu.h"
 #include "../include/pauseMenu.h"
+#include "../include/loading_screen.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
+#include <cstdio>
 
 /**
  * @brief Global instances for menu systems
@@ -29,7 +31,7 @@ OptionsScreen optionsScreen;
 int main()
 {
     // Inisialisasi
-    // Urutan penting: InitScreen dulu → InitMap → InitAll → InitMainMenu
+    // Urutan penting: InitScreen dulu → (loading screen will handle InitMap, InitAll, InitMainMenu)
     // InitMap harus sebelum InitAll karena player butuh data map buat spawn
 
     // Step 1: buat window, audio, dan render texture virtual (1280x720)
@@ -37,18 +39,19 @@ int main()
     state.previousScreen = MAIN_MENU; // Default return to main menu
     gState = &state;
 
-    // Step 2: load map dari JSON Tiled
-    InitMap();
-
-    // Step 3: init player dan camera — spawn point dibaca dari map
-    InitAll();
-
-    // Step 4: init elemen UI main menu
-    InitMainMenu(&state);
+    // Initialize loading state variables
+    state.loadingProgress = 0.0f;
+    state.loadingText = "";
+    state.loadingComplete = false;
+    state.loadingStage = 0;
+    state.assetsLoaded = false;
 
     // Step 5: init options screen (hidden initially)
     optionsScreen.Show();
     optionsScreen.Hide();
+
+    // Step 6: init main menu (needed for menu buttons to render)
+    InitMainMenu(&state);
 
     // Main Game Loop
     while (!WindowShouldClose())
@@ -60,10 +63,25 @@ int main()
             UpdateMainMenu(&state);
             RenderMainMenuToVirtualScreen(&state);
             DrawRenderWindows(&state);
-        }
-        // State: OPTIONS
-        else if (state.currentScreen == OPTIONS)
-        {
+          }
+/*==============================================================================
+             * State: LOADING
+             *==============================================================================*/
+else if (state.currentScreen == LOADING)
+            {
+                // Initialize loading screen only on first entry
+                if (!state.enteredLoading) {
+                    InitLoadingScreen(&state);
+                }
+                
+                // Update and render loading screen
+                UpdateLoadingScreen(&state);
+                RenderLoadingScreen(&state);
+                DrawRenderWindows(&state);
+            }
+          // State: OPTIONS
+         else if (state.currentScreen == OPTIONS)
+         {
             // Show options screen and set return screen on first entry
             if (!optionsScreen.IsActive()) {
                 optionsScreen.SetReturnScreen(state.previousScreen);
@@ -90,7 +108,7 @@ int main()
             }
 
             // toggle pause menu dengan tombol P
-            if (IsKeyPressed(KEY_P))
+            if (IsKeyPressed(KEY_GRAVE))
             {
                 if (pauseMenu.IsActive())
                 {

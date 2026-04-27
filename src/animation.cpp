@@ -68,22 +68,37 @@ const AnimationSet WolfAnimationSet = {
 
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
 {
-    // Mapping TileType ke koordinat di spritesheet
-    // Index harus sesuai urutan enum TileType
-    static const TileDefinition TileProperty[] = {
-        /* TILE_PLAYER_NEW   */ {{3, 2}, false, false},
-        /* TILE_CHEST_OPEN   */ {{0, 0}, false, false},
-        /* TILE_CHEST_CLOSED */ {{0, 0}, false, false},
-        /* TILE_ENEMY_SLIME  */ {{0, 0}, false, true},
-        /* TILE_ENEMY_SKELETON*/ {{0, 1}, false, true},
-        /* TILE_ENEMY_WOLF   */ {{0, 2}, false, true},
-        /* TILE_ITEM_POTION  */ {{7, 8}, false, true},
-        /* TILE_WEAPON       */ {{6, 4}, false, true}
-    };
+    // mapping TileType ke koordinat di spritesheet
+    // NOTE: Koordinat ini berdasarkan layout spritesheet tileset
+    TileDefinition prop;
+    switch (Type)
+    {
+    case TILE_PLAYER_NEW:
+        prop = {{3, 2}, false, false};
+        break;
+    case TILE_ENEMY_SLIME:
+        prop = {{0, 0}, false, true};
+        break;
+    case TILE_ENEMY_SKELETON:
+        prop = {{0, 1}, false, true};
+        break;
+    case TILE_ENEMY_WOLF:
+        prop = {{0, 2}, false, true};
+        break;
+    case TILE_ITEM_POTION:
+        prop = {{7, 8}, false, true};
+        break;
+    case TILE_WEAPON:
+        prop = {{6, 4}, false, true};
+        break;
+    default:
+        prop = {{0, 0}, true, false};
+        break;
+    }
 
     Rectangle Source = {
-        (float)(TileProperty[Type].CoordID.x * (TILE_SIZE + TILE_GAP)),
-        (float)(TileProperty[Type].CoordID.y * (TILE_SIZE + TILE_GAP)),
+        (float)(prop.CoordID.x * (TILE_SIZE + TILE_GAP)),
+        (float)(prop.CoordID.y * (TILE_SIZE + TILE_GAP)),
         (float)TILE_SIZE,
         (float)TILE_SIZE};
 

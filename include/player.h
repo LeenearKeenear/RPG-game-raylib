@@ -102,7 +102,11 @@ public:
             HitboxHeight};
     }
 
-    std::vector<Rectangle> CollisionRects;               ///< Tile tabrakan yang aktif
+    /** @return Posisi player dalam pixel */
+    Vector2 GetPosition() { return Position; }
+    void SetPosition(Vector2 pos) { Position = pos; }
+    
+    std::vector<Rectangle> CollisionRects;              ///< Tile tabrakan yang aktif
     std::vector<std::vector<Vector2>> CollisionPolygons; ///< Bentuk poligon tabrakan yang aktif
 
     RayCast Ray;          ///< Raycast untuk interaksi

@@ -1,5 +1,8 @@
 #include "../include/propsbehavior.h"
 
+extern void SpawnItemAtLocation(Vector2 pos);
+ChestManager chestManager;
+
 Vector2 SnapToTileGrid(Vector2 rawPos)
 {
     return {
@@ -87,12 +90,26 @@ void ChestManager::Interact(Vector2 hitPos)
         return;
     chest->state = ObjectState::Open;
     TriggerLoot(*chest);
-}
+} 
 
 void ChestManager::TriggerLoot(TileObject &chest)
 {
     // placeholder, rarity system nyusul
     TraceLog(LOG_INFO, "Chest opened at (%.1f, %.1f)", chest.position.x, chest.position.y);
+
+     int jumlahLoot = GetRandomValue(1, 3);
+    
+    for (int i = 0; i < jumlahLoot; i++)
+    {
+        // Kasih sedikit offset random (misal sejauh -20 sampai 20 pixel)
+        // Biar itemnya mencar di sekitar chest
+        Vector2 spawnPos = {
+            chest.position.x + (float)GetRandomValue(-60, 60),
+            chest.position.y + (float)GetRandomValue(-60, 60)
+        };
+        
+        SpawnItemAtLocation(spawnPos);
+    }
 }
 
 void ChestManager::Render()

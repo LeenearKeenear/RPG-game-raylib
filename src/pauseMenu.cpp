@@ -5,11 +5,14 @@
  * Handle pause menu UI dan standalone options screen dengan tabs.
  */
 
+#include <algorithm>
+
 #include "../include/pauseMenu.h"
 #include "../include/popup.h"
 #include "../include/videoTab.h"
 #include "../include/audioTab.h"
 #include "../include/keybindsTab.h"
+#include "../include/game_state_saver.h"
 
 /*==============================================================================
  * Static Variables (Popup Notifications)
@@ -34,9 +37,7 @@ static Popup loadPopup("Game Loaded!", "OK", 0.7F);
  * 
  * Menginisialisasi semua tombol tab, tombol back, dan dimensi awal.
  */
-OptionsScreen::OptionsScreen() 
-    : active(false), returnScreen(PLAY), selectedTab(0), 
-      showFPS(false), width(0), height(0), startX(0), startY(0)
+OptionsScreen::OptionsScreen() : active(false), returnScreen(PLAY), selectedTab(0), showFPS(false), width(0), height(0), startX(0), startY(0)
 {
     tabButtons = {buttonTxt("VIDEO", 0, 0, 30, WHITE, 0.7F),
                 buttonTxt("AUDIO", 0, 0, 30, WHITE, 0.7F),
@@ -136,14 +137,13 @@ void OptionsScreen::CalculateDimensions()
     startX = (GameScreenWidth - width) / 2;
     startY = (GameScreenHeight - height) / 2;
 
-    backgroundRect = {static_cast<float>(startX), static_cast<float>(startY),
-                   static_cast<float>(width), static_cast<float>(height)};
+    backgroundRect = {static_cast<float>(startX), static_cast<float>(startY), static_cast<float>(width), static_cast<float>(height)};
 
     int tabStartX = startX + padding;
     for (int i = 0; i < 3; i++) {
         tabButtons[i] = buttonTxt(
             i == 0 ? "VIDEO" : (i == 1 ? "AUDIO" : "KEYBINDS"),
-            tabStartX + i * (tabWidth + tabSpacing),
+            tabStartX + (i * (tabWidth + tabSpacing)),
             startY + padding,
             fontSize,
             (selectedTab == i) ? YELLOW : WHITE,
@@ -192,7 +192,9 @@ fpsButton = buttonTxt(
  */
 void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseClicked)
 {
-    if (!active) return;
+    if (!active) {
+        return;
+}
 
     if (backButton.isClicked(mousePosition, mouseClicked)) {
         active = false;
@@ -222,7 +224,9 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
  */
 void OptionsScreen::Draw(Vector2 mousePosition)
 {
-    if (!active) return;
+    if (!active) {
+        return;
+    }
 
     Color bgColor = {40, 40, 40, 230};
     DrawRectangleRec(backgroundRect, bgColor);
@@ -310,7 +314,7 @@ void PauseMenu::CalculateDimensions()
     int maxButtonWidth = 0;
     for (std::uint8_t i = 0; i < 6; i++) {
         int btnWidth = MeasureText(buttonTexts[i], fontSize);
-        if (btnWidth > maxButtonWidth) maxButtonWidth = btnWidth;
+        maxButtonWidth = std::max(btnWidth, maxButtonWidth);
     }
 
     width = maxButtonWidth;
@@ -322,14 +326,20 @@ void PauseMenu::CalculateDimensions()
 
     for (std::uint8_t i = 0; i < 6; i++) {
         int btnWidth = MeasureText(buttonTexts[i], fontSize);
-        int btnX = position.x + (width - btnWidth) / 2;
+        int btnX = position.x + ((width - btnWidth) / 2);
 
         int separatorCount = 0;
-        if (i > 0) separatorCount++;
-        if (i > 2) separatorCount++;
-        if (i > 4) separatorCount++;
+        if (i > 0) {
+            separatorCount++;
+        }
+        if (i > 2) {
+            separatorCount++;
+        }
+        if (i > 4) {
+            separatorCount++;
+        }
 
-        int btnY = position.y + paddingY + i * (fontSize + buttonSpacing) + separatorCount * (separatorSpacing - buttonSpacing);
+        int btnY = position.y + paddingY + (i * (fontSize + buttonSpacing)) + (separatorCount * (separatorSpacing - buttonSpacing));
         buttons[i] = buttonTxt(buttonTexts[i], btnX, btnY, fontSize, WHITE, 0.7F);
     }
 }
@@ -356,6 +366,11 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             state->currentScreen = OPTIONS;
             break;
         case 4:
+            state->enteredLoading = false;
+            state->loadingStage = 0;
+            state->loadingProgress = 0.0F;
+            state->loadingComplete = false;
+            SaveGameState(state);
             state->currentScreen = MAIN_MENU;
             Hide();
             break;
@@ -375,7 +390,9 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
  */
 void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicked)
 {
-    if (!active) return;
+    if (!active) {
+        return;
+    }
 
     if (savePopup.IsActive()) {
         savePopup.Update(mousePosition, mouseClicked);
@@ -400,7 +417,9 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
  */
 void PauseMenu::Draw(Vector2 mousePosition)
 {
-    if (!active) return;
+    if (!active) {
+        return;
+}
 
     Rectangle fullScreen = {0, 0, static_cast<float>(GameScreenWidth), static_cast<float>(GameScreenHeight)};
     Color dimColor = {0, 0, 0, static_cast<unsigned char>(255 * 0.2F)};
@@ -419,6 +438,10 @@ void PauseMenu::Draw(Vector2 mousePosition)
         buttons[i].Draw(mousePosition);
     }
 
-    if (savePopup.IsActive()) savePopup.Draw(mousePosition);
-    if (loadPopup.IsActive()) loadPopup.Draw(mousePosition);
+    if (savePopup.IsActive()) {
+        savePopup.Draw(mousePosition);
+    }
+    if (loadPopup.IsActive()) {
+        loadPopup.Draw(mousePosition);
+    }
 }
