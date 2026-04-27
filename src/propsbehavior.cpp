@@ -36,6 +36,11 @@ void ChestManager::SpawnChests(const std::vector<MapObject *> &chestObjects)
     }
 }
 
+/**
+ * @brief Cari chest terdekat dari titik hit
+ * Menggunakan expanded bounds agar titik di tepi tetap terdeteksi.
+ * Definisi: src/propsbehavior.cpp (file ini)
+ */
 TileObject *ChestManager::FindChest(Vector2 hitPos, float threshold)
 {
     TileObject *closest = nullptr;

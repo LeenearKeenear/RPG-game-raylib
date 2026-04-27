@@ -162,6 +162,7 @@ void OptionsScreen::CalculateDimensions()
     }
 
     const int labelFontSize = 24;
+    int labelX = startX + 40;
     int valueX = startX + 250;
     int contentStartY = startY + 100;
 
@@ -300,6 +301,7 @@ bool PauseMenu::IsActive() const
  */
 void PauseMenu::CalculateDimensions()
 {
+    const int maxWidth = static_cast<int>(GameScreenWidth * 0.30F);
     const int fontSize = 30;
     const int paddingY = 20;
     const int buttonSpacing = 10;

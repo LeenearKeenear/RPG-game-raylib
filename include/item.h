@@ -36,6 +36,7 @@ typedef struct
 // Global list untuk item yang ada di map
 extern std::vector<Item> activeItems;
 
+// Definisi: src/item.cpp
 void InitItemTextures();
 void InitItems();
 void SpawnItemWave();
@@ -50,7 +51,7 @@ void ClearItems();
 void SpawnWeapon(Vector2 pos, float multiplier, ItemRarity rarity);
 void SpawnPotion(Vector2 pos, float multiplier, ItemRarity rarity);
 
-// Fungsi Render & Update
+// Fungsi Render & Update (definisi: src/item.cpp)
 void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadius, float itemSpeed);
 void RenderItems(Item &item);
 void RenderAllItems();

@@ -100,7 +100,7 @@ private:
     const float DeathDuration = 1.2f;
 };
 
-// Utility functions
+// Utility functions (definisi: src/enemy.cpp)
 int GetRandomDamage(int min, int max);
 void InitEnemy();
 void InitEnemyTextures();

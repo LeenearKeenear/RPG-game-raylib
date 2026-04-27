@@ -60,7 +60,7 @@ public:
      * @brief Inisialisasi status pemain dan lokasi spawn.
      */
     void Init(GameState* state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
-    
+
     void Update() override;
     void Render(void) override;
     void TakeDamage(float amount, Vector2 knockback = {0, 0}) override;
@@ -117,6 +117,13 @@ public:
     float GetMagnetRadius() { return MagnetRadius; }
     float GetItemSpeed() { return ItemSpeed; }
 
+    // hitbox getter — override dari Entity::GetCenter()
+    Vector2 GetCenter() const override
+    {
+        return {
+            Position.x + HitboxOffsetX + HitboxWidth / 2,
+            Position.y + HitboxOffsetY + HitboxHeight / 2};
+    }
 
     InventoryItem GetHotbarItem(int index) { return Hotbar[index]; }
 
@@ -137,7 +144,7 @@ public:
     float HitFlashTimer = 0.0f;  ///< Durasi efek kilatan saat terkena hit
     Vector2 KnockbackVelocity = {0, 0}; ///< Gaya dorong balik (knockback) yang sedang diterapkan
 
-    // Logic methods
+    // Logic methods — definisi: src/player.cpp
     void DrawAimIndicator();
     float GetRayCastAngle() const { return RayCastAngle; }
 
@@ -149,9 +156,15 @@ private:
     bool CanMove(Vector2 NewPos);
 
     // magnet/pickup fields
-    float MagnetRadius = 32.0f;
+    float MagnetRadius = 20.0f;
     float ItemSpeed = 120.0f;
     const float RayCastAngle = 0.707f;  ///< cos(45°) — area pandang ±45° dari arah hadap
+
+    // Action handler — definisi: src/player.cpp
+    void HandleAction(void);
+
+    // Potion usage — definisi: src/player.cpp
+    void UsePotion(int slotIndex);
 };
 
 extern Player PlayerInstance;

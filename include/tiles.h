@@ -3,16 +3,18 @@
 
 #define TILE_SIZE 32        ///< Ukuran standar tile dalam pixel
 #define TILE_GAP 4         ///< Jarak antar tile dalam tileset (jika ada)
-#define MAX_TEXTURES 4      ///< Jumlah maksimum tekstur yang dimuat secara bersamaan
+#define MAX_TEXTURES 6      ///< Jumlah maksimum tekstur yang dimuat secara bersamaan
 
 extern Texture2D TexturesMap[MAX_TEXTURES];
 
 /**
  * @brief Pengidentifikasi (ID) untuk aset tekstur yang dimuat ke memori.
+ * @note TEXTURE_TILEMAP digunakan oleh map renderer (map.cpp)
  */
 enum TextureAsset
 {
-    TEXTURE_KNIGHT = 0,         ///< Sprite pemain/karakter
+    TEXTURE_TILEMAP = 0,    ///< Tileset untuk rendering map
+    TEXTURE_KNIGHT,         ///< Sprite pemain/karakter
     TEXTURE_ITEMS,          ///< Ikon dan item koleksi
     TEXTURE_ENEMIES         ///< Sprite musuh
 };

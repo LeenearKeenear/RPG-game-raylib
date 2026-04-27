@@ -224,11 +224,6 @@ GameState InitScreen()
 
 /**
  * @brief Update ukuran window dan scale multiplier tiap frame
- *
- * Wajib dipanggil tiap frame sebelum rendering agar scaling tetap benar
- * ketika window di-resize oleh user.
- *
- * @param state Pointer ke GameState aktif
  */
 void UpdateGame(GameState *state)
 {
@@ -242,17 +237,21 @@ void UpdateGame(GameState *state)
 /**
  * @brief Entry point update logic game — dipanggil sekali per frame
  *
- * Semua update logic entity masuk lewat sini.
- * Tambahkan system baru di sini kalau ada entity atau module baru.
+ * Menggunakan Entities::Update() sebagai entry point utama update semua entity.
+ * Player.Update() dan Enemy.Update() dipanggil otomatis dari situ.
  */
 void UpdateLogicAll()
 {
+    // Update semua entity (Player + semua Enemy) via Entities registry
     Entities::Update();
+
+    // Handle pending map transitions dari Interaction namespace
     Interaction::ExecutePendingTransitions(PlayerInstance);
+
     // Update Effects (Popups, Logs, etc)
     Effects::Update(GetFrameTime());
 
-
+    // Update item magnet/pickup
     Vector2 center = PlayerInstance.GetCenter();
     Rectangle pHitbox = {
         center.x - PlayerInstance.GetHitboxWidth() / 2,
@@ -260,7 +259,7 @@ void UpdateLogicAll()
         PlayerInstance.GetHitboxWidth(),
         PlayerInstance.GetHitboxHeight()};
 
-        UpdateItems(center, pHitbox, PlayerInstance.GetMagnetRadius(), PlayerInstance.GetItemSpeed());
+    UpdateItems(center, pHitbox, PlayerInstance.GetMagnetRadius(), PlayerInstance.GetItemSpeed());
 }
 
 /*==============================================================================
@@ -272,11 +271,9 @@ void UpdateLogicAll()
  *
  * Urutan layer render (urutan penting, jangan diubah sembarangan):
  * 1. Map — tile-based, tidak kena transform camera
- * 2. Entities & world overlay — dalam BeginMode2D (world space)
+ * 2. Entities, Items, Effects & world overlay — dalam BeginMode2D (world space)
  * 3. Debug panels — screen space, di luar BeginMode2D
  * 4. UI overlay — HUD, pause menu, dll
- *
- * @param state Pointer ke GameState aktif
  */
 void DrawRenderTexture(GameState *state)
 {
@@ -286,11 +283,11 @@ void DrawRenderTexture(GameState *state)
     // layer 1: tile map
     RenderMap();
 
+    // layer 2: entities, items, effects & world overlay (world space)
     BeginMode2D(camera);
     chestManager.Render();
     RenderAllItems();
     Entities::Render();
-    // Draw Effects
     Effects::Draw();
     DebugInstance.DrawWorldOverlay();
     EndMode2D();
@@ -307,11 +304,6 @@ void DrawRenderTexture(GameState *state)
 
 /**
  * @brief Render UI elements ke virtual screen
- *
- * Dipanggil di dalam BeginTextureMode, setelah semua world-space rendering selesai.
- * Tambahkan UI baru di sini.
- *
- * @param state Pointer ke GameState aktif
  */
 void DrawUIOverlay(GameState *state)
 {
@@ -326,7 +318,7 @@ void DrawUIOverlay(GameState *state)
     }
 
     // 3. Menus
-if (pauseMenu.IsActive())
+    if (pauseMenu.IsActive())
     {
         Vector2 mousePos = GetVirtualMousePosition(state);
         pauseMenu.Draw(mousePos);
@@ -335,15 +327,9 @@ if (pauseMenu.IsActive())
 
 /**
  * @brief Scale dan render layar virtual ke window asli
- *
- * Layar virtual 1280x720 di-fit ke ukuran window sambil menjaga aspect ratio.
- * Area yang tidak terpakai diisi warna hitam (letterbox).
- *
- * @param state Pointer ke GameState aktif
  */
 void DrawRenderWindows(GameState *state)
 {
-    // hitung offset centering biar layar virtual di tengah window
     float offsetX = (state->WindowScreenWidth - ((float)GameScreenWidth * state->ScaleMultiplier)) * 0.5F;
     float offsetY = (state->WindowScreenHeight - ((float)GameScreenHeight * state->ScaleMultiplier)) * 0.5F;
 
@@ -352,7 +338,7 @@ void DrawRenderWindows(GameState *state)
 
     DrawTexturePro(
         state->Dungeon.texture,
-        (Rectangle){0, 0, (float)GameScreenWidth, -(float)GameScreenHeight}, // source flipped Y
+        (Rectangle){0, 0, (float)GameScreenWidth, -(float)GameScreenHeight},
         (Rectangle){offsetX, offsetY, (float)GameScreenWidth * state->ScaleMultiplier, (float)GameScreenHeight * state->ScaleMultiplier},
         (Vector2){0, 0},
         0.0F,
@@ -367,19 +353,12 @@ void DrawRenderWindows(GameState *state)
 
 /**
  * @brief Konversi posisi mouse dari window space ke virtual screen space
- *
- * Diperlukan karena game dirender ke texture virtual yang di-scale ke window.
- * Tanpa konversi ini, posisi mouse tidak akan akurat di virtual screen.
- *
- * @param state Pointer ke GameState (butuh ScaleMultiplier dan ukuran window)
- * @return Vector2 posisi mouse dalam koordinat virtual screen (0,0 sampai 1280x720)
  */
 Vector2 GetVirtualMousePosition(GameState *state)
 {
     Vector2 mouse = GetMousePosition();
     Vector2 virtualMouse = {0, 0};
 
-    // kurangi offset letterbox lalu bagi scale untuk dapat koordinat virtual
     virtualMouse.x = (mouse.x - ((state->WindowScreenWidth - (GameScreenWidth * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
     virtualMouse.y = (mouse.y - ((state->WindowScreenHeight - (GameScreenHeight * state->ScaleMultiplier)) * 0.5F)) / state->ScaleMultiplier;
 
@@ -392,14 +371,6 @@ Vector2 GetVirtualMousePosition(GameState *state)
 
 /**
  * @brief Bersihin semua resource sebelum game ditutup
- *
- * Urutan cleanup (urutan penting):
- * 1. Unload semua texture di TexturesMap
- * 2. Unload map data
- * 3. Unload render texture virtual
- * 4. Tutup audio dan window
- *
- * @param state Pointer ke GameState aktif
  */
 void GameShutDown(GameState *state)
 {
@@ -418,11 +389,6 @@ void GameShutDown(GameState *state)
  * Window & Video Settings Functions
  *==============================================================================*/
 
-/**
- * @brief ToggleFullscreenMode()
- * Toggle antara fullscreen dan windowed mode.
- * @note Setelah toggle,UpdateGame() akan recalculate scale
- */
 void ToggleFullscreenMode(void)
 {
     if (IsWindowFullscreen())
@@ -435,22 +401,11 @@ void ToggleFullscreenMode(void)
     }
 }
 
-/**
- * @brief SetResolution()
- * Set ukuran window ke resolusi tertentu.
- * @param width Lebar window baru
- * @param height Tinggi window baru
- */
 void SetResolution(int width, int height)
 {
     SetWindowSize(width, height);
 }
 
-/**
- * @brief GetCurrentResolution()
- * Ambil resolusi saat ini.
- * @return Rectangle berisi x=width, y=height
- */
 Rectangle GetCurrentResolution(void)
 {
     Rectangle res = {0};
@@ -459,11 +414,6 @@ Rectangle GetCurrentResolution(void)
     return res;
 }
 
-/**
- * @brief GetMonitorResolution()
- * Ambil resolusi monitor utama.
- * @return Rectangle berisi x=monitorWidth, y=monitorHeight
- */
 Rectangle GetMonitorResolution(void)
 {
     Rectangle res = {0};
@@ -472,11 +422,6 @@ Rectangle GetMonitorResolution(void)
     return res;
 }
 
-/**
- * @brief IsFullscreen()
- * Cek apakah sedang dalam mode fullscreen.
- * @return true kalo fullscreen
- */
 bool IsFullscreen(void)
 {
     return IsWindowFullscreen();

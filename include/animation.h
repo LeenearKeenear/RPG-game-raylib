@@ -1,15 +1,12 @@
 #pragma once
 
-#include "raylib.h"
 #include "tiles.h"
 
 /*==============================================================================
- * Animation Logic (Data-Driven)
+ * Animation State & Direction
  *==============================================================================*/
 
-/**
- * @brief Status animasi yang mungkin untuk suatu entitas.
- */
+/** State animasi buat entity (player, enemy, dll) */
 enum State
 {
     IDLE,
@@ -71,13 +68,48 @@ struct AnimationSet
 };
 
 /*==============================================================================
- * Animation Functions
+ * Tile Rendering (Legacy helpers — deklarasi asli ada di tiles.h/tiles.cpp)
  *==============================================================================*/
+
+/**
+ * @brief Jenis tile yang ada di spritesheet (untuk RenderTilePNG)
+ * @note Digunakan oleh RenderTilePNG() saja
+ */
+typedef enum
+{
+    TILE_PLAYER_NEW,
+    TILE_CHEST_OPEN,
+    TILE_CHEST_CLOSED,   /**< @deprecated Cuma placeholder, gak dipake */
+    TILE_ENEMY_SLIME,    /**< Slime */
+    TILE_ENEMY_SKELETON, /**< Skeleton */
+    TILE_ENEMY_WOLF,     /**< Wolf */
+    TILE_ITEM_POTION,
+    TILE_WEAPON
+} TileType;
+
+/**
+ * @brief Properti tiap tile
+ */
+typedef struct
+{
+    TileCoordinate CoordID; /**< Posisi tile di spritesheet */
+    bool IsWalkable;        /**< True kalo player/enemy bisa lewat */
+    bool HasInteraction;    /**< True kalo tile punya event interaksi */
+} TileDefinition;
+
+/**
+ * @brief Render satu tile dari spritesheet ke posisi world (legacy helper)
+ */
+void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
 
 /**
  * @brief Render satu tile dari spritesheet ke posisi world dengan ukuran kecil
  */
 void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale);
+
+/*==============================================================================
+ * Animation Functions
+ *==============================================================================*/
 
 /**
  * @brief Melanjutkan progres status animasi berdasarkan langkah waktu (dt).
@@ -108,64 +140,40 @@ namespace AnimEffects
 {
     /**
      * @brief Menghitung nilai alpha untuk efek fade-out linear.
-     * @param timer Waktu yang sudah berjalan.
-     * @param duration Durasi total animasi.
-     * @return Nilai alpha antara 0.0f dan 1.0f.
      */
     float CalculateFadeOut(float timer, float duration);
 
     /**
      * @brief Menghitung posisi offset vertikal yang terus naik.
-     * @param currentOffset Offset saat ini.
-     * @param speed Kecepatan naik (pixel per detik).
-     * @param dt Delta time.
-     * @return Offset baru.
      */
     float CalculateFloatOffset(float currentOffset, float speed, float dt);
 
     /**
      * @brief Menentukan apakah objek harus digambar (efek kedip).
-     * @param timer Waktu yang sudah berjalan.
-     * @param frequency Frekuensi kedipan.
-     * @return True jika harus digambar, False jika tidak.
      */
     bool ShouldBlink(float timer, float frequency);
 
     /**
      * @brief Menerapkan logika fisika sederhana (gravitasi & friksi) pada posisi.
-     * @param pos Referensi ke posisi.
-     * @param vel Referensi ke velocity.
-     * @param gravity Nilai gravitasi.
-     * @param friction Nilai friksi (0.0 - 1.0).
-     * @param dt Delta time.
      */
     void ApplyPhysics(Vector2& pos, Vector2& vel, float gravity, float friction, float dt);
 
     /**
      * @brief Menggerakkan posisi ke arah target dengan kecepatan tertentu.
-     * @param current Posisi saat ini.
-     * @param target Posisi tujuan.
-     * @param speed Kecepatan gerak.
-     * @param dt Delta time.
-     * @return Posisi baru.
      */
     Vector2 LerpTowards(Vector2 current, Vector2 target, float speed, float dt);
 
     /**
      * @brief Menghitung offset maju-mundur untuk animasi tusukan (Thrust).
-     * @param progress Progress animasi (0.0 - 1.0).
-     * @param maxOffset Jarak maksimum tusukan.
-     * @return Offset saat ini.
      */
     float CalculateThrustOffset(float progress, float maxOffset);
 
     /**
      * @brief Menghitung sudut rotasi untuk animasi ayunan (Slash).
-     * @param progress Progress animasi (0.0 - 1.0).
-     * @param startAngle Sudut awal ayunan.
-     * @param sweepAngle Total sudut yang ditempuh.
-     * @return Sudut rotasi saat ini.
      */
     float CalculateSlashRotation(float progress, float startAngle, float sweepAngle);
 }
 
+// Fungsi lama — masih dipakai oleh HandleAction() di player.cpp
+// Definisi: src/animation.cpp
+void UpdatePlayerAttack(Animation &p);

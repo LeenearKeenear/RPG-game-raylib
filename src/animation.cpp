@@ -1,7 +1,9 @@
 #include "../include/animation.h"
 #include "../lib/raylib/include/raymath.h"
 
-// --- Definisi Data Animasi ---
+/*==============================================================================
+ * Animation Set Data Definitions
+ *==============================================================================*/
 
 const AnimationSet PlayerAnimationSet = {
     .configs = {
@@ -60,9 +62,41 @@ const AnimationSet WolfAnimationSet = {
 };
 
 /*==============================================================================
- * Animation Logic Implementation
+ * Legacy Tile Rendering (RenderTilePNG — masih dipakai oleh beberapa modul)
+ * Definisi LoadTileTexture, GetFrame, DrawTileTexture ada di src/tiles.cpp
  *==============================================================================*/
 
+void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
+{
+    // Mapping TileType ke koordinat di spritesheet
+    // Index harus sesuai urutan enum TileType
+    static const TileDefinition TileProperty[] = {
+        /* TILE_PLAYER_NEW   */ {{3, 2}, false, false},
+        /* TILE_CHEST_OPEN   */ {{0, 0}, false, false},
+        /* TILE_CHEST_CLOSED */ {{0, 0}, false, false},
+        /* TILE_ENEMY_SLIME  */ {{0, 0}, false, true},
+        /* TILE_ENEMY_SKELETON*/ {{0, 1}, false, true},
+        /* TILE_ENEMY_WOLF   */ {{0, 2}, false, true},
+        /* TILE_ITEM_POTION  */ {{7, 8}, false, true},
+        /* TILE_WEAPON       */ {{6, 4}, false, true}
+    };
+
+    Rectangle Source = {
+        (float)(TileProperty[Type].CoordID.x * (TILE_SIZE + TILE_GAP)),
+        (float)(TileProperty[Type].CoordID.y * (TILE_SIZE + TILE_GAP)),
+        (float)TILE_SIZE,
+        (float)TILE_SIZE};
+
+    Rectangle Destination = {(float)pos_x, (float)pos_y, (float)TILE_SIZE, (float)TILE_SIZE};
+    Vector2 origin = {0, 0};
+    DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
+}
+
+/*==============================================================================
+ * Small Sprite Rendering
+ *==============================================================================*/
+
+// Definisi: src/animation.cpp (ini file ini sendiri)
 void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale) {
     float smallSize = TILE_SIZE * scale;
     float offset = (TILE_SIZE - smallSize) / 2.0f;
@@ -76,6 +110,10 @@ void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, fl
 
     DrawTileTexture(slot, (int)sheetCoord.x, (int)sheetCoord.y, dest);
 }
+
+/*==============================================================================
+ * Animation Logic Implementation (Arsitektur akbarazy-2nd)
+ *==============================================================================*/
 
 void UpdateAnimation(Animation &anim, float dt)
 {
@@ -136,6 +174,22 @@ void PlayAnimation(Animation &anim, State newState, Direction newDir, const Anim
     anim.timer = 0;
     anim.walkFrameIndex = 0;
     anim.currentFrame = anim.currentConfig->pattern[0];
+}
+
+/*==============================================================================
+ * Legacy: UpdatePlayerAttack — masih dipakai oleh Player::HandleAction()
+ * Definisi: src/animation.cpp (ini file ini sendiri)
+ *==============================================================================*/
+
+void UpdatePlayerAttack(Animation &p)
+{
+    if (!p.isAttacking)
+    {
+        p.state = ATTACK;
+        p.currentFrame = 0;
+        p.timer = 0;
+        p.isAttacking = true;
+    }
 }
 
 /*==============================================================================

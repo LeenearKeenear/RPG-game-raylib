@@ -151,7 +151,6 @@ bool Enemy::CheckPlayerLoS() {
     if (!tilesonMap || !PlayerInstance.IsAlive()) return false;
 
     Vector2 enemyCenter = GetCenter();
-    Vector2 playerPos = PlayerInstance.GetPosition();
     Vector2 playerCenter = PlayerInstance.GetCenter();
 
     float dist = Vector2Distance(enemyCenter, playerCenter);
@@ -267,7 +266,6 @@ void Enemy::HandleChase() {
 }
 
 void Enemy::HandleAttack() {
-    Vector2 playerPos = PlayerInstance.GetPosition();
     Vector2 enemyCenter = GetCenter();
     Vector2 playerCenter = PlayerInstance.GetCenter();
 
@@ -371,7 +369,10 @@ void Enemy::Render() {
     }
 }
 
-// Global functions implementation
+/*==============================================================================
+ * Global Utility Functions (definisi: src/enemy.cpp)
+ *==============================================================================*/
+
 int GetRandomDamage(int min, int max) {
     return GetRandomValue(min, max);
 }
@@ -414,7 +415,7 @@ void SpawnRandomEnemy() {
 }
 
 void SaveEnemiesForMap(const std::string& mapPath) {
-    // Note: Entities::RegisterDeath already handles persistence of dead enemies
+    // Entities::RegisterDeath already handles persistence of dead enemies
 }
 
 bool LoadEnemiesForMap(const std::string& mapPath) {

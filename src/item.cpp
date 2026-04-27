@@ -10,8 +10,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <map>
 
-static std::vector<Item> currentItems;
 static std::map<std::string, std::vector<Item>> savedMapItems;
 std::vector<Item> activeItems;
 
@@ -30,6 +30,10 @@ void SpawnItemWave()
     }
 
     TraceLog(LOG_INFO, "ITEM: total spawned = %d", (int)activeItems.size());
+    for (auto &item : activeItems)
+    {
+        TraceLog(LOG_INFO, "SPAWNED: %s at (%.1f, %.1f)", item.name.c_str(), item.position.x, item.position.y);
+    }
 }
 
 void InitItems()
@@ -79,6 +83,8 @@ void SpawnRandomItem()
 
     TiledHelper::CollisionResult mapCollision;
     TiledHelperFunction.TryGetCollisionByLayerName(COLLISION_LAYER_NAME, mapCollision);
+    TiledHelper::CollisionResult boundCollision;
+    TiledHelperFunction.TryGetCollisionByType("map_bound", boundCollision);
 
     while (!validPos && attempts < maxAttempts)
     {
@@ -87,22 +93,27 @@ void SpawnRandomItem()
             (float)GetRandomValue(TILE_SIZE, (int)mapHeight - TILE_SIZE)};
 
         Rectangle itemHitbox = BuildHitbox(randomPos, 0, 0, TILE_SIZE, TILE_SIZE);
+
         bool colRect = CheckCollisionAgainstRects(itemHitbox, mapCollision.rects);
         bool colPoly = CheckCollisionAgainstPolygons(itemHitbox, mapCollision.polygons);
+        bool inBounds = IsWithinWorldBounds(itemHitbox, mapWidth, mapHeight);
+        bool insideBound = boundCollision.polygons.empty()
+                               ? true
+                               : !IsPointInPolygon(randomPos, boundCollision.polygons[0]);
 
-        if (!colRect && !colPoly)
+        if (!colRect && !colPoly && inBounds && insideBound)
         {
             validPos = true;
         }
         attempts++;
     }
 
-    if (validPos)
-    {
-        ItemCategory c = (GetRandomValue(1, 2) == 1) ? ITEM_POTION : ITEM_WEAPON;
-        ItemRarity r = (GetRandomValue(1, 2) == 1) ? RARITY_COMMON : RARITY_RARE;
-        activeItems.push_back(SpawnItem(randomPos, c, (float)GetRandomValue(1, 3), r));
-    }
+    if (!validPos)
+        return;
+
+    ItemCategory c = (GetRandomValue(1, 2) == 1) ? ITEM_POTION : ITEM_WEAPON;
+    ItemRarity r = (GetRandomValue(1, 2) == 1) ? RARITY_COMMON : RARITY_RARE;
+    activeItems.push_back(SpawnItem(randomPos, c, (float)GetRandomValue(1, 3), r));
 }
 
 Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity rarity)
@@ -114,6 +125,7 @@ Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity 
     newItem.isPickedUp = false;
     newItem.position = pos;
     
+    // Tentukan Nama dan Hitbox berdasarkan kategori
     switch (category)
     {
     case ITEM_WEAPON:
@@ -130,9 +142,24 @@ Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity 
         break;
     }
 
+    const char *rarityText = "";
+    if (rarity == RARITY_COMMON)
+        rarityText = "COMMON";
+    else if (rarity == RARITY_RARE)
+        rarityText = "RARE";
+
+    TraceLog(LOG_INFO, "ITEM: Spawned '%s' at (%.1f, %.1f) with Multiplier: %.2f and rarity '%s'",
+             newItem.name.c_str(), pos.x, pos.y, multiplier, rarityText);
+
     return newItem;
 }
 
+/**
+ * @brief Update semua item aktif: magnet pull dan pickup.
+ * Menggunakan AnimEffects::LerpTowards untuk smooth magnet pull.
+ * Menggunakan Inventory::AddToInventory untuk pickup system.
+ * Definisi: src/item.cpp (file ini)
+ */
 void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadius, float itemSpeed)
 {
     for (auto &item : activeItems)
@@ -146,22 +173,23 @@ void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadiu
 
         float dist = Vector2Distance(playerCenter, itemCenter);
 
+        // Dalam radius magnet → gerakin item ke player (smooth lerp)
         if (dist <= magnetRadius)
         {
             item.position = AnimEffects::LerpTowards(item.position, playerCenter, itemSpeed, GetFrameTime());
+
+            // Sync hitbox ke position
             item.hitbox.x = item.position.x;
             item.hitbox.y = item.position.y;
         }
 
+        // Pickup via hitbox collision
         if (CheckCollisionRecs(playerHitbox, item.hitbox))
         {
             if (Inventory::AddToInventory(PlayerInstance, item)) {
                 item.isPickedUp = true;
                 std::string logMsg = "Picked up: " + item.name;
                 Effects::AddLog(logMsg.c_str());
-            } else {
-                // Optional: Log if inventory is full
-                // MessageLog::AddLog("Inventory Full!");
             }
         }
     }
@@ -187,5 +215,6 @@ void RenderItems(Item &item)
     case ITEM_WEAPON: sheetCoord = {6, 4}; break;
     default:          sheetCoord = {7, 8}; break;
     }
+
     DrawSmallSprite(TEXTURE_ITEMS, sheetCoord, item.position, 0.5f);
 }

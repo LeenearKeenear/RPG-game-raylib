@@ -79,6 +79,16 @@ void Player::Init(GameState *state, const char *spawnObjectName)
 
 /**
  * Loop update utama untuk pemain.
+ * Dipanggil oleh Entities::Update() setiap frame.
+ * 
+ * Urutan:
+ * 1. Input polling
+ * 2. Lifecycle check (revive)
+ * 3. Timer & Status effects
+ * 4. Physics & Knockback
+ * 5. Logic modules (Movement, Combat, Inventory, Interaction)
+ * 6. Animation & Camera update
+ * 7. Map transition handling
  */
 void Player::Update()
 {
@@ -114,18 +124,6 @@ void Player::Update()
         pendingGoBack = true;
     }
 
-    // Handle map transitions immediately or queue them
-    if (pendingGoBack) {
-        pendingGoBack = false;
-        GoBack();
-        return;
-    }
-    if (pendingSwitchMap) {
-        pendingSwitchMap = false;
-        SwitchMap(pendingMapPath.c_str(), pendingDoorName.c_str());
-        return;
-    }
-
     // Memblokir pergerakan selama animasi serangan
     if (!Anim.isAttacking) {
         Movement::HandleMovement(*this);
@@ -142,10 +140,24 @@ void Player::Update()
     Anim.position = Position; 
     UpdateAnimation(Anim, GetFrameTime());
     Movement::UpdateCamera(*this);
+
+    // 7. Handle map transitions
+    if (pendingGoBack) {
+        pendingGoBack = false;
+        GoBack();
+        return;
+    }
+    if (pendingSwitchMap) {
+        pendingSwitchMap = false;
+        SwitchMap(pendingMapPath.c_str(), pendingDoorName.c_str());
+        return;
+    }
 }
 
-
-
+/**
+ * Render sprite player dengan animasi di posisi world saat ini.
+ * Dipanggil dari Entities::Render() dengan Y-sorting.
+ */
 void Player::Render(void)
 {
     // Bayangan (Drop shadow)
@@ -180,7 +192,9 @@ void Player::TakeDamage(float amount, Vector2 knockback) {
     TraceLog(LOG_INFO, "PLAYER: Menerima %.1f damage. Sisa HP: %.1f", amount, Health);
 }
 
-
+/*==============================================================================
+ * Private Helper Methods
+ *==============================================================================*/
 
 bool Player::CanMove(Vector2 newPosition)
 {
@@ -192,8 +206,11 @@ Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
     return { position.x + HitboxOffsetX, position.y + HitboxOffsetY, HitboxWidth, HitboxHeight };
 }
 
-
-
+/**
+ * @brief Gambar indicator arah aim player (debug overlay)
+ * Warna berubah berdasarkan apakah arah aim valid (dot product dengan facing direction)
+ * Definisi: src/player.cpp (file ini)
+ */
 void Player::DrawAimIndicator(void)
 {
     if (!isDebugMode) return;
@@ -218,6 +235,112 @@ void Player::DrawAimIndicator(void)
     Color indicatorColor = (dot >= RayCastAngle) ? GREEN : WHITE;
 
     DrawLineEx(playerCenter, rayEnd, 2.0f, indicatorColor);
+    // Raycast hanya terhadap object layer (garis biru) untuk titik merah
+    std::vector<MapObject> debugObstacles;
+    if (tilesonMap) {
+        for (auto &obj : tilesonMap->Objects) {
+            if (obj.layerName == OBJECT_LAYER_NAME) {
+                debugObstacles.push_back(obj);
+            }
+        }
+    }
+    LastHit = Ray.Cast(playerCenter, aimDir, INTERACT_RANGE, debugObstacles);
+
+    // Titik merah hanya di interseksi dengan garis biru (object layer)
+    if (LastHit.hit) {
+        DrawCircleV(LastHit.point, 4.0f, RED);
+    }
 }
 
+/*==============================================================================
+ * Action Handlers
+ *==============================================================================*/
 
+/**
+ * Resolve apa yang terjadi saat input aksi (misal: Left Click)
+ * dilakukan berdasarkan context:
+ * - Inventori terbuka → equip/unequip item
+ * - Slot senjata (1/2) → attack
+ * - Slot potion (3/4) → minum potion
+ * Definisi: src/player.cpp (file ini)
+ */
+void Player::HandleAction(void)
+{
+    PlayerAction action = InputInstance.ResolveAction();
+
+    switch (action)
+    {
+    case ACTION_ATTACK:
+        if (Mana >= AttackManaCost)
+        {
+            UpdatePlayerAttack(Anim);
+            Mana -= AttackManaCost;
+            ManaRegenTimer = ManaRegenDelay; // Reset timer ke 2 detik
+            TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d) - Mana: %.1f", (int)InputInstance.GetActiveSlot(), Mana);
+        }
+        else
+        {
+            TraceLog(LOG_WARNING, "PLAYER: Attack failed! Out of energy.");
+        }
+        break;
+
+    case ACTION_DRINK_POTION:
+    {
+        int slotIdx = (int)InputInstance.GetActiveSlot() - 1;
+        if (slotIdx >= 0 && slotIdx < 4)
+        {
+            if (Hotbar[slotIdx].type == ITEM_POTION && Hotbar[slotIdx].amount > 0)
+            {
+                UsePotion(slotIdx);
+                TraceLog(LOG_INFO, "PLAYER: Drink potion! %s (slot %d)", Hotbar[slotIdx].name.c_str(), (int)InputInstance.GetActiveSlot());
+            }
+            else
+            {
+                TraceLog(LOG_INFO, "PLAYER: No potion in slot %d!", (int)InputInstance.GetActiveSlot());
+            }
+        }
+        break;
+    }
+
+    case ACTION_EQUIP_UNEQUIP:
+        // TODO: implementasi equip/unequip dari inventori
+        TraceLog(LOG_INFO, "PLAYER: Equip/Unequip from inventory!");
+        break;
+
+    case ACTION_NONE:
+    default:
+        break;
+    }
+}
+
+/**
+ * @brief Menggunakan potion dari hotbar slot tertentu.
+ * Cek apakah item mengandung kata "Mana" untuk mendeteksi tipe heal.
+ * Definisi: src/player.cpp (file ini)
+ */
+void Player::UsePotion(int slotIndex)
+{
+    if (Hotbar[slotIndex].name.find("Mana") != std::string::npos)
+    {
+        // Apply mana heal
+        Mana += Hotbar[slotIndex].healValue;
+        if (Mana > MaxMana)
+            Mana = MaxMana;
+        TraceLog(LOG_INFO, "PLAYER: Healed Mana by %d! Current: %.1f", Hotbar[slotIndex].healValue, Mana);
+    }
+    else
+    {
+        // Apply health heal
+        Health += Hotbar[slotIndex].healValue;
+        if (Health > MaxHealth)
+            Health = MaxHealth;
+        TraceLog(LOG_INFO, "PLAYER: Healed Health by %d! Current: %.1f", Hotbar[slotIndex].healValue, Health);
+    }
+
+    // Consume item
+    Hotbar[slotIndex].amount--;
+    if (Hotbar[slotIndex].amount <= 0)
+    {
+        Hotbar[slotIndex] = {ITEM_NONE, "", 0, 0, 0, 0, 0};
+    }
+}
