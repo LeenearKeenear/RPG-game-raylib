@@ -37,8 +37,7 @@ static Popup loadPopup("Game Loaded!", "OK", 0.7F);
  */
 OptionsScreen::OptionsScreen() 
     : active(false), returnScreen(PLAY), selectedTab(0), 
-      width(0), height(0), startX(0), startY(0), 
-      showFPS(false)
+      showFPS(false), width(0), height(0), startX(0), startY(0)
 {
     tabButtons = {buttonTxt("VIDEO", 0, 0, 30, WHITE, 0.7F),
                 buttonTxt("AUDIO", 0, 0, 30, WHITE, 0.7F),

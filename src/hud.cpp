@@ -1,102 +1,186 @@
 #include "../include/hud.h"
 #include "../include/player.h"
 #include "../include/animation.h"
+#include "../include/inventory.h"
+#include "../include/effectQueue.h"
 #include <cstdio>
+#include <vector>
+#include <string>
+
+extern const int GameScreenWidth;
+extern const int GameScreenHeight;
 
 /**
  * @brief Helper untuk menggambar teks dengan shadow (bayangan) agar terbaca di background terang/gelap.
  */
 static void DrawTextHUD(const char* text, int x, int y, int fontSize, Color color)
 {
-    // 1. Hitung lebar teks
     int textWidth = MeasureText(text, fontSize);
     
-    // 2. Padding background proporsional terhadap ukuran font
     float padX = (float)fontSize * 0.8f;
     float padY = (float)fontSize * 0.5f;
     
-    // 3. Gambar background hitam semi-transparan
     DrawRectangleRounded(
         (Rectangle){ (float)x - padX/2.0f, (float)y - padY/2.0f, (float)textWidth + padX, (float)fontSize + padY }, 
         0.3f, 8, ColorAlpha(BLACK, 0.8f)
     );
 
-    // 4. Gambar teks utama
     DrawText(text, x, y, fontSize, color);
+}
+
+static int selectedSlot = -1; // -1: none, 0-48: bag, 49-52: hotbar
+
+static InventoryItem& GetItemBySlotIndex(int index) {
+    if (index >= 0 && index < 49) return PlayerInstance.Bag[index];
+    if (index >= 49 && index < 53) return PlayerInstance.Hotbar[index - 49];
+    static InventoryItem empty = {ITEM_NONE, "", 0, 0, 0, 0, 0};
+    return empty;
+}
+
+void DrawInventory()
+{
+    if (!InputInstance.IsInventoryOpen()) {
+        selectedSlot = -1;
+        return;
+    }
+
+    // Overlay gelap
+    DrawRectangle(0, 0, GameScreenWidth, GameScreenHeight, ColorAlpha(BLACK, 0.7f));
+    DrawTextHUD("INVENTORY", GameScreenWidth / 2 - 90, 50, 30, GOLD);
+
+    const float slotSize = 50.0f;
+    const float padding = 6.0f;
+    const int gridSize = 7;
+    const float totalGridSize = (slotSize * gridSize) + (padding * (gridSize - 1));
+    
+    const float startX = (GameScreenWidth - totalGridSize) / 2.0f;
+    const float startY = (GameScreenHeight - totalGridSize) / 2.0f;
+
+    Vector2 mousePos = GetVirtualMousePosition(gState);
+    bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+    for (int i = 0; i < 49; i++)
+    {
+        int row = i / gridSize;
+        int col = i % gridSize;
+
+        Rectangle slotRect = {
+            startX + col * (slotSize + padding),
+            startY + row * (slotSize + padding),
+            slotSize,
+            slotSize
+        };
+
+        bool isHovered = CheckCollisionPointRec(mousePos, slotRect);
+        bool isSelected = (selectedSlot == i);
+
+        // Slot background
+        Color slotColor = isSelected ? ColorAlpha(GOLD, 0.4f) : (isHovered ? ColorAlpha(GRAY, 0.7f) : ColorAlpha(DARKGRAY, 0.6f));
+        DrawRectangleRounded(slotRect, 0.2f, 8, slotColor);
+        DrawRectangleRoundedLines(slotRect, 0.2f, 8, isSelected ? GOLD : ColorAlpha(WHITE, 0.3f));
+
+        // Item icon
+        InventoryItem& item = PlayerInstance.Bag[i];
+        if (item.type != ITEM_NONE)
+        {
+            float iconSize = 36.0f;
+            Rectangle dest = {
+                slotRect.x + (slotSize - iconSize) / 2.0f,
+                slotRect.y + (slotSize - iconSize) / 2.0f,
+                iconSize,
+                iconSize
+            };
+            DrawTileTexture(TEXTURE_ITEMS, item.iconX, item.iconY, dest);
+
+            if (item.amount > 1)
+            {
+                char amtBuf[12];
+                sprintf(amtBuf, "%d", item.amount);
+                DrawText(amtBuf, (int)slotRect.x + 35, (int)slotRect.y + 35, 12, WHITE);
+            }
+        }
+
+        // Logic Click
+        if (isHovered && mouseClicked)
+        {
+            if (selectedSlot == -1) 
+            {
+                if (item.type != ITEM_NONE) selectedSlot = i;
+            }
+            else 
+            {
+                // Swap
+                InventoryItem temp = GetItemBySlotIndex(i);
+                GetItemBySlotIndex(i) = GetItemBySlotIndex(selectedSlot);
+                GetItemBySlotIndex(selectedSlot) = temp;
+                selectedSlot = -1;
+            }
+        }
+    }
+
+    DrawTextHUD("Press 'I' to Close", GameScreenWidth / 2 - 85, GameScreenHeight - 60, 20, GRAY);
 }
 
 /**
  * @brief Helper untuk menggambar bar statistik (HP/MP) dengan teks di kanannya.
- * Dibuat internal di file ini saja.
  */
 static void DrawStatBar(Vector2 pos, float width, float height, float ratio, Color color, int current)
 {
-    // 1. Shadow & Background
     DrawRectangleRounded((Rectangle){ pos.x + 2, pos.y + 2, width, height }, 0.4f, 8, ColorAlpha(BLACK, 0.3f));
     DrawRectangleRounded((Rectangle){ pos.x, pos.y, width, height }, 0.4f, 8, DARKGRAY);
     
-    // 2. Fill (dengan efek gloss)
     if (ratio > 0) {
         DrawRectangleRounded((Rectangle){ pos.x, pos.y, width * ratio, height }, 0.4f, 8, color);
         DrawRectangleRounded((Rectangle){ pos.x, pos.y, width * ratio, height * 0.4f }, 0.4f, 8, ColorAlpha(WHITE, 0.1f));
     }
 
-    // 3. Border
     DrawRectangleRoundedLines((Rectangle){ pos.x, pos.y, width, height }, 0.4f, 8, ColorAlpha(WHITE, 0.2f));
 
-    // 4. Text (Samping Bar)
     char buffer[32];
     sprintf(buffer, "%d", current);
     
-    int fontSize = 18; // Ukuran disesuaikan dengan tinggi bar (22)
-    
-    // Posisikan di kanan bar
+    int fontSize = 18;
     int textX = (int)(pos.x + width + 15);
-    int textY = (int)(pos.y + (height - fontSize) / 2.0f); // Rata tengah vertikal
+    int textY = (int)(pos.y + (height - fontSize) / 2.0f);
     
     DrawTextHUD(buffer, textX, textY, fontSize, WHITE);
 }
 
 void DrawHotbar()
 {
-    extern const int GameScreenWidth;
-    extern const int GameScreenHeight;
-
-    const float slotSize = 55.0f; // Ukuran kotak dikurangi
+    const float slotSize = 55.0f;
     const float padding = 10.0f;
-    const float screenPadding = 30.0f; // Menyamakan dengan padding HP bar
+    const float screenPadding = 30.0f;
     const float totalWidth = (slotSize * 4) + (padding * 3);
     
-    // Taruh di kanan bawah, sejajar dengan bagian bawah mana bar (GameScreenHeight - 30)
     const float startX = (float)GameScreenWidth - screenPadding - totalWidth;
     const float startY = (float)GameScreenHeight - 30.0f - slotSize;
 
-    ItemSlot activeSlot = InputInstance.GetActiveSlot();
+    int activeSlot = (int)InputInstance.GetActiveSlot();
 
     for (int i = 0; i < 4; i++)
     {
         Rectangle slotRect = {startX + (i * (slotSize + padding)), startY, slotSize, slotSize};
         bool isActive = (activeSlot == (int)(i + 1));
+        bool isInventoryOpen = InputInstance.IsInventoryOpen();
 
-        // 1. Shadow
+        int globalIdx = 49 + i;
+        bool isHovered = isInventoryOpen && CheckCollisionPointRec(GetVirtualMousePosition(gState), slotRect);
+        bool isSelected = (selectedSlot == globalIdx);
+
         DrawRectangleRounded((Rectangle){slotRect.x + 2, slotRect.y + 2, slotRect.width, slotRect.height}, 0.2f, 8, ColorAlpha(BLACK, 0.4f));
 
-        // 2. Background
-        Color bgColor = isActive ? ColorAlpha(GOLD, 0.3f) : ColorAlpha(DARKGRAY, 0.6f);
+        Color bgColor = isActive ? ColorAlpha(GOLD, 0.3f) : (isSelected ? ColorAlpha(GOLD, 0.4f) : ColorAlpha(DARKGRAY, 0.6f));
+        if (isHovered && !isSelected) bgColor = ColorAlpha(GRAY, 0.7f);
+        
         DrawRectangleRounded(slotRect, 0.4f, 8, bgColor);
 
-        // 3. Border
-        Color borderColor = isActive ? GOLD : ColorAlpha(WHITE, 0.3f);
+        Color borderColor = (isActive || isSelected) ? GOLD : ColorAlpha(WHITE, 0.3f);
         DrawRectangleRoundedLines(slotRect, 0.4f, 8, borderColor);
 
-        // 4. Item Info (Icon)
-        InventoryItem item = PlayerInstance.GetHotbarItem(i);
+        InventoryItem item = PlayerInstance.Hotbar[i];
         if (item.type != ITEM_NONE)
         {
-            // Ambil source rect dari test.png
-            Rectangle src = GetFrame(item.iconX, item.iconY);
-            
-            // Render icon ditengah slot, sedikit diperbesar (misal 42x42)
             float iconDrawSize = 42.0f;
             Rectangle dest = {
                 slotRect.x + (slotRect.width - iconDrawSize) / 2.0f,
@@ -105,17 +189,32 @@ void DrawHotbar()
                 iconDrawSize
             };
             
-            DrawTexturePro(TexturesMap[TEXTURE_ITEMS], src, dest, {0, 0}, 0.0f, WHITE);
+            DrawTileTexture(TEXTURE_ITEMS, item.iconX, item.iconY, dest);
 
-            // Draw amount if > 1 or it's a potion/food
             if (item.amount > 0)
             {
                 char amtBuf[12];
                 sprintf(amtBuf, "%d", item.amount);
-                int fontSize = 12; // Tetap besar sesuai permintaan
+                int fontSize = 12;
                 int textW = MeasureText(amtBuf, fontSize);
-                // Sesuaikan posisi Y untuk slotSize 55 (menggunakan offset -22 agar terlihat pas di pojok)
                 DrawTextHUD(amtBuf, (int)(slotRect.x + slotRect.width - textW - 4), (int)(slotRect.y + slotRect.height - 13.5), fontSize, WHITE);
+            }
+        }
+
+        // Logic Click in Hotbar (when inventory open)
+        if (isHovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            if (selectedSlot == -1)
+            {
+                if (item.type != ITEM_NONE) selectedSlot = globalIdx;
+            }
+            else
+            {
+                // Swap
+                InventoryItem temp = GetItemBySlotIndex(globalIdx);
+                GetItemBySlotIndex(globalIdx) = GetItemBySlotIndex(selectedSlot);
+                GetItemBySlotIndex(selectedSlot) = temp;
+                selectedSlot = -1;
             }
         }
     }
@@ -123,7 +222,6 @@ void DrawHotbar()
 
 void DrawPlayerHUD()
 {
-    // Data stats
     float health = PlayerInstance.GetHealth();
     float maxHealth = PlayerInstance.GetMaxHealth();
     float healthRatio = (maxHealth > 0) ? health / maxHealth : 0;
@@ -132,13 +230,7 @@ void DrawPlayerHUD()
     float maxMana = PlayerInstance.GetMaxMana();
     float manaRatio = (maxMana > 0) ? mana / maxMana : 0;
 
-    // Warna HP dinamis
-    Color healthColor = GREEN;
-    if (healthRatio < 0.25f) healthColor = RED;
-    else if (healthRatio < 0.5f) healthColor = ORANGE;
-
-    // Konfigurasi layout
-    extern const int GameScreenHeight; 
+    Color healthColor = RED;
     const float barWidth = 220.0f;
     const float barHeight = 22.0f;
     const float padding = 30.0f;
@@ -146,16 +238,12 @@ void DrawPlayerHUD()
     const float avatarSize = 80.0f;
     const float avatarPadding = 18.0f;
 
-    // Posisi Avatar
     Vector2 avatarPos = { padding + avatarSize/2.0f, (float)GameScreenHeight - padding - avatarSize/2.0f };
     float radius = avatarSize / 2.0f;
     
-    // Background & Circle Avatar (Premium Glow & Circle)
-    DrawCircleV({ avatarPos.x + 2, avatarPos.y + 2 }, radius + 2, ColorAlpha(BLACK, 0.4f)); // Shadow
+    DrawCircleV({ avatarPos.x + 2, avatarPos.y + 2 }, radius + 2, ColorAlpha(BLACK, 0.4f)); 
     DrawCircleV(avatarPos, radius, DARKGRAY);
     
-    // Knight Sprite (Down Idle) - Dibuat sesuai ukuran frame yang lebih besar
-    Rectangle knightSrc = GetFrame(0, 2);
     float spriteSize = avatarSize - 10.0f; 
     Rectangle knightDest = { 
         (avatarPos.x - spriteSize/2.0f) + 1.0f, 
@@ -163,24 +251,20 @@ void DrawPlayerHUD()
         spriteSize, 
         spriteSize 
     };
-    DrawTexturePro(TexturesMap[TEXTURE_KNIGHT], knightSrc, knightDest, { 0, 0 }, 0.0f, WHITE);
+    DrawTileTexture(TEXTURE_KNIGHT, 0, 2, knightDest);
     
-    // Border Avatar (Circular)
     DrawCircleLinesV(avatarPos, radius, ColorAlpha(GOLD, 0.6f));
-    DrawCircleLinesV(avatarPos, radius + 1, ColorAlpha(GOLD, 0.3f)); // Subtle outer glow
+    DrawCircleLinesV(avatarPos, radius + 1, ColorAlpha(GOLD, 0.3f)); 
 
-    // Posisi Bars (Geser ke kanan avatar)
     float barsX = padding + avatarSize + avatarPadding;
     Vector2 healthPos = { barsX, (float)GameScreenHeight - padding - (barHeight * 2) - gap };
     Vector2 manaPos = { barsX, (float)GameScreenHeight - padding - barHeight };
 
-    // Draw Name (Di atas HP bar) dengan Shadow dan warna putih agar premium
     DrawTextHUD(PlayerInstance.GetName(), (int)healthPos.x + 7, (int)healthPos.y - 35, 20, WHITE);
 
-    // Draw Bars
     DrawStatBar(healthPos, barWidth, barHeight, healthRatio, healthColor, (int)health);
-    DrawStatBar(manaPos, barWidth, barHeight, manaRatio, SKYBLUE, (int)mana);
+    DrawStatBar(manaPos, barWidth, barHeight, manaRatio, GOLD, (int)mana);
 
-    // Draw Hotbar
     DrawHotbar();
+    DrawInventory();
 }
