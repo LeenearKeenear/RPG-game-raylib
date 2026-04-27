@@ -31,6 +31,7 @@ typedef struct
     int textureID;        // Index texture di atlas
     bool isPickedUp;      // Status apakah sudah diambil
     float statMultiplier; // Multiplier spawn (misal: damage x2)
+    float spawnTime;      // Waktu sebelum item bisa diambil
 } Item;
 
 // Global list untuk item yang ada di map
@@ -46,6 +47,8 @@ Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity 
 void SaveItemsForMap(const std::string &mapPath);
 bool LoadItemsforMap(const std::string &mapPath);
 void ClearItems();
+
+void SpawnItemAtLocation(Vector2 pos);
 
 // Fungsi pembantu untuk kategori spesifik
 void SpawnWeapon(Vector2 pos, float multiplier, ItemRarity rarity);
