@@ -15,11 +15,7 @@
  * @param startX Posisi X awal area options
  * @param startY Posisi Y awal area options
  */
-void DrawKeybindsTab(
-    Vector2 mousePosition,
-    int startX,
-    int startY)
-{
+void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY) {
     (void)mousePosition;
     int contentStartY = startY + 100;
     const int fontSize = 20;
@@ -31,7 +27,7 @@ void DrawKeybindsTab(
         "S / Arrow Down",
         "A / Arrow Left",
         "D / Arrow Right",
-        "E",
+        "F",
         "I",
         "M",
         "Mouse Left",
@@ -39,7 +35,7 @@ void DrawKeybindsTab(
         "2",
         "3",
         "4",
-        "P",
+        "`",
         "TAB",
         "R",
         "K",
