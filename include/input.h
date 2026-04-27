@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../lib/raylib/include/raylib.h"
-#include "inputLinkedlist.h"
+#include "inputLinkedList.h"
 
 /**
  * @brief Aksi tingkat tinggi yang dipetakan dari input mentah.
@@ -107,4 +107,4 @@ private:
     HotbarList doubleLinkedList; ///< Mengelola perputaran hotbar melalui scroll mouse
 };
 
-extern PlayerInput InputInstance;
+extern PlayerInput InputInstance;

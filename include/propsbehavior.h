@@ -114,7 +114,7 @@ private:
 #define BOMB_DAMAGE 25.0f            // damage bom
 #define BOMB_EXPLOSION_DURATION 0.3f // timer buat durasi meledaknya
 
-    std::vector<BombdData> bombs;
+    std::vector<BombData> bombs;
     std::vector<Vector2> spawnPoints;
 
     void SetupCallbacks(BombData &bomb);

@@ -1,4 +1,5 @@
 #include "../include/entities.h"
+#include "../include/propsbehavior.h"
 #include <vector>
 #include <algorithm>
 #include <set>
@@ -48,11 +49,11 @@ namespace Entities
     void Render()
     {
         // Depth sorting: Entitas dengan nilai Y lebih besar akan di-render terakhir (tampil di depan)
-        std::sort(Registry.begin(), Registry.end(), [](Entity *a, Entity *b) {
+        std::sort(Registry.begin(), Registry.end(), [](Entity *a, Entity *b)
+                  {
             if (!a) return false;
             if (!b) return true;
-            return a->Position.y < b->Position.y;
-        });
+            return a->Position.y < b->Position.y; });
 
         for (auto entity : Registry)
         {
@@ -118,7 +119,7 @@ namespace Entities
     /**
      * Menandai entitas sebagai mati untuk mencegahnya muncul kembali saat map dimuat ulang.
      */
-    void RegisterDeath(const std::string& mapPath, int objectId)
+    void RegisterDeath(const std::string &mapPath, int objectId)
     {
         DeadEntities.insert(mapPath + "_" + std::to_string(objectId));
     }
@@ -126,8 +127,24 @@ namespace Entities
     /**
      * Memeriksa apakah objek map tertentu sudah tercatat sebagai mati.
      */
-    bool IsAlreadyDead(const std::string& mapPath, int objectId)
+    bool IsAlreadyDead(const std::string &mapPath, int objectId)
     {
         return DeadEntities.find(mapPath + "_" + std::to_string(objectId)) != DeadEntities.end();
     }
+}
+
+// rendering master buat tile prop
+void RenderTileProps(void)
+{
+    chestManager.Render();
+    spikeManager.Render();
+    bombManager.Render();
+}
+
+// clear master buat tile prop
+void ClearTileProps(void)
+{
+    chestManager.Clear();
+    spikeManager.Clear();
+    bombManager.Clear();
 }

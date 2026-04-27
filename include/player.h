@@ -72,7 +72,7 @@ public:
     SwingAttack Swing = {0}; ///< Data status serangan saat ini
 
     Vector2 Velocity = {0, 0};   ///< Vektor kecepatan gerak saat ini
-    float Speed = 3.0f;          ///< Kecepatan gerak dasar
+    float Speed = 4.0f;          ///< Kecepatan gerak dasar
     float Mana = 100.0f;         ///< Poin mana saat ini
     float MaxMana = 100.0f;      ///< Poin mana maksimum
     float ManaRegenTimer = 0.0f; ///< Timer untuk jeda pemulihan mana
@@ -93,7 +93,14 @@ public:
     float HitboxOffsetX = 8.0f;
     float HitboxOffsetY = 14.0f;
 
-    Rectangle GetHitbox() const override { return {Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight}; }
+    Rectangle GetHitbox() const override
+    {
+        return {
+            Position.x + HitboxOffsetX,
+            Position.y + HitboxOffsetY,
+            HitboxWidth,
+            HitboxHeight};
+    }
 
     std::vector<Rectangle> CollisionRects;               ///< Tile tabrakan yang aktif
     std::vector<std::vector<Vector2>> CollisionPolygons; ///< Bentuk poligon tabrakan yang aktif
@@ -129,29 +136,7 @@ public:
             Position.y + HitboxOffsetY + HitboxHeight / 2};
     }
 
-    // hitbox player getter
-    Rectangle GetHitbox()
-    {
-        return {
-            GetPosition().x + HitboxOffsetX,
-            GetPosition().y + HitboxOffsetY,
-            HitboxWidth,
-            HitboxHeight};
-    }
-
-    // info getters
-    const char *GetName() { return Name; }
-
-    // ================================================================
-    // Public Members
-    // ================================================================
-
-    bool pendingSwitchMap = false; /**< Flag nunggu ganti map */
-    std::string pendingMapPath;    /**< Path map tujuan */
-    std::string pendingDoorName;   /**< Nama pintu tujuan di map baru */
-    bool pendingGoBack = false;    /**< Flag nunggu aksi go back ke map sebelumnya */
-
-    // Hotbar management
+      // Hotbar management
     InventoryItem GetHotbarItem(int index) { return Hotbar[index]; }
 
     /**
@@ -188,7 +173,7 @@ private:
     // magnet/pickup fields
     float MagnetRadius = 20.0f;
     float ItemSpeed = 120.0f;
-    const float RayCastAngle = 0.707f; ///< cos(45°) — area pandang ±45° dari arah hadap
+    const float RayCastAngle = 0.600f; ///< cos(45°) — area pandang ±45° dari arah hadap
 
     // Action handler — definisi: src/player.cpp
     void HandleAction(void);

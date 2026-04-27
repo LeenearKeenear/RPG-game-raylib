@@ -193,7 +193,6 @@ void Debug::DrawAttackOverlay(void)
         break;
     }
 
-
     // Gambar hitbox serangan
     DrawRectangleLinesEx(attackHitbox, 2.0f, RED);
     DrawRectangleRec(attackHitbox, Fade(RED, 0.3f));
@@ -201,7 +200,7 @@ void Debug::DrawAttackOverlay(void)
     // Gambar titik hit jika ray mengenai object
     if (PlayerInstance.GetLastHit().hit)
         DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, VIOLET);
-}
+
     // Label
     DrawText("Attack Area (2:1 Rect)", (int)attackHitbox.x, (int)attackHitbox.y - 14, 14, RED);
 }
@@ -218,51 +217,58 @@ void Debug::DrawEnemySpawnOverlay(void)
     {
         // Deteksi sederhana apakah ini objek musuh
         std::string nameLower = obj.name;
-        std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), [](unsigned char c){ return std::tolower(c); });
-        
-        std::string typeLower = obj.type;
-        std::transform(typeLower.begin(), typeLower.end(), typeLower.begin(), [](unsigned char c){ return std::tolower(c); });
+        std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), [](unsigned char c)
+                       { return std::tolower(c); });
 
-        bool isEnemySpawn = (nameLower.find("enemy") != std::string::npos || 
-                             nameLower.find("slime") != std::string::npos || 
-                             nameLower.find("skeleton") != std::string::npos || 
+        std::string typeLower = obj.type;
+        std::transform(typeLower.begin(), typeLower.end(), typeLower.begin(), [](unsigned char c)
+                       { return std::tolower(c); });
+
+        bool isEnemySpawn = (nameLower.find("enemy") != std::string::npos ||
+                             nameLower.find("slime") != std::string::npos ||
+                             nameLower.find("skeleton") != std::string::npos ||
                              nameLower.find("wolf") != std::string::npos ||
                              obj.name == "spawn_enemy" ||
                              typeLower == "enemy_spawn");
 
         if (isEnemySpawn)
         {
-            Vector2 pos = { obj.bounds.x, obj.bounds.y };
-            
+            Vector2 pos = {obj.bounds.x, obj.bounds.y};
+
             // Gambar lingkaran di titik spawn
             DrawCircleV(pos, 5.0f, PURPLE);
             DrawCircleLinesV(pos, 8.0f, Fade(PURPLE, 0.5f));
-            
+
             // Label nama objek
             DrawText(obj.name.c_str(), (int)pos.x - 35, (int)pos.y - 28, 12, PURPLE);
-            
+
             // Tampilkan jumlah jika ada properti 'count'
-            if (obj.properties.count("count")) {
+            if (obj.properties.count("count"))
+            {
                 int count = 1;
                 auto prop = obj.properties.at("count");
-                if (prop.getType() == tson::Type::Int) count = prop.getValue<int>();
-                else if (prop.getType() == tson::Type::Float) count = (int)prop.getValue<float>();
+                if (prop.getType() == tson::Type::Int)
+                    count = prop.getValue<int>();
+                else if (prop.getType() == tson::Type::Float)
+                    count = (int)prop.getValue<float>();
                 DrawText(TextFormat("Count: %d", count), (int)pos.x + 10, (int)pos.y + 10, 10, MAGENTA);
             }
-            
+
             // Tampilkan radius patroli (Lingkaran besar transparan)
             float radius = 128.0f;
-            if (obj.properties.count("radius")) {
+            if (obj.properties.count("radius"))
+            {
                 auto prop = obj.properties.at("radius");
-                if (prop.getType() == tson::Type::Int) radius = (float)prop.getValue<int>();
-                else if (prop.getType() == tson::Type::Float) radius = prop.getValue<float>();
+                if (prop.getType() == tson::Type::Int)
+                    radius = (float)prop.getValue<int>();
+                else if (prop.getType() == tson::Type::Float)
+                    radius = prop.getValue<float>();
             }
             DrawCircleLinesV(pos, radius, Fade(PURPLE, 0.2f));
             DrawText(TextFormat("Rad: %.0f", radius), (int)pos.x - 20, (int)pos.y + 15, 10, MAGENTA);
         }
     }
 }
-
 
 /*==============================================================================
  * Public Methods
@@ -486,7 +492,7 @@ void Debug::DrawWorldOverlay(void)
 
     DrawRectangleLinesEx(playerHitbox, 2.0f, LIME);
 
-       // Magnet radius overlay
+    // Magnet radius overlay
     Vector2 playerCenter = PlayerInstance.GetCenter();
     DrawCircleLinesV(playerCenter, PlayerInstance.GetMagnetRadius(), GOLD);
 
