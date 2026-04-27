@@ -8,10 +8,6 @@
 
 #include "../include/mainMenu.h"
 #include "../include/screen.h"
-<<<<<<< HEAD
-=======
-#include "../lib/raylib/include/raymath.h"
->>>>>>> origin/main
 #include "../lib/raylib/include/raylib.h"
 #include <array>
 
@@ -72,25 +68,25 @@ void UpdateMainMenu(GameState *state)
     Vector2 mousePosition = GetVirtualMousePosition(state);
     bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
-     for (int i = 0; i < 4; i++) {
-         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
-             switch (i) {
-                 case 0:  // Start Game
-                     state->currentScreen = LOADING;
-                     break;
-                 case 2:  // Options
-                     state->previousScreen = MAIN_MENU;
-                     state->currentScreen = OPTIONS;
-                     break;
-                 case 3:  // Quit
-                     CloseWindow();
-                     break;
-                 case 1:  // Load Game
-                 default:
-                     break;
-             }
-         }
-     }
+    for (int i = 0; i < 4; i++) {
+        if (buttons[i].isClicked(mousePosition, mouseClicked)) {
+            switch (i) {
+                case 0:  // Start Game
+                    state->currentScreen = LOADING;
+                    break;
+                case 2:  // Options
+                    state->previousScreen = MAIN_MENU;
+                    state->currentScreen = OPTIONS;
+                    break;
+                case 3:  // Quit
+                    CloseWindow();
+                    break;
+                case 1:  // Load Game
+                default:
+                    break;
+            }
+        }
+    }
 }
 
 /**
