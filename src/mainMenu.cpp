@@ -8,6 +8,10 @@
 
 #include "../include/mainMenu.h"
 #include "../include/screen.h"
+<<<<<<< HEAD
+=======
+#include "../lib/raylib/include/raymath.h"
+>>>>>>> origin/main
 #include "../lib/raylib/include/raylib.h"
 #include <array>
 
@@ -51,7 +55,7 @@ void InitMainMenu(GameState *state)
     int buttonSpacing = 70;
     int fontSize = 30;
 
-    // Looping bikin 4 tombol dengan posisi vertikal berurutan
+    // Looping bilang 4 tombol dengan posisi vertikal berurutan
     for (int i = 0; i < 4; i++)
     {
         buttons[i] = buttonTxt(texts[i], centerX, startY + (i * buttonSpacing), fontSize, WHITE, 0.6F);
