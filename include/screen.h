@@ -85,6 +85,7 @@ void DrawRenderTexture(GameState *state);
  * @param state Pointer ke GameState aktif
  */
 void DrawUIOverlay(GameState *state);
+void DrawPlayerHUD();
 
 /**
  * @brief Konversi posisi mouse dari window space ke virtual screen space
@@ -97,6 +98,7 @@ Vector2 GetVirtualMousePosition(GameState *state);
  * @brief Jalankan seluruh update logic game per frame
  */
 void UpdateLogicAll(void);
+void SpawnEnemiesFromMap(void);
 
 /**
  * @brief Gambar virtual screen ke window asli dengan scaling

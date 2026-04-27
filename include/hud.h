@@ -7,3 +7,4 @@
  * Fungsi ini dipanggil dari DrawUIOverlay di screen_handler.cpp
  */
 void DrawPlayerHUD();
+void DrawInventory();
