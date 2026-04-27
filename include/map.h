@@ -35,6 +35,7 @@ extern Camera2D camera;
  */
 struct MapObject
 {
+    int id;                                           // ID unik dari Tiled
     std::string name;                                 // Nama object di Tiled
     std::string type;                                 // Type object di Tiled
     std::string layerName;                            // Nama layer asal object
@@ -118,6 +119,7 @@ extern TileRange currentVisibleRange;
 #define COLLISION_LAYER_NAME "obstacle" // Nama layer collision obstacle
 #define OBJECT_LAYER_NAME "object"      // Nama layer object placement
 #define TRAP_LAYER_NAME "trap"          // nama layer trap placement
+#define ENEMY_SPAWN_OBJECT_NAME "spawn_enemy" // Nama objek spesifik untuk spawn musuh
 #define SPAWN_OBJECT_NAME "spawn"       // Nama object spawn player
 #define DOOR_TYPE_OBJECT_NAME "pass"    // Type object untuk pintu
 #define CHEST_TYPE_OBJECT_NAME "chest"  // Type object untuk chest
@@ -160,3 +162,4 @@ void SwitchMap(const char *newMapPath, const char *targetSpawnName);
  * @brief Kembali ke map sebelumnya
  */
 void GoBack(void);
+const char* GetCurrentMapPath(void);

@@ -12,13 +12,17 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../include/screen.h"
+#include "../include/entities.h"
 #include "../include/mapLogic.h"
 #include "../include/map.h"
+#include "../include/tiles.h"
 #include "../include/animation.h"
 #include "../include/player.h"
 #include "../include/enemy.h"
 #include "../include/item.h"
 #include "../include/mapstack.h"
+#include "../include/entities.h"
+#include "../include/movement.h"
 #include "../include/propsbehavior.h"
 #include <memory>
 #include <string>
@@ -125,6 +129,7 @@ void LoadMap(const char *mapPath)
             for (auto &obj : layer.getObjects())
             {
                 MapObject mapObj;
+                mapObj.id = obj.getId();
                 mapObj.name = obj.getName();
                 mapObj.type = obj.getType();
                 mapObj.layerName = layer.getName();
@@ -417,6 +422,10 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     // Re-init player berdasarkan target door di map baru
     PlayerInstance.Init(gState, targetDoorName);
 
+    // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
+    Entities::Clear();
+    Entities::Add(&PlayerInstance);
+    SpawnEnemiesFromMap();
     // Load musuh yang sudah ada atau spawn baru
     if (!LoadEnemiesForMap(currentMapPath))
     {
@@ -433,6 +442,9 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
     camera.rotation = 0;
     camera.zoom = 1.0F;
+
+    // Sinkronisasi kamera segera agar tidak ada blink/jump zoom di frame pertama
+    Movement::UpdateCamera(PlayerInstance);
 
     TraceLog(LOG_INFO, "SwitchMap: switched to map: %s via door: %s",
              newMapPath,
@@ -476,6 +488,10 @@ void GoBack(void)
     // Init player di spawn point map sebelumnya
     PlayerInstance.Init(gState, prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
 
+    // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
+    Entities::Clear();
+    Entities::Add(&PlayerInstance);
+    SpawnEnemiesFromMap();
     // Load musuh dari history
     if (!LoadEnemiesForMap(currentMapPath))
     {
@@ -493,5 +509,13 @@ void GoBack(void)
     camera.rotation = 0;
     camera.zoom = 1.0F;
 
+    // Sinkronisasi kamera segera agar tidak ada blink/jump zoom di frame pertama
+    Movement::UpdateCamera(PlayerInstance);
+
     TraceLog(LOG_INFO, "GoBack: returned to map: %s", prev.mapPath.c_str());
+}
+
+const char* GetCurrentMapPath(void)
+{
+    return currentMapPath.c_str();
 }

@@ -1,5 +1,6 @@
 #include "../include/item.h"
 #include "../include/animation.h"
+#include "../include/effects.h"
 #include "../include/screen.h"
 #include "../include/entities.h"
 #include "../include/player.h"
@@ -8,12 +9,11 @@
 #include "../lib/raylib/include/raymath.h"
 #include <iostream>
 #include <vector>
+#include <string>
+#include <map>
 
-static std::vector<Item> currentItems;
 static std::map<std::string, std::vector<Item>> savedMapItems;
 std::vector<Item> activeItems;
-extern void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale);
-extern TileDefinition TileProperty[];
 
 void InitItemTextures()
 {
@@ -46,7 +46,7 @@ void SaveItemsForMap(const std::string &mapPath)
 {
     if (mapPath.empty())
         return;
-    savedMapItems[mapPath] = currentItems;
+    savedMapItems[mapPath] = activeItems;
 }
 
 bool LoadItemsforMap(const std::string &mapPath)
@@ -57,7 +57,7 @@ bool LoadItemsforMap(const std::string &mapPath)
     auto it = savedMapItems.find(mapPath);
     if (it != savedMapItems.end())
     {
-        currentItems = it->second;
+        activeItems = it->second;
         return true;
     }
     return false;
@@ -65,24 +65,22 @@ bool LoadItemsforMap(const std::string &mapPath)
 
 void ClearItems()
 {
-    currentItems.clear();
+    activeItems.clear();
 }
 
 void SpawnRandomItem()
 {
     if (tilesonMap == nullptr)
         return;
-    TraceLog(LOG_INFO, "ITEM: tilesonMap = %p", tilesonMap);
 
     Vector2 randomPos;
     bool validPos = false;
-    int maxAttempts = 1000;
+    int maxAttempts = 100;
     int attempts = 0;
 
     float mapWidth = (float)tilesonMap->width * TILE_SIZE;
     float mapHeight = (float)tilesonMap->height * TILE_SIZE;
 
-    // Ambil data collision map sekali
     TiledHelper::CollisionResult mapCollision;
     TiledHelperFunction.TryGetCollisionByLayerName(COLLISION_LAYER_NAME, mapCollision);
     TiledHelper::CollisionResult boundCollision;
@@ -94,10 +92,8 @@ void SpawnRandomItem()
             (float)GetRandomValue(TILE_SIZE, (int)mapWidth - TILE_SIZE),
             (float)GetRandomValue(TILE_SIZE, (int)mapHeight - TILE_SIZE)};
 
-        // Buat hitbox sementara untuk musuh (asumsi 32x32)
         Rectangle itemHitbox = BuildHitbox(randomPos, 0, 0, TILE_SIZE, TILE_SIZE);
 
-        // Cek apakah posisi ini menabrak wall atau polygon collision
         bool colRect = CheckCollisionAgainstRects(itemHitbox, mapCollision.rects);
         bool colPoly = CheckCollisionAgainstPolygons(itemHitbox, mapCollision.polygons);
         bool inBounds = IsWithinWorldBounds(itemHitbox, mapWidth, mapHeight);
@@ -113,25 +109,11 @@ void SpawnRandomItem()
     }
 
     if (!validPos)
-        return; // Gagal nemu tempat kosong
+        return;
 
-    int randomItem = GetRandomValue(1, 2);
-    int randomMult = GetRandomValue(1, 3);
-    int randomRarity = GetRandomValue(1, 2);
-
-    ItemCategory c;
-    if (randomItem == 1)
-        c = ITEM_POTION;
-    else
-        c = ITEM_WEAPON;
-
-    ItemRarity r;
-    if (randomRarity == 1)
-        r = RARITY_COMMON;
-    else
-        r = RARITY_RARE;
-
-    activeItems.push_back(SpawnItem(randomPos, c, randomMult, r));
+    ItemCategory c = (GetRandomValue(1, 2) == 1) ? ITEM_POTION : ITEM_WEAPON;
+    ItemRarity r = (GetRandomValue(1, 2) == 1) ? RARITY_COMMON : RARITY_RARE;
+    activeItems.push_back(SpawnItem(randomPos, c, (float)GetRandomValue(1, 3), r));
 }
 
 Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity rarity)
@@ -142,7 +124,8 @@ Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity 
     newItem.rarity = rarity;
     newItem.isPickedUp = false;
     newItem.position = pos;
-    // Tentukan Nama dan Hitbox berdasarkan kategori (Requirement 2 & 3)
+    
+    // Tentukan Nama dan Hitbox berdasarkan kategori
     switch (category)
     {
     case ITEM_WEAPON:
@@ -159,7 +142,6 @@ Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity 
         break;
     }
 
-    // Tentukan nama rarity-nya dulu
     const char *rarityText = "";
     if (rarity == RARITY_COMMON)
         rarityText = "COMMON";
@@ -168,10 +150,16 @@ Item SpawnItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity 
 
     TraceLog(LOG_INFO, "ITEM: Spawned '%s' at (%.1f, %.1f) with Multiplier: %.2f and rarity '%s'",
              newItem.name.c_str(), pos.x, pos.y, multiplier, rarityText);
-    // Masukkan ke dunia (Vector)
+
     return newItem;
 }
 
+/**
+ * @brief Update semua item aktif: magnet pull dan pickup.
+ * Menggunakan AnimEffects::LerpTowards untuk smooth magnet pull.
+ * Menggunakan Inventory::AddToInventory untuk pickup system.
+ * Definisi: src/item.cpp (file ini)
+ */
 void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadius, float itemSpeed)
 {
     for (auto &item : activeItems)
@@ -185,12 +173,10 @@ void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadiu
 
         float dist = Vector2Distance(playerCenter, itemCenter);
 
-        // Dalam radius magnet → gerakin item ke player
+        // Dalam radius magnet → gerakin item ke player (smooth lerp)
         if (dist <= magnetRadius)
         {
-            Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, itemCenter));
-            item.position.x += dir.x * itemSpeed * GetFrameTime();
-            item.position.y += dir.y * itemSpeed * GetFrameTime();
+            item.position = AnimEffects::LerpTowards(item.position, playerCenter, itemSpeed, GetFrameTime());
 
             // Sync hitbox ke position
             item.hitbox.x = item.position.x;
@@ -200,8 +186,11 @@ void UpdateItems(Vector2 playerCenter, Rectangle playerHitbox, float magnetRadiu
         // Pickup via hitbox collision
         if (CheckCollisionRecs(playerHitbox, item.hitbox))
         {
-            item.isPickedUp = true;
-            std::cout << "Picked up: " << item.name << std::endl;
+            if (Inventory::AddToInventory(PlayerInstance, item)) {
+                item.isPickedUp = true;
+                std::string logMsg = "Picked up: " + item.name;
+                Effects::AddLog(logMsg.c_str());
+            }
         }
     }
 }
@@ -219,22 +208,13 @@ void RenderAllItems()
 
 void RenderItems(Item &item)
 {
-    // Tentukan koordinat di spritesheet secara manual saja kalau dilarang akses TileProperty
     Vector2 sheetCoord;
-
     switch (item.category)
     {
-    case ITEM_POTION:
-        sheetCoord = {7, 8};
-        break;
-    case ITEM_WEAPON:
-        sheetCoord = {6, 4};
-        break;
-    default:
-        sheetCoord = {7, 8};
-        break;
+    case ITEM_POTION: sheetCoord = {7, 8}; break;
+    case ITEM_WEAPON: sheetCoord = {6, 4}; break;
+    default:          sheetCoord = {7, 8}; break;
     }
 
-    // Panggil fungsi pembungkus tadi
     DrawSmallSprite(TEXTURE_ITEMS, sheetCoord, item.position, 0.5f);
 }

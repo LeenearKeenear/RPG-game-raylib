@@ -278,3 +278,14 @@ bool CheckCollisionAgainstPolygons(const Rectangle &hitbox, const std::vector<st
  * @return true kalo hitbox di dalam batas
  */
 bool IsWithinWorldBounds(const Rectangle &hitbox, float worldWidth, float worldHeight);
+
+/**
+ * @brief Cek apakah sebuah posisi aman (tidak menabrak wall/collision) dan berada di dalam batas map
+ * @param pos Posisi yang mau dicek
+ * @param width Lebar hitbox
+ * @param height Tinggi hitbox
+ * @param offsetX Offset X hitbox
+ * @param offsetY Offset Y hitbox
+ * @return true kalo posisi aman untuk spawn/gerak
+ */
+bool IsPositionSafe(Vector2 pos, float width, float height, float offsetX, float offsetY);
