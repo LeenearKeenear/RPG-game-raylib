@@ -61,16 +61,21 @@ void SaveGameState(GameState *state)
     
     /*==============================================================================
      * Save Enemy States
-     *==============================================================================*/
-    savedEnemyStates.clear();
-    for (const Enemy& enemy : activeEnemies) {
-        SavedEnemyState savedEnemy;
-        savedEnemy.position = enemy.position;
-        savedEnemy.currentHP = enemy.currentHP;
-        savedEnemy.isAlive = enemy.isAlive;
-        savedEnemy.type = enemy.type;
-        savedEnemyStates.push_back(savedEnemy);
-    }
+     *==============================================================================
+     * @note Enemy saving dinonaktifkan karena sistem enemy telah diubah
+     *   menggunakan Entities namespace di codebase baru. Untuk sekarang,
+     *   enemy akan di-spawn ulang setiap kali masuk game.
+     *   TODO: Update untuk menggunakan Entities system di masa depan.
+     */
+    // savedEnemyStates.clear();
+    // for (const Enemy& enemy : activeEnemies) {
+    //     SavedEnemyState savedEnemy;
+    //     savedEnemy.position = enemy.position;
+    //     savedEnemy.currentHP = enemy.currentHP;
+    //     savedEnemy.isAlive = enemy.isAlive;
+    //     savedEnemy.type = enemy.type;
+    //     savedEnemyStates.push_back(savedEnemy);
+    // }
     
     /*==============================================================================
      * Save Item States
@@ -130,18 +135,23 @@ void RestoreGameState(GameState *state)
     
     /*==============================================================================
      * Restore Enemy States
-     *==============================================================================*/
-    if (hasSavedState && !savedEnemyStates.empty()) {
-        int enemyIndex = 0;
-        for (Enemy& enemy : activeEnemies) {
-            if (enemyIndex < (int)savedEnemyStates.size()) {
-                enemy.currentHP = savedEnemyStates[enemyIndex].currentHP;
-                enemy.isAlive = savedEnemyStates[enemyIndex].isAlive;
-                enemy.position = savedEnemyStates[enemyIndex].position;
-                enemyIndex++;
-            }
-        }
-    }
+     *==============================================================================
+     * @note Enemy restore dinonaktifkan karena sistem enemy telah diubah
+     *   menggunakan Entities namespace di codebase baru. Untuk sekarang,
+     *   enemy akan di-spawn ulang setiap kali masuk game.
+     *   TODO: Update untuk menggunakan Entities system di masa depan.
+     */
+    // if (hasSavedState && !savedEnemyStates.empty()) {
+    //     int enemyIndex = 0;
+    //     for (Enemy& enemy : activeEnemies) {
+    //         if (enemyIndex < (int)savedEnemyStates.size()) {
+    //             enemy.currentHP = savedEnemyStates[enemyIndex].currentHP;
+    //             enemy.isAlive = savedEnemyStates[enemyIndex].isAlive;
+    //             enemy.position = savedEnemyStates[enemyIndex].position;
+    //             enemyIndex++;
+    //         }
+    //     }
+    // }
     
     /*==============================================================================
      * Restore Item States
