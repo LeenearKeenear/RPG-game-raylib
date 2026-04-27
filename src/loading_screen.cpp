@@ -161,10 +161,10 @@ void RenderLoadingScreen(GameState *state)
     DrawRectangle(GameScreenWidth/2 - 150, GameScreenHeight/2 + 20, 300, 20, DARKGRAY);
     DrawRectangle(GameScreenWidth/2 - 150, GameScreenHeight/2 + 20, (int)(state->loadingProgress * 3), 20, GREEN);
     
-    char progressText[10];
-    sprintf(progressText, "%d%%", (int)state->loadingProgress);
-    int progressTextWidth = MeasureText(progressText, 20);
-    DrawText(progressText, GameScreenWidth/2 - progressTextWidth/2, GameScreenHeight/2 + 50, 20, WHITE);
+    std::array<char, 10> progressText;
+    sprintf(progressText.data(), "%d%%", (int)state->loadingProgress);
+    int progressTextWidth = MeasureText(progressText.data(), 20);
+    DrawText(progressText.data(), GameScreenWidth/2 - progressTextWidth/2, GameScreenHeight/2 + 50, 20, WHITE);
     
     EndTextureMode();
 }
