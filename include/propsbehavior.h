@@ -71,13 +71,13 @@ private:
     };
 
 // konstanta buat timing spike nya
-#define SPIKE_ACTIVE_MAX 6.0f      // nilai maksimun pas spike aktif (adjustable)
-#define SPIKE_ACTIVE_MIN 3.0f      // nilai minimum pas spike aktif (adjustable)
-#define SPIKE_INACTIVE_MAX 7.0f    // nilai maksimun pas spike gak aktif (adjustable)
-#define SPIKE_INACTIVE_MIN 4.0f    // nilai minimum pas spike gak aktif (adjustable)
+#define SPIKE_ACTIVE_MAX 6.0f   // nilai maksimun pas spike aktif (adjustable)
+#define SPIKE_ACTIVE_MIN 3.0f   // nilai minimum pas spike aktif (adjustable)
+#define SPIKE_INACTIVE_MAX 7.0f // nilai maksimun pas spike gak aktif (adjustable)
+#define SPIKE_INACTIVE_MIN 4.0f // nilai minimum pas spike gak aktif (adjustable)
 
-float SpikeDamage = 10.0f;
-float globalDamageCooldown = 1.0f;
+    float SpikeDamage = 10.0f;
+    float globalDamageCooldown = 1.0f;
 
     std::vector<SpikeData> spikes;
     unsigned int SeedFromName(const std::string &name);
@@ -92,13 +92,13 @@ class BombManager
 {
 public:
     void SpawnBombs(const std::vector<MapObject *> &bombObjects);
-    void Update(float deltaTime, Rectangle playerBounds, Player* player);
+    void Update(float deltaTime, Rectangle playerBounds, Player *player);
     void Render();
     void Clear();
     void SpawnAll(); // debug
 
     TileObject *FindBomb(Vector2 hitPos, float threshold = 32.0f);
-    void Interact(Vector2 hitPos, Rectangle playerBounds);
+    void HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player);
 
 private:
     struct BombData
@@ -120,7 +120,7 @@ private:
     std::vector<Vector2> spawnPoints;
 
     void SetupCallbacks(BombData &bomb);
-    void Explode(BombData &bomb, Rectangle playerBounds);
+    void Explode(BombData &bomb, Rectangle playerBounds, Player *player);
     bool IsInExplosionRadius(Vector2 bombPos, Rectangle target);
 };
 

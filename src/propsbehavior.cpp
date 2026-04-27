@@ -316,19 +316,15 @@ void BombManager::SetupCallbacks(BombData &bomb)
     };
 }
 
-void BombManager::Explode(BombData &bomb, Rectangle playerBounds)
+void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player)
 {
     bomb.tile.state = ObjectState::Inactive;
     bomb.isExploding = true;
     bomb.explosionTimer = BOMB_EXPLOSION_DURATION;
 
-    if (bomb.onExplode)
-        bomb.onExplode(bomb.tile, BOMB_EXPLOSION_RADIUS);
-
     if (IsInExplosionRadius(bomb.tile.position, playerBounds))
-        if (bomb.onDamagePlayer)
-            bomb.onDamagePlayer(bomb.tile);
-
+        if (player)
+            player->TakeDamage(BOMB_DAMAGE);
     // enemy nanti ditambah di sini
 }
 
@@ -363,23 +359,16 @@ void BombManager::Update(float deltaTime, Rectangle playerBounds, Player *player
         bombs.end());
 }
 
-void BombManager::Interact(Vector2 hitPos, Rectangle playerBounds)
+void BombManager::HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player)
 {
-    TraceLog(LOG_INFO, "Looking for bomb at (%.1f, %.1f), total bombs: %d", hitPos.x, hitPos.y, (int)bombs.size());
-    TileObject *tile = FindBomb(hitPos);
-    if (!tile || tile->state == ObjectState::Inactive)
-        return;
-
-    // cari bomb yang matching buat di-explode
     for (auto &bomb : bombs)
     {
-        if (&bomb.tile == tile)
-        {
-            if (bomb.onHit)
-                bomb.onHit(bomb.tile);
-            Explode(bomb, playerBounds);
-            break;
-        }
+        if (!bomb.isAlive || bomb.isExploding)
+            continue;
+        if (!CheckCollisionRecs(attackHitbox, bomb.tile.bounds))
+            continue;
+
+        Explode(bomb, playerBounds, player);
     }
 }
 

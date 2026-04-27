@@ -7,6 +7,7 @@
 #include "../include/player.h"
 #include "../include/tiles.h"
 #include "../include/effects.h"
+#include "../include/propsbehavior.h"
 #include "../lib/raylib/include/raymath.h"
 #include <algorithm>
 #include <cmath>
@@ -53,8 +54,10 @@ namespace Combat
         // Memeriksa semua entitas aktif untuk tabrakan
         for (auto entity : Entities::GetRegistry())
         {
-            if (entity == &player) continue;
-            if (!entity->IsActive || entity->Health <= 0) continue;
+            if (entity == &player)
+                continue;
+            if (!entity->IsActive || entity->Health <= 0)
+                continue;
 
             // Memastikan kita tidak memukul entitas yang sama berkali-kali dalam satu ayunan/tusukan
             bool alreadyHit = false;
@@ -66,7 +69,8 @@ namespace Combat
                     break;
                 }
             }
-            if (alreadyHit) continue;
+            if (alreadyHit)
+                continue;
 
             if (CheckCollisionRecs(attackHitbox, entity->GetHitbox()))
             {
@@ -85,6 +89,9 @@ namespace Combat
                 TraceLog(LOG_INFO, "COMBAT: Pemain mengenai musuh! Damage: %.1f", damage);
             }
         }
+        // ini nanti dibuatin fungsi wrapper yang isinya semua jenis
+        // object tile yang harus di hit pakai combat sistem
+        bombManager.HitByAttack(attackHitbox, PlayerInstance.GetHitbox(), &player);
     }
 
     /**
@@ -93,7 +100,8 @@ namespace Combat
      */
     void HandleCombat(Player &player)
     {
-        if (player.Anim.isDead) return;
+        if (player.Anim.isDead)
+            return;
 
         // Penyaringan Input: Pastikan serangan hanya terpicu jika klik dimulai dalam status yang valid
         if (InputInstance.IsLeftClickPressed())
@@ -145,10 +153,14 @@ namespace Combat
                 // Menentukan arah hadap animasi berdasarkan sudut bidikan
                 float angle = atan2(attackDir.y, attackDir.x) * (180.0f / PI);
                 Direction attackFaceDir;
-                if (angle >= -135.0f && angle < -45.0f) attackFaceDir = UP;
-                else if (angle >= -45.0f && angle < 45.0f) attackFaceDir = RIGHT;
-                else if (angle >= 45.0f && angle < 135.0f) attackFaceDir = DOWN;
-                else attackFaceDir = LEFT;
+                if (angle >= -135.0f && angle < -45.0f)
+                    attackFaceDir = UP;
+                else if (angle >= -45.0f && angle < 45.0f)
+                    attackFaceDir = RIGHT;
+                else if (angle >= 45.0f && angle < 135.0f)
+                    attackFaceDir = DOWN;
+                else
+                    attackFaceDir = LEFT;
 
                 // Mengunci arah karakter ke arah bidikan
                 PlayAnimation(player.Anim, IDLE, attackFaceDir, PlayerAnimationSet);
@@ -175,7 +187,7 @@ namespace Combat
                 else
                 {
                     Effects::AddLog("Stamina tidak cukup!");
-                    player.Swing.pressRegistered = false; 
+                    player.Swing.pressRegistered = false;
                     TraceLog(LOG_WARNING, "PLAYER: Serangan gagal! Mana habis.");
                 }
             }
@@ -205,7 +217,8 @@ namespace Combat
      */
     void UpdateSwingAttack(Player &player, float dt)
     {
-        if (!player.Swing.active) return;
+        if (!player.Swing.active)
+            return;
 
         // Pastikan pusat senjata tetap terkunci pada posisi pemain (bahkan saat terkena knockback)
         Vector2 playerCenter = {
@@ -218,20 +231,40 @@ namespace Combat
         {
             switch (player.Anim.direction)
             {
-            case UP:    player.Swing.center.x += 3; break;
-            case DOWN:  player.Swing.center.x -= 3; break;
-            case LEFT:  player.Swing.center.y -= 3; break;
-            case RIGHT: player.Swing.center.y += 3; break;
+            case UP:
+                player.Swing.center.x += 3;
+                break;
+            case DOWN:
+                player.Swing.center.x -= 3;
+                break;
+            case LEFT:
+                player.Swing.center.y -= 3;
+                break;
+            case RIGHT:
+                player.Swing.center.y += 3;
+                break;
             }
         }
         else
         {
             switch (player.Anim.direction)
             {
-            case UP:    player.Swing.center.y -= 20; player.Swing.center.x += 1; break;
-            case DOWN:  player.Swing.center.y += 20; player.Swing.center.x -= 1; break;
-            case LEFT:  player.Swing.center.x -= 20; player.Swing.center.y -= 1; break;
-            case RIGHT: player.Swing.center.x += 20; player.Swing.center.y += 1; break;
+            case UP:
+                player.Swing.center.y -= 20;
+                player.Swing.center.x += 1;
+                break;
+            case DOWN:
+                player.Swing.center.y += 20;
+                player.Swing.center.x -= 1;
+                break;
+            case LEFT:
+                player.Swing.center.x -= 20;
+                player.Swing.center.y -= 1;
+                break;
+            case RIGHT:
+                player.Swing.center.x += 20;
+                player.Swing.center.y += 1;
+                break;
             }
         }
 
@@ -267,7 +300,8 @@ namespace Combat
      */
     void DrawSwingAttack(Player &player)
     {
-        if (!player.Swing.active) return;
+        if (!player.Swing.active)
+            return;
 
         InventoryItem item = Inventory::GetActiveHotbarItem(player);
 
