@@ -4,6 +4,7 @@
 #include "../include/mapLogic.h"
 #include "../include/map.h"
 #include "../include/screen.h"
+#include "../include/propsbehavior.h"
 #include "../lib/raylib/include/raymath.h"
 
 namespace Interaction
@@ -92,6 +93,7 @@ namespace Interaction
 
     /**
      * Menangani interaksi dengan properti (peti, tuas, dll.) yang terkena raycast.
+     * Interaksi hanya bisa dilakukan jika arah aim berada dalam area pandang player (±45°).
      */
     void CheckProps(Player &player)
     {
@@ -100,6 +102,24 @@ namespace Interaction
         if (!InputInstance.IsInteract())
             return;
 
+        // Cek apakah aim berada dalam area pandang player (garis raycast hijau)
+        Vector2 playerCenter = player.GetCenter();
+        Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(player.State), camera);
+        Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+
+        Vector2 facingDir = {0, 0};
+        switch (player.Anim.direction)
+        {
+            case UP:    facingDir = {0, -1}; break;
+            case DOWN:  facingDir = {0, 1};  break;
+            case LEFT:  facingDir = {-1, 0}; break;
+            case RIGHT: facingDir = {1, 0};  break;
+        }
+
+        float dot = Vector2DotProduct(facingDir, aimDir);
+        if (dot < player.GetRayCastAngle())
+            return; // Di luar area pandang, tidak bisa interaksi
+
         const std::string &type = player.LastHit.object->type;
         TraceLog(LOG_INFO, "Berinteraksi dengan: '%s' (tipe: %s)", player.LastHit.object->name.c_str(), type.c_str());
 
@@ -107,6 +127,8 @@ namespace Interaction
         if (type == CHEST_TYPE_OBJECT_NAME)
         {
             TraceLog(LOG_INFO, "Membuka peti: '%s'", player.LastHit.object->name.c_str());
+            chestManager.Interact(player.LastHit.point);
         }
     }
 }
+

@@ -148,23 +148,12 @@ void Debug::DrawCollisionOverlay(const std::string &layerName, Color rectColor, 
 /**
  * @brief Gambar overlay raycast interaksi player
  *
- * Ray diambil dari tengah hitbox player menuju arah mouse,
- * lalu titik hit terakhir ditandai jika ada object yang terkena.
+ * Titik hit terakhir ditandai jika ada object yang terkena.
+ * Garis raycast sudah digambar oleh DrawAimIndicator() di player.cpp
+ * dengan logika warna berdasarkan sudut hadap.
  */
 void Debug::DrawRaycastOverlay(void)
 {
-    Vector2 playerCenter = {
-        PlayerInstance.GetPosition().x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2,
-        PlayerInstance.GetPosition().y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2};
-
-    Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(gState), camera);
-    Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
-    Vector2 rayEnd = {
-        playerCenter.x + aimDir.x * PlayerInstance.GetINTERACT_RANGE(),
-        playerCenter.y + aimDir.y * PlayerInstance.GetINTERACT_RANGE()};
-
-    DrawLineEx(playerCenter, rayEnd, 1.0f, GREEN);
-
     // Gambar titik hit jika ray mengenai object (hanya saat debug mode aktif)
     if (isDebugMode && PlayerInstance.GetLastHit().hit)
         DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, RED);

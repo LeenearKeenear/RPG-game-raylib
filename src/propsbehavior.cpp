@@ -43,11 +43,25 @@ TileObject *ChestManager::FindChest(Vector2 hitPos, float threshold)
 
     for (auto &chest : chests)
     {
-        float dist = Vector2Distance(hitPos, chest.position);
-        if (dist < minDist)
+        // Expand bounds sedikit agar titik di tepi tetap terdeteksi
+        Rectangle expanded = {
+            chest.bounds.x - threshold,
+            chest.bounds.y - threshold,
+            chest.bounds.width + threshold * 2,
+            chest.bounds.height + threshold * 2};
+
+        if (CheckCollisionPointRec(hitPos, expanded))
         {
-            minDist = dist;
-            closest = &chest;
+            // Gunakan jarak ke center bounds untuk memilih yang terdekat
+            Vector2 center = {
+                chest.bounds.x + chest.bounds.width / 2,
+                chest.bounds.y + chest.bounds.height / 2};
+            float dist = Vector2Distance(hitPos, center);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closest = &chest;
+            }
         }
     }
     return closest; // nullptr kalau gak ada dalam threshold

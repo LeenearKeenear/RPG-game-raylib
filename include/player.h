@@ -139,6 +139,7 @@ public:
 
     // Logic methods
     void DrawAimIndicator();
+    float GetRayCastAngle() const { return RayCastAngle; }
 
 private:
     const char *Name = "Player Name";
@@ -150,7 +151,7 @@ private:
     // magnet/pickup fields
     float MagnetRadius = 32.0f;
     float ItemSpeed = 120.0f;
-    const float RayCastAngle = 0.3f;
+    const float RayCastAngle = 0.707f;  ///< cos(45°) — area pandang ±45° dari arah hadap
 };
 
 extern Player PlayerInstance;
