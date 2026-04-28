@@ -53,7 +53,7 @@ public:
     float AttackRange = 16.0f;          ///< Jarak yang dibutuhkan untuk memicu serangan
     float Damage = 5.0f;                ///< Damage yang dihasilkan per pukulan
     float Speed = 1.0f;                 ///< Kecepatan gerak saat patroli/kembali
-    float ChaseSpeed = 1.5f;            ///< Kecepatan gerak saat mengejar
+    float ChaseSpeed = 1.9f;            ///< Kecepatan gerak saat mengejar
     float HealthRegenRate = 10.0f;      ///< HP yang pulih per detik saat tidak dalam pertempuran
     float HealthRegenTimer = 0.0f;     ///< Timer untuk jeda pemulihan HP
     const float HealthRegenDelay = 2.0f;

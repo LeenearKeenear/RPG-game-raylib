@@ -118,6 +118,7 @@ private:
 
     std::vector<BombData> bombs;
     std::vector<Vector2> spawnPoints;
+    Player* playerRef = nullptr;
 
     void SetupCallbacks(BombData &bomb);
     void Explode(BombData &bomb, Rectangle playerBounds, Player *player);
@@ -129,4 +130,3 @@ extern ChestManager chestManager;
 extern SpikeManager spikeManager;
 extern BombManager bombManager;
 
-extern void SpawnItemAtLocation(Vector2 pos);

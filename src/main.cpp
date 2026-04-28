@@ -63,27 +63,29 @@ int main()
             UpdateMainMenu(&state);
             RenderMainMenuToVirtualScreen(&state);
             DrawRenderWindows(&state);
-          }
-/*==============================================================================
-             * State: LOADING
-             *==============================================================================*/
-else if (state.currentScreen == LOADING)
+        }
+        /*==============================================================================
+         * State: LOADING
+         *==============================================================================*/
+        else if (state.currentScreen == LOADING)
+        {
+            // Initialize loading screen only on first entry
+            if (!state.enteredLoading)
             {
-                // Initialize loading screen only on first entry
-                if (!state.enteredLoading) {
-                    InitLoadingScreen(&state);
-                }
-                
-                // Update and render loading screen
-                UpdateLoadingScreen(&state);
-                RenderLoadingScreen(&state);
-                DrawRenderWindows(&state);
+                InitLoadingScreen(&state);
             }
-          // State: OPTIONS
-         else if (state.currentScreen == OPTIONS)
-         {
+
+            // Update and render loading screen
+            UpdateLoadingScreen(&state);
+            RenderLoadingScreen(&state);
+            DrawRenderWindows(&state);
+        }
+        // State: OPTIONS
+        else if (state.currentScreen == OPTIONS)
+        {
             // Show options screen and set return screen on first entry
-            if (!optionsScreen.IsActive()) {
+            if (!optionsScreen.IsActive())
+            {
                 optionsScreen.SetReturnScreen(state.previousScreen);
                 optionsScreen.Show();
             }
@@ -103,7 +105,8 @@ else if (state.currentScreen == LOADING)
         else if (state.currentScreen == PLAY)
         {
             // If returning from OPTIONS, ensure pause menu is shown
-            if (state.previousScreen == OPTIONS && !pauseMenu.IsActive()) {
+            if (state.previousScreen == OPTIONS && !pauseMenu.IsActive())
+            {
                 pauseMenu.Show();
             }
 
@@ -133,7 +136,8 @@ else if (state.currentScreen == LOADING)
             }
 
             // update semua logic game - skip when paused
-            if (!pauseMenu.IsActive()) {
+            if (!pauseMenu.IsActive())
+            {
                 UpdateLogicAll();
             }
 
