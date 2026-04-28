@@ -62,22 +62,24 @@ private:
         TileObject tile;
         float activeTimer;
         float inactiveTimer;
-        float activeDuration;   // range: 1.0 - 3.0 detik (adjustable)
-        float inactiveDuration; // range: 1.0 - 3.0 detik (adjustable)
-        float damageCooldown;   // default: 0.5 detik (adjustable)
+        float activeDuration;
+        float inactiveDuration;
+        float damageCooldown;
         SpikeCallback onActivate;
         SpikeCallback onDeactivate;
         SpikeCallback onDamagePlayer;
     };
 
-// konstanta buat timing spike nya
-#define SPIKE_ACTIVE_MAX 6.0f   // nilai maksimun pas spike aktif (adjustable)
-#define SPIKE_ACTIVE_MIN 3.0f   // nilai minimum pas spike aktif (adjustable)
-#define SPIKE_INACTIVE_MAX 7.0f // nilai maksimun pas spike gak aktif (adjustable)
-#define SPIKE_INACTIVE_MIN 4.0f // nilai minimum pas spike gak aktif (adjustable)
+    // konstanta buat timing spike nya
+    static constexpr float SPIKE_ACTIVE_MAX = 6.0f;      // nilai maksimun pas spike aktif (adjustable)
+    static constexpr float SPIKE_ACTIVE_MIN = 3.0f;      // nilai minimum pas spike aktif (adjustable)
+    static constexpr float SPIKE_INACTIVE_MAX = 7.0f;    // nilai maksimun pas spike gak aktif (adjustable)
+    static constexpr float SPIKE_INACTIVE_MIN = 4.0f;    // nilai minimum pas spike gak aktif (adjustable)
+    static constexpr float SPIKE_DAMAGE = 10.0f;         // damage spike nya (adjustable)
+    static constexpr float SPIKE_DAMAGE_COOLDOWN = 1.0f; // waktu cooldown (adjustable)
 
-    float SpikeDamage = 10.0f;
-    float globalDamageCooldown = 1.0f;
+    float globalPlayerDamageCooldown = 0.0f;
+    float globalEnemyDamageCooldown = 0.0f;
 
     std::vector<SpikeData> spikes;
     unsigned int SeedFromName(const std::string &name);
@@ -112,13 +114,13 @@ private:
         BombCallback onDamagePlayer;
     };
 
-#define BOMB_EXPLOSION_RADIUS 80.0f  // nilai radius bom nya
-#define BOMB_DAMAGE 25.0f            // damage bom
-#define BOMB_EXPLOSION_DURATION 0.3f // timer buat durasi meledaknya
+    static constexpr float BOMB_EXPLOSION_RADIUS = 80.0f;  // nilai radius bom nya
+    static constexpr float BOMB_DAMAGE = 25.0f;            // damage bom
+    static constexpr float BOMB_EXPLOSION_DURATION = 0.3f; // timer buat durasi meledaknya
 
     std::vector<BombData> bombs;
     std::vector<Vector2> spawnPoints;
-    Player* playerRef = nullptr;
+    Player *playerRef = nullptr;
 
     void SetupCallbacks(BombData &bomb);
     void Explode(BombData &bomb, Rectangle playerBounds, Player *player);
@@ -129,4 +131,3 @@ private:
 extern ChestManager chestManager;
 extern SpikeManager spikeManager;
 extern BombManager bombManager;
-

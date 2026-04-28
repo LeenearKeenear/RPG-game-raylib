@@ -214,7 +214,8 @@ void SpikeManager::SetupCallbacks(SpikeData &spike)
 
 void SpikeManager::Update(float deltaTime, Rectangle playerBounds, Player *player)
 {
-    globalDamageCooldown -= deltaTime;
+    globalPlayerDamageCooldown -= deltaTime;
+    globalEnemyDamageCooldown -= deltaTime;
 
     for (auto &spike : spikes)
     {
@@ -239,17 +240,28 @@ void SpikeManager::Update(float deltaTime, Rectangle playerBounds, Player *playe
             spike.onDeactivate(spike.tile);
             continue;
         }
+        // damage player
+        if (CheckCollisionRecs(playerBounds, spike.tile.bounds) && globalPlayerDamageCooldown <= 0.0f && player)
+        {
+            globalPlayerDamageCooldown = SPIKE_DAMAGE_COOLDOWN;
+            player->TakeDamage(SPIKE_DAMAGE);
+        }
 
-        // cek damage
-        if (!CheckCollisionRecs(playerBounds, spike.tile.bounds))
-            continue;
-        if (globalDamageCooldown > 0.0f)
-            continue;
-        if (!player)
-            continue;
-
-        globalDamageCooldown = 1.0f;
-        player->TakeDamage(SpikeDamage);
+        // damage enemy
+        if (globalEnemyDamageCooldown <= 0.0f)
+        {
+            for (auto entity : Entities::GetRegistry())
+            {
+                Enemy *enemy = dynamic_cast<Enemy *>(entity);
+                if (!enemy || !enemy->IsActive || enemy->Health <= 0)
+                    continue;
+                if (CheckCollisionRecs(spike.tile.bounds, enemy->GetHitbox()))
+                {
+                    globalEnemyDamageCooldown = SPIKE_DAMAGE_COOLDOWN;
+                    enemy->TakeDamage(SPIKE_DAMAGE, {0, 0});
+                }
+            }
+        }
     }
 }
 
@@ -327,12 +339,10 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
 
     // hapus dari dynamic obstacles
     DynamicObstacles.erase(
-        std::remove_if(DynamicObstacles.begin(), DynamicObstacles.end(), [&](const Rectangle &r){
-            return r.x == bomb.tile.bounds.x && r.y == bomb.tile.bounds.y;
-        }),
-        DynamicObstacles.end()
-    );
-    
+        std::remove_if(DynamicObstacles.begin(), DynamicObstacles.end(), [&](const Rectangle &r)
+                       { return r.x == bomb.tile.bounds.x && r.y == bomb.tile.bounds.y; }),
+        DynamicObstacles.end());
+
     if (IsInExplosionRadius(bomb.tile.position, playerBounds))
         if (player)
             player->TakeDamage(BOMB_DAMAGE);

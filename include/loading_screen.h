@@ -9,8 +9,8 @@
  */
 
 #include "../lib/raylib/include/raylib.h"
-#include "../include/screen.h"
-#include "../include/animation.h"
+#include "screen.h"
+#include "animation.h"
 
 /*==============================================================================
  * Loading Screen Functions
