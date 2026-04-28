@@ -19,10 +19,30 @@ namespace Movement
         Direction nextDir = player.Anim.direction;
 
         // Mengambil vektor input mentah
-        if (InputInstance.IsMoveUp())    { player.Velocity.y -= 1; nextDir = UP;    moving = true; }
-        if (InputInstance.IsMoveDown())  { player.Velocity.y += 1; nextDir = DOWN;  moving = true; }
-        if (InputInstance.IsMoveLeft())  { player.Velocity.x -= 1; nextDir = LEFT;  moving = true; }
-        if (InputInstance.IsMoveRight()) { player.Velocity.x += 1; nextDir = RIGHT; moving = true; }
+        if (InputInstance.IsMoveUp())
+        {
+            player.Velocity.y -= 1;
+            nextDir = UP;
+            moving = true;
+        }
+        if (InputInstance.IsMoveDown())
+        {
+            player.Velocity.y += 1;
+            nextDir = DOWN;
+            moving = true;
+        }
+        if (InputInstance.IsMoveLeft())
+        {
+            player.Velocity.x -= 1;
+            nextDir = LEFT;
+            moving = true;
+        }
+        if (InputInstance.IsMoveRight())
+        {
+            player.Velocity.x += 1;
+            nextDir = RIGHT;
+            moving = true;
+        }
 
         // Memperbarui status animasi berdasarkan status pergerakan
         ::State nextState = moving ? WALK : IDLE;
@@ -38,8 +58,8 @@ namespace Movement
 
         // --- Logika Sliding Collision ---
         // Memeriksa sumbu X dan Y secara independen. Jika salah satu terhalang, sumbu lainnya masih bisa bergerak.
-        Vector2 nextX = { player.Position.x + player.Velocity.x * player.Speed, player.Position.y };
-        Vector2 nextY = { player.Position.x, player.Position.y + player.Velocity.y * player.Speed };
+        Vector2 nextX = {player.Position.x + player.Velocity.x * player.Speed, player.Position.y};
+        Vector2 nextY = {player.Position.x, player.Position.y + player.Velocity.y * player.Speed};
 
         if (CanMove(player, nextX))
         {
@@ -121,6 +141,10 @@ namespace Movement
 
         // 3. Pemeriksaan tabrakan poligon/objek Tiled
         if (CheckCollisionAgainstPolygons(hitbox, player.CollisionPolygons))
+            return false;
+
+        // 4. Pemeriksaan dynamic obstacles (object runtime seperti bomb)
+        if (CheckCollisionAgainstRects(hitbox, DynamicObstacles))
             return false;
 
         return true;

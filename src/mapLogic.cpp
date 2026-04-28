@@ -508,7 +508,8 @@ bool IsWithinWorldBounds(const Rectangle &hitbox, float worldWidth, float worldH
  */
 bool IsPositionSafe(Vector2 pos, float width, float height, float offsetX, float offsetY)
 {
-    if (!tilesonMap) return true;
+    if (!tilesonMap)
+        return true;
 
     // 1. Bangun hitbox
     Rectangle hitbox = BuildHitbox(pos, offsetX, offsetY, width, height);
@@ -529,5 +530,12 @@ bool IsPositionSafe(Vector2 pos, float width, float height, float offsetX, float
             return false;
     }
 
+    // 4. Cek Dynamic Obstacles (object runtime seperti bomb)
+    if (CheckCollisionAgainstRects(hitbox, DynamicObstacles))
+        return false;
+
     return true;
 }
+
+// dynamic obstacle function
+std::vector<Rectangle> DynamicObstacles;

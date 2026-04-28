@@ -1,9 +1,9 @@
 #pragma once
-#include "raylib.h"
+#include "../lib/raylib/include/raylib.h"
 
-#define TILE_SIZE 32        ///< Ukuran standar tile dalam pixel
-#define TILE_GAP 4         ///< Jarak antar tile dalam tileset (jika ada)
-#define MAX_TEXTURES 6      ///< Jumlah maksimum tekstur yang dimuat secara bersamaan
+constexpr int TILE_SIZE = 32;   ///< Ukuran standar tile dalam pixel
+constexpr int TILE_GAP = 4;     ///< Jarak antar tile dalam tileset (jika ada)
+constexpr int MAX_TEXTURES = 6; ///< Jumlah maksimum tekstur yang dimuat secara bersamaan
 
 extern Texture2D TexturesMap[MAX_TEXTURES];
 
@@ -13,10 +13,10 @@ extern Texture2D TexturesMap[MAX_TEXTURES];
  */
 enum TextureAsset
 {
-    TEXTURE_TILEMAP = 0,    ///< Tileset untuk rendering map
-    TEXTURE_KNIGHT,         ///< Sprite pemain/karakter
-    TEXTURE_ITEMS,          ///< Ikon dan item koleksi
-    TEXTURE_ENEMIES         ///< Sprite musuh
+    TEXTURE_TILEMAP = 0, ///< Tileset untuk rendering map
+    TEXTURE_KNIGHT,      ///< Sprite pemain/karakter
+    TEXTURE_ITEMS,       ///< Ikon dan item koleksi
+    TEXTURE_ENEMIES      ///< Sprite musuh
 };
 
 /**

@@ -9,9 +9,7 @@
  * - Handle perpindahan map dan riwayat navigasi
  */
 
-#include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
-#include "../include/screen.h"
 #include "../include/entities.h"
 #include "../include/mapLogic.h"
 #include "../include/map.h"
@@ -169,17 +167,20 @@ void LoadMap(const char *mapPath)
         TraceLog(LOG_INFO, "Tileson: Loading tileset: %s", imagePath.c_str());
 
         TilesetInfo info;
-        
+
         // Cek apakah texture tile utama sudah dimuat, reuse jika ada
-        if (TexturesMap[TEXTURE_TILEMAP].id != 0 && imagePath == "texture/tiles.png") {
+        if (TexturesMap[TEXTURE_TILEMAP].id != 0 && imagePath == "texture/tiles.png")
+        {
             info.texture = TexturesMap[TEXTURE_TILEMAP];
             TraceLog(LOG_INFO, "Tileson: Reusing cached texture for tiles.png");
-        } else {
+        }
+        else
+        {
             Image img = LoadImage(imagePath.c_str());
             info.texture = LoadTextureFromImage(img);
             UnloadImage(img);
         }
-        
+
         info.cols = tileset->getColumns();
         info.spacing = tileset->getSpacing();
         info.firstgid = tileset->getFirstgid();
@@ -215,15 +216,19 @@ void UnloadMap(void)
 
         // Unload texture tileset dari GPU
         // Jangan unload jika texture sudah ada di cache (TexturesMap)
-        for (auto &ts : tilesonMap->tilesets) {
+        for (auto &ts : tilesonMap->tilesets)
+        {
             bool isCached = false;
-            for (int i = 0; i < MAX_TEXTURES; i++) {
-                if (TexturesMap[i].id == ts.texture.id && ts.texture.id != 0) {
+            for (int i = 0; i < MAX_TEXTURES; i++)
+            {
+                if (TexturesMap[i].id == ts.texture.id && ts.texture.id != 0)
+                {
                     isCached = true;
                     break;
                 }
             }
-            if (!isCached && ts.texture.id != 0) {
+            if (!isCached && ts.texture.id != 0)
+            {
                 UnloadTexture(ts.texture);
             }
         }
@@ -267,12 +272,11 @@ void InitMap(void)
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath)){
+    if (!LoadItemsforMap(currentMapPath))
+    {
         SpawnItemWave();
     }
     BuildMapObjectIndex();
-
-    SpawnObject();
 }
 
 /*==============================================================================
@@ -415,7 +419,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
 
     if (!currentMapPath.empty())
         SaveItemsForMap(currentMapPath);
-    
+
     // Push map sekarang ke stack sebelum pindah
 
     // Simpan map sekarang ke history sebelum pindah
@@ -429,8 +433,6 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     LoadMap(newMapPath);
     BuildMapObjectIndex();
 
-    SpawnObject();
-
     // Stop kalau load map gagal
     if (tilesonMap == nullptr)
     {
@@ -440,6 +442,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
 
     // Re-init player berdasarkan target door di map baru
     PlayerInstance.Init(gState, targetDoorName);
+    SpawnObject();
 
     // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
     Entities::Clear();
@@ -451,7 +454,8 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath)){
+    if (!LoadItemsforMap(currentMapPath))
+    {
         SpawnItemWave();
     }
 
@@ -496,7 +500,6 @@ void GoBack(void)
     UnloadMap();
     LoadMap(prev.mapPath.c_str());
     BuildMapObjectIndex();
-    SpawnObject();
 
     if (tilesonMap == nullptr)
     {
@@ -506,6 +509,7 @@ void GoBack(void)
 
     // Init player di spawn point map sebelumnya
     PlayerInstance.Init(gState, prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
+    SpawnObject();
 
     // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
     Entities::Clear();
@@ -517,7 +521,8 @@ void GoBack(void)
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath)){
+    if (!LoadItemsforMap(currentMapPath))
+    {
         SpawnItemWave();
     }
 
@@ -538,7 +543,7 @@ void GoBack(void)
  * @brief Dapatkan path map yang sedang aktif
  * @return Path map saat ini (kosong jika tidak ada)
  */
-const char* GetCurrentMapPath(void)
+const char *GetCurrentMapPath(void)
 {
     return currentMapPath.c_str();
 }

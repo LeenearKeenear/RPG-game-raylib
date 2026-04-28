@@ -1,5 +1,7 @@
 #include "../include/propsbehavior.h"
 #include "../include/item.h"
+#include "../include/enemy.h"
+#include "../include/entities.h"
 
 Vector2 SnapToTileGrid(Vector2 rawPos)
 {
@@ -194,13 +196,13 @@ void SpikeManager::SetupCallbacks(SpikeData &spike)
     spike.onActivate = [](TileObject &tile)
     {
         tile.state = ObjectState::Active;
-        TraceLog(LOG_INFO, "Spike '%s' activated", tile.name.c_str());
+        // TraceLog(LOG_INFO, "Spike '%s' activated", tile.name.c_str());
     };
 
     spike.onDeactivate = [](TileObject &tile)
     {
         tile.state = ObjectState::Inactive;
-        TraceLog(LOG_INFO, "Spike '%s' deactivated", tile.name.c_str());
+        // TraceLog(LOG_INFO, "Spike '%s' deactivated", tile.name.c_str());
     };
 
     spike.onDamagePlayer = [](TileObject &tile)
@@ -212,7 +214,8 @@ void SpikeManager::SetupCallbacks(SpikeData &spike)
 
 void SpikeManager::Update(float deltaTime, Rectangle playerBounds, Player *player)
 {
-    globalDamageCooldown -= deltaTime;
+    globalPlayerDamageCooldown -= deltaTime;
+    globalEnemyDamageCooldown -= deltaTime;
 
     for (auto &spike : spikes)
     {
@@ -237,17 +240,28 @@ void SpikeManager::Update(float deltaTime, Rectangle playerBounds, Player *playe
             spike.onDeactivate(spike.tile);
             continue;
         }
+        // damage player
+        if (CheckCollisionRecs(playerBounds, spike.tile.bounds) && globalPlayerDamageCooldown <= 0.0f && player)
+        {
+            globalPlayerDamageCooldown = SPIKE_DAMAGE_COOLDOWN;
+            player->TakeDamage(SPIKE_DAMAGE);
+        }
 
-        // cek damage
-        if (!CheckCollisionRecs(playerBounds, spike.tile.bounds))
-            continue;
-        if (globalDamageCooldown > 0.0f)
-            continue;
-        if (!player)
-            continue;
-
-        globalDamageCooldown = 1.0f;
-        player->TakeDamage(SpikeDamage);
+        // damage enemy
+        if (globalEnemyDamageCooldown <= 0.0f)
+        {
+            for (auto entity : Entities::GetRegistry())
+            {
+                Enemy *enemy = dynamic_cast<Enemy *>(entity);
+                if (!enemy || !enemy->IsActive || enemy->Health <= 0)
+                    continue;
+                if (CheckCollisionRecs(spike.tile.bounds, enemy->GetHitbox()))
+                {
+                    globalEnemyDamageCooldown = SPIKE_DAMAGE_COOLDOWN;
+                    enemy->TakeDamage(SPIKE_DAMAGE, {0, 0});
+                }
+            }
+        }
     }
 }
 
@@ -295,6 +309,7 @@ void BombManager::SpawnBombs(const std::vector<MapObject *> &bombObjects)
         SetupCallbacks(data);
         bombs.push_back(data);
         spawnPoints.push_back(data.tile.position);
+        DynamicObstacles.push_back(data.tile.bounds);
     }
 }
 
@@ -322,10 +337,27 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
     bomb.isExploding = true;
     bomb.explosionTimer = BOMB_EXPLOSION_DURATION;
 
+    // hapus dari dynamic obstacles
+    DynamicObstacles.erase(
+        std::remove_if(DynamicObstacles.begin(), DynamicObstacles.end(), [&](const Rectangle &r)
+                       { return r.x == bomb.tile.bounds.x && r.y == bomb.tile.bounds.y; }),
+        DynamicObstacles.end());
+
     if (IsInExplosionRadius(bomb.tile.position, playerBounds))
         if (player)
             player->TakeDamage(BOMB_DAMAGE);
-    // enemy nanti ditambah di sini
+    // enemy nanti ditambah di
+
+    for (auto entity : Entities::GetRegistry())
+    {
+        Enemy *enemy = dynamic_cast<Enemy *>(entity);
+        if (!enemy)
+            continue;
+        if (!enemy->IsActive || enemy->Health <= 0)
+            continue;
+        if (IsInExplosionRadius(bomb.tile.position, enemy->GetHitbox()))
+            enemy->TakeDamage(BOMB_DAMAGE, {0, 0});
+    }
 }
 
 bool BombManager::IsInExplosionRadius(Vector2 bombPos, Rectangle target)
@@ -365,9 +397,8 @@ void BombManager::HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Pl
     {
         if (!bomb.isAlive || bomb.isExploding)
             continue;
-        if (!CheckCollisionRecs(attackHitbox, bomb.tile.bounds))
+        if (!CheckCollisionAgainstRects(attackHitbox, {bomb.tile.bounds}))
             continue;
-
         Explode(bomb, playerBounds, player);
     }
 }

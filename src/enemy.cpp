@@ -165,6 +165,13 @@ bool Enemy::CheckPlayerLoS() {
         }
     }
 
+    for (const auto &rect : DynamicObstacles) {
+        MapObject dynObj;
+        dynObj.bounds = rect;
+        dynObj.hasPolygon = false;
+        obstacles.push_back(dynObj);
+    }
+
     RayHitResult hit = Ray.Cast(enemyCenter, dir, DetectionRange, obstacles);
     return (!hit.hit || hit.distance >= dist);
 }

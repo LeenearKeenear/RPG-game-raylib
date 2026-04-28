@@ -288,4 +288,20 @@ bool IsWithinWorldBounds(const Rectangle &hitbox, float worldWidth, float worldH
  * @param offsetY Offset Y hitbox
  * @return true kalo posisi aman untuk spawn/gerak
  */
-bool IsPositionSafe(Vector2 pos, float width, float height, float offsetX, float offsetY);
+bool IsPositionSafe(Vector2 pos, float width, float height, float offsetX, float offsetY);
+
+/*==============================================================================
+ * Dynamic Obstacles
+ *==============================================================================*/
+
+/**
+ * @brief Daftar obstacle dinamis yang aktif di runtime
+ *
+ * Dipakai untuk object yang spawn/despawn saat game berjalan (contoh: bomb).
+ * Dicek oleh IsPositionSafe() dan CanMove() — semua entity otomatis kena collision-nya.
+ *
+ * Cara pakai:
+ * - Saat object spawn: push bounds ke DynamicObstacles
+ * - Saat object mati/despawn: hapus bounds dari DynamicObstacles
+ */
+extern std::vector<Rectangle> DynamicObstacles;

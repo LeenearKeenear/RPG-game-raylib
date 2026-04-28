@@ -93,13 +93,16 @@ void InitAll()
 
     // Spawn musuh dari map aktif
     SpawnEnemiesFromMap();
+    SpawnObject();
 }
 
 /**
  * @brief Fungsi pembantu untuk mengubah string menjadi lowercase
  */
-static std::string ToLower(std::string str) {
-    std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c){ return std::tolower(c); });
+static std::string ToLower(std::string str)
+{
+    std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c)
+                   { return std::tolower(c); });
     return str;
 }
 
@@ -107,7 +110,8 @@ static std::string ToLower(std::string str) {
 // soalnya butuh data object dari map, tapi masih berhubungan dengan entities dan enemy
 void SpawnEnemiesFromMap()
 {
-    if (!tilesonMap) return;
+    if (!tilesonMap)
+        return;
 
     TraceLog(LOG_INFO, "ENEMY: Spawning enemies for current map...");
 
@@ -117,9 +121,9 @@ void SpawnEnemiesFromMap()
         std::string typeLower = ToLower(obj.type);
 
         // Cek apakah ini adalah titik spawn musuh
-        bool isEnemySpawn = (nameLower.find("enemy") != std::string::npos || 
-                             nameLower.find("slime") != std::string::npos || 
-                             nameLower.find("skeleton") != std::string::npos || 
+        bool isEnemySpawn = (nameLower.find("enemy") != std::string::npos ||
+                             nameLower.find("slime") != std::string::npos ||
+                             nameLower.find("skeleton") != std::string::npos ||
                              nameLower.find("wolf") != std::string::npos ||
                              obj.name == ENEMY_SPAWN_OBJECT_NAME ||
                              typeLower == "enemy_spawn");
@@ -137,18 +141,36 @@ void SpawnEnemiesFromMap()
             EnemyType type = SLIME;
             bool typeFound = false;
 
-            if (obj.properties.count("enemy_type")) {
+            if (obj.properties.count("enemy_type"))
+            {
                 std::string typeStr = ToLower(obj.properties.at("enemy_type").getValue<std::string>());
-                if (typeStr == "skeleton") { type = SKELETON; typeFound = true; }
-                else if (typeStr == "wolf") { type = WOLF; typeFound = true; }
-                else if (typeStr == "slime") { type = SLIME; typeFound = true; }
+                if (typeStr == "skeleton")
+                {
+                    type = SKELETON;
+                    typeFound = true;
+                }
+                else if (typeStr == "wolf")
+                {
+                    type = WOLF;
+                    typeFound = true;
+                }
+                else if (typeStr == "slime")
+                {
+                    type = SLIME;
+                    typeFound = true;
+                }
             }
-            
-            if (!typeFound) {
-                if (nameLower.find("skeleton") != std::string::npos) type = SKELETON;
-                else if (nameLower.find("wolf") != std::string::npos) type = WOLF;
-                else if (nameLower.find("slime") != std::string::npos) type = SLIME;
-                else {
+
+            if (!typeFound)
+            {
+                if (nameLower.find("skeleton") != std::string::npos)
+                    type = SKELETON;
+                else if (nameLower.find("wolf") != std::string::npos)
+                    type = WOLF;
+                else if (nameLower.find("slime") != std::string::npos)
+                    type = SLIME;
+                else
+                {
                     // Gunakan GetRandomValue (cara lama) untuk menentukan tipe musuh secara acak tanpa srand()
                     type = (EnemyType)GetRandomValue(0, 2);
                 }
@@ -156,25 +178,26 @@ void SpawnEnemiesFromMap()
 
             // 2. Tentukan Radius Patroli (Default: 128, atau dari properti 'radius')
             float radius = 128.0f;
-            if (obj.properties.count("radius")) {
+            if (obj.properties.count("radius"))
+            {
                 auto prop = obj.properties.at("radius");
-                if (prop.getType() == tson::Type::Int) radius = (float)prop.getValue<int>();
-                else if (prop.getType() == tson::Type::Float) radius = prop.getValue<float>();
+                if (prop.getType() == tson::Type::Int)
+                    radius = (float)prop.getValue<int>();
+                else if (prop.getType() == tson::Type::Float)
+                    radius = prop.getValue<float>();
             }
 
             // 3. Spawn tepat 1 musuh di tengah objek spawn
-            Vector2 spawnPos = { obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f };
-            
+            Vector2 spawnPos = {obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f};
+
             Enemy *enemy = new Enemy();
             enemy->Init(spawnPos, obj.name.c_str(), obj.id, type, radius);
             Entities::AddDynamic(enemy);
-            
+
             TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %d, ID: %d) from spawn point '%s'", (int)type, obj.id, obj.name.c_str());
         }
     }
 }
-
-
 
 /**
  * @brief Inisialisasi window, audio, dan render texture virtual
@@ -312,7 +335,8 @@ void DrawUIOverlay(GameState *state)
     DrawPlayerHUD();
 
     // 2. FPS Counter (if enabled)
-    if (state->showFPS) {
+    if (state->showFPS)
+    {
         int fps = GetFPS();
         char fpsText[16];
         snprintf(fpsText, sizeof(fpsText), "FPS: %d", fps);
