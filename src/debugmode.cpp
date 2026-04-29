@@ -382,7 +382,7 @@ void Debug::DrawPlayerPanel(Rectangle bounds)
 void Debug::DrawZoomPanel(Rectangle bounds)
 {
     const float MAX_ZOOM = 3.5f;
-    const float MIN_ZOOM = 0.85f;
+    const float MIN_ZOOM = 0.60f;
     const float ZOOM_INCREMENT = 0.25f;
 
     // Handle zoom dengan scroll mouse
@@ -506,6 +506,7 @@ void Debug::DrawWorldOverlay(void)
     DrawCollisionOverlay(COLLISION_LAYER_NAME, RED, RED, LIGHTGRAY);
     DrawCollisionOverlay(OBJECT_LAYER_NAME, SKYBLUE, SKYBLUE, LIGHTGRAY);
     DrawCollisionOverlay(TRAP_LAYER_NAME, BEIGE, BEIGE, LIGHTGRAY);
+    DrawCollisionOverlay(ITEM_LAYER_NAME, PINK, PINK, LIGHTGRAY);
     DrawAttackOverlay();
     DrawEnemySpawnOverlay();
 
@@ -519,7 +520,7 @@ void Debug::DrawWorldOverlay(void)
     DrawRectangleLinesEx(mapBounds, 2.0f, GREEN);
 
     // Hitbox items
-    for (auto &item : activeItems)
+    for (auto &item : itemData.activeItems)
     {
         if (!item.isPickedUp)
         {

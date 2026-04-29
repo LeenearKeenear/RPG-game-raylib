@@ -239,7 +239,7 @@ void UnloadMap(void)
     }
 
     ClearEnemies();
-    ClearItems();
+    itemData.ClearItems();
     parsedMap.reset();
 }
 
@@ -251,18 +251,11 @@ void UnloadMap(void)
 void InitMap(void)
 {
     // Beberapa pilihan map yang tersedia (sementara di-comment)
-    // LoadMap("world_json/exampleworldmap_2.json");
-    // LoadMap("world_json/exampleworldmap.json");
-    // LoadMap("world_json/outsideLight.json");
-    // LoadMap("world_json/testermap.tmj");
-    // LoadMap("world_json/cave.json");
-    // LoadMap("world_json/inside.json");
-    // LoadMap("world_json/light.json");
 
     // LoadMap("world_json/floorA.json");
     // LoadMap("world_json/floorB.json");
     // LoadMap("world_json/floorC.json");
-
+    // "world_json/tutorial.json"
     // Map yang aktif saat ini
     currentMapPath = "world_json/tutorial.json";
     LoadMap(currentMapPath.c_str());
@@ -272,7 +265,7 @@ void InitMap(void)
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath))
+    if (!itemData.LoadItemsForMap(currentMapPath))
     {
         SpawnItemWave();
     }
@@ -418,7 +411,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         SaveEnemiesForMap(currentMapPath);
 
     if (!currentMapPath.empty())
-        SaveItemsForMap(currentMapPath);
+        itemData.SaveItemsForMap(currentMapPath);
 
     // Push map sekarang ke stack sebelum pindah
 
@@ -454,7 +447,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath))
+    if (!itemData.LoadItemsForMap(currentMapPath))
     {
         SpawnItemWave();
     }
@@ -490,7 +483,7 @@ void GoBack(void)
     // Simpan musuh map sekarang
     SaveEnemiesForMap(currentMapPath);
 
-    SaveItemsForMap(currentMapPath);
+    itemData.SaveItemsForMap(currentMapPath);
 
     // Ambil history teratas dan pop dari stack
     MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();
@@ -521,7 +514,7 @@ void GoBack(void)
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath))
+    if (!itemData.LoadItemsForMap(currentMapPath))
     {
         SpawnItemWave();
     }
