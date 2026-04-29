@@ -119,7 +119,7 @@ void ChestManager::TriggerLoot(TileObject &chest)
             chest.position.x + (float)GetRandomValue(-60, 60),
             chest.position.y + (float)GetRandomValue(-60, 60)};
 
-        SpawnItemAtLocation(spawnPos);
+        itemData.SpawnItemAtLocation(spawnPos);
     }
 }
 

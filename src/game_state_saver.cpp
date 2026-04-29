@@ -81,7 +81,7 @@ void SaveGameState(GameState *state)
      * Save Item States
      *==============================================================================*/
     savedItemStates.clear();
-    for (const Item& item : activeItems) {
+    for (const Item& item : itemData.activeItems) {
         SavedItemState savedItem;
         savedItem.position = item.position;
         savedItem.isPickedUp = item.isPickedUp;
@@ -158,7 +158,7 @@ void RestoreGameState(GameState *state)
      *==============================================================================*/
     if (hasSavedState && !savedItemStates.empty()) {
         int itemIndex = 0;
-        for (Item& item : activeItems) {
+        for (Item& item : itemData.activeItems) {
             if (itemIndex < (int)savedItemStates.size()) {
                 item.isPickedUp = savedItemStates[itemIndex].isPickedUp;
                 item.position = savedItemStates[itemIndex].position;

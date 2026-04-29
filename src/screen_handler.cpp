@@ -284,7 +284,7 @@ void UpdateLogicAll()
         PlayerInstance.GetHitboxWidth(),
         PlayerInstance.GetHitboxHeight()};
 
-    UpdateItems(center, pHitbox, PlayerInstance.GetMagnetRadius(), PlayerInstance.GetItemSpeed());
+    itemRender.Update(itemData.activeItems, center, pHitbox, PlayerInstance.GetMagnetRadius(), PlayerInstance.GetItemSpeed());
 }
 
 /*==============================================================================
@@ -311,7 +311,7 @@ void DrawRenderTexture(GameState *state)
     // layer 2: entities, items, effects & world overlay (world space)
     BeginMode2D(camera);
     RenderTileProps();
-    RenderAllItems();
+    itemRender.RenderAll(itemData.activeItems);
     Entities::Render();
     Effects::Draw();
     DebugInstance.DrawWorldOverlay();

@@ -239,7 +239,7 @@ void UnloadMap(void)
     }
 
     ClearEnemies();
-    ClearItems();
+    itemData.ClearItems();
     parsedMap.reset();
 }
 
@@ -262,9 +262,9 @@ void InitMap(void)
     // LoadMap("world_json/floorA.json");
     // LoadMap("world_json/floorB.json");
     // LoadMap("world_json/floorC.json");
-
+    // "world_json/tutorial.json"
     // Map yang aktif saat ini
-    currentMapPath = "world_json/tutorial.json";
+    currentMapPath = "world_json/floorA.json";
     LoadMap(currentMapPath.c_str());
 
     if (!LoadEnemiesForMap(currentMapPath))
@@ -272,7 +272,7 @@ void InitMap(void)
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath))
+    if (!itemData.LoadItemsForMap(currentMapPath))
     {
         SpawnItemWave();
     }
@@ -418,7 +418,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         SaveEnemiesForMap(currentMapPath);
 
     if (!currentMapPath.empty())
-        SaveItemsForMap(currentMapPath);
+        itemData.SaveItemsForMap(currentMapPath);
 
     // Push map sekarang ke stack sebelum pindah
 
@@ -454,7 +454,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath))
+    if (!itemData.LoadItemsForMap(currentMapPath))
     {
         SpawnItemWave();
     }
@@ -490,7 +490,7 @@ void GoBack(void)
     // Simpan musuh map sekarang
     SaveEnemiesForMap(currentMapPath);
 
-    SaveItemsForMap(currentMapPath);
+    itemData.SaveItemsForMap(currentMapPath);
 
     // Ambil history teratas dan pop dari stack
     MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();
@@ -521,7 +521,7 @@ void GoBack(void)
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath))
+    if (!itemData.LoadItemsForMap(currentMapPath))
     {
         SpawnItemWave();
     }
