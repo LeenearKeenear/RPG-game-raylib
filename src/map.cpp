@@ -251,20 +251,13 @@ void UnloadMap(void)
 void InitMap(void)
 {
     // Beberapa pilihan map yang tersedia (sementara di-comment)
-    // LoadMap("world_json/exampleworldmap_2.json");
-    // LoadMap("world_json/exampleworldmap.json");
-    // LoadMap("world_json/outsideLight.json");
-    // LoadMap("world_json/testermap.tmj");
-    // LoadMap("world_json/cave.json");
-    // LoadMap("world_json/inside.json");
-    // LoadMap("world_json/light.json");
 
     // LoadMap("world_json/floorA.json");
     // LoadMap("world_json/floorB.json");
     // LoadMap("world_json/floorC.json");
     // "world_json/tutorial.json"
     // Map yang aktif saat ini
-    currentMapPath = "world_json/floorA.json";
+    currentMapPath = "world_json/tutorial.json";
     LoadMap(currentMapPath.c_str());
 
     if (!LoadEnemiesForMap(currentMapPath))

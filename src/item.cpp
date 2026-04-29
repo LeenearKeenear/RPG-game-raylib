@@ -1,3 +1,15 @@
+/**
+ * @file item.cpp
+ * @brief Implementasi Item System
+ *
+ * File ini berisi implementasi untuk sistem item di dungeon:
+ * - ItemDataManager: manajemen data item aktif, spawn, save/load per map
+ * - ItemRenderManager: update magnet, pickup detection, dan render item
+ * - ItemSpawnManager: baca spawn area dari Tiled, kategorisasi, dan spawn acak per run
+ *
+ * Free functions dipertahankan sebagai wrapper untuk backward compatibility.
+ */
+
 #include "../include/item.h"
 #include "../include/animation.h"
 #include "../include/screen.h"
@@ -21,11 +33,17 @@ ItemSpawnManager spawnManager;
  * Free functions (backward compat)
  *==============================================================================*/
 
+/** @brief Load texture item dari spritesheet */
 void InitItemTextures()
 {
     LoadTileTexture(TEXTURE_ITEMS, "texture/test.png");
 }
 
+/**
+ * @brief Inisialisasi seluruh item system
+ *
+ * Load texture, init data manager, load spawn area dari Tiled, spawn item pertama kali.
+ */
 void InitItems()
 {
     InitItemTextures();
@@ -34,6 +52,11 @@ void InitItems()
     spawnManager.SpawnAll(itemData.activeItems);
 }
 
+/**
+ * @brief Reset dan spawn ulang semua item (untuk new run atau reload map)
+ *
+ * Clear activeItems, re-init spawn area, dan spawn ulang.
+ */
 void SpawnItemWave()
 {
     itemData.activeItems.clear();
@@ -41,26 +64,37 @@ void SpawnItemWave()
     spawnManager.SpawnAll(itemData.activeItems);
 }
 
+/** @brief Spawn item tambahan tanpa clear activeItems */
 void SpawnRandomItem()
 {
     spawnManager.SpawnAll(itemData.activeItems);
 }
 
-// backward compat buat 3 file yang akses activeItems langsung
-// PERUBAHAN FUNDAMENTAL: activeItems sekarang ada di itemData.activeItems
-// file lain yang akses `activeItems` extern perlu diupdate ke itemData.activeItems
-// atau tambah ini sementara:
+/** @brief Getter untuk activeItems */
 std::vector<Item> &GetActiveItems() { return itemData.activeItems; }
 
 /*==============================================================================
  * ItemDataManager
  *==============================================================================*/
 
+/** @brief Reset activeItems */
 void ItemDataManager::Init()
 {
     activeItems.clear();
 }
 
+/**
+ * @brief Buat item baru dengan properti lengkap
+ *
+ * Set nama, hitbox, dan rarity berdasarkan category.
+ * Log spawn ke console.
+ *
+ * @param pos Posisi spawn item
+ * @param category Jenis item (ITEM_WEAPON / ITEM_POTION)
+ * @param multiplier Stat multiplier item
+ * @param rarity Rarity item
+ * @return Item yang sudah di-setup
+ */
 Item ItemDataManager::CreateItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity rarity)
 {
     Item newItem;
@@ -93,6 +127,14 @@ Item ItemDataManager::CreateItem(Vector2 pos, ItemCategory category, float multi
     return newItem;
 }
 
+/**
+ * @brief Spawn item secara langsung ke posisi tertentu
+ *
+ * Dipakai oleh ChestManager saat chest dibuka.
+ * Category dipilih random antara ITEM_POTION dan ITEM_WEAPON.
+ *
+ * @param pos Posisi spawn item
+ */
 void ItemDataManager::SpawnItemAtLocation(Vector2 pos)
 {
     Item newItem;
@@ -116,6 +158,10 @@ void ItemDataManager::SpawnItemAtLocation(Vector2 pos)
     TraceLog(LOG_INFO, "ITEM: Spawned near chest at (%.1f, %.1f)", pos.x, pos.y);
 }
 
+/**
+ * @brief Simpan state activeItems untuk map tertentu
+ * @param mapPath Path map sebagai key penyimpanan
+ */
 void ItemDataManager::SaveItemsForMap(const std::string &mapPath)
 {
     if (mapPath.empty())
@@ -123,6 +169,11 @@ void ItemDataManager::SaveItemsForMap(const std::string &mapPath)
     savedMapItems[mapPath] = activeItems;
 }
 
+/**
+ * @brief Load state activeItems yang tersimpan untuk map tertentu
+ * @param mapPath Path map sebagai key pencarian
+ * @return true jika data ditemukan dan di-load, false jika belum ada
+ */
 bool ItemDataManager::LoadItemsForMap(const std::string &mapPath)
 {
     if (mapPath.empty())
@@ -136,6 +187,7 @@ bool ItemDataManager::LoadItemsForMap(const std::string &mapPath)
     return false;
 }
 
+/** @brief Hapus semua item aktif */
 void ItemDataManager::ClearItems()
 {
     activeItems.clear();
@@ -145,11 +197,25 @@ void ItemDataManager::ClearItems()
  * ItemRenderManager
  *==============================================================================*/
 
+/** @brief Load texture item dari spritesheet */
 void ItemRenderManager::InitTextures()
 {
     LoadTileTexture(TEXTURE_ITEMS, "texture/test.png");
 }
 
+/**
+ * @brief Update magnet effect dan pickup detection tiap frame
+ *
+ * Item yang dalam magnetRadius akan bergerak ke arah player.
+ * Item yang overlap dengan playerHitbox akan di-pickup (isPickedUp = true).
+ * Item yang baru spawn (< 1 detik) diabaikan.
+ *
+ * @param items Referensi ke activeItems
+ * @param playerCenter Posisi center player untuk magnet
+ * @param playerHitbox Hitbox player untuk pickup
+ * @param magnetRadius Radius magnet dalam pixel
+ * @param itemSpeed Kecepatan gerak item saat ditarik magnet
+ */
 void ItemRenderManager::Update(std::vector<Item> &items, Vector2 playerCenter, Rectangle playerHitbox, float magnetRadius, float itemSpeed)
 {
     float currentTime = (float)GetTime();
@@ -182,6 +248,10 @@ void ItemRenderManager::Update(std::vector<Item> &items, Vector2 playerCenter, R
     }
 }
 
+/**
+ * @brief Render semua item yang belum di-pickup
+ * @param items Referensi ke activeItems
+ */
 void ItemRenderManager::RenderAll(std::vector<Item> &items)
 {
     for (auto &item : items)
@@ -191,6 +261,13 @@ void ItemRenderManager::RenderAll(std::vector<Item> &items)
     }
 }
 
+/**
+ * @brief Render satu item berdasarkan category
+ *
+ * ITEM_POTION = sheet coord (7,8), ITEM_WEAPON = sheet coord (6,4).
+ *
+ * @param item Item yang akan di-render
+ */
 void ItemRenderManager::Render(Item &item)
 {
     Vector2 sheetCoord;
@@ -213,6 +290,11 @@ void ItemRenderManager::Render(Item &item)
  * ItemSpawnManager
  *==============================================================================*/
 
+/**
+ * @brief Generate seed dari nama area untuk randomisasi spawn
+ * @param name Nama spawn area dari Tiled
+ * @return Seed hasil hash nama
+ */
 unsigned int ItemSpawnManager::SeedFromName(const std::string &name)
 {
     unsigned int seed = 0;
@@ -221,6 +303,14 @@ unsigned int ItemSpawnManager::SeedFromName(const std::string &name)
     return seed;
 }
 
+/**
+ * @brief Inisialisasi spawn system untuk map saat ini
+ *
+ * Clear area lama, load dari layer Tiled, kategorisasi ukuran,
+ * tentukan area aktif secara random.
+ *
+ * @param layerName Nama object layer di Tiled yang berisi spawn area
+ */
 void ItemSpawnManager::Init(const std::string &layerName)
 {
     spawnAreas.clear();
@@ -229,6 +319,10 @@ void ItemSpawnManager::Init(const std::string &layerName)
     DetermineActiveAreas();
 }
 
+/**
+ * @brief Baca semua spawn area dari object layer Tiled
+ * @param layerName Nama layer yang dibaca
+ */
 void ItemSpawnManager::LoadSpawnAreas(const std::string &layerName)
 {
     const auto &objects = TilesonGetObjectsByLayerName(layerName);
@@ -246,6 +340,13 @@ void ItemSpawnManager::LoadSpawnAreas(const std::string &layerName)
     }
 }
 
+/**
+ * @brief Kategorisasi semua spawn area berdasarkan ukuran
+ *
+ * Polygon selalu SMALL. Rectangle dikategorisasi berdasarkan sisi terpanjang:
+ * <= 128px = SMALL, <= 256px = MEDIUM, <= 384px = LARGE, > 384px = XLARGE.
+ * Tiap size class punya range minSpawn-maxSpawn sendiri.
+ */
 void ItemSpawnManager::CategorizeAreas()
 {
     for (auto &area : spawnAreas)
@@ -280,6 +381,12 @@ void ItemSpawnManager::CategorizeAreas()
     }
 }
 
+/**
+ * @brief Klasifikasi ukuran area berdasarkan dimensi terpanjang
+ * @param width Lebar area
+ * @param height Tinggi area
+ * @return SpawnAreaSize hasil klasifikasi
+ */
 SpawnAreaSize ItemSpawnManager::ClassifySize(float width, float height)
 {
     float longest = (width > height) ? width : height;
@@ -292,6 +399,12 @@ SpawnAreaSize ItemSpawnManager::ClassifySize(float width, float height)
     return SPAWN_SIZE_XLARGE;
 }
 
+/**
+ * @brief Tentukan area mana yang aktif secara random tiap run
+ *
+ * Jumlah area aktif di-random antara 1 sampai total area.
+ * Area di-shuffle lalu sejumlah activeCount pertama ditandai aktif.
+ */
 void ItemSpawnManager::DetermineActiveAreas()
 {
     if (spawnAreas.empty())
@@ -307,6 +420,15 @@ void ItemSpawnManager::DetermineActiveAreas()
         spawnAreas[i].isActive = true;
 }
 
+/**
+ * @brief Dapatkan posisi random yang aman di dalam spawn area
+ *
+ * Coba maksimal 100 kali dengan IsPositionSafe check.
+ * Fallback ke center area jika semua attempt gagal.
+ *
+ * @param area SpawnArea target
+ * @return Posisi valid dalam area
+ */
 Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area)
 {
     int MaxAttempts = 100;
@@ -324,6 +446,15 @@ Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area)
     return {area.bounds.x + area.bounds.width / 2, area.bounds.y + area.bounds.height / 2};
 }
 
+/**
+ * @brief Spawn semua item ke activeItems berdasarkan area aktif
+ *
+ * Tiap area aktif spawn item sejumlah random antara minSpawn-maxSpawn.
+ * Category dan rarity di-random per item.
+ * Log total item yang di-spawn di akhir.
+ *
+ * @param activeItems Referensi ke vector item yang akan diisi
+ */
 void ItemSpawnManager::SpawnAll(std::vector<Item> &activeItems)
 {
     activeItems.clear();

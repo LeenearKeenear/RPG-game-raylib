@@ -1,8 +1,29 @@
+/**
+ * @file propsbehavior.cpp
+ * @brief Implementasi Props & Trap Behavior System
+ *
+ * File ini berisi implementasi untuk semua interactable props dan trap di dungeon:
+ * - ChestManager: spawn, interaksi, dan loot chest
+ * - SpikeManager: spawn, update timer aktif/nonaktif, damage player & enemy
+ * - BombManager: spawn, explode, chain reaction, damage player & enemy
+ *
+ * Semua manager di-spawn via SpawnObject() yang dipanggil saat map di-load.
+ */
+
 #include "../include/propsbehavior.h"
 #include "../include/item.h"
 #include "../include/enemy.h"
 #include "../include/entities.h"
 
+/*==============================================================================
+ * Utility Functions
+ *==============================================================================*/
+
+/**
+ * @brief Snap posisi ke grid tile terdekat
+ * @param rawPos Posisi mentah dari Tiled
+ * @return Posisi yang sudah di-snap ke kelipatan TILE_SIZE
+ */
 Vector2 SnapToTileGrid(Vector2 rawPos)
 {
     return {
@@ -10,6 +31,14 @@ Vector2 SnapToTileGrid(Vector2 rawPos)
         std::floor(rawPos.y / TILE_SIZE) * TILE_SIZE};
 }
 
+/**
+ * @brief Cek apakah titik hit berada dalam bounds object (dengan toleransi)
+ * @param hitPos Posisi hit
+ * @param bounds Bounding box object
+ * @param threshold Toleransi expand ke semua sisi
+ * @param outCenter Output posisi center bounds (opsional)
+ * @return true jika hitPos masuk dalam expanded bounds
+ */
 bool IsHitInBounds(Vector2 hitPos, Rectangle bounds, float threshold, Vector2 *outCenter = nullptr)
 {
     Rectangle expanded = {
@@ -27,12 +56,25 @@ bool IsHitInBounds(Vector2 hitPos, Rectangle bounds, float threshold, Vector2 *o
     return CheckCollisionPointRec(hitPos, expanded);
 }
 
+/**
+ * @brief Hitung jarak dari titik hit ke center bounds
+ * @param hitPos Posisi hit
+ * @param bounds Bounding box object
+ * @return Jarak ke center
+ */
 float DistToCenter(Vector2 hitPos, Rectangle bounds)
 {
     Vector2 center = {bounds.x + bounds.width / 2, bounds.y + bounds.height / 2};
     return Vector2Distance(hitPos, center);
 }
 
+/**
+ * @brief Spawn semua object dari Tiled ke manager masing-masing
+ *
+ * Dipanggil sekali saat map selesai di-load. Mengambil object
+ * berdasarkan type dari object layer dan mendistribusikannya
+ * ke ChestManager, SpikeManager, dan BombManager.
+ */
 void SpawnObject()
 {
     auto chestObjs = TiledHelper::GetObjectsByType(CHEST_TYPE_OBJECT_NAME);
@@ -45,9 +87,19 @@ void SpawnObject()
     bombManager.SpawnBombs(bombObjs);
 }
 
-// chest
+/*==============================================================================
+ * ChestManager Implementation
+ *==============================================================================*/
+
 ChestManager chestManager;
 
+/**
+ * @brief Spawn semua chest dari object layer Tiled
+ *
+ * Snap posisi ke tile grid, set state awal Closed.
+ *
+ * @param chestObjects Daftar pointer MapObject bertipe chest
+ */
 void ChestManager::SpawnChests(const std::vector<MapObject *> &chestObjects)
 {
     chests.clear();
@@ -71,8 +123,12 @@ void ChestManager::SpawnChests(const std::vector<MapObject *> &chestObjects)
 
 /**
  * @brief Cari chest terdekat dari titik hit
+ *
  * Menggunakan expanded bounds agar titik di tepi tetap terdeteksi.
- * Definisi: src/propsbehavior.cpp (file ini)
+ *
+ * @param hitPos Posisi hit dari player
+ * @param threshold Toleransi jarak ke tepi bounds
+ * @return Pointer ke chest terdekat, nullptr jika tidak ada
  */
 TileObject *ChestManager::FindChest(Vector2 hitPos, float threshold)
 {
@@ -94,6 +150,13 @@ TileObject *ChestManager::FindChest(Vector2 hitPos, float threshold)
     return closest; // nullptr kalau gak ada dalam threshold
 }
 
+/**
+ * @brief Trigger interaksi player dengan chest
+ *
+ * Cari chest di sekitar hitPos, buka jika masih Closed, lalu trigger loot.
+ *
+ * @param hitPos Posisi interaksi player
+ */
 void ChestManager::Interact(Vector2 hitPos)
 {
     TraceLog(LOG_INFO, "Looking for chest at (%.1f, %.1f), total chests: %d", hitPos.x, hitPos.y, (int)chests.size());
@@ -104,6 +167,14 @@ void ChestManager::Interact(Vector2 hitPos)
     TriggerLoot(*chest);
 }
 
+/**
+ * @brief Spawn loot item secara random di sekitar chest yang dibuka
+ *
+ * Jumlah item 1-3, posisi di-offset random di sekitar chest.
+ * Rarity system belum diimplementasi.
+ *
+ * @param chest TileObject chest yang baru dibuka
+ */
 void ChestManager::TriggerLoot(TileObject &chest)
 {
     // placeholder, rarity system nyusul
@@ -123,6 +194,11 @@ void ChestManager::TriggerLoot(TileObject &chest)
     }
 }
 
+/**
+ * @brief Render semua chest ke layar
+ *
+ * State Closed = BROWN, Open = WHITE. Placeholder, belum pakai sprite.
+ */
 void ChestManager::Render()
 {
     // placeholder: switch gambar based on state
@@ -135,13 +211,29 @@ void ChestManager::Render()
     }
 }
 
+/**
+ * @brief Bersihkan semua data chest
+ */
 void ChestManager::Clear()
 {
     chests.clear();
 }
 
-// trap spike
+/*==============================================================================
+ * SpikeManager Implementation
+ *==============================================================================*/
+
 SpikeManager spikeManager;
+
+/**
+ * @brief Generate seed dari nama object untuk randomisasi timer
+ *
+ * Spike dengan nama sama akan punya seed yang sama,
+ * dikombinasikan dengan global time seed agar tetap bervariasi tiap run.
+ *
+ * @param name Nama object spike dari Tiled
+ * @return Seed unsigned int hasil hash nama
+ */
 
 unsigned int SpikeManager::SeedFromName(const std::string &name)
 {
@@ -151,6 +243,15 @@ unsigned int SpikeManager::SeedFromName(const std::string &name)
     return seed;
 }
 
+/**
+ * @brief Spawn semua spike dari object layer Tiled
+ *
+ * Tiap spike dapat durasi aktif/nonaktif yang di-randomisasi
+ * menggunakan kombinasi global time seed dan name seed.
+ * State awal: Inactive.
+ *
+ * @param spikeObjects Daftar pointer MapObject bertipe spike
+ */
 void SpikeManager::SpawnSpikes(const std::vector<MapObject *> &spikeObjects)
 {
     spikes.clear();
@@ -191,6 +292,15 @@ void SpikeManager::SpawnSpikes(const std::vector<MapObject *> &spikeObjects)
     }
 }
 
+/**
+ * @brief Setup callback untuk event spike
+ *
+ * - onActivate: set state ke Active
+ * - onDeactivate: set state ke Inactive
+ * - onDamagePlayer: placeholder log damage
+ *
+ * @param spike SpikeData yang akan di-setup callbacknya
+ */
 void SpikeManager::SetupCallbacks(SpikeData &spike)
 {
     spike.onActivate = [](TileObject &tile)
@@ -212,6 +322,18 @@ void SpikeManager::SetupCallbacks(SpikeData &spike)
     };
 }
 
+/**
+ * @brief Update timer dan damage spike tiap frame
+ *
+ * Alur per spike:
+ * - Inactive: countdown inactiveTimer, switch ke Active jika habis
+ * - Active: countdown activeTimer, switch ke Inactive jika habis
+ * - Active: cek collision dengan player dan enemy, apply damage dengan cooldown global
+ *
+ * @param deltaTime Waktu antar frame
+ * @param playerBounds Bounding box player untuk cek collision
+ * @param player Pointer ke player untuk apply damage
+ */
 void SpikeManager::Update(float deltaTime, Rectangle playerBounds, Player *player)
 {
     globalPlayerDamageCooldown -= deltaTime;
@@ -265,6 +387,11 @@ void SpikeManager::Update(float deltaTime, Rectangle playerBounds, Player *playe
     }
 }
 
+/**
+ * @brief Render semua spike ke layar
+ *
+ * Active = RED, Inactive = GRAY. Placeholder, belum pakai sprite.
+ */
 void SpikeManager::Render()
 {
     for (auto &spike : spikes)
@@ -276,14 +403,28 @@ void SpikeManager::Render()
     }
 }
 
+/**
+ * @brief Bersihkan semua data spike
+ */
 void SpikeManager::Clear()
 {
     spikes.clear();
 }
 
-// bomb
+/*==============================================================================
+ * BombManager Implementation
+ *==============================================================================*/
+
 BombManager bombManager;
 
+/**
+ * @brief Spawn semua bomb dari object layer Tiled
+ *
+ * Snap posisi ke tile grid, set state awal Active,
+ * dan daftarkan ke DynamicObstacles untuk pathfinding enemy.
+ *
+ * @param bombObjects Daftar pointer MapObject bertipe bomb
+ */
 void BombManager::SpawnBombs(const std::vector<MapObject *> &bombObjects)
 {
     bombs.clear();
@@ -313,6 +454,15 @@ void BombManager::SpawnBombs(const std::vector<MapObject *> &bombObjects)
     }
 }
 
+/**
+ * @brief Setup callback untuk event bomb
+ *
+ * - onHit: log saat bomb kena serangan
+ * - onExplode: log saat bomb meledak
+ * - onDamagePlayer: log saat bomb damage player
+ *
+ * @param bomb BombData yang akan di-setup callbacknya
+ */
 void BombManager::SetupCallbacks(BombData &bomb)
 {
     bomb.onHit = [](TileObject &tile)
@@ -331,10 +481,28 @@ void BombManager::SetupCallbacks(BombData &bomb)
     };
 }
 
+/**
+ * @brief Trigger ledakan bomb
+ *
+ * Urutan proses:
+ * 1. Set state Inactive, tandai isExploding & isTriggered
+ * 2. Hapus dari DynamicObstacles
+ * 3. Damage player jika dalam radius
+ * 4. Damage semua enemy aktif dalam radius
+ * 5. Chain reaction: trigger Explode pada bomb lain dalam radius yang belum meledak
+ *
+ * isTriggered dipakai sebagai guard agar tidak terjadi infinite loop
+ * pada layout bomb yang saling berdekatan.
+ *
+ * @param bomb BombData yang akan diledakkan
+ * @param playerBounds Bounding box player
+ * @param player Pointer ke player untuk apply damage
+ */
 void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player)
 {
     bomb.tile.state = ObjectState::Inactive;
     bomb.isExploding = true;
+    bomb.isTriggered = true;
     bomb.explosionTimer = BOMB_EXPLOSION_DURATION;
 
     // hapus dari dynamic obstacles
@@ -358,8 +526,27 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
         if (IsInExplosionRadius(bomb.tile.position, enemy->GetHitbox()))
             enemy->TakeDamage(BOMB_DAMAGE, {0, 0});
     }
+
+    // chain reaction
+    for (auto &other : bombs)
+    {
+        if (!other.isAlive || other.isExploding || other.isTriggered)
+            continue;
+        if (IsInExplosionRadius(bomb.tile.position, other.tile.bounds))
+            Explode(other, playerBounds, player);
+    }
 }
 
+/**
+ * @brief Cek apakah target rectangle berada dalam radius ledakan bomb
+ *
+ * Menggunakan nearest-point check dari center bomb ke rectangle target,
+ * bukan center-to-center, agar akurat untuk target berukuran besar.
+ *
+ * @param bombPos Posisi center bomb
+ * @param target Bounding box target
+ * @return true jika jarak nearest point <= BOMB_EXPLOSION_RADIUS
+ */
 bool BombManager::IsInExplosionRadius(Vector2 bombPos, Rectangle target)
 {
     // cek titik terdekat di rectangle target ke pusat bomb
@@ -369,6 +556,17 @@ bool BombManager::IsInExplosionRadius(Vector2 bombPos, Rectangle target)
     return dist <= BOMB_EXPLOSION_RADIUS;
 }
 
+/**
+ * @brief Update state semua bomb tiap frame
+ *
+ * Countdown explosionTimer untuk bomb yang sedang meledak.
+ * Bomb yang explosionTimer-nya habis di-set isAlive = false,
+ * lalu dihapus dari vector di akhir update.
+ *
+ * @param deltaTime Waktu antar frame
+ * @param playerBounds Bounding box player
+ * @param player Pointer ke player
+ */
 void BombManager::Update(float deltaTime, Rectangle playerBounds, Player *player)
 {
     for (auto &bomb : bombs)
@@ -391,6 +589,13 @@ void BombManager::Update(float deltaTime, Rectangle playerBounds, Player *player
         bombs.end());
 }
 
+/**
+ * @brief Trigger ledakan bomb yang terkena hitbox serangan player
+ *
+ * @param attackHitbox Hitbox serangan player
+ * @param playerBounds Bounding box player
+ * @param player Pointer ke player
+ */
 void BombManager::HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player)
 {
     for (auto &bomb : bombs)
@@ -403,6 +608,13 @@ void BombManager::HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Pl
     }
 }
 
+/**
+ * @brief Cari bomb terdekat dari titik hit
+ *
+ * @param hitPos Posisi hit
+ * @param threshold Toleransi jarak ke tepi bounds
+ * @return Pointer ke TileObject bomb terdekat, nullptr jika tidak ada
+ */
 TileObject *BombManager::FindBomb(Vector2 hitPos, float threshold)
 {
     TileObject *closest = nullptr;
@@ -425,6 +637,12 @@ TileObject *BombManager::FindBomb(Vector2 hitPos, float threshold)
     return closest;
 }
 
+/**
+ * @brief Render semua bomb ke layar
+ *
+ * Exploding = lingkaran orange transparan radius BOMB_EXPLOSION_RADIUS.
+ * Idle = kotak RED. Placeholder, belum pakai sprite.
+ */
 void BombManager::Render()
 {
     for (auto &bomb : bombs)
@@ -439,11 +657,17 @@ void BombManager::Render()
     }
 }
 
+/**
+ * @brief Bersihkan semua data bomb
+ */
 void BombManager::Clear()
 {
     bombs.clear();
 }
 
+/**
+ * @brief Spawn ulang semua bomb dari spawnPoints (debug only, currently disabled)
+ */
 void BombManager::SpawnAll()
 {
     // // debug: spawn ulang semua bomb dari spawnPoints
