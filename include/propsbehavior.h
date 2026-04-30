@@ -17,6 +17,8 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include <random>
+#include <unordered_set>
+#include <string>
 
 /*==============================================================================
  * ObjectState Enum
@@ -59,6 +61,12 @@ struct TileObject
  */
 void SpawnObject(void);
 
+// helper encode data string
+inline std::string EncodePos(Vector2 pos)
+{
+    return std::to_string((int)pos.x) + "_" + std::to_string((int)pos.y);
+}
+
 /*==============================================================================
  * ChestManager
  *==============================================================================*/
@@ -88,6 +96,7 @@ public:
 
 private:
     std::vector<TileObject> chests;
+    std::unordered_set<std::string> consumedPositions;
 
     /**
      * @brief Cari chest terdekat dari titik hit
@@ -254,7 +263,7 @@ private:
     static constexpr float BOMB_EXPLOSION_DURATION = 0.3f; // Durasi animasi ledakan (detik)
 
     std::vector<BombData> bombs;
-    std::vector<Vector2> spawnPoints; // Posisi spawn awal, untuk debug respawn
+    std::unordered_set<std::string> consumedPositions;
     Player *playerRef = nullptr;
 
     /** @brief Setup callback onHit, onExplode, onDamagePlayer */

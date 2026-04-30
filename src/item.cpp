@@ -155,7 +155,6 @@ void ItemDataManager::SpawnItemAtLocation(Vector2 pos)
     }
 
     activeItems.push_back(newItem);
-    TraceLog(LOG_INFO, "ITEM: Spawned near chest at (%.1f, %.1f)", pos.x, pos.y);
 }
 
 /**

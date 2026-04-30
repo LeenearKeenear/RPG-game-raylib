@@ -102,20 +102,21 @@ ChestManager chestManager;
  */
 void ChestManager::SpawnChests(const std::vector<MapObject *> &chestObjects)
 {
+    TraceLog(LOG_INFO, "SpawnChests called, consumed size: %d", (int)consumedPositions.size());
     chests.clear();
     for (auto *obj : chestObjects)
     {
+        Vector2 snapped = SnapToTileGrid({obj->bounds.x, obj->bounds.y});
+
         TileObject c;
         c.name = obj->name;
         c.bounds = obj->bounds;
-        c.state = ObjectState::Closed;
-        c.position = SnapToTileGrid({obj->bounds.x, obj->bounds.y});
+        c.position = snapped;
 
-        TraceLog(LOG_INFO, "Chest '%s': raw=(%.1f,%.1f) snap=(%.1f,%.1f) size=(%.1f,%.1f)",
-                 obj->name.c_str(),
-                 obj->bounds.x, obj->bounds.y,
-                 c.position.x, c.position.y,
-                 obj->bounds.width, obj->bounds.height);
+        if (consumedPositions.count(EncodePos(snapped)))
+            c.state = ObjectState::Open; // udah pernah dibuka
+        else
+            c.state = ObjectState::Closed;
 
         chests.push_back(c);
     }
@@ -263,12 +264,6 @@ void SpikeManager::SpawnSpikes(const std::vector<MapObject *> &spikeObjects)
         data.tile.state = ObjectState::Inactive;
         data.tile.position = SnapToTileGrid({obj->bounds.x, obj->bounds.y});
 
-        TraceLog(LOG_INFO, "Spike '%s': raw=(%.1f,%.1f) snap=(%.1f,%.1f) size=(%.1f,%.1f)",
-                 obj->name.c_str(),
-                 obj->bounds.x, obj->bounds.y,
-                 data.tile.position.x, data.tile.position.y,
-                 obj->bounds.width, obj->bounds.height);
-
         unsigned int globalSeed = static_cast<unsigned int>(time(nullptr));
         unsigned int nameSeed = SeedFromName(obj->name);
 
@@ -281,11 +276,6 @@ void SpikeManager::SpawnSpikes(const std::vector<MapObject *> &spikeObjects)
         data.activeTimer = 0.0f;
         data.inactiveTimer = data.inactiveDuration;
         data.damageCooldown = 0.0f;
-
-        TraceLog(LOG_INFO, "Spike '%s': active=%.1fs inactive=%.1fs",
-                 obj->name.c_str(),
-                 data.activeDuration,
-                 data.inactiveDuration);
 
         SetupCallbacks(data);
         spikes.push_back(data);
@@ -428,20 +418,17 @@ BombManager bombManager;
 void BombManager::SpawnBombs(const std::vector<MapObject *> &bombObjects)
 {
     bombs.clear();
-    spawnPoints.clear();
     for (auto *obj : bombObjects)
     {
+        Vector2 snapped = SnapToTileGrid({obj->bounds.x, obj->bounds.y});
+        if (consumedPositions.count(EncodePos(snapped)))
+            continue; // skip yang udah meledak
+
         BombData data;
         data.tile.name = obj->name;
         data.tile.bounds = obj->bounds;
         data.tile.state = ObjectState::Active;
         data.tile.position = SnapToTileGrid({obj->bounds.x, obj->bounds.y});
-
-        TraceLog(LOG_INFO, "Bomb '%s': raw=(%.1f,%.1f) snap=(%.1f,%.1f) size=(%.1f,%.1f)",
-                 obj->name.c_str(),
-                 obj->bounds.x, obj->bounds.y,
-                 data.tile.position.x, data.tile.position.y,
-                 obj->bounds.width, obj->bounds.height);
 
         data.isAlive = true;
         data.isExploding = false;
@@ -449,7 +436,6 @@ void BombManager::SpawnBombs(const std::vector<MapObject *> &bombObjects)
 
         SetupCallbacks(data);
         bombs.push_back(data);
-        spawnPoints.push_back(data.tile.position);
         DynamicObstacles.push_back(data.tile.bounds);
     }
 }
@@ -504,6 +490,8 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
     bomb.isExploding = true;
     bomb.isTriggered = true;
     bomb.explosionTimer = BOMB_EXPLOSION_DURATION;
+
+    consumedPositions.insert(EncodePos(bomb.tile.position));
 
     // hapus dari dynamic obstacles
     DynamicObstacles.erase(
@@ -663,18 +651,4 @@ void BombManager::Render()
 void BombManager::Clear()
 {
     bombs.clear();
-}
-
-/**
- * @brief Spawn ulang semua bomb dari spawnPoints (debug only, currently disabled)
- */
-void BombManager::SpawnAll()
-{
-    // // debug: spawn ulang semua bomb dari spawnPoints
-    // bombs.clear();
-    // for (size_t i = 0; i < spawnPoints.size(); i++)
-    // {
-    //     std::string name = "bomb_debug_" + std::to_string(i);
-    //     Spawn(spawnPoints[i], name);
-    // }
 }
