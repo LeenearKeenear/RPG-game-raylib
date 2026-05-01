@@ -134,18 +134,44 @@ function Install-Tileson() {
     $cwd = $PWD.Path
     $tilesonDir = Join-Path $cwd "lib\tileson"
     $tilesonFile = Join-Path $tilesonDir "tileson.hpp"
-    
+    $tilesonUrl = "https://github.com/SSBMTonberry/tileson/releases/download/v1.4.0/tileson.hpp"
+
     Write-Step "Checking for tileson..."
     Write-Debug "Tileson path: $tilesonFile"
-    
+
     if (Test-Path $tilesonFile) {
         Write-Step "tileson.hpp already exists at $tilesonDir"
         return
     }
-    
-    Write-Step "tileson.hpp not found!"
-    Write-Host "  Please download tileson from: https://github.com/SSBMTonberry/tileson" -ForegroundColor Yellow
-    Write-Host "  Copy 'tileson.hpp' to: lib/tileson/" -ForegroundColor Yellow
+
+    Write-Step "tileson.hpp not found. Downloading tileson v1.4.0 from GitHub..."
+    Write-Debug "URL: $tilesonUrl"
+    Write-Debug "Download path: $tilesonFile"
+
+    if (-not (Test-Path $tilesonDir)) {
+        New-Item -ItemType Directory -Path $tilesonDir -Force | Out-Null
+    }
+
+    try {
+        Invoke-WebRequest -Uri $tilesonUrl -OutFile $tilesonFile -UserAgent "PowerShell"
+    } catch {
+        Write-Err "Download failed: $_"
+        exit 1
+    }
+
+    if (Test-Path $tilesonFile) {
+        $fileSize = (Get-Item $tilesonFile).Length
+        if ($fileSize -gt 100KB) {
+            Write-Step "tileson installed successfully to $tilesonDir ($([math]::Round($fileSize/1KB, 1)) KB)" -ForegroundColor Green
+        } else {
+            Write-Err "Downloaded file too small ($fileSize bytes), likely failed"
+            Remove-Item -Path $tilesonFile -Force -ErrorAction SilentlyContinue
+            exit 1
+        }
+    } else {
+        Write-Err "Download failed - file not created"
+        exit 1
+    }
 }
 
 function Install-NlohmannJson() {
