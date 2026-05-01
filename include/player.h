@@ -181,9 +181,6 @@ private:
 
     // Action handler — definisi: src/player.cpp
     void HandleAction(void);
-
-    // Potion usage — definisi: src/player.cpp
-    void UsePotion(int slotIndex);
 };
 
 extern Player PlayerInstance;

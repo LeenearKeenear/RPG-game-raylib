@@ -18,6 +18,7 @@
 #include <map>
 #include <random>
 #include <algorithm>
+#include <variant>
 
 /*==============================================================================
  * Enums
@@ -56,24 +57,75 @@ typedef enum
 } SpawnAreaSize;
 
 /*==============================================================================
+ * Behavior Structs per Category
+ *==============================================================================*/
+
+// Pindah dari combat.h — dipakai sebagai bagian dari WeaponData
+enum AttackType
+{
+    ATTACK_SLASH,
+    ATTACK_THRUST
+};
+
+struct WeaponData
+{
+    float damage;
+    float reach;
+    float breadth;
+    float duration;
+    float knockbackForce;
+    float startAngleOffset;
+    float sweepAngle;
+    Vector2 centerOffset;
+    float manaCost;
+    AttackType attackType;
+};
+
+struct PotionData
+{
+    int healValue;
+    bool isMana;
+};
+
+struct ArmorData
+{
+    float defense;
+};
+
+/*==============================================================================
+ * ItemDefinition — single source of truth
+ *==============================================================================*/
+
+struct ItemDefinition
+{
+    int id;
+    std::string name;
+    ItemCategory category;
+    Vector2 sheetCoord;
+    Vector2 hitboxSize;
+    ItemRarity rarity;
+    std::variant<WeaponData, PotionData, ArmorData> data;
+};
+
+/*==============================================================================
  * Structs
  *==============================================================================*/
 
-/**
- * @brief Representasi satu item yang ada di world
- */
-typedef struct
+struct ItemSpawn
 {
-    std::string name;       // Nama item
-    ItemCategory category;  // Kategori item
-    ItemRarity rarity;      // Rarity item
-    Vector2 position;       // Posisi item di world
-    Rectangle hitbox;       // Hitbox item untuk pickup/collision
-    int textureID;          // ID texture item
-    bool isPickedUp;        // True jika item sudah diambil player
-    float statMultiplier;   // Multiplier stat dari item
-    float spawnTime;        // Waktu item di-spawn
-} Item;
+    int definitionId;
+    Vector2 position;
+    Rectangle hitbox;
+    bool isPickedUp;
+    bool isAdded;
+    float spawnTime;
+};
+
+struct InventoryItem
+{
+    int definitionId = -1; // -1 = slot kosong
+    int amount = 0;
+};
 
 /**
  * @brief Representasi satu area spawn item dari Tiled
@@ -88,6 +140,22 @@ typedef struct
     bool isActive;           // True jika area dipakai untuk spawn pada run ini
     bool isPolygon;          // True jika area berasal dari object polygon
 } SpawnArea;
+
+/*==============================================================================
+ * ItemDefinitionManager
+ *==============================================================================*/
+
+class ItemDefinitionManager
+{
+public:
+    void Init();
+    const ItemDefinition &Get(int id) const;
+    const std::vector<ItemDefinition> &GetAll() const;
+    int Count() const;
+
+private:
+    std::vector<ItemDefinition> pool;
+};
 
 /*==============================================================================
  * ItemDataManager
@@ -112,8 +180,8 @@ public:
      * @param rarity Rarity item
      * @return Item yang sudah dibuat
      */
-    Item CreateItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity rarity);
 
+    ItemSpawn CreateItem(Vector2 pos, int definitionId);
     /**
      * @brief Spawn item langsung di posisi tertentu
      * @param pos Posisi spawn item
@@ -139,11 +207,11 @@ public:
     void ClearItems();
 
     // Daftar item yang sedang aktif di world
-    std::vector<Item> activeItems;
+    std::vector<ItemSpawn> activeItems;
 
 private:
     // Penyimpanan state item berdasarkan path map
-    std::map<std::string, std::vector<Item>> savedMapItems;
+    std::map<std::string, std::vector<ItemSpawn>> savedMapItems;
 };
 
 /*==============================================================================
@@ -164,26 +232,22 @@ public:
      * @param magnetRadius Radius tarikan item ke player
      * @param itemSpeed Kecepatan item saat tertarik ke player
      */
-    void Update(std::vector<Item> &items, Vector2 playerCenter,
+    void Update(std::vector<ItemSpawn> &items, Vector2 playerCenter,
                 Rectangle playerHitbox, float magnetRadius, float itemSpeed);
 
     /**
      * @brief Render semua item yang belum diambil
      * @param items Daftar item yang akan dirender
      */
-    void RenderAll(std::vector<Item> &items);
+    void RenderAll(std::vector<ItemSpawn> &items);
 
     /**
      * @brief Render satu item
      * @param item Item yang akan dirender
      */
-    void Render(Item &item);
+    void Render(ItemSpawn &item);
 
 private:
-    /**
-     * @brief Load texture item yang dibutuhkan renderer
-     */
-    void InitTextures();
 };
 
 /*==============================================================================
@@ -206,13 +270,9 @@ public:
      * @brief Spawn semua item berdasarkan area aktif
      * @param activeItems Vector item aktif yang akan diisi
      */
-    void SpawnAll(std::vector<Item> &activeItems);
+    void SpawnAll(std::vector<ItemSpawn> &activeItems);
 
-    /**
-     * @brief Spawn item random ke daftar item aktif
-     * @param activeItems Vector item aktif yang akan diisi
-     */
-    void SpawnRandomItem(std::vector<Item> &activeItems);
+    int PickRandomDefinitionId(std::mt19937 &rng);
 
 private:
     // Daftar area spawn item yang dibaca dari Tiled
@@ -281,7 +341,10 @@ void SpawnItemWave();
  */
 void SpawnRandomItem();
 
+std::vector<ItemSpawn> &GetActiveItems();
+
 // Instance global manager item
 extern ItemDataManager itemData;
 extern ItemRenderManager itemRender;
 extern ItemSpawnManager spawnManager;
+extern ItemDefinitionManager itemDefs;

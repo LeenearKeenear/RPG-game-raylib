@@ -11,10 +11,11 @@
  */
 
 #include "../include/item.h"
+#include "../include/combat.h"
+#include "../include/player.h"
 #include "../include/animation.h"
 #include "../include/screen.h"
 #include "../include/entities.h"
-#include "../include/player.h"
 #include "../include/enemy.h"
 #include "../include/mapLogic.h"
 #include "../lib/raylib/include/raymath.h"
@@ -24,7 +25,8 @@
 extern void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale);
 extern TileDefinition TileProperty[];
 
-// instance global ketiga class
+// instance global keempat class
+ItemDefinitionManager itemDefs;
 ItemDataManager itemData;
 ItemRenderManager itemRender;
 ItemSpawnManager spawnManager;
@@ -46,6 +48,7 @@ void InitItemTextures()
  */
 void InitItems()
 {
+    itemDefs.Init();
     InitItemTextures();
     itemData.Init();
     spawnManager.Init(ITEM_LAYER_NAME);
@@ -71,10 +74,42 @@ void SpawnRandomItem()
 }
 
 /** @brief Getter untuk activeItems */
-std::vector<Item> &GetActiveItems() { return itemData.activeItems; }
+std::vector<ItemSpawn> &GetActiveItems() { return itemData.activeItems; }
 
 /*==============================================================================
- * ItemDataManager
+ * ItemDefinitionManager
+ *==============================================================================*/
+
+void ItemDefinitionManager::Init()
+{
+    pool = {
+        {0, "Iron Sword", ITEM_WEAPON, {6, 4}, {32, 32}, RARITY_COMMON, WeaponData{15.f, 40.f, 16.f, 0.25f, 0.6f, 0.f, 0.f, {8.f, 4.f}, 10.f, ATTACK_THRUST}},
+
+        {1, "Iron Axe", ITEM_WEAPON, {7, 4}, {32, 32}, RARITY_RARE, WeaponData{25.f, 48.f, 56.f, 0.5f, 1.8f, 55.f, -95.f, {20.f, 20.f}, 15.f, ATTACK_SLASH}},
+
+        {2, "Health Potion", ITEM_POTION, {7, 8}, {20, 20}, RARITY_COMMON, PotionData{20, false}},
+
+        {3, "Mana Bread", ITEM_POTION, {10, 8}, {20, 20}, RARITY_COMMON, PotionData{15, true}},
+    };
+}
+
+const ItemDefinition &ItemDefinitionManager::Get(int id) const
+{
+    return pool[id];
+}
+
+const std::vector<ItemDefinition> &ItemDefinitionManager::GetAll() const
+{
+    return pool;
+}
+
+int ItemDefinitionManager::Count() const
+{
+    return (int)pool.size();
+}
+
+/*==============================================================================
+ * ItemDataSpawnManager
  *==============================================================================*/
 
 /** @brief Reset activeItems */
@@ -95,36 +130,20 @@ void ItemDataManager::Init()
  * @param rarity Rarity item
  * @return Item yang sudah di-setup
  */
-Item ItemDataManager::CreateItem(Vector2 pos, ItemCategory category, float multiplier, ItemRarity rarity)
+ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
 {
-    Item newItem;
-    newItem.category = category;
-    newItem.statMultiplier = multiplier;
-    newItem.rarity = rarity;
-    newItem.isPickedUp = false;
-    newItem.position = pos;
-    newItem.spawnTime = (float)GetTime();
+    const ItemDefinition &def = itemDefs.Get(definitionId);
+    ItemSpawn item;
+    item.definitionId = definitionId;
+    item.position = pos;
+    item.hitbox = {pos.x, pos.y, def.hitboxSize.x, def.hitboxSize.y};
+    item.isPickedUp = false;
+    item.isAdded = false;
+    item.spawnTime = (float)GetTime();
 
-    switch (category)
-    {
-    case ITEM_WEAPON:
-        newItem.name = "Sword";
-        newItem.hitbox = {pos.x, pos.y, 32, 32};
-        break;
-    case ITEM_POTION:
-        newItem.name = "Health Potion";
-        newItem.hitbox = {pos.x, pos.y, 20, 20};
-        break;
-    default:
-        newItem.name = "Unknown Item";
-        newItem.hitbox = {pos.x, pos.y, 16, 16};
-        break;
-    }
-
-    const char *rarityText = (rarity == RARITY_COMMON) ? "COMMON" : "RARE";
-    TraceLog(LOG_INFO, "ITEM: Spawned '%s' at (%.1f, %.1f) rarity '%s'",
-             newItem.name.c_str(), pos.x, pos.y, rarityText);
-    return newItem;
+    TraceLog(LOG_INFO, "ITEM: Spawned '%s' at (%.1f, %.1f)",
+             def.name.c_str(), pos.x, pos.y);
+    return item;
 }
 
 /**
@@ -137,24 +156,9 @@ Item ItemDataManager::CreateItem(Vector2 pos, ItemCategory category, float multi
  */
 void ItemDataManager::SpawnItemAtLocation(Vector2 pos)
 {
-    Item newItem;
-    newItem.category = (GetRandomValue(0, 1) == 0) ? ITEM_POTION : ITEM_WEAPON;
-    newItem.position = pos;
-    newItem.isPickedUp = false;
-    newItem.spawnTime = (float)GetTime();
-
-    if (newItem.category == ITEM_WEAPON)
-    {
-        newItem.name = "Sword";
-        newItem.hitbox = {pos.x, pos.y, 32, 32};
-    }
-    else
-    {
-        newItem.name = "Health Potion";
-        newItem.hitbox = {pos.x, pos.y, 20, 20};
-    }
-
-    activeItems.push_back(newItem);
+    std::mt19937 rng(static_cast<unsigned int>(time(nullptr)));
+    int defId = spawnManager.PickRandomDefinitionId(rng);
+    activeItems.push_back(CreateItem(pos, defId));
 }
 
 /**
@@ -196,12 +200,6 @@ void ItemDataManager::ClearItems()
  * ItemRenderManager
  *==============================================================================*/
 
-/** @brief Load texture item dari spritesheet */
-void ItemRenderManager::InitTextures()
-{
-    LoadTileTexture(TEXTURE_ITEMS, "texture/test.png");
-}
-
 /**
  * @brief Update magnet effect dan pickup detection tiap frame
  *
@@ -215,7 +213,8 @@ void ItemRenderManager::InitTextures()
  * @param magnetRadius Radius magnet dalam pixel
  * @param itemSpeed Kecepatan gerak item saat ditarik magnet
  */
-void ItemRenderManager::Update(std::vector<Item> &items, Vector2 playerCenter, Rectangle playerHitbox, float magnetRadius, float itemSpeed)
+void ItemRenderManager::Update(std::vector<ItemSpawn> &items, Vector2 playerCenter,
+                               Rectangle playerHitbox, float magnetRadius, float itemSpeed)
 {
     float currentTime = (float)GetTime();
     for (auto &item : items)
@@ -242,7 +241,8 @@ void ItemRenderManager::Update(std::vector<Item> &items, Vector2 playerCenter, R
         if (CheckCollisionRecs(playerHitbox, item.hitbox))
         {
             item.isPickedUp = true;
-            std::cout << "Picked up: " << item.name << std::endl;
+            TraceLog(LOG_INFO, "ITEM: Picked up '%s'",
+                     itemDefs.Get(item.definitionId).name.c_str());
         }
     }
 }
@@ -251,7 +251,7 @@ void ItemRenderManager::Update(std::vector<Item> &items, Vector2 playerCenter, R
  * @brief Render semua item yang belum di-pickup
  * @param items Referensi ke activeItems
  */
-void ItemRenderManager::RenderAll(std::vector<Item> &items)
+void ItemRenderManager::RenderAll(std::vector<ItemSpawn> &items)
 {
     for (auto &item : items)
     {
@@ -267,27 +267,21 @@ void ItemRenderManager::RenderAll(std::vector<Item> &items)
  *
  * @param item Item yang akan di-render
  */
-void ItemRenderManager::Render(Item &item)
+void ItemRenderManager::Render(ItemSpawn &item)
 {
-    Vector2 sheetCoord;
-    switch (item.category)
-    {
-    case ITEM_POTION:
-        sheetCoord = {7, 8};
-        break;
-    case ITEM_WEAPON:
-        sheetCoord = {6, 4};
-        break;
-    default:
-        sheetCoord = {7, 8};
-        break;
-    }
-    DrawSmallSprite(TEXTURE_ITEMS, sheetCoord, item.position, 0.5f);
+    const ItemDefinition &def = itemDefs.Get(item.definitionId);
+    DrawSmallSprite(TEXTURE_ITEMS, def.sheetCoord, item.position, 0.5f);
 }
 
 /*==============================================================================
  * ItemSpawnManager
  *==============================================================================*/
+
+// Rarity chance dalam persen — total harus 100
+static const std::map<ItemRarity, int> RARITY_WEIGHTS = {
+    {RARITY_COMMON, 70},
+    {RARITY_RARE, 30},
+};
 
 /**
  * @brief Generate seed dari nama area untuk randomisasi spawn
@@ -409,8 +403,7 @@ void ItemSpawnManager::DetermineActiveAreas()
     if (spawnAreas.empty())
         return;
 
-    unsigned int seed = static_cast<unsigned int>(time(nullptr));
-    std::mt19937 rng(seed);
+    std::mt19937 rng(static_cast<unsigned int>(time(nullptr)));
     std::uniform_int_distribution<int> areaDist(1, (int)spawnAreas.size());
     int activeCount = areaDist(rng);
 
@@ -445,6 +438,39 @@ Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area)
     return {area.bounds.x + area.bounds.width / 2, area.bounds.y + area.bounds.height / 2};
 }
 
+// Pilih definitionId random berdasarkan rarity weight
+int ItemSpawnManager::PickRandomDefinitionId(std::mt19937 &rng)
+{
+    // Kumpulkan semua item per rarity
+    std::map<ItemRarity, std::vector<int>> byRarity;
+    for (const auto &def : itemDefs.GetAll())
+        byRarity[def.rarity].push_back(def.id);
+
+    // Roll rarity dulu
+    std::uniform_int_distribution<int> rollDist(1, 100);
+    int roll = rollDist(rng);
+
+    int cumulative = 0;
+    ItemRarity pickedRarity = RARITY_COMMON;
+    for (const auto &[rarity, weight] : RARITY_WEIGHTS)
+    {
+        cumulative += weight;
+        if (roll <= cumulative)
+        {
+            pickedRarity = rarity;
+            break;
+        }
+    }
+
+    // Kalau rarity yang ke-roll gak ada itemnya, fallback ke COMMON
+    if (byRarity[pickedRarity].empty())
+        pickedRarity = RARITY_COMMON;
+
+    // Pilih random dari item dengan rarity itu
+    std::uniform_int_distribution<int> idxDist(0, (int)byRarity[pickedRarity].size() - 1);
+    return byRarity[pickedRarity][idxDist(rng)];
+}
+
 /**
  * @brief Spawn semua item ke activeItems berdasarkan area aktif
  *
@@ -454,7 +480,7 @@ Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area)
  *
  * @param activeItems Referensi ke vector item yang akan diisi
  */
-void ItemSpawnManager::SpawnAll(std::vector<Item> &activeItems)
+void ItemSpawnManager::SpawnAll(std::vector<ItemSpawn> &activeItems)
 {
     activeItems.clear();
 
@@ -472,14 +498,8 @@ void ItemSpawnManager::SpawnAll(std::vector<Item> &activeItems)
         for (int i = 0; i < spawnCount; i++)
         {
             Vector2 pos = GetRandomPosInArea(area);
-            int randomItem = GetRandomValue(1, 2);
-            int randomMult = GetRandomValue(1, 3);
-            int randomRarity = GetRandomValue(1, 2);
-
-            ItemCategory c = (randomItem == 1) ? ITEM_POTION : ITEM_WEAPON;
-            ItemRarity r = (randomRarity == 1) ? RARITY_COMMON : RARITY_RARE;
-
-            activeItems.push_back(itemData.CreateItem(pos, c, (float)randomMult, r));
+            int defId = PickRandomDefinitionId(rng);
+            activeItems.push_back(itemData.CreateItem(pos, defId));
         }
     }
 
