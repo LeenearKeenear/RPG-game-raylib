@@ -19,7 +19,7 @@ function Write-Err($message) {
     Write-Host "[ERROR] $message" -ForegroundColor Red
 }
 
-# Early exit if all libs already exist (no output)
+# Early exit if all libs already exist
 $cwd = $PWD.Path
 $raylibDir = Join-Path $cwd "lib\raylib"
 $tilesonDir = Join-Path $cwd "lib\tileson"
@@ -40,6 +40,7 @@ if ($raylibReady) {
 }
 
 if ($raylibReady -and $tilesonReady -and $jsonReady) {
+    Write-Step "All required libraries already installed" -ForegroundColor Green
     exit 0
 }
 
