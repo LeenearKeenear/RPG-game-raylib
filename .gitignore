@@ -24,6 +24,7 @@ lib/json/
 
 # Temp extraction for setup
 json-temp/
+raylib-*/
 
 # Temp directories
 tmp/
