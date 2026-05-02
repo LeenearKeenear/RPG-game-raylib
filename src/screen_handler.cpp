@@ -300,6 +300,7 @@ void UpdateLogicAll()
             else
             {
                 TraceLog(LOG_INFO, "PICKUP: inventory full");
+                item.isPickedUp = false; // balik ke world
             }
         }
     }

@@ -119,6 +119,7 @@ struct ItemSpawn
     bool isPickedUp;
     bool isAdded;
     float spawnTime;
+    int amount = 1;
 };
 
 struct InventoryItem

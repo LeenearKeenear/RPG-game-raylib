@@ -36,10 +36,10 @@ void Player::Init(GameState *state, const char *spawnObjectName)
         // Inisialisasi perlengkapan hotbar default
         Hotbar[0] = {0, 1}; // Iron Sword
         Hotbar[1] = {1, 1}; // Iron Axe
-        Hotbar[2] = {2, 3}; // Health Potion
-        Hotbar[3] = {3, 5}; // Mana Bread
+        Hotbar[2] = {2, 8}; // Health Potion
+        Hotbar[3] = {3, 8}; // Mana Bread
 
-        for (int i = 0; i < 49; i++)
+        for (int i = 0; i < PlayerInstance.MaxBag; i++)
             Bag[i] = {-1, 0};
 
         isInitialized = true;
@@ -150,6 +150,7 @@ void Player::Update()
 
     Inventory::HandleInventoryActions(*this);
     Interaction::HandleInteractions(*this);
+    HandleAction();
 
     // 6. Update Animasi & Kamera
     Combat::UpdateSwingAttack(*this, GetFrameTime());
@@ -300,53 +301,49 @@ void Player::DrawAimIndicator(void)
  */
 void Player::HandleAction(void)
 {
+    if (InputInstance.IsInventoryOpen())
+        return;
+
     PlayerAction action = InputInstance.ResolveAction();
 
     switch (action)
     {
-    case ACTION_ATTACK:
+    case ACTION_DROP_ITEM:
     {
-        float manaCost = Inventory::GetAttackManaCost(*this);
-        if (Mana >= manaCost)
+        int slotIdx = (int)InputInstance.GetActiveSlot() - 1;
+        if (slotIdx < 0 || slotIdx >= MaxHotbar)
+            break;
+
+        InventoryItem &slot = Hotbar[slotIdx];
+        if (slot.definitionId == -1)
+            break;
+
+        bool dropAll = InputInstance.IsDropItemAll();
+
+        Vector2 playerCenter = GetCenter();
+        Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(State), camera);
+        Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+        Vector2 dropPos = {
+            playerCenter.x + aimDir.x * INTERACT_RANGE,
+            playerCenter.y + aimDir.y * INTERACT_RANGE};
+
+        ItemSpawn dropped = itemData.CreateItem(dropPos, slot.definitionId);
+        if (dropAll)
         {
-            UpdatePlayerAttack(Anim);
-            Mana -= manaCost;
-            ManaRegenTimer = ManaRegenDelay;
-            TraceLog(LOG_INFO, "PLAYER: Attack! (slot %d) - Mana: %.1f", (int)InputInstance.GetActiveSlot(), Mana);
+            dropped.amount = slot.amount;
+            slot = {-1, 0};
         }
         else
         {
-            TraceLog(LOG_WARNING, "PLAYER: Attack failed! Out of energy.");
+            dropped.amount = 1;
+            slot.amount -= 1;
+            if (slot.amount <= 0)
+                slot = {-1, 0};
         }
+
+        itemData.activeItems.push_back(dropped);
         break;
     }
-
-    case ACTION_DRINK_POTION:
-    {
-        int slotIdx = (int)InputInstance.GetActiveSlot() - 1;
-        if (slotIdx >= 0 && slotIdx < 4)
-        {
-            InventoryItem &slot = Hotbar[slotIdx];
-            if (slot.definitionId != -1 && slot.amount > 0)
-            {
-                const ItemDefinition &def = itemDefs.Get(slot.definitionId);
-                if (def.category == ITEM_POTION)
-                {
-                    Inventory::UsePotion(*this, slotIdx);
-                    TraceLog(LOG_INFO, "PLAYER: Drink potion! %s (slot %d)", def.name.c_str(), slotIdx + 1);
-                }
-            }
-            else
-            {
-                TraceLog(LOG_INFO, "PLAYER: No potion in slot %d!", slotIdx + 1);
-            }
-        }
-        break;
-    }
-
-    case ACTION_EQUIP_UNEQUIP:
-        TraceLog(LOG_INFO, "PLAYER: Equip/Unequip from inventory!");
-        break;
 
     case ACTION_NONE:
     default:

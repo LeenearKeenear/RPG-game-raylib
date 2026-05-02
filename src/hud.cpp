@@ -3,6 +3,7 @@
 #include "../include/animation.h"
 #include "../include/inventory.h"
 #include "../include/effectQueue.h"
+#include "../lib/raylib/include/raymath.h"
 #include <cstdio>
 #include <vector>
 #include <string>
@@ -37,10 +38,10 @@ static void DrawTextHUD(const char *text, int x, int y, int fontSize, Color colo
 
 static InventoryItem &GetItemBySlotIndex(int index)
 {
-    if (index >= 0 && index < 49)
+    if (index >= 0 && index < PlayerInstance.MaxBag)
         return PlayerInstance.Bag[index];
-    if (index >= 49 && index < 53)
-        return PlayerInstance.Hotbar[index - 49];
+    if (index >= PlayerInstance.MaxBag && index < PlayerInstance.MaxInventory)
+        return PlayerInstance.Hotbar[index - PlayerInstance.MaxBag];
     static InventoryItem empty = {-1, 0};
     return empty;
 }
@@ -138,7 +139,7 @@ void DrawInventory()
 
     const float slotSize = 50.0f;
     const float padding = 6.0f;
-    const int gridSize = 7;
+    const int gridSize = 5;
     const float totalGridSize = (slotSize * gridSize) + (padding * (gridSize - 1));
     const float startX = (GameScreenWidth - totalGridSize) / 2.0f;
     const float startY = (GameScreenHeight - totalGridSize) / 2.0f;
@@ -147,7 +148,7 @@ void DrawInventory()
     bool mousePressed = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
     bool mouseReleased = IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
 
-    for (int i = 0; i < 49; i++)
+    for (int i = 0; i < PlayerInstance.MaxBag; i++)
     {
         int row = i / gridSize;
         int col = i % gridSize;
@@ -196,9 +197,21 @@ void DrawInventory()
             HandleDrop(i);
     }
 
-    // Drop di luar slot — cancel drag, item balik
     if (mouseReleased && dragSlot != -1)
     {
+        InventoryItem &src = GetItemBySlotIndex(dragSlot);
+        Vector2 playerCenter = PlayerInstance.GetCenter();
+        Vector2 mouseWorld = GetScreenToWorld2D(mousePos, camera);
+        Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+        Vector2 dropPos = {
+            playerCenter.x + aimDir.x * PlayerInstance.INTERACT_RANGE,
+            playerCenter.y + aimDir.y * PlayerInstance.INTERACT_RANGE};
+
+        ItemSpawn dropped = itemData.CreateItem(dropPos, dragItem.definitionId);
+        dropped.amount = dragItem.amount;
+        itemData.activeItems.push_back(dropped);
+        src = {-1, 0};
+
         dragSlot = -1;
         dragItem = {-1, 0};
     }
@@ -243,11 +256,11 @@ void DrawHotbar()
     bool mousePressed = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
     bool mouseReleased = IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
 
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < PlayerInstance.MaxHotbar; i++)
     {
         Rectangle slotRect = {startX + (i * (slotSize + padding)), startY, slotSize, slotSize};
         bool isActive = (activeSlot == (int)(i + 1));
-        int globalIdx = 49 + i;
+        int globalIdx = PlayerInstance.MaxBag + i;
         bool isHovered = isInventoryOpen && CheckCollisionPointRec(mousePos, slotRect);
         bool isDragSource = (dragSlot == globalIdx);
 

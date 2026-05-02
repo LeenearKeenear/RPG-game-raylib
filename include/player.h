@@ -86,7 +86,10 @@ public:
     std::string pendingDoorName;   ///< Nama pintu tujuan di map baru
     bool pendingGoBack = false;    ///< Flag untuk kembali ke map sebelumnya
     InventoryItem Hotbar[4];       ///< Item akses cepat (hotbar) pemain
-    InventoryItem Bag[49];         ///< Tas penyimpanan utama pemain (inventory, 7x7 grid)
+    InventoryItem Bag[20];         ///< Tas penyimpanan utama pemain (inventory, 5x5 grid)
+    const int MaxBag = 20; ///< jumlah maksimum bag. nilainya harus sama dengan bag
+    const int MaxHotbar = 4;    ///< jumlah maksimum hotbar. nilainya harus sama dengan hotbar
+    const int MaxInventory = MaxBag + MaxHotbar; ///< keseluruhan inventory
 
     float HitboxWidth = 16.0f;
     float HitboxHeight = 12.0f;

@@ -1,4 +1,6 @@
 #include "../include/input.h"
+#include "../include/player.h"
+#include "../include/item.h"
 
 PlayerInput InputInstance;
 
@@ -15,19 +17,23 @@ void PlayerInput::PollInput(void)
         return;
     }
 
-    Current.moveUp    = IsKeyDown(KEY_UP)    || IsKeyDown(KEY_W);
-    Current.moveDown  = IsKeyDown(KEY_DOWN)  || IsKeyDown(KEY_S);
-    Current.moveLeft  = IsKeyDown(KEY_LEFT)  || IsKeyDown(KEY_A);
+    Current.moveUp = IsKeyDown(KEY_UP) || IsKeyDown(KEY_W);
+    Current.moveDown = IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S);
+    Current.moveLeft = IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A);
     Current.moveRight = IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D);
 
     // --- Actions (KeyPressed — tap sekali / baru diteken) ---
-    Current.interact        = IsKeyPressed(KEY_E);
-    Current.revive          = IsKeyPressed(KEY_R);
+    Current.interact = IsKeyPressed(KEY_E);
+    Current.revive = IsKeyPressed(KEY_R);
     Current.toggleInventory = IsKeyPressed(KEY_I);
-    Current.toggleMap       = IsKeyPressed(KEY_M);
-    
+    Current.toggleMap = IsKeyPressed(KEY_M);
+    Current.dropItem = IsKeyPressed(KEY_Q);
+    Current.dropItemAll = IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
+
     Current.leftClickPressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-    Current.leftClickDown    = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    Current.rightClickPressed = IsMouseButtonPressed(MOUSE_BUTTON_RIGHT);
+    Current.leftClickDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    Current.rightClickDown = IsMouseButtonDown(MOUSE_BUTTON_RIGHT);
 
     Current.selectSlot1 = IsKeyPressed(KEY_ONE);
     Current.selectSlot2 = IsKeyPressed(KEY_TWO);
@@ -103,21 +109,24 @@ void PlayerInput::UpdateState(void)
 
 PlayerAction PlayerInput::ResolveAction() const
 {
-    if (InventoryOpen)
-        return ACTION_EQUIP_UNEQUIP;
 
-    switch (ActiveSlot)
-    {
-    case SLOT_WEAPON_1:
-    case SLOT_WEAPON_2:
+    if (Current.dropItem)
+        return ACTION_DROP_ITEM;
+
+    // Ambil item di slot aktif
+    int slotIdx = (int)ActiveSlot - 1;
+    if (slotIdx < 0 || slotIdx >= 4)
+        return ACTION_NONE;
+
+    const InventoryItem &item = PlayerInstance.Hotbar[slotIdx];
+    if (item.definitionId == -1)
+        return ACTION_NONE;
+
+    const ItemDefinition &def = itemDefs.Get(item.definitionId);
+    if (def.category == ITEM_WEAPON)
         return ACTION_ATTACK;
-
-    case SLOT_POTION_1:
-    case SLOT_POTION_2:
+    if (def.category == ITEM_POTION)
         return ACTION_DRINK_POTION;
 
-    case SLOT_NONE:
-    default:
-        return ACTION_ATTACK;
-    }
+    return ACTION_NONE;
 }

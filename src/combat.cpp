@@ -101,6 +101,9 @@ namespace Combat
         if (player.Anim.isDead)
             return;
 
+        if (InputInstance.IsInventoryOpen())
+            return;
+
         // Penyaringan Input: Pastikan serangan hanya terpicu jika klik dimulai dalam status yang valid
         if (InputInstance.IsLeftClickPressed())
         {
@@ -175,7 +178,7 @@ namespace Combat
                         player.Swing.pressRegistered = false;
                         return;
                     }
-                    
+
                     player.Mana -= manaCost;
                     player.ManaRegenTimer = player.ManaRegenDelay;
 

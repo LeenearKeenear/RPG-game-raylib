@@ -6,10 +6,24 @@
 
 namespace Inventory
 {
+    // cek apakah masih ada space di inventory
+    bool HasInventorySpace(const Player &player)
+    {
+        for (int i = 0; i < PlayerInstance.MaxHotbar; i++)
+            if (player.Hotbar[i].definitionId == -1)
+                return true;
+        for (int i = 0; i < PlayerInstance.MaxBag; i++)
+            if (player.Bag[i].definitionId == -1)
+                return true;
+        return false;
+    }
 
     void HandleInventoryActions(Player &player)
     {
-        if (!InputInstance.IsLeftClickPressed())
+        if (InputInstance.IsInventoryOpen())
+            return;
+
+        if (!InputInstance.IsRightClickPressed())
             return;
 
         PlayerAction action = InputInstance.ResolveAction();
@@ -17,7 +31,7 @@ namespace Inventory
         if (action == ACTION_DRINK_POTION)
         {
             int slotIdx = (int)InputInstance.GetActiveSlot() - 1;
-            if (slotIdx >= 0 && slotIdx < 4)
+            if (slotIdx >= 0 && slotIdx < PlayerInstance.MaxHotbar)
                 UsePotion(player, slotIdx);
         }
         else if (action == ACTION_EQUIP_UNEQUIP)
@@ -54,57 +68,92 @@ namespace Inventory
     {
         const ItemDefinition &def = itemDefs.Get(item.definitionId);
         bool isStackable = (def.category != ITEM_WEAPON);
+        int remaining = item.amount;
+        int activeSlot = (int)InputInstance.GetActiveSlot() - 1;
 
-        // Coba merge ke slot yang sudah ada item sama
+        // 1. Hotbar aktif dulu
+        if (activeSlot >= 0 && activeSlot < PlayerInstance.MaxHotbar)
+        {
+            InventoryItem &active = player.Hotbar[activeSlot];
+            if (active.definitionId == -1)
+            {
+                int add = std::min(remaining, 8);
+                active = {item.definitionId, add};
+                remaining -= add;
+            }
+            else if (isStackable && active.definitionId == item.definitionId && active.amount < 8)
+            {
+                int space = 8 - active.amount;
+                int add = std::min(remaining, space);
+                active.amount += add;
+                remaining -= add;
+            }
+        }
+
+        if (remaining <= 0)
+            return true;
+
+        // 2. Merge ke slot lain yang sudah ada
         if (isStackable)
         {
-            // Cek hotbar dulu
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < PlayerInstance.MaxHotbar && remaining > 0; i++)
             {
+                if (i == activeSlot)
+                    continue;
                 if (player.Hotbar[i].definitionId == item.definitionId && player.Hotbar[i].amount < 8)
                 {
-                    player.Hotbar[i].amount++;
-                    return true;
+                    int space = 8 - player.Hotbar[i].amount;
+                    int add = std::min(remaining, space);
+                    player.Hotbar[i].amount += add;
+                    remaining -= add;
                 }
             }
-            // Cek bag
-            for (int i = 0; i < 49; i++)
+            for (int i = 0; i < PlayerInstance.MaxBag && remaining > 0; i++)
             {
                 if (player.Bag[i].definitionId == item.definitionId && player.Bag[i].amount < 8)
                 {
-                    player.Bag[i].amount++;
-                    return true;
+                    int space = 8 - player.Bag[i].amount;
+                    int add = std::min(remaining, space);
+                    player.Bag[i].amount += add;
+                    remaining -= add;
                 }
             }
         }
 
-        // Slot kosong di hotbar
-        for (int i = 0; i < 4; i++)
+        if (remaining <= 0)
+            return true;
+
+        // 3. Slot kosong hotbar lain
+        for (int i = 0; i < PlayerInstance.MaxHotbar && remaining > 0; i++)
         {
+            if (i == activeSlot)
+                continue;
             if (player.Hotbar[i].definitionId == -1)
             {
-                player.Hotbar[i] = {item.definitionId, 1};
-                return true;
+                int add = std::min(remaining, 8);
+                player.Hotbar[i] = {item.definitionId, add};
+                remaining -= add;
             }
         }
 
-        // Slot kosong di bag
-        for (int i = 0; i < 49; i++)
+        // 4. Bag
+        for (int i = 0; i < PlayerInstance.MaxBag && remaining > 0; i++)
         {
             if (player.Bag[i].definitionId == -1)
             {
-                player.Bag[i] = {item.definitionId, 1};
-                return true;
+                int add = std::min(remaining, 8);
+                player.Bag[i] = {item.definitionId, add};
+                remaining -= add;
             }
         }
 
-        return false;
+        return remaining < item.amount;
     }
 
     InventoryItem GetActiveHotbarItem(const Player &player)
     {
         int idx = (int)InputInstance.GetActiveSlot() - 1;
-        if (idx >= 0 && idx < 4)
+        if (idx >= 0 && idx < PlayerInstance.MaxHotbar)
             return player.Hotbar[idx];
         return {-1, 0};
     }

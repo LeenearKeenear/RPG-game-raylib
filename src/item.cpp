@@ -11,6 +11,7 @@
  */
 
 #include "../include/item.h"
+#include "../include/inventory.h"
 #include "../include/combat.h"
 #include "../include/player.h"
 #include "../include/animation.h"
@@ -83,9 +84,9 @@ std::vector<ItemSpawn> &GetActiveItems() { return itemData.activeItems; }
 void ItemDefinitionManager::Init()
 {
     pool = {
-        {0, "Iron Sword", ITEM_WEAPON, {6, 4}, {32, 32}, RARITY_COMMON, WeaponData{15.f, 40.f, 16.f, 0.25f, 0.6f, 0.f, 0.f, {8.f, 4.f}, 10.f, ATTACK_THRUST}},
+        {0, "Iron Sword", ITEM_WEAPON, {6, 4}, {20, 20}, RARITY_COMMON, WeaponData{15.f, 40.f, 16.f, 0.25f, 0.6f, 0.f, 0.f, {8.f, 4.f}, 10.f, ATTACK_THRUST}},
 
-        {1, "Iron Axe", ITEM_WEAPON, {7, 4}, {32, 32}, RARITY_RARE, WeaponData{25.f, 48.f, 56.f, 0.5f, 1.8f, 55.f, -95.f, {20.f, 20.f}, 15.f, ATTACK_SLASH}},
+        {1, "Iron Axe", ITEM_WEAPON, {7, 4}, {20, 20}, RARITY_RARE, WeaponData{25.f, 48.f, 56.f, 0.5f, 1.8f, 55.f, -95.f, {20.f, 20.f}, 15.f, ATTACK_SLASH}},
 
         {2, "Health Potion", ITEM_POTION, {7, 8}, {20, 20}, RARITY_COMMON, PotionData{20, false}},
 
@@ -136,7 +137,10 @@ ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
     ItemSpawn item;
     item.definitionId = definitionId;
     item.position = pos;
-    item.hitbox = {pos.x, pos.y, def.hitboxSize.x, def.hitboxSize.y};
+    item.hitbox = {pos.x - def.hitboxSize.x / 2,
+                   pos.y - def.hitboxSize.y / 2,
+                   def.hitboxSize.x,
+                   def.hitboxSize.y};
     item.isPickedUp = false;
     item.isAdded = false;
     item.spawnTime = (float)GetTime();
@@ -216,12 +220,15 @@ void ItemDataManager::ClearItems()
 void ItemRenderManager::Update(std::vector<ItemSpawn> &items, Vector2 playerCenter,
                                Rectangle playerHitbox, float magnetRadius, float itemSpeed)
 {
+
     float currentTime = (float)GetTime();
     for (auto &item : items)
     {
         if (item.isPickedUp)
             continue;
         if (currentTime - item.spawnTime < 1.0f)
+            continue;
+        if (!Inventory::HasInventorySpace(PlayerInstance))
             continue;
 
         Vector2 itemCenter = {
@@ -270,7 +277,15 @@ void ItemRenderManager::RenderAll(std::vector<ItemSpawn> &items)
 void ItemRenderManager::Render(ItemSpawn &item)
 {
     const ItemDefinition &def = itemDefs.Get(item.definitionId);
-    DrawSmallSprite(TEXTURE_ITEMS, def.sheetCoord, item.position, 0.5f);
+    Vector2 center = {
+        item.hitbox.x + item.hitbox.width / 2,
+        item.hitbox.y + item.hitbox.height / 2};
+    const float scale = 0.5f;
+    float smallSize = TILE_SIZE * scale;
+    Vector2 renderPos = {
+        center.x - smallSize,
+        center.y - smallSize};
+    DrawSmallSprite(TEXTURE_ITEMS, def.sheetCoord, renderPos, scale);
 }
 
 /*==============================================================================
