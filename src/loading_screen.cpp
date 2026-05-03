@@ -4,6 +4,7 @@
  *
  * Handle tampilan loading screen dan sequence loading asset game.
  * Asset dimuat sekali saja saat pertama kali Start Game, kemudian reuse.
+ * Juga menangani transisi map dengan loading screen yang sama.
  */
 
 #include "../include/loading_screen.h"
@@ -13,14 +14,18 @@
 #include "../include/item.h"
 #include "../include/mainMenu.h"
 #include "../include/game_state_saver.h"
+#include "../include/screen.h"
 #include "../lib/raylib/include/raylib.h"
 
 /*==============================================================================
  * Konstanta Loading
  *==============================================================================*/
 
-/** @brief Total stage loading */
+/** @brief Total stage loading untuk initial startup */
 #define TOTAL_LOADING_STAGES 6
+
+/** @brief Total stage loading untuk map switch */
+#define MAP_SWITCH_STAGES 4
 
 /*==============================================================================
  * Public Functions
@@ -38,8 +43,10 @@ void InitLoadingScreen(GameState *state)
     state->loadingStage = 0;
     state->loadingProgress = 0.0F;
     state->loadingComplete = false;
-    
-    if (state->assetsLoaded) {
+
+    if (state->isSwitchingMap) {
+        state->loadingText = "Switching map...";
+    } else if (state->assetsLoaded) {
         state->loadingText = "Loading saved state...";
     } else {
         state->loadingText = "Starting asset loading...";
@@ -50,16 +57,90 @@ void InitLoadingScreen(GameState *state)
  * @brief UpdateLoadingScreen()
  * Update logic loading screen dan sequence loading asset.
  * @param state Pointer ke GameState
- * @details Load asset per stage, skip jika assetsLoaded sudah true
+ * @details Load asset per stage, skip jika assetsLoaded sudah true.
+ *          Juga menangani map switch dengan stages terpisah.
  */
 void UpdateLoadingScreen(GameState *state)
 {
     UpdateGame(state);
-    
+
     if (state->loadingComplete) {
         return;
     }
-    
+
+    /*==============================================================================
+     * Map Switch Loading - handle transisi map dengan loading screen
+     *==============================================================================*/
+    if (state->isSwitchingMap) {
+        switch (state->loadingStage) {
+            case 0:
+                state->loadingText = "Unloading current map...";
+                // Simpan state map lama sudah dilakukan di SwitchMap()
+                UnloadMap();
+                state->loadingStage++;
+                state->loadingProgress = (float)state->loadingStage / MAP_SWITCH_STAGES * 100.0F;
+                break;
+
+            case 1:
+                state->loadingText = "Loading new map...";
+                LoadMap(state->pendingMapPath.c_str());
+                BuildMapObjectIndex();
+                SpawnObject();
+                state->loadingStage++;
+                state->loadingProgress = (float)state->loadingStage / MAP_SWITCH_STAGES * 100.0F;
+                break;
+
+            case 2:
+                state->loadingText = "Initializing player and entities...";
+                // Re-init player berdasarkan target door di map baru
+                PlayerInstance.Init(gState, state->pendingDoorName.c_str());
+                
+                // Bersihkan entitas map sebelumnya dan spawn entitas baru
+                Entities::Clear();
+                Entities::Add(&PlayerInstance);
+                SpawnEnemiesFromMap();
+                
+                // Load musuh yang sudah ada atau spawn baru
+                if (!LoadEnemiesForMap(state->pendingMapPath)) {
+                    SpawnRandomWave();
+                }
+                
+                // Load items
+                if (!itemData.LoadItemsForMap(state->pendingMapPath)) {
+                    SpawnItemWave();
+                }
+                
+                state->loadingStage++;
+                state->loadingProgress = (float)state->loadingStage / MAP_SWITCH_STAGES * 100.0F;
+                break;
+
+            case 3:
+                state->loadingText = "Finalizing map switch...";
+                // Set camera ke spawn player
+                Vector2 spawnPos = PlayerInstance.GetPosition();
+                camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
+                camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
+                camera.rotation = 0;
+                camera.zoom = 1.0F;
+                Movement::UpdateCamera(PlayerInstance);
+                
+                // Update current map path
+                currentMapPath = state->pendingMapPath;
+                
+                // Clear map switch state
+                state->isSwitchingMap = false;
+                state->pendingMapPath.clear();
+                state->pendingDoorName.clear();
+                
+                state->loadingComplete = true;
+                state->loadingProgress = 100.0F;
+                state->loadingText = "Map loaded!";
+                state->currentScreen = PLAY;
+                break;
+        }
+        return;
+    }
+
     /*==============================================================================
      * Jika asset sudah dimuat, skip loading stages
      *==============================================================================*/
