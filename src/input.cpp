@@ -32,8 +32,11 @@ void PlayerInput::PollInput(void)
 
     Current.leftClickPressed = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     Current.rightClickPressed = IsMouseButtonPressed(MOUSE_BUTTON_RIGHT);
+    Current.leftClickReleased = IsMouseButtonReleased(MOUSE_BUTTON_LEFT);
+    Current.rightClickReleased = IsMouseButtonReleased(MOUSE_BUTTON_RIGHT);
     Current.leftClickDown = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
     Current.rightClickDown = IsMouseButtonDown(MOUSE_BUTTON_RIGHT);
+    Current.ctrlDown = IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown (KEY_RIGHT_CONTROL);
 
     Current.selectSlot1 = IsKeyPressed(KEY_ONE);
     Current.selectSlot2 = IsKeyPressed(KEY_TWO);

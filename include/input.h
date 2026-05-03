@@ -32,8 +32,11 @@ struct InputState
     bool toggleMap;
     bool leftClickPressed;
     bool rightClickPressed;
+    bool leftClickReleased;
+    bool rightClickReleased;
     bool leftClickDown;
     bool rightClickDown;
+    bool ctrlDown;
     bool goBack;
     bool dropItem;
     bool dropItemAll;
@@ -80,8 +83,11 @@ public:
     bool IsToggleMap() const { return Current.toggleMap; }
     bool IsLeftClickPressed() const { return Current.leftClickPressed; }
     bool IsRightClickPressed() const { return Current.rightClickPressed; }
+    bool IsLeftClickReleased() const { return Current.leftClickReleased; }
+    bool IsRightClickReleased() const { return Current.rightClickReleased; }
     bool IsLeftClickDown() const { return Current.leftClickDown; }
     bool IsRightClickDown() const { return Current.rightClickDown; }
+    bool IsCtrlDown() { return Current.ctrlDown; }
     bool IsGoBack() const { return Current.goBack; }
     bool IsDropItem() const { return Current.dropItem; }
     bool IsDropItemAll() const { return Current.dropItemAll; }

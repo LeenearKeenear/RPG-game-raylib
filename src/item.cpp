@@ -84,13 +84,13 @@ std::vector<ItemSpawn> &GetActiveItems() { return itemData.activeItems; }
 void ItemDefinitionManager::Init()
 {
     pool = {
-        {0, "Iron Sword", ITEM_WEAPON, {6, 4}, {20, 20}, RARITY_COMMON, WeaponData{15.f, 40.f, 16.f, 0.25f, 0.6f, 0.f, 0.f, {8.f, 4.f}, 10.f, ATTACK_THRUST}},
+        {0, "Iron Sword", ITEM_WEAPON, {6, 4}, {20, 20}, RARITY_COMMON, false, 1, WeaponData{15.f, 40.f, 16.f, 0.25f, 0.6f, 0.f, 0.f, {8.f, 4.f}, 10.f, ATTACK_THRUST}},
 
-        {1, "Iron Axe", ITEM_WEAPON, {7, 4}, {20, 20}, RARITY_RARE, WeaponData{25.f, 48.f, 56.f, 0.5f, 1.8f, 55.f, -95.f, {20.f, 20.f}, 15.f, ATTACK_SLASH}},
+        {1, "Iron Axe", ITEM_WEAPON, {7, 4}, {20, 20}, RARITY_RARE, false, 1, WeaponData{25.f, 48.f, 56.f, 0.5f, 1.8f, 55.f, -95.f, {20.f, 20.f}, 15.f, ATTACK_SLASH}},
 
-        {2, "Health Potion", ITEM_POTION, {7, 8}, {20, 20}, RARITY_COMMON, PotionData{20, false}},
+        {2, "Health Potion", ITEM_POTION, {7, 8}, {20, 20}, RARITY_COMMON, true, 8, PotionData{20, false}},
 
-        {3, "Mana Bread", ITEM_POTION, {10, 8}, {20, 20}, RARITY_COMMON, PotionData{15, true}},
+        {3, "Mana Bread", ITEM_POTION, {10, 8}, {20, 20}, RARITY_COMMON, true, 8, PotionData{15, true}},
     };
 }
 
@@ -286,6 +286,17 @@ void ItemRenderManager::Render(ItemSpawn &item)
         center.x - smallSize,
         center.y - smallSize};
     DrawSmallSprite(TEXTURE_ITEMS, def.sheetCoord, renderPos, scale);
+
+    if (item.amount > 1)
+    {
+        std::string amountText = std::to_string(item.amount);
+        int fontSize = 8;
+        int textWidth = MeasureText(amountText.c_str(), fontSize);
+        Vector2 textPos = {
+            center.x - textWidth / 2.0f,
+            (center.y + smallSize) - 5.0f};
+        DrawText(amountText.c_str(), (int)textPos.x, (int)textPos.y, fontSize, WHITE);
+    }
 }
 
 /*==============================================================================

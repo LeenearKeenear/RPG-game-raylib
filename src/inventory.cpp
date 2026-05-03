@@ -67,7 +67,8 @@ namespace Inventory
     bool AddToInventory(Player &player, const ItemSpawn &item)
     {
         const ItemDefinition &def = itemDefs.Get(item.definitionId);
-        bool isStackable = (def.category != ITEM_WEAPON);
+        bool isStackable = def.isStackable;
+        int maxStack = def.maxStack;
         int remaining = item.amount;
         int activeSlot = (int)InputInstance.GetActiveSlot() - 1;
 
@@ -77,13 +78,13 @@ namespace Inventory
             InventoryItem &active = player.Hotbar[activeSlot];
             if (active.definitionId == -1)
             {
-                int add = std::min(remaining, 8);
+                int add = std::min(remaining, maxStack);
                 active = {item.definitionId, add};
                 remaining -= add;
             }
             else if (isStackable && active.definitionId == item.definitionId && active.amount < 8)
             {
-                int space = 8 - active.amount;
+                int space = maxStack - active.amount;
                 int add = std::min(remaining, space);
                 active.amount += add;
                 remaining -= add;
@@ -102,7 +103,7 @@ namespace Inventory
                     continue;
                 if (player.Hotbar[i].definitionId == item.definitionId && player.Hotbar[i].amount < 8)
                 {
-                    int space = 8 - player.Hotbar[i].amount;
+                    int space = maxStack - player.Hotbar[i].amount;
                     int add = std::min(remaining, space);
                     player.Hotbar[i].amount += add;
                     remaining -= add;
@@ -112,7 +113,7 @@ namespace Inventory
             {
                 if (player.Bag[i].definitionId == item.definitionId && player.Bag[i].amount < 8)
                 {
-                    int space = 8 - player.Bag[i].amount;
+                    int space = maxStack - player.Bag[i].amount;
                     int add = std::min(remaining, space);
                     player.Bag[i].amount += add;
                     remaining -= add;

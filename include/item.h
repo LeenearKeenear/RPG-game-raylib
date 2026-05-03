@@ -104,6 +104,8 @@ struct ItemDefinition
     Vector2 sheetCoord;
     Vector2 hitboxSize;
     ItemRarity rarity;
+    bool isStackable;
+    int maxStack;
     std::variant<WeaponData, PotionData, ArmorData> data;
 };
 

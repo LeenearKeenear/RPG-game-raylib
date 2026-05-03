@@ -11,11 +11,12 @@
 extern const int GameScreenWidth;
 extern const int GameScreenHeight;
 
-static const int STACK_LIMIT = 8;
-
 // Drag state
-static int dragSlot = -1;                // slot asal drag (-1 = tidak ada)
+static int dragSlot = -1; // slot asal drag (-1 = tidak ada)
+static bool isDragSplit = false;
+static int splitTotalAmount = 0;
 static InventoryItem dragItem = {-1, 0}; // copy item yang sedang di-drag
+static std::vector<int> splitVisitedSlots;
 
 static void DrawItemIcon(const InventoryItem &item, Rectangle dest)
 {
@@ -46,6 +47,116 @@ static InventoryItem &GetItemBySlotIndex(int index)
     return empty;
 }
 
+static void HandleSplitDragSlot(int slotIndex, Rectangle slotRect, Vector2 mousePos)
+{
+    InventoryItem &item = GetItemBySlotIndex(slotIndex);
+    bool isHovered = CheckCollisionPointRec(mousePos, slotRect);
+
+    // Mulai drag split
+    if (isHovered && InputInstance.IsRightClickDown() && dragSlot == -1 && item.definitionId != -1)
+    {
+        const ItemDefinition &def = itemDefs.Get(item.definitionId);
+        if (def.isStackable && item.amount > 1)
+        {
+            splitTotalAmount = item.amount;
+            dragItem = {item.definitionId, 0};
+            dragSlot = slotIndex;
+            isDragSplit = true;
+            splitVisitedSlots.clear();
+            splitVisitedSlots.push_back(slotIndex);
+        }
+    }
+
+    // Hover isi slot kosong
+    if (isDragSplit && isHovered)
+    {
+        bool alreadyVisited = std::find(splitVisitedSlots.begin(), splitVisitedSlots.end(), slotIndex) != splitVisitedSlots.end();
+
+        if (!alreadyVisited && item.definitionId == -1)
+        {
+            // Stop kalau sudah tidak bisa dibagi lagi
+            int nextSlotCount = (int)splitVisitedSlots.size() + 1;
+            if (splitTotalAmount / nextSlotCount == 0)
+                return;
+
+            splitVisitedSlots.push_back(slotIndex);
+
+            int slotCount = (int)splitVisitedSlots.size();
+            int base = splitTotalAmount / slotCount;
+            int remainder = splitTotalAmount % slotCount;
+
+            for (int j = 0; j < slotCount; j++)
+            {
+                InventoryItem &s = GetItemBySlotIndex(splitVisitedSlots[j]);
+                int give = base + (j == 0 ? remainder : 0);
+                s = {dragItem.definitionId, give};
+            }
+        }
+    }
+}
+
+static void HandleSplitRelease()
+{
+    if (InputInstance.IsRightClickReleased() && isDragSplit)
+    {
+        isDragSplit = false;
+        dragSlot = -1;
+        dragItem = {-1, 0};
+        splitTotalAmount = 0;
+        splitVisitedSlots.clear();
+    }
+}
+
+static void HandleMergeStack(int slotIndex)
+{
+    InventoryItem &target = GetItemBySlotIndex(slotIndex);
+    if (target.definitionId == -1)
+        return;
+
+    const ItemDefinition &def = itemDefs.Get(target.definitionId);
+    if (!def.isStackable)
+        return;
+    if (target.amount >= def.maxStack)
+        return;
+
+    for (int i = 0; i < PlayerInstance.MaxBag && target.amount < def.maxStack; i++)
+    {
+        if (i == slotIndex)
+            continue;
+        InventoryItem &other = PlayerInstance.Bag[i];
+        if (other.definitionId != target.definitionId)
+            continue;
+        if (other.amount >= def.maxStack)
+            continue;
+
+        int space = def.maxStack - target.amount;
+        int take = std::min(space, other.amount);
+        target.amount += take;
+        other.amount -= take;
+        if (other.amount <= 0)
+            other = {-1, 0};
+    }
+
+    for (int i = 0; i < PlayerInstance.MaxHotbar && target.amount < def.maxStack; i++)
+    {
+        int globalIdx = PlayerInstance.MaxBag + i;
+        if (globalIdx == slotIndex)
+            continue;
+        InventoryItem &other = PlayerInstance.Hotbar[i];
+        if (other.definitionId != target.definitionId)
+            continue;
+        if (other.amount >= def.maxStack)
+            continue;
+
+        int space = def.maxStack - target.amount;
+        int take = std::min(space, other.amount);
+        target.amount += take;
+        other.amount -= take;
+        if (other.amount <= 0)
+            other = {-1, 0};
+    }
+}
+
 // Handle drop ke slot tujuan — merge atau swap
 static void HandleDrop(int toSlot)
 {
@@ -58,6 +169,7 @@ static void HandleDrop(int toSlot)
 
     InventoryItem &src = GetItemBySlotIndex(dragSlot);
     InventoryItem &dst = GetItemBySlotIndex(toSlot);
+    const ItemDefinition &def = itemDefs.Get(dragItem.definitionId);
 
     if (dragItem.definitionId == -1)
     {
@@ -69,13 +181,13 @@ static void HandleDrop(int toSlot)
     bool canStack = false;
     if (dst.definitionId == dragItem.definitionId && dst.definitionId != -1)
     {
-        const ItemDefinition &def = itemDefs.Get(dragItem.definitionId);
-        canStack = (def.category != ITEM_WEAPON);
+
+        canStack = (def.isStackable);
     }
 
     if (canStack)
     {
-        int spaceLeft = STACK_LIMIT - dst.amount;
+        int spaceLeft = def.maxStack - dst.amount;
         if (spaceLeft <= 0)
         {
             // Penuh — swap biasa
@@ -125,11 +237,12 @@ void DrawInventory()
 {
     if (!InputInstance.IsInventoryOpen())
     {
-        // Cancel drag kalau inventory ditutup
         if (dragSlot != -1)
         {
             dragSlot = -1;
             dragItem = {-1, 0};
+            isDragSplit = false;
+            splitVisitedSlots.clear();
         }
         return;
     }
@@ -145,8 +258,9 @@ void DrawInventory()
     const float startY = (GameScreenHeight - totalGridSize) / 2.0f;
 
     Vector2 mousePos = GetVirtualMousePosition(gState);
-    bool mousePressed = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-    bool mouseReleased = IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
+    bool mousePressed = InputInstance.IsLeftClickPressed();
+    bool mouseReleased = InputInstance.IsLeftClickReleased();
+    bool dragHandled = false;
 
     for (int i = 0; i < PlayerInstance.MaxBag; i++)
     {
@@ -167,7 +281,6 @@ void DrawInventory()
 
         InventoryItem &item = PlayerInstance.Bag[i];
 
-        // Kalau ini slot asal drag, render dengan transparansi
         if (item.definitionId != -1 && !isDragSource)
         {
             float iconSize = 36.0f;
@@ -185,19 +298,38 @@ void DrawInventory()
             }
         }
 
-        // Mulai drag
-        if (isHovered && mousePressed && dragSlot == -1 && item.definitionId != -1)
+        if (isHovered && mousePressed && dragSlot == -1 && !isDragSplit && item.definitionId != -1)
         {
-            dragSlot = i;
-            dragItem = item;
+            bool ctrlHeld = InputInstance.IsCtrlDown();
+            if (ctrlHeld)
+                HandleMergeStack(i); // atau globalIdx untuk hotbar
+            else
+            {
+                dragSlot = i;
+                dragItem = item;
+            };
         }
 
-        // Drop ke slot ini
-        if (isHovered && mouseReleased && dragSlot != -1 && dragSlot != i)
+        if (isHovered && mouseReleased && dragSlot != -1 && dragSlot != i && !isDragSplit)
+        {
             HandleDrop(i);
+            dragHandled = true;
+        }
+
+        // Drop ke slot yang sama = cancel drag
+        if (isHovered && mouseReleased && dragSlot == i)
+        {
+            dragSlot = -1;
+            dragItem = {-1, 0};
+            dragHandled = true;
+        }
+
+        HandleSplitDragSlot(i, slotRect, mousePos);
     }
 
-    if (mouseReleased && dragSlot != -1)
+    HandleSplitRelease();
+
+    if (mouseReleased && dragSlot != -1 && !isDragSplit && !dragHandled)
     {
         InventoryItem &src = GetItemBySlotIndex(dragSlot);
         Vector2 playerCenter = PlayerInstance.GetCenter();
@@ -253,8 +385,8 @@ void DrawHotbar()
     bool isInventoryOpen = InputInstance.IsInventoryOpen();
 
     Vector2 mousePos = GetVirtualMousePosition(gState);
-    bool mousePressed = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
-    bool mouseReleased = IsMouseButtonReleased(MOUSE_LEFT_BUTTON);
+    bool mousePressed = InputInstance.IsLeftClickPressed();
+    bool mouseReleased = InputInstance.IsLeftClickReleased();
 
     for (int i = 0; i < PlayerInstance.MaxHotbar; i++)
     {
@@ -296,16 +428,16 @@ void DrawHotbar()
 
         if (isInventoryOpen)
         {
-            // Mulai drag dari hotbar
-            if (isHovered && mousePressed && dragSlot == -1 && item.definitionId != -1)
+            if (isHovered && mousePressed && dragSlot == -1 && !isDragSplit && item.definitionId != -1)
             {
                 dragSlot = globalIdx;
                 dragItem = item;
             }
 
-            // Drop ke hotbar slot ini
-            if (isHovered && mouseReleased && dragSlot != -1 && dragSlot != globalIdx)
+            if (isHovered && mouseReleased && dragSlot != -1 && dragSlot != globalIdx && !isDragSplit)
                 HandleDrop(globalIdx);
+
+            HandleSplitDragSlot(globalIdx, slotRect, mousePos);
         }
     }
 }
