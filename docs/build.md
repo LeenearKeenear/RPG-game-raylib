@@ -21,11 +21,13 @@ Pasang alat-alat berikut untuk membangun proyek:
 2. Jalankan skrip setup untuk mengunduh dependensi:
 
    **Windows (PowerShell):**
+
    ```powershell
    .\setup.ps1
    ```
 
    **Linux/macOS (Bash):**
+
    ```bash
    bash setup.sh
    ```

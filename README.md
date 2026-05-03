@@ -27,6 +27,7 @@ Game RPG 2D yang dibuat dengan Raylib.
 ## Setup Pertama Kali
 
 ### Windows
+
 ```powershell
 # Jalankan skrip setup untuk mengunduh dependensi
 .\setup.ps1
@@ -36,6 +37,7 @@ cmake --preset ninja && cmake --build --preset ninja
 ```
 
 ### Linux/macOS
+
 ```bash
 # Jalankan skrip setup untuk mengunduh dependensi
 bash setup.sh
