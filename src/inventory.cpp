@@ -6,7 +6,10 @@
 
 namespace Inventory
 {
-    // cek apakah masih ada space di inventory
+    /*==============================================================================
+     * Utilitas Inventory
+     *==============================================================================*/
+
     bool HasInventorySpace(const Player &player)
     {
         for (int i = 0; i < PlayerInstance.MaxHotbar; i++)
@@ -18,8 +21,21 @@ namespace Inventory
         return false;
     }
 
+    InventoryItem GetActiveHotbarItem(const Player &player)
+    {
+        int idx = (int)InputInstance.GetActiveSlot() - 1;
+        if (idx >= 0 && idx < PlayerInstance.MaxHotbar)
+            return player.Hotbar[idx];
+        return {-1, 0};
+    }
+
+    /*==============================================================================
+     * Input & Aksi Inventory
+     *==============================================================================*/
+
     void HandleInventoryActions(Player &player)
     {
+        // Inventory terbuka = block semua aksi shortcut
         if (InputInstance.IsInventoryOpen())
             return;
 
@@ -40,6 +56,10 @@ namespace Inventory
         }
     }
 
+    /*==============================================================================
+     * Potion
+     *==============================================================================*/
+
     void UsePotion(Player &player, int slotIndex)
     {
         InventoryItem &slot = player.Hotbar[slotIndex];
@@ -54,6 +74,19 @@ namespace Inventory
             return;
 
         const PotionData &potion = std::get<PotionData>(def.data);
+
+        // Jangan konsumsi jika stat sudah penuh
+        if (potion.isMana && player.Mana >= player.MaxMana)
+        {
+            Effects::AddLog("Mana sudah penuh!");
+            return;
+        }
+        if (!potion.isMana && player.Health >= player.MaxHealth)
+        {
+            Effects::AddLog("Health sudah penuh!");
+            return;
+        }
+
         if (potion.isMana)
             player.Mana = std::min(player.Mana + (float)potion.healValue, player.MaxMana);
         else
@@ -61,8 +94,12 @@ namespace Inventory
 
         slot.amount--;
         if (slot.amount <= 0)
-            slot = {-1, 0};
+            slot = {-1, 0}; // kosongkan slot jika habis
     }
+
+    /*==============================================================================
+     * Penambahan Item ke Inventory
+     *==============================================================================*/
 
     bool AddToInventory(Player &player, const ItemSpawn &item)
     {
@@ -72,7 +109,7 @@ namespace Inventory
         int remaining = item.amount;
         int activeSlot = (int)InputInstance.GetActiveSlot() - 1;
 
-        // 1. Hotbar aktif dulu
+        // 1. Prioritaskan slot hotbar aktif
         if (activeSlot >= 0 && activeSlot < PlayerInstance.MaxHotbar)
         {
             InventoryItem &active = player.Hotbar[activeSlot];
@@ -82,7 +119,7 @@ namespace Inventory
                 active = {item.definitionId, add};
                 remaining -= add;
             }
-            else if (isStackable && active.definitionId == item.definitionId && active.amount < 8)
+            else if (isStackable && active.definitionId == item.definitionId && active.amount < maxStack)
             {
                 int space = maxStack - active.amount;
                 int add = std::min(remaining, space);
@@ -94,14 +131,14 @@ namespace Inventory
         if (remaining <= 0)
             return true;
 
-        // 2. Merge ke slot lain yang sudah ada
+        // 2. Merge ke stack yang sudah ada di hotbar & bag
         if (isStackable)
         {
             for (int i = 0; i < PlayerInstance.MaxHotbar && remaining > 0; i++)
             {
                 if (i == activeSlot)
                     continue;
-                if (player.Hotbar[i].definitionId == item.definitionId && player.Hotbar[i].amount < 8)
+                if (player.Hotbar[i].definitionId == item.definitionId && player.Hotbar[i].amount < maxStack)
                 {
                     int space = maxStack - player.Hotbar[i].amount;
                     int add = std::min(remaining, space);
@@ -111,7 +148,7 @@ namespace Inventory
             }
             for (int i = 0; i < PlayerInstance.MaxBag && remaining > 0; i++)
             {
-                if (player.Bag[i].definitionId == item.definitionId && player.Bag[i].amount < 8)
+                if (player.Bag[i].definitionId == item.definitionId && player.Bag[i].amount < maxStack)
                 {
                     int space = maxStack - player.Bag[i].amount;
                     int add = std::min(remaining, space);
@@ -124,40 +161,37 @@ namespace Inventory
         if (remaining <= 0)
             return true;
 
-        // 3. Slot kosong hotbar lain
+        // 3. Slot kosong hotbar (selain active slot)
         for (int i = 0; i < PlayerInstance.MaxHotbar && remaining > 0; i++)
         {
             if (i == activeSlot)
                 continue;
             if (player.Hotbar[i].definitionId == -1)
             {
-                int add = std::min(remaining, 8);
+                int add = std::min(remaining, maxStack);
                 player.Hotbar[i] = {item.definitionId, add};
                 remaining -= add;
             }
         }
 
-        // 4. Bag
+        // 4. Slot kosong bag sebagai fallback terakhir
         for (int i = 0; i < PlayerInstance.MaxBag && remaining > 0; i++)
         {
             if (player.Bag[i].definitionId == -1)
             {
-                int add = std::min(remaining, 8);
+                int add = std::min(remaining, maxStack);
                 player.Bag[i] = {item.definitionId, add};
                 remaining -= add;
             }
         }
 
+        // true jika minimal sebagian item berhasil masuk
         return remaining < item.amount;
     }
 
-    InventoryItem GetActiveHotbarItem(const Player &player)
-    {
-        int idx = (int)InputInstance.GetActiveSlot() - 1;
-        if (idx >= 0 && idx < PlayerInstance.MaxHotbar)
-            return player.Hotbar[idx];
-        return {-1, 0};
-    }
+    /*==============================================================================
+     * Senjata & Serangan
+     *==============================================================================*/
 
     void SetupAttackStats(Player &player, Direction attackFaceDir)
     {
@@ -171,6 +205,7 @@ namespace Inventory
 
         const WeaponData &wpn = std::get<WeaponData>(def.data);
 
+        // Base angle menentukan orientasi awal swing
         float baseAngle = 0.0f;
         switch (attackFaceDir)
         {
@@ -190,6 +225,7 @@ namespace Inventory
 
         player.Swing.baseAngle = baseAngle;
 
+        // Center offset disesuaikan per arah agar hitbox tidak miring
         switch (attackFaceDir)
         {
         case UP:
