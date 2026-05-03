@@ -151,9 +151,20 @@ typedef struct
 class ItemDefinitionManager
 {
 public:
+    /** @brief Inisialisasi pool definisi item */
     void Init();
+
+    /**
+     * @brief Ambil definisi item berdasarkan ID
+     * @param id ID item yang dicari
+     * @return Referensi ke ItemDefinition
+     */
     const ItemDefinition &Get(int id) const;
+
+    /** @brief Ambil seluruh pool definisi item */
     const std::vector<ItemDefinition> &GetAll() const;
+
+    /** @brief Jumlah item yang terdaftar di pool */
     int Count() const;
 
 private:
@@ -176,14 +187,11 @@ public:
     void Init();
 
     /**
-     * @brief Buat item baru dengan properti tertentu
+     * @brief Buat item baru berdasarkan definisi
      * @param pos Posisi spawn item
-     * @param category Kategori item
-     * @param multiplier Multiplier stat item
-     * @param rarity Rarity item
-     * @return Item yang sudah dibuat
+     * @param definitionId ID definisi item
+     * @return ItemSpawn yang sudah dibuat
      */
-
     ItemSpawn CreateItem(Vector2 pos, int definitionId);
     /**
      * @brief Spawn item langsung di posisi tertentu
