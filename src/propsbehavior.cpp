@@ -165,6 +165,7 @@ void ChestManager::Interact(Vector2 hitPos)
     if (!chest || chest->state == ObjectState::Open)
         return;
     chest->state = ObjectState::Open;
+    consumedPositions.insert(EncodePos(chest->position));
     TriggerLoot(*chest);
 }
 
