@@ -420,62 +420,25 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
  */
 void GoBack(void)
 {
-    if (mapHistoryStack.IsEmpty())
-    {
+    if (mapHistoryStack.IsEmpty()) {
         TraceLog(LOG_WARNING, "GoBack: no map history to go back to");
         return;
     }
 
-    // Simpan musuh map sekarang
+    // Simpan state map sekarang
     SaveEnemiesForMap(currentMapPath);
-
     itemData.SaveItemsForMap(currentMapPath);
 
     // Ambil history teratas dan pop dari stack
     MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();
-    currentMapPath = prev.mapPath;
 
-    // Muat kembali map sebelumnya
-    UnloadMap();
-    LoadMap(prev.mapPath.c_str());
-    BuildMapObjectIndex();
+    // Set pending map switch - loading screen akan menangani sisanya
+    gState->isGoingBack = true;
+    gState->pendingMapPath = prev.mapPath;
+    gState->pendingDoorName = prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName;
+    gState->currentScreen = LOADING;
 
-    if (tilesonMap == nullptr)
-    {
-        TraceLog(LOG_ERROR, "GoBack: failed to load map: %s", prev.mapPath.c_str());
-        return;
-    }
-
-    // Init player di spawn point map sebelumnya
-    PlayerInstance.Init(gState, prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
-    SpawnObject();
-
-    // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
-    Entities::Clear();
-    Entities::Add(&PlayerInstance);
-    SpawnEnemiesFromMap();
-    // Load musuh dari history
-    if (!LoadEnemiesForMap(currentMapPath))
-    {
-        SpawnRandomWave();
-    }
-
-    if (!itemData.LoadItemsForMap(currentMapPath))
-    {
-        SpawnItemWave();
-    }
-
-    // Set camera ke tengah spawn player
-    Vector2 spawnPos = PlayerInstance.GetPosition();
-    camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
-    camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
-    camera.rotation = 0;
-    camera.zoom = 1.0F;
-
-    // Sinkronisasi kamera segera agar tidak ada blink/jump zoom di frame pertama
-    Movement::UpdateCamera(PlayerInstance);
-
-    TraceLog(LOG_INFO, "GoBack: returned to map: %s", prev.mapPath.c_str());
+    TraceLog(LOG_INFO, "GoBack: transitioning to LOADING screen for map: %s", prev.mapPath.c_str());
 }
 
 /**

@@ -93,6 +93,11 @@ using GameState = struct
      */
     bool isSwitchingMap;
     /**
+     * @brief Flag menandakan sedang dalam proses kembali ke map sebelumnya
+     * @details Dipakai oleh loading screen untuk tahu harus load map lama
+     */
+    bool isGoingBack;
+    /**
      * @brief Path map tujuan yang akan dimuat
      */
     std::string pendingMapPath;

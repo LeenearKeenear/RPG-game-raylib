@@ -71,18 +71,19 @@ void UpdateLoadingScreen(GameState *state)
     /*==============================================================================
      * Map Switch Loading - handle transisi map dengan loading screen
      *==============================================================================*/
-    if (state->isSwitchingMap) {
+    if (state->isSwitchingMap || state->isGoingBack) {
+        bool isBack = state->isGoingBack;
+        
         switch (state->loadingStage) {
             case 0:
-                state->loadingText = "Unloading current map...";
-                // Simpan state map lama sudah dilakukan di SwitchMap()
+                state->loadingText = isBack ? "Returning to previous map..." : "Unloading current map...";
                 UnloadMap();
                 state->loadingStage++;
                 state->loadingProgress = (float)state->loadingStage / MAP_SWITCH_STAGES * 100.0F;
                 break;
 
             case 1:
-                state->loadingText = "Loading new map...";
+                state->loadingText = isBack ? "Reloading previous map..." : "Loading new map...";
                 LoadMap(state->pendingMapPath.c_str());
                 BuildMapObjectIndex();
                 SpawnObject();
@@ -129,6 +130,7 @@ void UpdateLoadingScreen(GameState *state)
                 
                 // Clear map switch state
                 state->isSwitchingMap = false;
+                state->isGoingBack = false;
                 state->pendingMapPath.clear();
                 state->pendingDoorName.clear();
                 
