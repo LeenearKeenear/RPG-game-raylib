@@ -19,27 +19,45 @@ Game RPG 2D yang dibuat dengan Raylib.
 
 ## Dependencies
 
-- **Raylib 5.5**: Auto-download via `setup.ps1` (Windows) / Manual (macOS/Linux)
+- **Raylib 5.5**: Auto-download via `setup.ps1` (Windows) atau `setup.sh` (Linux/macOS)
 - **Tileson**: Download manual dari [GitHub Tileson](https://github.com/SSBMTonberry/tileson), copy `tileson.hpp` ke `lib/tileson/`
+
+> **PERHATIAN**: Dukungan untuk sistem Unix (Linux/macOS) bersifat eksperimental dan memerlukan pengujian lebih lanjut. Skrip `setup.sh` telah disediakan namun mungkin mengalami kendala pada beberapa distribusi.
 
 ## Setup Pertama Kali
 
+### Windows
+```powershell
+# Jalankan skrip setup untuk mengunduh dependensi
+.\setup.ps1
+
+# Build project
+cmake --preset ninja && cmake --build --preset ninja
+```
+
+### Linux/macOS
 ```bash
-# One-line
+# Jalankan skrip setup untuk mengunduh dependensi
+bash setup.sh
+
+# Build project
 cmake --preset ninja && cmake --build --preset ninja
 ```
 
 Ini akan:
 
-1. Download Raylib 5.5 ke `lib/raylib/` (Windows saja)
+1. Download Raylib 5.5 ke `lib/raylib/` (otomatis sesuai OS)
 2. Compile semua file .cpp (Unity build)
 3. Link dengan library
-4. Copy raylib.dll ke folder output
+4. Copy raylib.dll ke folder output (Windows)
+
+> **PERHATIAN**: Setup untuk Linux/macOS bersifat eksperimental dan memerlukan pengujian lebih lanjut.
 
 ### Jalankan Game
 
 ```bash
-./build/bin/main.exe
+./build/bin/main.exe   # Linux/macOS
+.\build\bin\main.exe   # Windows PowerShell
 ```
 
 ### Build
