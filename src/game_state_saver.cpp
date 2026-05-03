@@ -54,11 +54,12 @@ void SaveGameState(GameState *state)
     savedPlayerState.position = PlayerInstance.GetPosition();
     savedPlayerState.health = PlayerInstance.GetHealth();
     savedPlayerState.mana = PlayerInstance.GetMana();
-    
-    for (int i = 0; i < 4; i++) {
+
+    for (int i = 0; i < 4; i++)
+    {
         savedPlayerState.hotbar[i] = PlayerInstance.GetHotbarItem(i);
     }
-    
+
     /*==============================================================================
      * Save Enemy States
      *==============================================================================
@@ -76,37 +77,39 @@ void SaveGameState(GameState *state)
     //     savedEnemy.type = enemy.type;
     //     savedEnemyStates.push_back(savedEnemy);
     // }
-    
+
     /*==============================================================================
      * Save Item States
      *==============================================================================*/
     savedItemStates.clear();
-    for (const Item& item : itemData.activeItems) {
+    for (const ItemSpawn &item : itemData.activeItems)
+    {
         SavedItemState savedItem;
         savedItem.position = item.position;
         savedItem.isPickedUp = item.isPickedUp;
-        savedItem.category = item.category;
-        savedItem.rarity = item.rarity;
-        savedItem.statMultiplier = item.statMultiplier;
+        savedItem.definitionId = item.definitionId;
         savedItemStates.push_back(savedItem);
     }
-    
+
     /*==============================================================================
      * Save Map State (map path, camera, chest opened status)
      *==============================================================================*/
-    const char* mapPath = GetCurrentMapPath();
+    const char *mapPath = GetCurrentMapPath();
     savedMapState.mapPath = (mapPath == nullptr || mapPath[0] == '\0') ? "world_json/tutorial.json" : std::string(mapPath);
     savedMapState.cameraTarget = camera.target;
     savedMapState.cameraZoom = camera.zoom;
     savedMapState.chestOpened.clear();
-    if (tilesonMap != nullptr) {
-        for (const MapObject& obj : tilesonMap->Objects) {
-            if (obj.type == "chest") {
+    if (tilesonMap != nullptr)
+    {
+        for (const MapObject &obj : tilesonMap->Objects)
+        {
+            if (obj.type == "chest")
+            {
                 savedMapState.chestOpened.push_back(0);
             }
         }
     }
-    
+
     /*==============================================================================
      * Mark as having saved state
      *==============================================================================*/
@@ -123,16 +126,18 @@ void RestoreGameState(GameState *state)
     /*==============================================================================
      * Restore Player State
      *==============================================================================*/
-    if (hasSavedState) {
+    if (hasSavedState)
+    {
         PlayerInstance.SetHealth(savedPlayerState.health);
         PlayerInstance.SetMana(savedPlayerState.mana);
         PlayerInstance.SetPosition(savedPlayerState.position);
-        
-        for (int i = 0; i < 4; i++) {
+
+        for (int i = 0; i < 4; i++)
+        {
             PlayerInstance.SetHotbarItem(i, savedPlayerState.hotbar[i]);
         }
     }
-    
+
     /*==============================================================================
      * Restore Enemy States
      *==============================================================================
@@ -152,28 +157,29 @@ void RestoreGameState(GameState *state)
     //         }
     //     }
     // }
-    
+
     /*==============================================================================
      * Restore Item States
      *==============================================================================*/
-    if (hasSavedState && !savedItemStates.empty()) {
+    if (hasSavedState && !savedItemStates.empty())
+    {
         int itemIndex = 0;
-        for (Item& item : itemData.activeItems) {
-            if (itemIndex < (int)savedItemStates.size()) {
+        for (ItemSpawn &item : itemData.activeItems)
+        {
+            if (itemIndex < (int)savedItemStates.size())
+            {
                 item.isPickedUp = savedItemStates[itemIndex].isPickedUp;
                 item.position = savedItemStates[itemIndex].position;
-                item.category = savedItemStates[itemIndex].category;
-                item.rarity = savedItemStates[itemIndex].rarity;
-                item.statMultiplier = savedItemStates[itemIndex].statMultiplier;
+                item.definitionId = savedItemStates[itemIndex].definitionId;
                 itemIndex++;
             }
         }
     }
-    
     /*==============================================================================
      * Restore Map State (camera, chest opened status)
      *==============================================================================*/
-    if (hasSavedState) {
+    if (hasSavedState)
+    {
         // Restore camera position
         camera.target = savedMapState.cameraTarget;
         camera.zoom = savedMapState.cameraZoom;
@@ -201,15 +207,8 @@ void ClearSavedState(void)
     savedPlayerState.position = {0};
     savedPlayerState.health = 0;
     savedPlayerState.mana = 0;
-    for (int i = 0; i < 4; i++) {
-        savedPlayerState.hotbar[i].type = ITEM_NONE;
-        savedPlayerState.hotbar[i].name = "";
-        savedPlayerState.hotbar[i].amount = 0;
-        savedPlayerState.hotbar[i].damage = 0;
-        savedPlayerState.hotbar[i].healValue = 0;
-        savedPlayerState.hotbar[i].iconX = 0;
-        savedPlayerState.hotbar[i].iconY = 0;
-    }
+    for (int i = 0; i < 4; i++)
+        savedPlayerState.hotbar[i] = {-1, 0};
     savedEnemyStates.clear();
     savedItemStates.clear();
     savedMapState.chestOpened.clear();

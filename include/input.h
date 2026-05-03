@@ -11,7 +11,8 @@ enum PlayerAction
     ACTION_NONE,
     ACTION_ATTACK,
     ACTION_DRINK_POTION,
-    ACTION_EQUIP_UNEQUIP
+    ACTION_EQUIP_UNEQUIP,
+    ACTION_DROP_ITEM,
 };
 
 /**
@@ -30,8 +31,15 @@ struct InputState
     bool toggleInventory;
     bool toggleMap;
     bool leftClickPressed;
+    bool rightClickPressed;
+    bool leftClickReleased;
+    bool rightClickReleased;
     bool leftClickDown;
+    bool rightClickDown;
+    bool ctrlDown;
     bool goBack;
+    bool dropItem;
+    bool dropItemAll;
 
     bool selectSlot1;
     bool selectSlot2;
@@ -69,14 +77,20 @@ public:
     bool IsMoveRight() const { return Current.moveRight; }
     bool IsMoving() const { return Current.moveUp || Current.moveDown || Current.moveLeft || Current.moveRight; }
 
-    bool IsInteract()        const { return Current.interact; }
-    bool IsRevive()          const { return Current.revive; }
+    bool IsInteract() const { return Current.interact; }
+    bool IsRevive() const { return Current.revive; }
     bool IsToggleInventory() const { return Current.toggleInventory; }
     bool IsToggleMap() const { return Current.toggleMap; }
     bool IsLeftClickPressed() const { return Current.leftClickPressed; }
+    bool IsRightClickPressed() const { return Current.rightClickPressed; }
+    bool IsLeftClickReleased() const { return Current.leftClickReleased; }
+    bool IsRightClickReleased() const { return Current.rightClickReleased; }
     bool IsLeftClickDown() const { return Current.leftClickDown; }
+    bool IsRightClickDown() const { return Current.rightClickDown; }
+    bool IsCtrlDown() { return Current.ctrlDown; }
     bool IsGoBack() const { return Current.goBack; }
-
+    bool IsDropItem() const { return Current.dropItem; }
+    bool IsDropItemAll() const { return Current.dropItemAll; }
     bool IsSelectSlot1() const { return Current.selectSlot1; }
     bool IsSelectSlot2() const { return Current.selectSlot2; }
     bool IsSelectSlot3() const { return Current.selectSlot3; }

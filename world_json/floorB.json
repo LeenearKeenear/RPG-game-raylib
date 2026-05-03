@@ -436,15 +436,15 @@
                 {
                  "height":0,
                  "id":18,
-                 "name":"enemy_spawn",
+                 "name":"spawn",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
                  "type":"spawn",
                  "visible":true,
                  "width":0,
-                 "x":342.424242424242,
-                 "y":475.757575757576
+                 "x":576,
+                 "y":1056
                 }, 
                 {
                  "height":0,
@@ -591,7 +591,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -717,10 +717,46 @@
                  "width":32,
                  "x":192,
                  "y":960
+                }, 
+                {
+                 "height":32,
+                 "id":133,
+                 "name":"chest",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"chest",
+                 "visible":true,
+                 "width":32,
+                 "x":640,
+                 "y":864
+                }, 
+                {
+                 "height":32,
+                 "id":134,
+                 "name":"chest",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"chest",
+                 "visible":true,
+                 "width":32,
+                 "x":640,
+                 "y":896
+                }, 
+                {
+                 "height":32,
+                 "id":135,
+                 "name":"chest",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"chest",
+                 "visible":true,
+                 "width":32,
+                 "x":704,
+                 "y":864
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -1475,7 +1511,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":false,
+         "visible":true,
          "x":0,
          "y":0
         }, 
@@ -1522,12 +1558,12 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":true,
+         "visible":false,
          "x":0,
          "y":0
         }],
  "nextlayerid":11,
- "nextobjectid":133,
+ "nextobjectid":136,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

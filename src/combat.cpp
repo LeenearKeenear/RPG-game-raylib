@@ -54,12 +54,12 @@ namespace Combat
         // Memeriksa semua entitas aktif untuk tabrakan
         for (auto entity : Entities::GetRegistry())
         {
-            if (entity == &player)
+            Entity *playerAsEntity = &player;
+            if (entity == playerAsEntity)
                 continue;
             if (!entity->IsActive || entity->Health <= 0)
                 continue;
 
-            // Memastikan kita tidak memukul entitas yang sama berkali-kali dalam satu ayunan/tusukan
             bool alreadyHit = false;
             for (void *ptr : player.Swing.damagedEntities)
             {
@@ -74,7 +74,6 @@ namespace Combat
 
             if (CheckCollisionRecs(attackHitbox, entity->GetHitbox()))
             {
-                // Menghitung arah dorongan balik (knockback) menjauhi pemain
                 Vector2 entityCenter = {entity->Position.x + 16, entity->Position.y + 16};
                 Vector2 knockDir = Vector2Normalize(Vector2Subtract(entityCenter, playerCenter));
 
@@ -82,7 +81,6 @@ namespace Combat
                 Vector2 knockback = Vector2Scale(knockDir, player.Swing.knockbackForce);
                 entity->TakeDamage(damage, knockback);
 
-                // Umpan balik visual
                 Effects::AddDamage(entityCenter, damage);
 
                 player.Swing.damagedEntities.push_back((void *)entity);
@@ -101,6 +99,9 @@ namespace Combat
     void HandleCombat(Player &player)
     {
         if (player.Anim.isDead)
+            return;
+
+        if (InputInstance.IsInventoryOpen())
             return;
 
         // Penyaringan Input: Pastikan serangan hanya terpicu jika klik dimulai dalam status yang valid
@@ -170,6 +171,14 @@ namespace Combat
                 // Pemeriksaan Resource (Mana)
                 if (player.Mana >= manaCost)
                 {
+                    InventoryItem activeItem = Inventory::GetActiveHotbarItem(player);
+                    if (activeItem.definitionId == -1 || itemDefs.Get(activeItem.definitionId).category != ITEM_WEAPON)
+                    {
+                        Effects::AddLog("Tidak ada senjata!");
+                        player.Swing.pressRegistered = false;
+                        return;
+                    }
+
                     player.Mana -= manaCost;
                     player.ManaRegenTimer = player.ManaRegenDelay;
 
@@ -304,26 +313,24 @@ namespace Combat
             return;
 
         InventoryItem item = Inventory::GetActiveHotbarItem(player);
+        if (item.definitionId == -1)
+            return;
 
-        if (item.type == ITEM_WEAPON)
+        const ItemDefinition &def = itemDefs.Get(item.definitionId);
+        if (def.category != ITEM_WEAPON)
+            return;
+
+        Vector2 visualPos = player.Swing.center;
+        if (player.Swing.type == ATTACK_THRUST)
         {
-
-            // Menghitung posisi visual dengan offset tusukan searah
-            Vector2 visualPos = player.Swing.center;
-            if (player.Swing.type == ATTACK_THRUST)
-            {
-                float rad = player.Swing.baseAngle * (PI / 180.0f);
-                visualPos.x += cosf(rad) * player.Swing.thrustOffset;
-                visualPos.y += sinf(rad) * player.Swing.thrustOffset;
-            }
-
-            Rectangle dest = {visualPos.x, visualPos.y, 20, 20};
-            // Titik asal (Origin) {0, 24} untuk tile 32x32 yang digunakan sebagai sprite 20x20 agar rotasi dari posisi tangan
-            Vector2 origin = {0, 24};
-
-            // Sprite dimiringkan 45 derajat di sumber, jadi kita sesuaikan
-            DrawTileTexture(TEXTURE_ITEMS, item.iconX, item.iconY, dest, origin, player.Swing.currentAngle + 45.0f);
+            float rad = player.Swing.baseAngle * (PI / 180.0f);
+            visualPos.x += cosf(rad) * player.Swing.thrustOffset;
+            visualPos.y += sinf(rad) * player.Swing.thrustOffset;
         }
+
+        Rectangle dest = {visualPos.x, visualPos.y, 20, 20};
+        Vector2 origin = {0, 24};
+        DrawTileTexture(TEXTURE_ITEMS, (int)def.sheetCoord.x, (int)def.sheetCoord.y, dest, origin, player.Swing.currentAngle + 45.0f);
     }
 
     void AddDamagePopup(Vector2 pos, float damage)

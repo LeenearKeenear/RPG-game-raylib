@@ -285,6 +285,25 @@ void UpdateLogicAll()
         PlayerInstance.GetHitboxHeight()};
 
     itemRender.Update(itemData.activeItems, center, pHitbox, PlayerInstance.GetMagnetRadius(), PlayerInstance.GetItemSpeed());
+
+    // Pickup scan setelah magnet update
+    for (auto &item : itemData.activeItems)
+    {
+        if (item.isPickedUp && !item.isAdded)
+        {
+            TraceLog(LOG_INFO, "PICKUP: trying to add definitionId=%d", item.definitionId);
+            if (Inventory::AddToInventory(PlayerInstance, item))
+            {
+                TraceLog(LOG_INFO, "PICKUP: added to inventory");
+                item.isAdded = true;
+            }
+            else
+            {
+                TraceLog(LOG_INFO, "PICKUP: inventory full");
+                item.isPickedUp = false; // balik ke world
+            }
+        }
+    }
 }
 
 /*==============================================================================

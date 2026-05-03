@@ -257,7 +257,7 @@ void InitMap(void)
     // LoadMap("world_json/floorC.json");
     // "world_json/tutorial.json"
     // Map yang aktif saat ini
-    currentMapPath = "world_json/tutorial.json";
+    currentMapPath = "world_json/floorB.json";
     LoadMap(currentMapPath.c_str());
 
     if (!LoadEnemiesForMap(currentMapPath))

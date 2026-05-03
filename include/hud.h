@@ -4,7 +4,16 @@
 
 /**
  * @brief Render HUD player (Nama, Health, Mana) di pojok kiri bawah.
- * Fungsi ini dipanggil dari DrawUIOverlay di screen_handler.cpp
+ * Dipanggil dari DrawUIOverlay di screen_handler.cpp.
  */
 void DrawPlayerHUD();
+
+/**
+ * @brief Render layar inventory beserta logika drag & drop, split, dan merge.
+ */
 void DrawInventory();
+
+/**
+ * @brief Render hotbar beserta logika drag & drop saat inventory terbuka.
+ */
+void DrawHotbar();

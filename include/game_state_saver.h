@@ -45,13 +45,15 @@ struct SavedEnemyState {
 
 /**
  * @brief Struktur data untuk menyimpan state satu item
+ * 
+ * Hanya menyimpan state yang unik per instance.
+ * Data statis item (nama, kategori, rarity, dll) diambil dari
+ * ItemDefinitionManager via definitionId.
  */
 struct SavedItemState {
-    Vector2 position;           /**< Posisi item di world */
-    bool isPickedUp;            /**< Status collected/remaining */
-    ItemCategory category;      /**< Kategori item */
-    ItemRarity rarity;          /**< Rarity item */
-    float statMultiplier;       /**< Multiplier stat item */
+    Vector2 position;   /**< Posisi item di world */
+    bool isPickedUp;    /**< Status collected/remaining */
+    int definitionId;   /**< ID referensi ke ItemDefinition */
 };
 
 /**
