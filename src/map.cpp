@@ -388,23 +388,30 @@ TileRange GetVisibleTileRange(void)
  * Map Switching & Navigation
  *==============================================================================*/
 
-/**
- * @brief Pindah ke map baru dan spawn di pintu atau titik tujuan tertentu
- *
- * Map aktif saat ini akan disimpan ke history sebelum map baru dimuat.
- * entry point untuk semua logic map setelah inimap();
- *
- * @param newMapPath Path file map tujuan
- * @param targetDoorName Nama pintu atau spawn point pada map tujuan
- */
 void SwitchMap(const char *newMapPath, const char *targetDoorName)
 {
     // Safety check biar gak load path kosong
-    if (newMapPath == nullptr || newMapPath[0] == '\0')
-    {
+    if (newMapPath == nullptr || newMapPath[0] == '\0') {
         TraceLog(LOG_ERROR, "SwitchMap: newMapPath is null or empty");
         return;
     }
+
+    // Simpan state map lama sebelum pindah
+    if (!currentMapPath.empty()) {
+        SaveEnemiesForMap(currentMapPath);
+        itemData.SaveItemsForMap(currentMapPath);
+        mapHistoryStack.Push(currentMapPath, "");
+    }
+
+    // Set pending map switch - loading screen akan menangani sisanya
+    gState->isSwitchingMap = true;
+    gState->pendingMapPath = newMapPath;
+    gState->pendingDoorName = (targetDoorName != nullptr && targetDoorName[0] != '\0')
+                                 ? targetDoorName : SPAWN_OBJECT_NAME;
+    gState->currentScreen = LOADING;
+
+    TraceLog(LOG_INFO, "SwitchMap: transitioning to LOADING screen for map: %s", newMapPath);
+}
 
     // Simpan musuh map lama sebelum ganti path
     if (!currentMapPath.empty())
