@@ -28,7 +28,7 @@ raylib-*/
 # Temp directories
 .tmp/
 tmp/
-temp/
+*temp/
 
 # Junk
 **nul**
