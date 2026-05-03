@@ -26,6 +26,7 @@ json-temp/
 raylib-*/
 
 # Temp directories
+.tmp/
 tmp/
 temp/
 
