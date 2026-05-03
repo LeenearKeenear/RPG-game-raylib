@@ -408,6 +408,12 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     gState->pendingMapPath = newMapPath;
     gState->pendingDoorName = (targetDoorName != nullptr && targetDoorName[0] != '\0')
                                  ? targetDoorName : SPAWN_OBJECT_NAME;
+    // Reset loading state agar InitLoadingScreen() dipanggil ulang
+    gState->enteredLoading = false;
+    gState->loadingStage = 0;
+    gState->loadingProgress = 0.0F;
+    gState->loadingComplete = false;
+    gState->loadingText = "Switching map...";
     gState->currentScreen = LOADING;
 
     TraceLog(LOG_INFO, "SwitchMap: transitioning to LOADING screen for map: %s", newMapPath);
@@ -436,6 +442,12 @@ void GoBack(void)
     gState->isGoingBack = true;
     gState->pendingMapPath = prev.mapPath;
     gState->pendingDoorName = prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName;
+    // Reset loading state agar InitLoadingScreen() dipanggil ulang
+    gState->enteredLoading = false;
+    gState->loadingStage = 0;
+    gState->loadingProgress = 0.0F;
+    gState->loadingComplete = false;
+    gState->loadingText = "Returning to previous map...";
     gState->currentScreen = LOADING;
 
     TraceLog(LOG_INFO, "GoBack: transitioning to LOADING screen for map: %s", prev.mapPath.c_str());
