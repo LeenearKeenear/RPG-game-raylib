@@ -16,6 +16,16 @@ AGENTS.md
 raylib/
 lib/raylib/
 
+# Auto-downloaded tileson
+lib/tileson/
+
+# Auto-downloaded nlohmann-json
+lib/json/
+
+# Temp extraction for setup
+json-temp/
+raylib-*/
+
 # Temp directories
 tmp/
 temp/

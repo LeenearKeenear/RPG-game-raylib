@@ -19,14 +19,28 @@ function Write-Err($message) {
     Write-Host "[ERROR] $message" -ForegroundColor Red
 }
 
-# Early exit if all libs already exist (no output)
+# Early exit if all libs already exist
 $cwd = $PWD.Path
 $raylibDir = Join-Path $cwd "lib\raylib"
 $tilesonDir = Join-Path $cwd "lib\tileson"
+$jsonDir = Join-Path $cwd "lib\json"
 $raylibReady = (Test-Path (Join-Path $raylibDir "include\raylib.h")) -and (Test-Path (Join-Path $raylibDir "lib\libraylib.a"))
 $tilesonReady = Test-Path (Join-Path $tilesonDir "tileson.hpp")
+$jsonReady = Test-Path (Join-Path $jsonDir "include\nlohmann\json.hpp")
 
-if ($raylibReady -and $tilesonReady) {
+# Clean up junk files from existing raylib install (if any)
+if ($raylibReady) {
+    $junkFiles = @("CHANGELOG", "LICENSE", "README.md")
+    foreach ($junk in $junkFiles) {
+        $junkPath = Join-Path $raylibDir $junk
+        if (Test-Path $junkPath) {
+            Remove-Item -Path $junkPath -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+if ($raylibReady -and $tilesonReady -and $jsonReady) {
+    Write-Step "All required libraries already installed" -ForegroundColor Green
     exit 0
 }
 
@@ -98,6 +112,11 @@ function Install-Raylib() {
     
     Write-Debug "Cleaning up zip file"
     Remove-Item -Path $zipPath -Force -ErrorAction SilentlyContinue
+
+    Write-Debug "Removing junk files (CHANGELOG, LICENSE, README.md)"
+    Remove-Item -Path (Join-Path $installDir "CHANGELOG") -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path (Join-Path $installDir "LICENSE") -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path (Join-Path $installDir "README.md") -Force -ErrorAction SilentlyContinue
     
     $headerPath = Join-Path $installDir "include\raylib.h"
     $libPath = Join-Path $installDir "lib\libraylib.a"
@@ -116,24 +135,131 @@ function Install-Tileson() {
     $cwd = $PWD.Path
     $tilesonDir = Join-Path $cwd "lib\tileson"
     $tilesonFile = Join-Path $tilesonDir "tileson.hpp"
-    
+    $tilesonUrl = "https://github.com/SSBMTonberry/tileson/releases/download/v1.4.0/tileson.hpp"
+
     Write-Step "Checking for tileson..."
     Write-Debug "Tileson path: $tilesonFile"
-    
+
     if (Test-Path $tilesonFile) {
         Write-Step "tileson.hpp already exists at $tilesonDir"
         return
     }
-    
-    Write-Step "tileson.hpp not found!"
-    Write-Host "  Please download tileson from: https://github.com/SSBMTonberry/tileson" -ForegroundColor Yellow
-    Write-Host "  Copy 'tileson.hpp' to: lib/tileson/" -ForegroundColor Yellow
+
+    Write-Step "tileson.hpp not found. Downloading tileson v1.4.0 from GitHub..."
+    Write-Debug "URL: $tilesonUrl"
+    Write-Debug "Download path: $tilesonFile"
+
+    if (-not (Test-Path $tilesonDir)) {
+        New-Item -ItemType Directory -Path $tilesonDir -Force | Out-Null
+    }
+
+    try {
+        Invoke-WebRequest -Uri $tilesonUrl -OutFile $tilesonFile -UserAgent "PowerShell"
+    } catch {
+        Write-Err "Download failed: $_"
+        exit 1
+    }
+
+    if (Test-Path $tilesonFile) {
+        $fileSize = (Get-Item $tilesonFile).Length
+        if ($fileSize -gt 100KB) {
+            Write-Step "tileson installed successfully to $tilesonDir ($([math]::Round($fileSize/1KB, 1)) KB)" -ForegroundColor Green
+        } else {
+            Write-Err "Downloaded file too small ($fileSize bytes), likely failed"
+            Remove-Item -Path $tilesonFile -Force -ErrorAction SilentlyContinue
+            exit 1
+        }
+    } else {
+        Write-Err "Download failed - file not created"
+        exit 1
+    }
+}
+
+function Install-NlohmannJson() {
+    $cwd = $PWD.Path
+    $jsonDir = Join-Path $cwd "lib\json"
+    $jsonTemp = Join-Path $cwd "json-temp"
+    $zipFile = Join-Path $cwd "include.zip"
+    $jsonUrl = "https://github.com/nlohmann/json/releases/download/v3.12.0/include.zip"
+
+    Write-Step "Checking for nlohmann-json..."
+    Write-Debug "Install directory: $jsonDir"
+
+    if (Test-Path (Join-Path $jsonDir "include\nlohmann\json.hpp")) {
+        Write-Step "nlohmann-json already installed at $jsonDir"
+        return
+    }
+
+    Write-Step "nlohmann-json not found. Downloading nlohmann-json v3.12.0 from GitHub..."
+    Write-Debug "URL: $jsonUrl"
+    Write-Debug "Download path: $zipFile"
+
+    Write-Debug "Downloading..."
+    try {
+        Invoke-WebRequest -Uri $jsonUrl -OutFile $zipFile -UserAgent "PowerShell"
+    } catch {
+        Write-Err "Download failed: $_"
+        exit 1
+    }
+
+    if (-not (Test-Path $zipFile)) {
+        Write-Err "Download failed - file not created"
+        exit 1
+    }
+
+    Write-Step "Download complete. Extracting..."
+
+    if (Test-Path $jsonTemp) {
+        Write-Debug "Removing existing $jsonTemp"
+        Remove-Item -Path $jsonTemp -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    if (Test-Path $jsonDir) {
+        Write-Debug "Removing existing $jsonDir"
+        Remove-Item -Path $jsonDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    Write-Debug "Extracting to: $jsonTemp"
+    try {
+        Expand-Archive -Path $zipFile -DestinationPath $jsonTemp -Force
+    } catch {
+        Write-Err "Extraction failed: $_"
+        exit 1
+    }
+
+    $sourceDir = Join-Path $jsonTemp "include\nlohmann"
+    $destDir = Join-Path $jsonDir "include\nlohmann"
+
+    if (-not (Test-Path $sourceDir)) {
+        Write-Err "Extracted nlohmann folder not found at: $sourceDir"
+        Write-Debug "Contents of ${jsonTemp}\include:"
+        Get-ChildItem (Join-Path $jsonTemp "include") | ForEach-Object { Write-Debug "  - $($_.Name)" }
+        exit 1
+    }
+
+    Write-Debug "Moving nlohmann headers to $destDir"
+    if (-not (Test-Path (Split-Path $destDir))) {
+        New-Item -ItemType Directory -Path (Split-Path $destDir) -Force | Out-Null
+    }
+    Move-Item -Path $sourceDir -Destination $destDir -Force
+
+    Write-Debug "Cleaning up temp files"
+    Remove-Item -Path $jsonTemp -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path $zipFile -Force -ErrorAction SilentlyContinue
+
+    $headerPath = Join-Path $jsonDir "include\nlohmann\json.hpp"
+    if (Test-Path $headerPath) {
+        Write-Step "nlohmann-json installed successfully to $jsonDir" -ForegroundColor Green
+    } else {
+        Write-Err "Installation verification failed!"
+        Write-Debug "Header exists: $(Test-Path $headerPath)"
+        exit 1
+    }
 }
 
 function Remove-OldRaylib() {
     $cwd = $PWD.Path
     $oldRaylib = Join-Path $cwd "raylib"
-    
+
     if (Test-Path $oldRaylib) {
         Write-Step "Removing old bundled raylib folder..."
         Write-Debug "Removing $oldRaylib"
@@ -145,3 +271,4 @@ function Remove-OldRaylib() {
 Remove-OldRaylib
 Install-Raylib
 Install-Tileson
+Install-NlohmannJson
