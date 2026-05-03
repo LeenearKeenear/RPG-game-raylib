@@ -237,6 +237,9 @@ GameState InitScreen()
 
     state.currentScreen = MAIN_MENU;
     state.showFPS = false;
+    state.isSwitchingMap = false;
+    state.pendingMapPath.clear();
+    state.pendingDoorName.clear();
 
     return state;
 }

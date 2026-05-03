@@ -82,6 +82,23 @@ using GameState = struct
      * @details Dipakai agar InitLoadingScreen tidak dipanggil setiap frame
      */
     bool enteredLoading;
+
+    /*==============================================================================
+     * Map Switch State Variables
+     *==============================================================================*/
+    /**
+     * @brief Flag menandakan sedang dalam proses switch map
+     * @details Dipakai oleh loading screen untuk tahu harus load map baru
+     */
+    bool isSwitchingMap;
+    /**
+     * @brief Path map tujuan yang akan dimuat
+     */
+    std::string pendingMapPath;
+    /**
+     * @brief Nama door atau spawn point tujuan
+     */
+    std::string pendingDoorName;
 };
 
 // Pointer global ke GameState aktif
