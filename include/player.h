@@ -80,15 +80,15 @@ public:
     const float ManaRegenRate = 10.0f;
     const float AttackManaCost = 10.0f;
 
-    Animation Anim;                ///< Pengontrol animasi
-    bool pendingSwitchMap = false; ///< Flag untuk memicu transisi map
-    std::string pendingMapPath;    ///< Path map tujuan
-    std::string pendingDoorName;   ///< Nama pintu tujuan di map baru
-    bool pendingGoBack = false;    ///< Flag untuk kembali ke map sebelumnya
-    InventoryItem Hotbar[4];       ///< Item akses cepat (hotbar) pemain
-    InventoryItem Bag[20];         ///< Tas penyimpanan utama pemain (inventory, 5x5 grid)
-    const int MaxBag = 20; ///< jumlah maksimum bag. nilainya harus sama dengan bag
-    const int MaxHotbar = 4;    ///< jumlah maksimum hotbar. nilainya harus sama dengan hotbar
+    Animation Anim;                              ///< Pengontrol animasi
+    bool pendingSwitchMap = false;               ///< Flag untuk memicu transisi map
+    std::string pendingMapPath;                  ///< Path map tujuan
+    std::string pendingDoorName;                 ///< Nama pintu tujuan di map baru
+    bool pendingGoBack = false;                  ///< Flag untuk kembali ke map sebelumnya
+    InventoryItem Hotbar[4];                     ///< Item akses cepat (hotbar) pemain
+    InventoryItem Bag[20];                       ///< Tas penyimpanan utama pemain (inventory, 5x5 grid)
+    const int MaxBag = 20;                       ///< jumlah maksimum bag. nilainya harus sama dengan bag
+    const int MaxHotbar = 4;                     ///< jumlah maksimum hotbar. nilainya harus sama dengan hotbar
     const int MaxInventory = MaxBag + MaxHotbar; ///< keseluruhan inventory
 
     float HitboxWidth = 16.0f;
@@ -169,6 +169,7 @@ public:
     // Logic methods — definisi: src/player.cpp
     void DrawAimIndicator();
     float GetRayCastAngle() const { return RayCastAngle; }
+    float GetItemDropAngle() const { return RayCastAngleItemDrop; }
 
 private:
     const char *Name = "Player Name";
@@ -182,8 +183,11 @@ private:
     float ItemSpeed = 300.0f;          // default 300
     const float RayCastAngle = 0.600f; ///< cos(45°) — area pandang ±45° dari arah hadap
 
-    // Action handler — definisi: src/player.cpp
-    void HandleAction(void);
+    // item drop angle
+    const float RayCastAngleItemDrop = 0.000f; // ±90° dari arah hadap
+
+        // Action handler — definisi: src/player.cpp
+        void HandleAction(void);
 };
 
 extern Player PlayerInstance;

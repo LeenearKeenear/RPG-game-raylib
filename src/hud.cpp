@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <vector>
 #include <string>
+#include <cmath>
 
 extern const int GameScreenWidth;
 extern const int GameScreenHeight;
@@ -398,9 +399,48 @@ void DrawInventory()
         Vector2 playerCenter = PlayerInstance.GetCenter();
         Vector2 mouseWorld = GetScreenToWorld2D(mousePos, camera);
         Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+
+        // Arah hadap player
+        Vector2 facingDir = {0, 0};
+        switch (PlayerInstance.Anim.direction)
+        {
+        case UP:
+            facingDir = {0, -1};
+            break;
+        case DOWN:
+            facingDir = {0, 1};
+            break;
+        case LEFT:
+            facingDir = {-1, 0};
+            break;
+        case RIGHT:
+            facingDir = {1, 0};
+            break;
+        }
+
+        float dot = Vector2DotProduct(facingDir, aimDir);
+        Vector2 dropDir = aimDir;
+
+        if (dot < PlayerInstance.GetItemDropAngle())
+        {
+            // Hitung sudut threshold dari facingDir
+            float threshold = acosf(PlayerInstance.GetItemDropAngle());
+
+            // Cross product untuk tahu aimDir di sisi kiri atau kanan facingDir
+            float cross = facingDir.x * aimDir.y - facingDir.y * aimDir.x;
+            float sign = (cross >= 0) ? 1.0f : -1.0f;
+
+            // Rotasi facingDir sebesar threshold ke sisi terdekat
+            float cosA = cosf(threshold * sign);
+            float sinA = sinf(threshold * sign);
+            dropDir = {
+                facingDir.x * cosA - facingDir.y * sinA,
+                facingDir.x * sinA + facingDir.y * cosA};
+        }
+
         Vector2 dropPos = {
-            playerCenter.x + aimDir.x * PlayerInstance.INTERACT_RANGE,
-            playerCenter.y + aimDir.y * PlayerInstance.INTERACT_RANGE};
+            playerCenter.x + dropDir.x * PlayerInstance.INTERACT_RANGE,
+            playerCenter.y + dropDir.y * PlayerInstance.INTERACT_RANGE};
 
         ItemSpawn dropped = itemData.CreateItem(dropPos, dragItem.definitionId);
         dropped.amount = dragItem.amount;
