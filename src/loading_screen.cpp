@@ -125,7 +125,7 @@ void UpdateLoadingScreen(GameState *state)
                 Movement::UpdateCamera(PlayerInstance);
                 
                 // Update current map path
-                currentMapPath = state->pendingMapPath;
+                SetCurrentMapPath(state->pendingMapPath.c_str());
                 
                 // Clear map switch state
                 state->isSwitchingMap = false;

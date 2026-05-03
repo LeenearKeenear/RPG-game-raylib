@@ -11,6 +11,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include <atomic>
 #include <cstdint>
+#include <string>
 
 /*==============================================================================
  * Virtual Screen Constants

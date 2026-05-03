@@ -413,67 +413,6 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     TraceLog(LOG_INFO, "SwitchMap: transitioning to LOADING screen for map: %s", newMapPath);
 }
 
-    // Simpan musuh map lama sebelum ganti path
-    if (!currentMapPath.empty())
-        SaveEnemiesForMap(currentMapPath);
-
-    if (!currentMapPath.empty())
-        itemData.SaveItemsForMap(currentMapPath);
-
-    // Push map sekarang ke stack sebelum pindah
-
-    // Simpan map sekarang ke history sebelum pindah
-    if (!currentMapPath.empty())
-        mapHistoryStack.Push(currentMapPath, "");
-
-    // Update current map lalu muat map baru
-    currentMapPath = newMapPath;
-
-    UnloadMap();
-    LoadMap(newMapPath);
-    BuildMapObjectIndex();
-
-    // Stop kalau load map gagal
-    if (tilesonMap == nullptr)
-    {
-        TraceLog(LOG_ERROR, "SwitchMap: failed to load map: %s", newMapPath);
-        return;
-    }
-
-    // Re-init player berdasarkan target door di map baru
-    PlayerInstance.Init(gState, targetDoorName);
-    SpawnObject();
-
-    // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
-    Entities::Clear();
-    Entities::Add(&PlayerInstance);
-    SpawnEnemiesFromMap();
-    // Load musuh yang sudah ada atau spawn baru
-    if (!LoadEnemiesForMap(currentMapPath))
-    {
-        SpawnRandomWave();
-    }
-
-    if (!itemData.LoadItemsForMap(currentMapPath))
-    {
-        SpawnItemWave();
-    }
-
-    // Set camera ke tengah spawn player
-    Vector2 spawnPos = PlayerInstance.GetPosition();
-    camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
-    camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
-    camera.rotation = 0;
-    camera.zoom = 1.0F;
-
-    // Sinkronisasi kamera segera agar tidak ada blink/jump zoom di frame pertama
-    Movement::UpdateCamera(PlayerInstance);
-
-    TraceLog(LOG_INFO, "SwitchMap: switched to map: %s via door: %s",
-             newMapPath,
-             (targetDoorName != nullptr && targetDoorName[0] != '\0') ? targetDoorName : SPAWN_OBJECT_NAME);
-}
-
 /**
  * @brief Kembali ke map sebelumnya dari history
  *
@@ -546,4 +485,13 @@ void GoBack(void)
 const char *GetCurrentMapPath(void)
 {
     return currentMapPath.c_str();
+}
+
+/**
+ * @brief Set path map yang sedang aktif
+ * @param newPath Path map baru
+ */
+void SetCurrentMapPath(const char *newPath)
+{
+    currentMapPath = (newPath != nullptr && newPath[0] != '\0') ? newPath : "";
 }

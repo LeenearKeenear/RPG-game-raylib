@@ -166,6 +166,12 @@ void SwitchMap(const char *newMapPath, const char *targetSpawnName);
 const char *GetCurrentMapPath(void);
 
 /**
+ * @brief Set path map yang sedang aktif
+ * @param newPath Path map baru
+ */
+void SetCurrentMapPath(const char *newPath);
+
+/**
  * @brief Kembali ke map sebelumnya
  */
 void GoBack(void);
