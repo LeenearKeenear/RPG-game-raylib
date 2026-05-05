@@ -42,7 +42,7 @@ using ScreenState = enum : std::uint8_t
 /**
  * @brief Menyimpan data utama rendering dan state game
  */
-using GameState = struct
+struct GameState
 {
     RenderTexture2D Dungeon;   /**< Render texture virtual (1280x720) - target rendering semua game */
     float ScaleMultiplier;     /**< Rasio scale layar virtual ke window asli (dihitung tiap frame) */
