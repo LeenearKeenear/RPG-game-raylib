@@ -4,7 +4,7 @@ Dokumentasi ini menjelaskan struktur folder `assets/` yang menyimpan semua aset 
 
 ## Pohon Folder Assets
 
-```
+```txt
 assets/
 ├── audio/                # Aset audio game
 │   └── sfx/              # Efek suara (Sound Effects)
@@ -26,13 +26,15 @@ assets/
 ## Daftar File per Kategori
 
 ### Audio (audio/)
+
 | File | Deskripsi |
-|------|-----------|
+| --- | ----------- |
 | `sfx/666herohero-slash-21834.mp3` | Efek suara serangan pedang (slash) |
 
 ### Tekstur (textures/)
+
 | File | Deskripsi |
-|------|-----------|
+| --- | --- |
 | `autotiles.png` | Tile otomatis untuk pengisian area peta secara otomatis |
 | `enemies.png` | Sprite sheet berisi animasi semua jenis musuh |
 | `knight.png` | Sprite sheet karakter pemain (kelas Knight) |
@@ -41,8 +43,9 @@ assets/
 | `tiles.png` | Sprite sheet tile dasar untuk pembuatan peta |
 
 ### Peta (maps/)
+
 | File | Deskripsi |
-|------|-----------|
+| --- | --- |
 | `floorA.json` | Data peta lantai pertama game |
 | `floorB.json` | Data peta lantai kedua game |
 | `floorC.json` | Data peta lantai ketiga game |
@@ -51,7 +54,7 @@ assets/
 ## Format File Aset
 
 | Jenis Aset | Format | Keterangan |
-|------------|--------|------------|
+| --- | --- | --- |
 | Audio | MP3 | Efek suara pendek, dikelola di folder `audio/sfx/` |
 | Tekstur | PNG | Gambar tanpa kompresi lossy, mendukung transparansi |
 | Peta | JSON | Format Tileson (kompatibel dengan Tiled Map Editor) |

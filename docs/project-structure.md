@@ -4,7 +4,7 @@ Dokumentasi ini menjelaskan struktur folder lengkap proyek RPG Game yang dibangu
 
 ## Pohon Struktur Proyek
 
-```
+```txt
 rpg-game-raylib/
 ├── assets/          # Aset game (audio, tekstur, peta)
 ├── build/           # Hasil kompilasi (otomatis dibuat oleh CMake)
@@ -25,7 +25,7 @@ rpg-game-raylib/
 ## Deskripsi Folder Utama
 
 | Folder | Deskripsi |
-|--------|-----------|
+| --- | --- |
 | `assets/` | Menyimpan semua aset game non-kode: audio (efek suara), tekstur (sprites, tiles, UI), dan peta (format JSON Tileson). |
 | `build/` | Direktori hasil kompilasi otomatis. Berisi executable (`build/bin/main.exe`) dan file sementara CMake/Ninja. **Jangan edit file di sini secara manual**. |
 | `docs/` | Dokumentasi tambahan proyek (panduan build, struktur proyek, dll). |

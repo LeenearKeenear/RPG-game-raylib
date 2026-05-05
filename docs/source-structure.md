@@ -5,7 +5,8 @@ Dokumentasi ini menjelaskan struktur folder `src/` (file `.cpp`) dan `include/` 
 ## Pohon Struktur Kode Sumber
 
 ### Folder `src/` (File Sumber)
-```
+
+```txt
 src/
 ├── core/                   # Logika inti game
 │   ├── game_state_saver.cpp # Penyimpanan state game (save/load)
@@ -49,7 +50,8 @@ src/
 ```
 
 ### Folder `include/` (File Header)
-```
+
+```txt
 include/
 ├── core/                   # Header inti
 │   ├── game_state_saver.h
@@ -97,8 +99,9 @@ include/
 ## Daftar File per Kategori
 
 ### Core (Inti Game)
+
 | File | Tujuan |
-|------|--------|
+| --- | --- |
 | `main.cpp` | Entry point aplikasi, inisialisasi Raylib dan game loop |
 | `screen_handler.cpp` | Mengatur virtual screen 640x360 agar tetap proporsional di berbagai resolusi |
 | `loading_screen.cpp` | Menampilkan layar loading saat memuat aset atau peta |
@@ -106,29 +109,33 @@ include/
 | `game_state_saver.cpp` | Menyimpan dan memuat state game (save/load) |
 
 ### Entities (Entitas)
+
 | File | Tujuan |
-|------|--------|
+| --- | --- |
 | `player.cpp` | Logika pergerakan, animasi, dan interaksi pemain |
 | `enemy.cpp` | Logika AI, pergerakan, dan serangan musuh |
 | `entities.cpp` | Logika dasar semua entitas (posisi, kolisi, rendering) |
 
 ### Items (Item & Inventory)
+
 | File | Tujuan |
-|------|--------|
+| --- | --- |
 | `item.cpp` | Logika dasar item (nama, tipe, efek) |
 | `inventory.cpp` | Manajemen inventory pemain (tambah, hapus, gunakan item) |
 | `propsbehavior.cpp` | Perilaku item saat ditaruh di dunia game (properti, interaksi) |
 
 ### Map (Peta)
+
 | File | Tujuan |
-|------|--------|
+| --- | --- |
 | `map.cpp` | Memuat dan mengelola peta dari file JSON Tileson |
 | `tiles.cpp` | Rendering tilemap dan deteksi kolisi tile |
 | `mapLogic.cpp` | Logika interaksi peta (transisi antar peta, event peta) |
 
 ### Systems (Sistem Game)
+
 | File | Tujuan |
-|------|--------|
+| --- | --- |
 | `input.cpp` | Memproses input keyboard/pemain |
 | `movement.cpp` | Logika pergerakan semua entitas |
 | `combat.cpp` | Logika serangan, damage, dan HP |
@@ -137,14 +144,16 @@ include/
 | `inputLinkedList.cpp` | Struktur data linked list untuk antrean input |
 
 ### Rendering (Rendering)
+
 | File | Tujuan |
-|------|--------|
+| --- | --- |
 | `animation.cpp` | Sistem animasi sprite berbasis frame |
 | `hud.cpp` | Rendering HUD (HP bar, inventory, minimap) |
 
 ### UI (Antarmuka Pengguna)
+
 | File | Tujuan |
-|------|--------|
+| --- | --- |
 | `mainMenu.cpp` | Menu utama (mulai game, pengaturan, keluar) |
 | `pauseMenu.cpp` | Menu pause (lanjutkan, pengaturan, keluar) |
 | `popup.cpp` | Komponen popup untuk pesan singkat |
@@ -153,20 +162,22 @@ include/
 | `keybindsTab.cpp` | Pengaturan tombol kontrol di menu pause |
 
 ### Debug (Mode Debug)
+
 | File | Tujuan |
-|------|--------|
+| --- | --- |
 | `debugmode.cpp` | Fitur debug (tampilkan FPS, kolisi, teleportasi) |
 
 ### Utils (Utilitas)
+
 | File | Tujuan |
-|------|--------|
+| --- | --- |
 | `effectQueue.h` | Header antrian efek (digunakan oleh sistem effects) |
 
 ## Ketergantungan Antar Modul
 
 Berikut adalah ketergantungan utama antar modul (modul di kiri bergantung pada modul di kanan):
 
-```
+```txt
 entities ──▶ core, map, systems
 items ──▶ entities, core
 map ──▶ core, lib/tileson, systems
@@ -178,6 +189,7 @@ utils ──▶ (digunakan oleh systems, rendering)
 ```
 
 Penjelasan singkat:
+
 - Semua modul bergantung pada `core` sebagai fondasi dasar.
 - Modul `entities` dan `map` sering digunakan oleh modul lain untuk logika dunia game.
 - Modul `systems` mengorkestrasi logika lintas modul (input, movement, combat).
