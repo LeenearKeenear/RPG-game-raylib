@@ -16,6 +16,7 @@
 #include "game_state_saver.h"
 #include "screen.h"
 #include "entities.h"
+#include "propsbehavior.h"
 #include "../lib/raylib/include/raylib.h"
 
 /*==============================================================================
