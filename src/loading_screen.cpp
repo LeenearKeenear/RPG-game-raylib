@@ -168,28 +168,28 @@ void UpdateLoadingScreen(GameState *state)
     switch (state->loadingStage) {
         case 0:
             state->loadingText = "Loading tilemap textures...";
-            LoadTileTexture(TEXTURE_TILEMAP, "texture/tiles.png");
+            LoadTileTexture(TEXTURE_TILEMAP, "assets/textures/tiles.png");
             state->loadingStage++;
             state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;
             break;
             
         case 1:
             state->loadingText = "Loading character sprites...";
-            LoadTileTexture(TEXTURE_KNIGHT, "texture/knight.png");
+            LoadTileTexture(TEXTURE_KNIGHT, "assets/textures/knight.png");
             state->loadingStage++;
             state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;
             break;
             
         case 2:
             state->loadingText = "Loading item icons...";
-            LoadTileTexture(TEXTURE_ITEMS, "texture/test.png");
+            LoadTileTexture(TEXTURE_ITEMS, "assets/textures/test.png");
             state->loadingStage++;
             state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;
             break;
             
         case 3:
             state->loadingText = "Loading enemy textures...";
-            LoadTileTexture(TEXTURE_ENEMIES, "texture/Enemies.png");
+            LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
             state->loadingStage++;
             state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;
             break;

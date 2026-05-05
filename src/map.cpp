@@ -163,13 +163,13 @@ void LoadMap(const char *mapPath)
     for (int i = 0; i < (int)tilesetList.size(); i++)
     {
         tson::Tileset *tileset = &tilesetList[i];
-        std::string imagePath = "texture/" + tileset->getImagePath().filename().u8string();
+        std::string imagePath = "assets/textures/" + tileset->getImagePath().filename().u8string();
         TraceLog(LOG_INFO, "Tileson: Loading tileset: %s", imagePath.c_str());
 
         TilesetInfo info;
 
         // Cek apakah texture tile utama sudah dimuat, reuse jika ada
-        if (TexturesMap[TEXTURE_TILEMAP].id != 0 && imagePath == "texture/tiles.png")
+        if (TexturesMap[TEXTURE_TILEMAP].id != 0 && imagePath == "assets/textures/tiles.png")
         {
             info.texture = TexturesMap[TEXTURE_TILEMAP];
             TraceLog(LOG_INFO, "Tileson: Reusing cached texture for tiles.png");
@@ -250,14 +250,14 @@ void UnloadMap(void)
  */
 void InitMap(void)
 {
-    // Beberapa pilihan map yang tersedia (sementara di-comment)
-
-    // LoadMap("world_json/floorA.json");
-    // LoadMap("world_json/floorB.json");
-    // LoadMap("world_json/floorC.json");
-    // "world_json/tutorial.json"
-    // Map yang aktif saat ini
-    currentMapPath = "world_json/floorB.json";
+     // Beberapa pilihan map yang tersedia (sementara di-comment)
+ 
+     // LoadMap("assets/maps/floorA.json");
+     // LoadMap("assets/maps/floorB.json");
+     // LoadMap("assets/maps/floorC.json");
+     // "assets/maps/tutorial.json"
+     // Map yang aktif saat ini
+     currentMapPath = "assets/maps/floorB.json";
     LoadMap(currentMapPath.c_str());
 
     if (!LoadEnemiesForMap(currentMapPath))

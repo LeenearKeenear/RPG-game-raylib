@@ -39,7 +39,7 @@ ItemSpawnManager spawnManager;
 /** @brief Load texture item dari spritesheet */
 void InitItemTextures()
 {
-    LoadTileTexture(TEXTURE_ITEMS, "texture/test.png");
+    LoadTileTexture(TEXTURE_ITEMS, "assets/textures/test.png");
 }
 
 /**

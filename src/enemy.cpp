@@ -385,7 +385,7 @@ int GetRandomDamage(int min, int max) {
 }
 
 void InitEnemy() {
-    LoadTileTexture(TEXTURE_ENEMIES, "texture/Enemies.png");
+    LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
 }
 
 void InitEnemyTextures() {

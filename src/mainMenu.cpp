@@ -35,7 +35,7 @@ void InitMainMenu(GameState *state)
     (void)state; // unused parameter, buat future use
 
     // Load dan resize logo
-    Image logoImg = LoadImage("texture/logo.png");
+    Image logoImg = LoadImage("assets/textures/logo.png");
     int targetWidth = static_cast<int>(3840 * 0.13F);
     int targetHeight = static_cast<int>(2160 * 0.13F);
     ImageResize(&logoImg, targetWidth, targetHeight);

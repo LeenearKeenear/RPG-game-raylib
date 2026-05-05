@@ -22,9 +22,9 @@ void Player::Init(GameState *state, const char *spawnObjectName)
     // Memuat resource global pemain hanya satu kali
     if (!isInitialized)
     {
-        LoadTileTexture(TEXTURE_KNIGHT, "texture/knight.png");
-        LoadTileTexture(TEXTURE_ITEMS, "texture/test.png");
-        LoadTileTexture(TEXTURE_ENEMIES, "texture/enemies.png");
+        LoadTileTexture(TEXTURE_KNIGHT, "assets/textures/knight.png");
+        LoadTileTexture(TEXTURE_ITEMS, "assets/textures/test.png");
+        LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
 
         MaxHealth = 100.0f;
         Health = MaxHealth;

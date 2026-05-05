@@ -95,7 +95,7 @@ void SaveGameState(GameState *state)
      * Save Map State (map path, camera, chest opened status)
      *==============================================================================*/
     const char *mapPath = GetCurrentMapPath();
-    savedMapState.mapPath = (mapPath == nullptr || mapPath[0] == '\0') ? "world_json/tutorial.json" : std::string(mapPath);
+    savedMapState.mapPath = (mapPath == nullptr || mapPath[0] == '\0') ? "assets/maps/tutorial.json" : std::string(mapPath);
     savedMapState.cameraTarget = camera.target;
     savedMapState.cameraZoom = camera.zoom;
     savedMapState.chestOpened.clear();
