@@ -15,8 +15,11 @@
 #include "../include/screen.h"
 #include "../include/map.h"
 #include "../include/mapLogic.h"
+#include "../include/tiles.h"
 #include "../include/animation.h"
 #include "../include/player.h"
+#include <algorithm>
+#include <cctype>
 #include "../include/item.h"
 
 /*==============================================================================
@@ -145,26 +148,126 @@ void Debug::DrawCollisionOverlay(const std::string &layerName, Color rectColor, 
 /**
  * @brief Gambar overlay raycast interaksi player
  *
- * Ray diambil dari tengah hitbox player menuju arah mouse,
- * lalu titik hit terakhir ditandai jika ada object yang terkena.
+ * Titik hit terakhir ditandai jika ada object yang terkena.
+ * Garis raycast sudah digambar oleh DrawAimIndicator() di player.cpp
+ * dengan logika warna berdasarkan sudut hadap.
  */
 void Debug::DrawRaycastOverlay(void)
 {
+    // Gambar titik hit jika ray mengenai object (hanya saat debug mode aktif)
+    if (isDebugMode && PlayerInstance.GetLastHit().hit)
+        DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, RED);
+}
+
+/**
+ * @brief Gambar overlay area serangan player
+ */
+void Debug::DrawAttackOverlay(void)
+{
+    // Hanya gambar jika player sedang menyerang
+    if (!PlayerInstance.Anim.isAttacking)
+        return;
+
     Vector2 playerCenter = {
         PlayerInstance.GetPosition().x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2,
         PlayerInstance.GetPosition().y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2};
 
-    Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(gState), camera);
-    Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
-    Vector2 rayEnd = {
-        playerCenter.x + aimDir.x * PlayerInstance.GetINTERACT_RANGE(),
-        playerCenter.y + aimDir.y * PlayerInstance.GetINTERACT_RANGE()};
+    // Logika yang sama dengan Combat::PerformHitDetection
+    Rectangle attackHitbox;
+    float reach = PlayerInstance.Swing.reach;
+    float breadth = PlayerInstance.Swing.breadth;
 
-    DrawLineEx(playerCenter, rayEnd, 2.0f, GREEN);
+    switch (PlayerInstance.Anim.direction)
+    {
+    case RIGHT:
+        attackHitbox = {playerCenter.x + PlayerInstance.GetHitboxWidth() / 2, playerCenter.y - breadth / 2, reach, breadth};
+        break;
+    case LEFT:
+        attackHitbox = {playerCenter.x - PlayerInstance.GetHitboxWidth() / 2 - reach, playerCenter.y - breadth / 2, reach, breadth};
+        break;
+    case DOWN:
+        attackHitbox = {playerCenter.x - breadth / 2, playerCenter.y + PlayerInstance.GetHitboxHeight() / 2, breadth, reach};
+        break;
+    case UP:
+        attackHitbox = {playerCenter.x - breadth / 2, playerCenter.y - PlayerInstance.GetHitboxHeight() / 2 - reach, breadth, reach};
+        break;
+    }
+
+    // Gambar hitbox serangan
+    DrawRectangleLinesEx(attackHitbox, 2.0f, RED);
+    DrawRectangleRec(attackHitbox, Fade(RED, 0.3f));
 
     // Gambar titik hit jika ray mengenai object
     if (PlayerInstance.GetLastHit().hit)
-        DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, RED);
+        DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, VIOLET);
+
+    // Label
+    DrawText("Attack Area (2:1 Rect)", (int)attackHitbox.x, (int)attackHitbox.y - 14, 14, RED);
+}
+
+/**
+ * @brief Gambar titik spawn musuh yang terdeteksi dari data map
+ */
+void Debug::DrawEnemySpawnOverlay(void)
+{
+    if (tilesonMap == nullptr)
+        return;
+
+    for (auto &obj : tilesonMap->Objects)
+    {
+        // Deteksi sederhana apakah ini objek musuh
+        std::string nameLower = obj.name;
+        std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), [](unsigned char c)
+                       { return std::tolower(c); });
+
+        std::string typeLower = obj.type;
+        std::transform(typeLower.begin(), typeLower.end(), typeLower.begin(), [](unsigned char c)
+                       { return std::tolower(c); });
+
+        bool isEnemySpawn = (nameLower.find("enemy") != std::string::npos ||
+                             nameLower.find("slime") != std::string::npos ||
+                             nameLower.find("skeleton") != std::string::npos ||
+                             nameLower.find("wolf") != std::string::npos ||
+                             obj.name == "spawn_enemy" ||
+                             typeLower == "enemy_spawn");
+
+        if (isEnemySpawn)
+        {
+            Vector2 pos = {obj.bounds.x, obj.bounds.y};
+
+            // Gambar lingkaran di titik spawn
+            DrawCircleV(pos, 5.0f, PURPLE);
+            DrawCircleLinesV(pos, 8.0f, Fade(PURPLE, 0.5f));
+
+            // Label nama objek
+            DrawText(obj.name.c_str(), (int)pos.x - 35, (int)pos.y - 28, 12, PURPLE);
+
+            // Tampilkan jumlah jika ada properti 'count'
+            if (obj.properties.count("count"))
+            {
+                int count = 1;
+                auto prop = obj.properties.at("count");
+                if (prop.getType() == tson::Type::Int)
+                    count = prop.getValue<int>();
+                else if (prop.getType() == tson::Type::Float)
+                    count = (int)prop.getValue<float>();
+                DrawText(TextFormat("Count: %d", count), (int)pos.x + 10, (int)pos.y + 10, 10, MAGENTA);
+            }
+
+            // Tampilkan radius patroli (Lingkaran besar transparan)
+            float radius = 128.0f;
+            if (obj.properties.count("radius"))
+            {
+                auto prop = obj.properties.at("radius");
+                if (prop.getType() == tson::Type::Int)
+                    radius = (float)prop.getValue<int>();
+                else if (prop.getType() == tson::Type::Float)
+                    radius = prop.getValue<float>();
+            }
+            DrawCircleLinesV(pos, radius, Fade(PURPLE, 0.2f));
+            DrawText(TextFormat("Rad: %.0f", radius), (int)pos.x - 20, (int)pos.y + 15, 10, MAGENTA);
+        }
+    }
 }
 
 /*==============================================================================
@@ -279,7 +382,7 @@ void Debug::DrawPlayerPanel(Rectangle bounds)
 void Debug::DrawZoomPanel(Rectangle bounds)
 {
     const float MAX_ZOOM = 3.5f;
-    const float MIN_ZOOM = 0.85f;
+    const float MIN_ZOOM = 0.60f;
     const float ZOOM_INCREMENT = 0.25f;
 
     // Handle zoom dengan scroll mouse
@@ -375,37 +478,37 @@ void Debug::DrawCollisionPanel(Rectangle bounds)
  */
 void Debug::DrawWorldOverlay(void)
 {
-    if (!isDebugMode)
-        return;
-
     if (tilesonMap == nullptr)
         return;
 
-    // Hitbox player
-    Vector2 playerPos = PlayerInstance.GetPosition();
+    // Overlay hanya muncul saat debug mode aktif
+    if (!isDebugMode)
+        return;
 
-    Rectangle playerHitbox = {
-        playerPos.x + PlayerInstance.GetHitboxOffsetX(),
-        playerPos.y + PlayerInstance.GetHitboxOffsetY(),
-        PlayerInstance.GetHitboxWidth(),
-        PlayerInstance.GetHitboxHeight()};
+    // Gambar raycast interaksi
+    DrawRaycastOverlay();
+
+    Rectangle playerHitbox = PlayerInstance.GetHitbox();
 
     DrawRectangleLinesEx(playerHitbox, 2.0f, LIME);
 
     // Magnet radius overlay
     Vector2 playerCenter = PlayerInstance.GetCenter();
-    DrawCircleLinesV(playerCenter, PlayerInstance.GetMagnetRadius(), ORANGE);
+    DrawCircleLinesV(playerCenter, PlayerInstance.GetMagnetRadius(), GOLD);
 
     // Titik sudut hitbox player
-    DrawCircleV({playerHitbox.x, playerHitbox.y}, 2.5f, GREEN);
-    DrawCircleV({playerHitbox.x + playerHitbox.width, playerHitbox.y}, 2.5f, GREEN);
-    DrawCircleV({playerHitbox.x, playerHitbox.y + playerHitbox.height}, 2.5f, GREEN);
-    DrawCircleV({playerHitbox.x + playerHitbox.width, playerHitbox.y + playerHitbox.height}, 2.5f, GREEN);
+    DrawCircleV({playerHitbox.x, playerHitbox.y}, 2.5f, LIME);
+    DrawCircleV({playerHitbox.x + playerHitbox.width, playerHitbox.y}, 2.5f, LIME);
+    DrawCircleV({playerHitbox.x, playerHitbox.y + playerHitbox.height}, 2.5f, LIME);
+    DrawCircleV({playerHitbox.x + playerHitbox.width, playerHitbox.y + playerHitbox.height}, 2.5f, LIME);
 
     // Overlay collision object
-    DrawCollisionOverlay(COLLISION_LAYER_NAME, RED, GOLD, GOLD);
-    DrawCollisionOverlay(OBJECT_LAYER_NAME, BLUE, BLUE, BLUE);
-    DrawRaycastOverlay();
+    DrawCollisionOverlay(COLLISION_LAYER_NAME, RED, RED, LIGHTGRAY);
+    DrawCollisionOverlay(OBJECT_LAYER_NAME, SKYBLUE, SKYBLUE, LIGHTGRAY);
+    DrawCollisionOverlay(TRAP_LAYER_NAME, BEIGE, BEIGE, LIGHTGRAY);
+    DrawCollisionOverlay(ITEM_LAYER_NAME, PINK, PINK, LIGHTGRAY);
+    DrawAttackOverlay();
+    DrawEnemySpawnOverlay();
 
     // Batas luar map
     Rectangle mapBounds = {
@@ -414,18 +517,16 @@ void Debug::DrawWorldOverlay(void)
         (float)tilesonMap->width * TILE_SIZE,
         (float)tilesonMap->height * TILE_SIZE};
 
-    DrawRectangleLinesEx(mapBounds, 2.0f, SKYBLUE);
+    DrawRectangleLinesEx(mapBounds, 2.0f, GREEN);
 
     // Hitbox items
-    for (auto &item : activeItems)
+    for (auto &item : itemData.activeItems)
     {
         if (!item.isPickedUp)
         {
-            DrawRectangleLinesEx(item.hitbox, 1.5f, YELLOW);
-            DrawText(item.name.c_str(), (int)item.hitbox.x, (int)item.hitbox.y - 12, 10, YELLOW);
+            const ItemDefinition &def = itemDefs.Get(item.definitionId);
+            DrawRectangleLinesEx(item.hitbox, 1.5f, PINK);
+            DrawText(def.name.c_str(), (int)item.hitbox.x, (int)item.hitbox.y - 12, 10, PINK);
         }
     }
-
-    // Label kecil untuk hitbox
-    DrawText("Hitbox", (int)playerHitbox.x, (int)playerHitbox.y - 14, 14, LIME);
 }

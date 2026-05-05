@@ -1,54 +1,79 @@
 #pragma once
 
-/**
- * @file animation.h
- * @brief Animation System & Tile Rendering Module
- *
- * Handle semua animasi sprite untuk player, enemy, dan entity lain.
- * Semua logic animasi (frame switching, timing, direction) dipusatin di sini.
- * Module ini juga contain tile rendering system buat render spritesheet-based tiles.
- */
-
-#include "raylib.h"
+#include "tiles.h"
 
 /*==============================================================================
- * Texture & Asset Management
+ * Animation State & Direction
  *==============================================================================*/
 
-/** Jumlah maksimum slot texture PNG yang bisa di-load */
-#define MAX_TEXTURES 6
+/** State animasi buat entity (player, enemy, dll) */
+enum State
+{
+    IDLE,
+    WALK,
+    ATTACK,
+    DEAD
+};
 
 /**
- * @brief Enum buat milih slot texture
- * @note TEXTURE_KNIGHT nanti bakal direfaktor jadi lebih general
+ * @brief Arah mata angin untuk orientasi animasi.
  */
-typedef enum
+enum Direction
 {
-    TEXTURE_TILEMAP = 0,
-    TEXTURE_KNIGHT,
-    TEXTURE_ITEMS,   // test menambahkan texture untuk player slot
-    TEXTURE_ENEMIES, /**< Slot buat sprite enemy slime */
-} TextureAsset;
+    LEFT,
+    RIGHT,
+    DOWN,
+    UP
+};
 
-/** Global texture array - diakses dari file lain pake extern */
-extern Texture2D TexturesMap[MAX_TEXTURES];
+struct AnimationSet;
+
+/**
+ * @brief Konfigurasi untuk urutan animasi tertentu.
+ */
+struct AnimationConfig
+{
+    int row;             ///< Baris pada tileset
+    int startFrame;      ///< Kolom frame awal
+    int frameCount;      ///< Jumlah frame dalam urutan
+    float speed;         ///< Durasi setiap frame dalam detik
+    bool loop;           ///< Apakah animasi harus diulang?
+    int pattern[8];      ///< Pola urutan frame kustom (opsional)
+    int patternCount;    ///< Jumlah frame dalam pola kustom
+};
+
+/**
+ * @brief Status runtime dari sebuah instansi animasi.
+ */
+struct Animation
+{
+    Vector2 position;            ///< Posisi tempat animasi di-render
+    State state;                 ///< Status logika saat ini
+    Direction direction;         ///< Arah hadap saat ini
+    int currentFrame;            ///< Indeks frame saat ini dalam urutan
+    float timer;                 ///< Waktu yang telah berlalu pada frame saat ini
+    int walkFrameIndex;          ///< Indeks khusus untuk pola berjalan
+    bool isAttacking;            ///< Flag untuk memblokir animasi lain saat menyerang
+    bool isDead;                 ///< Flag untuk mengunci animasi pada status DEAD
+    const AnimationConfig *currentConfig; ///< Pointer ke konfigurasi yang aktif
+    const AnimationSet *animSet;  ///< Set yang berisi semua animasi yang tersedia
+};
+
+/**
+ * @brief Wadah untuk semua animasi milik tipe entitas tertentu.
+ */
+struct AnimationSet
+{
+    AnimationConfig configs[4][4]; // [Status][Arah]
+};
 
 /*==============================================================================
- * Tile System
+ * Tile Rendering (Legacy helpers — deklarasi asli ada di tiles.h/tiles.cpp)
  *==============================================================================*/
 
 /**
- * @brief Koordinat universal buat posisi tile di spritesheet atau world
- */
-typedef struct
-{
-    int x; /**< Koordinat X */
-    int y; /**< Koordinat Y */
-} TileCoordinate;
-
-/**
- * @brief Semua jenis tile yang ada
- * @note keknya ini gak kepake
+ * @brief Jenis tile yang ada di spritesheet (untuk RenderTilePNG)
+ * @note Digunakan oleh RenderTilePNG() saja
  */
 typedef enum
 {
@@ -64,7 +89,6 @@ typedef enum
 
 /**
  * @brief Properti tiap tile
- * @note gak kepake
  */
 typedef struct
 {
@@ -73,155 +97,83 @@ typedef struct
     bool HasInteraction;    /**< True kalo tile punya event interaksi */
 } TileDefinition;
 
-/** Ukuran tile dalam pixel */
-#define TILE_SIZE 32
-
-/** Jarak antar tile di spritesheet (padding) */
-#define TILE_GAP 4
-
-/*==============================================================================
- * Tile Rendering Functions
- *==============================================================================*/
-
 /**
- * @brief Load texture PNG ke slot yang ditentuin
- * @param Slot Slot texture (dari enum TextureAsset)
- * @param Path File path ke gambar PNG
- */
-void LoadTileTexture(TextureAsset Slot, const char *Path);
-
-/**
- * @brief Render satu tile dari spritesheet ke posisi world
- * @param pos_x Posisi world X (pixel)
- * @param pos_y Posisi world Y (pixel)
- * @param Type Jenis tile (dari enum TileType)
- * @param Rotation Rotasi dalam derajat
- * @param Slot Texture asset yang dipake
+ * @brief Render satu tile dari spritesheet ke posisi world (legacy helper)
  */
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot);
 
 /**
  * @brief Render satu tile dari spritesheet ke posisi world dengan ukuran kecil
- * @param Slot Texture asset yang dipake
- * @param sheetCoord Koordinat dalam png texture
- * @param worldPos Posisi dalam world
- * @param scale Skala pengecilan untuk texture
- * @param
  */
 void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale);
-
-/**
- * @brief Ambil source rectangle dari spritesheet berdasarkan frame koordinat
- * @param frameX Koordinat X frame (dalam satuan tile)
- * @param frameY Koordinat Y frame (dalam satuan tile)
- * @return Rectangle buat raylib DrawTextureRec()
- */
-Rectangle GetFrame(int frameX, int frameY);
-
-/*==============================================================================
- * Animation State & Direction
- *==============================================================================*/
-
-/** State animasi buat entity (player, enemy, dll) */
-enum State
-{
-    IDLE,   /**< Diam/standby */
-    WALK,   /**< Jalan */
-    ATTACK, /**< Nyerrang */
-    DEAD    /**< Mati */
-};
-
-/** Arah hadap entity buat nentuin sprite mana yang dipake */
-enum Direction
-{
-    LEFT,  /**< Ngadep kiri */
-    RIGHT, /**< Ngadep kanan */
-    DOWN,  /**< Ngadep bawah */
-    UP     /**< Ngadep atas */
-};
-
-/*==============================================================================
- * AnimationPlayer Struct
- *==============================================================================*/
-
-/**
- * @brief Data animasi buat satu entity (player, enemy, dll)
- */
-struct AnimationPlayer
-{
-    Vector2 position; /**< Posisi entity di world (pixel) */
-
-    State state;         /**< State animasi saat ini (IDLE/WALK/ATTACK/DEAD) */
-    Direction direction; /**< Arah hadap entity saat ini */
-
-    int frame;        /**< Index frame animasi yang ditampilin (wrapper dari walkFrameIndex) */
-    float frameTime;  /**< Akumulator waktu buat timing animasi (dalam detik) */
-    float frameSpeed; /**< Kecepatan ganti frame (durasi per frame, misal 0.1 = 10 FPS) */
-
-    int walkFrameIndex; /**< Index frame buat mapping gambar dari texture pack */
-
-    bool isAttacking; /**< Flag ngecek apakah entity sedang attack */
-    bool isDead;      /**< Flag ngecek apakah entity udah mati */
-};
 
 /*==============================================================================
  * Animation Functions
  *==============================================================================*/
 
-/** @name State Setters
- *  @brief Set direction dan state animasi
- *  @{
+/**
+ * @brief Melanjutkan progres status animasi berdasarkan langkah waktu (dt).
  */
-void UpdatePlayerWalkUp(AnimationPlayer &p);    /**< Set animasi jalan ke atas */
-void UpdatePlayerWalkDown(AnimationPlayer &p);  /**< Set animasi jalan ke bawah */
-void UpdatePlayerWalkLeft(AnimationPlayer &p);  /**< Set animasi jalan ke kiri */
-void UpdatePlayerWalkRight(AnimationPlayer &p); /**< Set animasi jalan ke kanan */
-void UpdatePlayerIdle(AnimationPlayer &p);      /**< Set animasi idle/diam */
-void UpdatePlayerAttack(AnimationPlayer &p);    /**< Set animasi attack */
-void UpdatePlayerDeath(AnimationPlayer &p);     /**< Set animasi death/mati */
-/** @} */
+void UpdateAnimation(Animation &anim, float dt);
 
 /**
- * @brief Update frame animasi berdasarkan delta time
- * @param p AnimationPlayer yang bakal diupdate
- * @param dt Delta time dalam detik (buat nambahin frameTime)
+ * @brief Me-render animasi pada frame saat ini.
  */
-void UpdateAnimation(AnimationPlayer &p, float dt);
+void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint = WHITE);
 
 /**
- * @brief Render player sprite ke layar berdasarkan state dan direction
- * @param p AnimationPlayer dengan state animasi saat ini
+ * @brief Berpindah ke status animasi dan arah yang baru.
  */
-void DrawPlayer(AnimationPlayer &p);
+void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set);
 
-/**
- * @brief State animasi buat enemy entity
- */
-enum EnemyState
+// Set animasi yang telah ditentukan untuk berbagai tipe entitas
+extern const AnimationSet PlayerAnimationSet;
+extern const AnimationSet SlimeAnimationSet;
+extern const AnimationSet SkeletonAnimationSet;
+extern const AnimationSet WolfAnimationSet;
+
+/*==============================================================================
+ * Generic Animation Effects (UI & Feedback)
+ *==============================================================================*/
+
+namespace AnimEffects
 {
-    EnIDLE,   /**< Diam/standby */
-    EnROAM,   /**< Jalan */
-    EnCHASE,  /**< Mengejar */
-    EnATTACK, /**< Nyerang */
-    EnDEAD    /**< Mati */
-};
+    /**
+     * @brief Menghitung nilai alpha untuk efek fade-out linear.
+     */
+    float CalculateFadeOut(float timer, float duration);
 
-/**
- *
- *
- */
-struct AnimationEnemy
-{
-    Vector2 position; /**< Posisi entity di world (pixel) */
+    /**
+     * @brief Menghitung posisi offset vertikal yang terus naik.
+     */
+    float CalculateFloatOffset(float currentOffset, float speed, float dt);
 
-    EnemyState EnState; /**< State animasi saat ini (IDLE/WALK/CHASE/ATTACK/DEAD) */
+    /**
+     * @brief Menentukan apakah objek harus digambar (efek kedip).
+     */
+    bool ShouldBlink(float timer, float frequency);
 
-    int frame;        /**< Index frame animasi yang ditampilin (wrapper dari walkFrameIndex) */
-    float frameTime;  /**< Akumulator waktu buat timing animasi (dalam detik) */
-    float frameSpeed; /**< Kecepatan ganti frame (durasi per frame, misal 0.1 = 10 FPS) */
+    /**
+     * @brief Menerapkan logika fisika sederhana (gravitasi & friksi) pada posisi.
+     */
+    void ApplyPhysics(Vector2& pos, Vector2& vel, float gravity, float friction, float dt);
 
-    int walkFrameIndex; /**< Index frame buat mapping gambar dari texture pack */
+    /**
+     * @brief Menggerakkan posisi ke arah target dengan kecepatan tertentu.
+     */
+    Vector2 LerpTowards(Vector2 current, Vector2 target, float speed, float dt);
 
-    bool isAttacking; /**< Flag ngecek apakah entity sedang attack */
-    bool isDead;      /**< Flag ngecek apakah entity udah mati */
-};
+    /**
+     * @brief Menghitung offset maju-mundur untuk animasi tusukan (Thrust).
+     */
+    float CalculateThrustOffset(float progress, float maxOffset);
+
+    /**
+     * @brief Menghitung sudut rotasi untuk animasi ayunan (Slash).
+     */
+    float CalculateSlashRotation(float progress, float startAngle, float sweepAngle);
+}
+
+// Fungsi lama — masih dipakai oleh HandleAction() di player.cpp
+// Definisi: src/animation.cpp
+void UpdatePlayerAttack(Animation &p);

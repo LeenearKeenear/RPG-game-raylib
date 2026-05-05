@@ -10,6 +10,8 @@
 
 #include "../lib/raylib/include/raylib.h"
 #include <string>
+#include <iostream>
+#include <type_traits>
 
 /*==============================================================================
  * Button Policies
@@ -37,7 +39,7 @@ struct TextPolicy
         textWidth = MeasureText(text, fontSize);
     }
 
-    Rectangle GetBounds() const
+    [[nodiscard]] Rectangle GetBounds() const
     {
         return {static_cast<float>(posX), static_cast<float>(posY), 
                 static_cast<float>(textWidth), static_cast<float>(fontSize)};
@@ -68,12 +70,12 @@ struct ImagePolicy
         hoverAmount = hover;
     }
 
-    void Unload()
+    void Unload() const
     {
         UnloadTexture(texture);
     }
 
-    Rectangle GetBounds() const
+    [[nodiscard]] Rectangle GetBounds() const
     {
         return {position.x, position.y, 
                 static_cast<float>(texture.width), static_cast<float>(texture.height)};
@@ -130,6 +132,47 @@ public:
         return CheckCollisionPointRec(mousePosition, policy.GetBounds());
     }
 
+    [[nodiscard]] Rectangle GetBounds() const
+    {
+        return policy.GetBounds();
+    }
+
+    [[nodiscard]] bool operator==(const Button &other) const
+    {
+        Rectangle a = policy.GetBounds();
+        Rectangle b = other.policy.GetBounds();
+        return a.x == b.x && a.y == b.y && a.width == b.width && a.height == b.height;
+    }
+
+    [[nodiscard]] bool operator!=(const Button &other) const
+    {
+        return !(*this == other);
+    }
+
+    [[nodiscard]] bool operator<(const Button &other) const
+    {
+        Rectangle a = policy.GetBounds();
+        Rectangle b = other.policy.GetBounds();
+        if (a.y != b.y)
+            return a.y < b.y;
+        return a.x < b.x;
+    }
+
+    [[nodiscard]] bool operator<=(const Button &other) const
+    {
+        return !(other < *this);
+    }
+
+    [[nodiscard]] bool operator>(const Button &other) const
+    {
+        return other < *this;
+    }
+
+    [[nodiscard]] bool operator>=(const Button &other) const
+    {
+        return !(*this < other);
+    }
+
 private:
     [[nodiscard]] Color GetNormalColor() const
     {
@@ -181,3 +224,52 @@ using buttonTxt = Button<TextPolicy>;
  * @brief Image-based button - backward compatible dengan buttonImage lama
  */
 using buttonImage = Button<ImagePolicy>;
+
+/*==============================================================================
+ * Function Overloading Demonstration
+ *==============================================================================*/
+
+template<typename PolicyType>
+class Button;
+
+namespace ButtonHelper
+{
+inline void print(int value)
+{
+    DrawText(TextFormat("Int: %d", value), 0, 0, 20, WHITE);
+}
+
+inline void print(float value)
+{
+    DrawText(TextFormat("Float: %.2f", value), 0, 0, 20, WHITE);
+}
+
+inline void print(double value)
+{
+    DrawText(TextFormat("Double: %.2f", value), 0, 0, 20, WHITE);
+}
+
+inline void print(const char *text)
+{
+    DrawText(text, 0, 0, 20, WHITE);
+}
+
+template<typename PolicyType>
+inline void print(const Button<PolicyType> &btn)
+{
+    Rectangle bounds = btn.GetBounds();
+    DrawText(TextFormat("Button at (%.0f, %.0f) size (%.0f x %.0f)",
+           bounds.x, bounds.y, bounds.width, bounds.height),
+           0, 0, 20, WHITE);
+}
+
+template<typename PolicyType>
+inline std::ostream &operator<<(std::ostream &os, const Button<PolicyType> &btn)
+{
+    Rectangle bounds = btn.GetBounds();
+    os << "Button<" << (std::is_same_v<PolicyType, TextPolicy> ? "TextPolicy" : "ImagePolicy") << ">{";
+    os << "pos=(" << bounds.x << "," << bounds.y << "), "
+       << "size=" << bounds.width << "x" << bounds.height << "}";
+    return os;
+}
+} // namespace ButtonHelper

@@ -9,16 +9,18 @@
  * - Handle perpindahan map dan riwayat navigasi
  */
 
-#include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
-#include "../include/screen.h"
+#include "../include/entities.h"
 #include "../include/mapLogic.h"
 #include "../include/map.h"
+#include "../include/tiles.h"
 #include "../include/animation.h"
 #include "../include/player.h"
 #include "../include/enemy.h"
 #include "../include/item.h"
 #include "../include/mapstack.h"
+#include "../include/entities.h"
+#include "../include/movement.h"
 #include "../include/propsbehavior.h"
 #include <memory>
 #include <string>
@@ -125,6 +127,7 @@ void LoadMap(const char *mapPath)
             for (auto &obj : layer.getObjects())
             {
                 MapObject mapObj;
+                mapObj.id = obj.getId();
                 mapObj.name = obj.getName();
                 mapObj.type = obj.getType();
                 mapObj.layerName = layer.getName();
@@ -163,16 +166,27 @@ void LoadMap(const char *mapPath)
         std::string imagePath = "texture/" + tileset->getImagePath().filename().u8string();
         TraceLog(LOG_INFO, "Tileson: Loading tileset: %s", imagePath.c_str());
 
-        Image img = LoadImage(imagePath.c_str());
         TilesetInfo info;
-        info.texture = LoadTextureFromImage(img);
+
+        // Cek apakah texture tile utama sudah dimuat, reuse jika ada
+        if (TexturesMap[TEXTURE_TILEMAP].id != 0 && imagePath == "texture/tiles.png")
+        {
+            info.texture = TexturesMap[TEXTURE_TILEMAP];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for tiles.png");
+        }
+        else
+        {
+            Image img = LoadImage(imagePath.c_str());
+            info.texture = LoadTextureFromImage(img);
+            UnloadImage(img);
+        }
+
         info.cols = tileset->getColumns();
         info.spacing = tileset->getSpacing();
         info.firstgid = tileset->getFirstgid();
         info.lastgid = (i + 1 < (int)tilesetList.size())
                            ? tilesetList[i + 1].getFirstgid() - 1
                            : INT_MAX;
-        UnloadImage(img);
 
         tilesonMap->tilesets.push_back(info);
         TraceLog(LOG_INFO, "Tileson: Loaded tileset %s (gid %d-%d)", imagePath.c_str(), info.firstgid, info.lastgid);
@@ -196,13 +210,28 @@ void UnloadMap(void)
             delete[] tilesonMap->tiles[i];
         delete[] tilesonMap->tiles;
 
-        chestManager.Clear();
+        ClearTileProps();
+
         tilesonMap->Objects.clear();
 
         // Unload texture tileset dari GPU
+        // Jangan unload jika texture sudah ada di cache (TexturesMap)
         for (auto &ts : tilesonMap->tilesets)
-            if (ts.texture.id != 0)
+        {
+            bool isCached = false;
+            for (int i = 0; i < MAX_TEXTURES; i++)
+            {
+                if (TexturesMap[i].id == ts.texture.id && ts.texture.id != 0)
+                {
+                    isCached = true;
+                    break;
+                }
+            }
+            if (!isCached && ts.texture.id != 0)
+            {
                 UnloadTexture(ts.texture);
+            }
+        }
         tilesonMap->tilesets.clear();
 
         delete tilesonMap;
@@ -210,7 +239,7 @@ void UnloadMap(void)
     }
 
     ClearEnemies();
-    ClearItems();
+    itemData.ClearItems();
     parsedMap.reset();
 }
 
@@ -222,20 +251,13 @@ void UnloadMap(void)
 void InitMap(void)
 {
     // Beberapa pilihan map yang tersedia (sementara di-comment)
-    // LoadMap("world_json/exampleworldmap_2.json");
-    // LoadMap("world_json/exampleworldmap.json");
-    // LoadMap("world_json/outsideLight.json");
-    // LoadMap("world_json/testermap.tmj");
-    // LoadMap("world_json/cave.json");
-    // LoadMap("world_json/inside.json");
-    // LoadMap("world_json/light.json");
 
     // LoadMap("world_json/floorA.json");
     // LoadMap("world_json/floorB.json");
     // LoadMap("world_json/floorC.json");
-
+    // "world_json/tutorial.json"
     // Map yang aktif saat ini
-    currentMapPath = "world_json/tutorial.json";
+    currentMapPath = "world_json/floorB.json";
     LoadMap(currentMapPath.c_str());
 
     if (!LoadEnemiesForMap(currentMapPath))
@@ -243,12 +265,11 @@ void InitMap(void)
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath)){
+    if (!itemData.LoadItemsForMap(currentMapPath))
+    {
         SpawnItemWave();
     }
     BuildMapObjectIndex();
-
-    SpawnObject();
 }
 
 /*==============================================================================
@@ -390,8 +411,8 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
         SaveEnemiesForMap(currentMapPath);
 
     if (!currentMapPath.empty())
-        SaveItemsForMap(currentMapPath);
-    
+        itemData.SaveItemsForMap(currentMapPath);
+
     // Push map sekarang ke stack sebelum pindah
 
     // Simpan map sekarang ke history sebelum pindah
@@ -405,8 +426,6 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     LoadMap(newMapPath);
     BuildMapObjectIndex();
 
-    SpawnObject();
-
     // Stop kalau load map gagal
     if (tilesonMap == nullptr)
     {
@@ -416,14 +435,20 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
 
     // Re-init player berdasarkan target door di map baru
     PlayerInstance.Init(gState, targetDoorName);
+    SpawnObject();
 
+    // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
+    Entities::Clear();
+    Entities::Add(&PlayerInstance);
+    SpawnEnemiesFromMap();
     // Load musuh yang sudah ada atau spawn baru
     if (!LoadEnemiesForMap(currentMapPath))
     {
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath)){
+    if (!itemData.LoadItemsForMap(currentMapPath))
+    {
         SpawnItemWave();
     }
 
@@ -433,6 +458,9 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
     camera.rotation = 0;
     camera.zoom = 1.0F;
+
+    // Sinkronisasi kamera segera agar tidak ada blink/jump zoom di frame pertama
+    Movement::UpdateCamera(PlayerInstance);
 
     TraceLog(LOG_INFO, "SwitchMap: switched to map: %s via door: %s",
              newMapPath,
@@ -455,7 +483,7 @@ void GoBack(void)
     // Simpan musuh map sekarang
     SaveEnemiesForMap(currentMapPath);
 
-    SaveItemsForMap(currentMapPath);
+    itemData.SaveItemsForMap(currentMapPath);
 
     // Ambil history teratas dan pop dari stack
     MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();
@@ -465,7 +493,6 @@ void GoBack(void)
     UnloadMap();
     LoadMap(prev.mapPath.c_str());
     BuildMapObjectIndex();
-    SpawnObject();
 
     if (tilesonMap == nullptr)
     {
@@ -475,14 +502,20 @@ void GoBack(void)
 
     // Init player di spawn point map sebelumnya
     PlayerInstance.Init(gState, prev.doorName.empty() ? SPAWN_OBJECT_NAME : prev.doorName.c_str());
+    SpawnObject();
 
+    // Bersihkan entitas map sebelumnya (kecuali player) dan spawn musuh baru
+    Entities::Clear();
+    Entities::Add(&PlayerInstance);
+    SpawnEnemiesFromMap();
     // Load musuh dari history
     if (!LoadEnemiesForMap(currentMapPath))
     {
         SpawnRandomWave();
     }
 
-    if (!LoadItemsforMap(currentMapPath)){
+    if (!itemData.LoadItemsForMap(currentMapPath))
+    {
         SpawnItemWave();
     }
 
@@ -493,5 +526,17 @@ void GoBack(void)
     camera.rotation = 0;
     camera.zoom = 1.0F;
 
+    // Sinkronisasi kamera segera agar tidak ada blink/jump zoom di frame pertama
+    Movement::UpdateCamera(PlayerInstance);
+
     TraceLog(LOG_INFO, "GoBack: returned to map: %s", prev.mapPath.c_str());
+}
+
+/**
+ * @brief Dapatkan path map yang sedang aktif
+ * @return Path map saat ini (kosong jika tidak ada)
+ */
+const char *GetCurrentMapPath(void)
+{
+    return currentMapPath.c_str();
 }

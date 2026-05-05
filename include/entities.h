@@ -1,24 +1,49 @@
 #pragma once
+#include <vector>
+#include <string>
+#include "entity.h"
 
 /**
- * @file entities.h
- * @brief Entities Coordination Module
- *
- * Coordinator buat semua entity di game (player, enemy, item).
- * Jadi tempat sentral buat ngelola render dan update semua entity.
+ * @brief Sistem registri dan manajemen global untuk entitas.
+ * Menangani inisialisasi, pembaruan (update), perenderan, dan persistensi status kematian.
  */
+namespace Entities
+{
+    void Init();     ///< Inisialisasi sistem entitas
+    void Update();   ///< Update semua entitas yang aktif
+    void Render();   ///< Render semua entitas yang aktif
+    void Shutdown(); ///< Bersihkan semua entitas
 
-/*==============================================================================
- * Entities Functions
- *==============================================================================*/
+    /**
+     * @brief Menambahkan entitas statis/persisten ke dalam registri.
+     */
+    void Add(Entity *entity);
 
-/**
- * @brief Master render buat semua entity
- * @note Dipanggil di dalam BeginMode2D block
- *       Handle render player, enemy, item, dll dalam satu tempat
- *
- * Roadmap kedepan:
- * - Spawn logic enemy/item bakal masuk sini
- * - Update logic enemy/item bakal masuk sini
- */
-void RenderEntities(void);
+    /**
+     * @brief Menambahkan entitas dinamis (contoh: efek sementara, proyektil).
+     */
+    void AddDynamic(Entity *entity);
+
+    void Clear();    ///< Hapus semua entitas dari registri
+
+    /**
+     * @brief Mendapatkan daftar semua entitas yang terdaftar saat ini.
+     */
+    const std::vector<Entity *> &GetRegistry();
+
+    /**
+     * @brief Mencatat entitas sebagai "mati" di map tertentu agar tidak muncul kembali (respawn).
+     */
+    void RegisterDeath(const std::string& mapPath, int objectId);
+
+    /**
+     * @brief Memeriksa apakah suatu entitas sudah pernah dibunuh sebelumnya di suatu map.
+     */
+    bool IsAlreadyDead(const std::string& mapPath, int objectId);
+}
+
+// master render untuk object tile kek chest, trap dll
+void RenderTileProps(void);
+
+// master clear untuk object tile kek chest, trap dll
+void ClearTileProps(void);

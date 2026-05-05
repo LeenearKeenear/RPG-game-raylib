@@ -11,7 +11,7 @@
          "name":"ground",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":50,
          "x":0,
          "y":0
@@ -387,6 +387,17 @@
                          "x":-192,
                          "y":0
                         }],
+                 "properties":[
+                        {
+                         "name":"target_door",
+                         "type":"string",
+                         "value":"spawn"
+                        }, 
+                        {
+                         "name":"target_map",
+                         "type":"string",
+                         "value":"world_json\/tutorial.json"
+                        }],
                  "rotation":0,
                  "type":"finish",
                  "visible":true,
@@ -399,8 +410,67 @@
          "visible":true,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":8,
+         "name":"item",
+         "objects":[
+                {
+                 "height":416,
+                 "id":24,
+                 "name":"item",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":800,
+                 "x":288,
+                 "y":2208
+                }, 
+                {
+                 "height":608,
+                 "id":25,
+                 "name":"item1",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":576,
+                 "x":352,
+                 "y":1472
+                }, 
+                {
+                 "height":640,
+                 "id":26,
+                 "name":"item2",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":512,
+                 "x":800,
+                 "y":672
+                }, 
+                {
+                 "height":2112,
+                 "id":27,
+                 "name":"item3",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":1024,
+                 "x":288,
+                 "y":512
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":8,
+ "nextlayerid":9,
  "nextobjectid":28,
  "orientation":"orthogonal",
  "renderorder":"right-down",

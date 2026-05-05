@@ -14,6 +14,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/tileson/tileson.hpp"
 #include "../include/map.h"
+#include "../include/tiles.h"
 
 /*==============================================================================
  * Global Variables
@@ -467,10 +468,6 @@ bool CheckCollisionAgainstPolygons(const Rectangle &hitbox, const std::vector<st
     return false;
 }
 
-/*==============================================================================
- * World Boundary Helpers
- *==============================================================================*/
-
 /**
  * @brief Cek apakah hitbox masih berada di dalam batas dunia
  *
@@ -495,3 +492,50 @@ bool IsWithinWorldBounds(const Rectangle &hitbox, float worldWidth, float worldH
 
     return true;
 }
+
+/**
+ * @brief Cek apakah sebuah posisi aman (tidak menabrak wall/collision) dan berada di dalam batas map
+ *
+ * Menggabungkan pengecekan world bounds dan collision terhadap rectangle & polygon
+ * yang ada di layer COLLISION_LAYER_NAME.
+ *
+ * @param pos Posisi entitas yang dicek
+ * @param width Lebar hitbox
+ * @param height Tinggi hitbox
+ * @param offsetX Offset X hitbox dari posisi dasar
+ * @param offsetY Offset Y hitbox dari posisi dasar
+ * @return true jika posisi aman (di dalam map dan tidak menabrak)
+ */
+bool IsPositionSafe(Vector2 pos, float width, float height, float offsetX, float offsetY)
+{
+    if (!tilesonMap)
+        return true;
+
+    // 1. Bangun hitbox
+    Rectangle hitbox = BuildHitbox(pos, offsetX, offsetY, width, height);
+
+    // 2. Cek World Bounds
+    float worldWidth = (float)tilesonMap->width * TILE_SIZE;
+    float worldHeight = (float)tilesonMap->height * TILE_SIZE;
+    if (!IsWithinWorldBounds(hitbox, worldWidth, worldHeight))
+        return false;
+
+    // 3. Cek Collision (Obstacle Layer)
+    TiledHelper::CollisionResult col;
+    if (TiledHelperFunction.TryGetCollisionByLayerName(COLLISION_LAYER_NAME, col))
+    {
+        if (CheckCollisionAgainstRects(hitbox, col.rects))
+            return false;
+        if (CheckCollisionAgainstPolygons(hitbox, col.polygons))
+            return false;
+    }
+
+    // 4. Cek Dynamic Obstacles (object runtime seperti bomb)
+    if (CheckCollisionAgainstRects(hitbox, DynamicObstacles))
+        return false;
+
+    return true;
+}
+
+// dynamic obstacle function
+std::vector<Rectangle> DynamicObstacles;

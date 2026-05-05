@@ -1,269 +1,193 @@
 #pragma once
 
-/**
- * @file player.h
- * @brief Player System Module
- *
- * Handle semua behavior player: movement, collision, render, camera.
- * Ini inti dari gameplay player character.
- */
-
 #include "../lib/raylib/include/raylib.h"
 #include "map.h"
 #include "screen.h"
+#include "tiles.h"
 #include "animation.h"
-#include "input.h"
 #include "inventory.h"
+#include "entity.h"
+#include "input.h"
 #include "mapLogic.h"
 
-// ================================================================
-// Player Class
-// Handle semua behavior player: movement, collision, render
-//
-// Workflow collision:
-// - Collision dibaca dari object layer "collision" di Tiled
-// - Setiap Rectangle / Polygon di layer itu dianggap solid/blocked
-// - CanMove() ngecek apakah posisi baru player nabrak salah satu shape itu
-//
-// Workflow world bound:
-// - World boundary custom dibaca dari object layer "map_bound" di Tiled
-// - Kalau layer boundary tidak ada / tidak punya polygon,
-//   CanMove() fallback ke rectangle ukuran map
-//
-// Workflow spawn:
-// - Spawn point dibaca dari object bernama "spawn" di Tiled
-// - Init() otomatis taruh player di posisi spawn
-// ================================================================
-
-/*==============================================================================
- * Player Class
- *==============================================================================*/
+class Player;
 
 /**
- * @brief Class utama buat handle player character
- *
- * Nyediain semua fungsi yang berhubungan sama player:
- * - Movement & collision detection
- * - Animasi (jalan, idle, attack, mati)
- * - Camera follow
- * - Interaksi dengan object (door, dll)
- * - Handle input dari PlayerInput
+ * @brief Namespace untuk logika pergerakan pemain dan kamera.
  */
-class Player
+namespace Movement
+{
+    void HandleMovement(Player &player);
+    void UpdateCamera(Player &player);
+    bool CanMove(Player &player, Vector2 newPos);
+}
+
+/**
+ * @brief Namespace untuk logika pertarungan dan manajemen kesehatan pemain.
+ */
+namespace Combat
+{
+    void HandleCombat(Player &player);
+    void HandleRevive(Player &player);
+}
+
+/**
+ * @brief Namespace untuk interaksi lingkungan dan raycasting.
+ */
+namespace Interaction
+{
+    void HandleInteractions(Player &player);
+    void UpdateRaycast(Player &player);
+    void CheckDoors(Player &player);
+    void CheckProps(Player &player);
+}
+
+/**
+ * @brief Namespace untuk hotbar dan penggunaan item.
+ */
+namespace Inventory
+{
+    void HandleInventoryActions(Player &player);
+    void UsePotion(Player &player, int slotIndex);
+}
+
+#include "combat.h"
+
+/**
+ * @brief Kelas utama karakter pemain.
+ * Menangani integrasi input, pergerakan, status pertarungan, dan data interaksi.
+ */
+class Player : public Entity
 {
 public:
-    // ================================================================
-    // Initialization
-    // ================================================================
-
     /**
-     * @brief Inisialisasi player
-     * @param spawnObjectName Nama object spawn point di Tiled (default: SPAWN_OBJECT_NAME)
-     * @note Load texture, baca spawn & collision dari Tiled, setup animasi awal
+     * @brief Inisialisasi status pemain dan lokasi spawn.
      */
     void Init(GameState *state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
 
-    // ================================================================
-    // Update & Render
-    // ================================================================
+    void Update() override;
+    void Render(void) override;
+    void TakeDamage(float amount, Vector2 knockback = {0, 0}) override;
 
-    /**
-     * @brief Handle input dan movement per frame
-     * @note Cek collision sebelum apply posisi baru
-     *       Juga handle attack, death, revive, dll
-     */
-    void Update();
+    SwingAttack Swing = {0}; ///< Data status serangan saat ini
 
-    /**
-     * @brief Render sprite player di posisi world saat ini
-     * @note Panggil DrawPlayer() dari animation system
-     */
-    void Render(void);
+    Vector2 Velocity = {0, 0};   ///< Vektor kecepatan gerak saat ini
+    float Speed = 4.0f;          ///< Kecepatan gerak dasar
+    float Mana = 100.0f;         ///< Poin mana saat ini
+    float MaxMana = 100.0f;      ///< Poin mana maksimum
+    float ManaRegenTimer = 0.0f; ///< Timer untuk jeda pemulihan mana
+    const float ManaRegenDelay = 2.0f;
+    const float ManaRegenRate = 10.0f;
+    const float AttackManaCost = 10.0f;
 
-    /**
-     * @brief Wrapper per frame — dipanggil dari UpdateLogicAll()
-     * @note Urutan: Update() → PlayerCamera()
-     */
-    void Tick();
+    Animation Anim;                              ///< Pengontrol animasi
+    bool pendingSwitchMap = false;               ///< Flag untuk memicu transisi map
+    std::string pendingMapPath;                  ///< Path map tujuan
+    std::string pendingDoorName;                 ///< Nama pintu tujuan di map baru
+    bool pendingGoBack = false;                  ///< Flag untuk kembali ke map sebelumnya
+    InventoryItem Hotbar[4];                     ///< Item akses cepat (hotbar) pemain
+    InventoryItem Bag[20];                       ///< Tas penyimpanan utama pemain (inventory, 5x5 grid)
+    const int MaxBag = 20;                       ///< jumlah maksimum bag. nilainya harus sama dengan bag
+    const int MaxHotbar = 4;                     ///< jumlah maksimum hotbar. nilainya harus sama dengan hotbar
+    const int MaxInventory = MaxBag + MaxHotbar; ///< keseluruhan inventory
 
-    /**
-     * @brief Handle camera follow player dengan clamp ke world bounds
-     * @note Camera bakal ngikutin player tapi gak bakal keluar dari batas map
-     */
-    void PlayerCamera(void);
+    float HitboxWidth = 16.0f;
+    float HitboxHeight = 12.0f;
+    float HitboxOffsetX = 8.0f;
+    float HitboxOffsetY = 14.0f;
 
-    // ================================================================
-    // Getters
-    // ================================================================
+    Rectangle GetHitbox() const override
+    {
+        return {
+            Position.x + HitboxOffsetX,
+            Position.y + HitboxOffsetY,
+            HitboxWidth,
+            HitboxHeight};
+    }
 
     /** @return Posisi player dalam pixel */
     Vector2 GetPosition() { return Position; }
+    void SetPosition(Vector2 pos) { Position = pos; }
 
-    /** @return Speed player — dipake debug panel */
-    float GetSpeed() { return Speed; }
+    std::vector<Rectangle> CollisionRects;               ///< Tile tabrakan yang aktif
+    std::vector<std::vector<Vector2>> CollisionPolygons; ///< Bentuk poligon tabrakan yang aktif
 
-    /** @return true kalo player masih hidup, false kalo udah mati */
-    bool IsAlive() { return !Anim.isDead; }
+    RayCast Ray;          ///< Raycast untuk interaksi
+    RayHitResult LastHit; ///< Data dari tabrakan raycast terakhir
+    const float INTERACT_RANGE = 32.0f;
 
-    // hitbox getters — dipake collision dan debug panel
+    // Getter untuk modul logika eksternal
+    bool IsAlive() const override { return !Anim.isDead; }
+    float GetHealth() { return Health; }
+    float GetMaxHealth() { return MaxHealth; }
+    float GetMana() { return Mana; }
+    float GetMaxMana() { return MaxMana; }
+    const char *GetName() { return Name; }
+    RayHitResult GetLastHit() { return LastHit; }
     float GetHitboxWidth() { return HitboxWidth; }
     float GetHitboxHeight() { return HitboxHeight; }
     float GetHitboxOffsetX() { return HitboxOffsetX; }
     float GetHitboxOffsetY() { return HitboxOffsetY; }
-
-    // ================================================================
-    // Frustum Culling
-    // ================================================================
-
-    // health getters
-    float GetHealth() { return Health; }
-    float GetMaxHealth() { return MaxHealth; }
-    void SetHealth(float h) { Health = h; }
-
-    // mana getters
-    float GetMana() { return Mana; }
-    float GetMaxMana() { return MaxMana; }
-    void SetMana(float m) { Mana = m; }
-
-    // raycasting getters
-    RayHitResult GetLastHit() { return LastHit; }
     float GetINTERACT_RANGE() { return INTERACT_RANGE; }
+    float GetSpeed() { return Speed; }
 
     // pickup getters
     float GetMagnetRadius() { return MagnetRadius; }
     float GetItemSpeed() { return ItemSpeed; }
 
-    // hitbox getter
-    Vector2 GetCenter()
+    // hitbox getter — override dari Entity::GetCenter()
+    Vector2 GetCenter() const override
     {
         return {
             Position.x + HitboxOffsetX + HitboxWidth / 2,
             Position.y + HitboxOffsetY + HitboxHeight / 2};
     }
 
-    // info getters
-    const char *GetName() { return Name; }
-
-    // ================================================================
-    // Public Members
-    // ================================================================
-
-    AnimationPlayer Anim; /**< Data animasi player (state, frame, dll) */
-
-    bool pendingSwitchMap = false; /**< Flag nunggu ganti map */
-    std::string pendingMapPath;    /**< Path map tujuan */
-    std::string pendingDoorName;   /**< Nama pintu tujuan di map baru */
-    bool pendingGoBack = false;    /**< Flag nunggu aksi go back ke map sebelumnya */
-
     // Hotbar management
     InventoryItem GetHotbarItem(int index) { return Hotbar[index]; }
+
+    /**
+     * @brief Memperbarui kesehatan dengan pemeriksaan batas.
+     */
+    void SetHealth(float h)
+    {
+        Health = h;
+        if (Health < 0)
+            Health = 0;
+        if (Health > MaxHealth)
+            Health = MaxHealth;
+    }
+    void SetMana(float m) { Mana = m; }
     void SetHotbarItem(int index, InventoryItem item) { Hotbar[index] = item; }
-    void UsePotion(int slotIndex);
+
+    GameState *State = nullptr; ///< Pointer ke status game global
+
+    // Feedback visual/fisika
+    float HitFlashTimer = 0.0f;         ///< Durasi efek kilatan saat terkena hit
+    Vector2 KnockbackVelocity = {0, 0}; ///< Gaya dorong balik (knockback) yang sedang diterapkan
+
+    // Logic methods — definisi: src/player.cpp
+    void DrawAimIndicator();
+    float GetRayCastAngle() const { return RayCastAngle; }
+    float GetItemDropAngle() const { return RayCastAngleItemDrop; }
 
 private:
-    // ================================================================
-    // Private Methods
-    // ================================================================
+    const char *Name = "Player Name";
+    bool isInitialized = false;
 
-    /**
-     * @brief Dapetin hitbox player di posisi tertentu
-     * @param position Posisi yang mau dicek (biasanya posisi baru sebelum movement)
-     * @return Rectangle hitbox dengan offset yang udah di-apply
-     */
     Rectangle GetPlayerHitboxAtPosition(Vector2 position);
-
-    /**
-     * @brief Cek apakah posisi baru player valid (gak nabrak collision & masih di dalam map)
-     * @param NewPos Posisi baru yang mau dicek
-     * @return false kalo nabrak collision / keluar bound, true kalo aman
-     */
     bool CanMove(Vector2 NewPos);
 
-    // raycasting buat player
-    void RayCasting(void);
+    // magnet/pickup fields
+    float MagnetRadius = 70.0f;        // default 70
+    float ItemSpeed = 300.0f;          // default 300
+    const float RayCastAngle = 0.600f; ///< cos(45°) — area pandang ±45° dari arah hadap
 
-    // indicator raycastingnya TODO: ubah pake gambar biar enak diliat
-    void DrawAimIndicator(void);
+    // item drop angle
+    const float RayCastAngleItemDrop = 0.000f; // ±90° dari arah hadap
 
-    /**
-     * @brief Cek interaksi dengan door/pintu dan trigger switch map kalo perlu
-     */
-    void CheckDoorInteraction(void);
-
-    void CheckPropInteraction(void);
-
-    /**
-     * @brief Handle aksi left click berdasarkan context (slot aktif / inventori)
-     * @note Panggil ResolveSpaceAction() dari PlayerInput
-     */
-    void HandleSpaceAction(void);
-
-    /**
-     * @brief Revive player — reset state dari DEAD ke IDLE
-     * @note Dipanggil pas tekan tombol R (debug)
-     */
-    void HandleRevive(void);
-
-    // ================================================================
-    // Private Members
-    // ================================================================
-
-    GameState *State = nullptr;
-
-    Vector2 Position;      /**< Posisi player di world (pixel) */
-    Vector2 Velocity;      /**< Kecepatan player (belum dipake maksimal) */
-    int TileSize = 32;     /**< Ukuran tile dalam pixel */
-    float Speed = 6.0f;    /**< Kecepatan gerak player (pixel per frame) */
-    Texture2D CharTexture; /**< Texture sprite player */
-    const char *Name = "Player Name";
-
-    // ukuran hitbox player bisa diperkecil dari sprite biar movement
-    // terasa lebih enak dan gak gampang nyangkut di sudut/object.
-    float HitboxWidth = 16.0f;   /**< Lebar hitbox player */
-    float HitboxHeight = 12.0f;  /**< Tinggi hitbox player */
-    float HitboxOffsetX = 8.0f;  /**< Offset X hitbox dari posisi (makin besar makin ke kanan) */
-    float HitboxOffsetY = 14.0f; /**< Offset Y hitbox dari posisi (makin besar makin ke bawah) */
-
-    // collision data dari Tiled — diisi pas Init()
-    std::vector<Rectangle> CollisionRects;               /**< Rectangle collision dari object layer */
-    std::vector<std::vector<Vector2>> CollisionPolygons; /**< Polygon collision dari object layer */
-
-    // custom world boundary polygon dari Tiled — diisi pas Init()
-    // kalo kosong, CanMove() fallback ke rectangle ukuran map
-    std::vector<Vector2> WorldBoundaryPolygon; /**< Boundary polygon custom */
-
-    // health player
-    float Health = 100.0f;
-    float MaxHealth = 100.0f;
-
-    // mana/energy player
-    float Mana = 100.0f;
-    float MaxMana = 100.0f;
-    float ManaRegenTimer = 0.0f;
-    const float ManaRegenDelay = 2.0f;
-    const float ManaRegenRate = 10.0f; // per second
-    const float AttackManaCost = 10.0f;
-
-    // handle action berdasarkan context (slot aktif / inventori)
-    void HandleAction(void);
-
-    // raycasting
-    RayCast Ray;          // class buat raycast nya
-    RayHitResult LastHit; // hasil ray frame ini, bisa dicek fungsi lain
-
-    // fungsi gather item bentuk "magnet"
-    float MagnetRadius = 80.0f; // size "magnet"
-    float ItemSpeed = 400.0f;   // speed itemnya
-
-    const float INTERACT_RANGE = TILE_SIZE * 1.0f; // TODO: set nilai yang bener
-    const float RayCastAngle = 0.3f;               // angle maksimum buat raycast interactionnya. makin gede makin sempit anglenya
-    // Hotbar slots (1-4)
-    InventoryItem Hotbar[4];
+        // Action handler — definisi: src/player.cpp
+        void HandleAction(void);
 };
 
-/*==============================================================================
- * Global Player Instance
- *==============================================================================*/
-
-/** Global instance player — bisa diakses file lain via extern */
 extern Player PlayerInstance;

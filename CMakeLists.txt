@@ -50,6 +50,7 @@ target_include_directories(main PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/tileson>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/raylib/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/json/include>
 )
 
 # Raylib library

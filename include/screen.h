@@ -9,6 +9,8 @@
  */
 
 #include "../lib/raylib/include/raylib.h"
+#include <atomic>
+#include <cstdint>
 
 /*==============================================================================
  * Virtual Screen Constants
@@ -25,12 +27,13 @@ extern const int GameScreenHeight;
 /**
  * @brief Daftar state utama game
  */
-typedef enum
+using ScreenState = enum : std::uint8_t
 {
     MAIN_MENU, // State menu utama
+    LOADING,   // State loading aset
     PLAY,      // State gameplay aktif
     OPTIONS    // State menu pengaturan
-} ScreenState;
+};
 
 /*==============================================================================
  * GameState Struct
@@ -39,7 +42,7 @@ typedef enum
 /**
  * @brief Menyimpan data utama rendering dan state game
  */
-typedef struct
+using GameState = struct
 {
     RenderTexture2D Dungeon;   /**< Render texture virtual (1280x720) - target rendering semua game */
     float ScaleMultiplier;     /**< Rasio scale layar virtual ke window asli (dihitung tiap frame) */
@@ -48,7 +51,38 @@ typedef struct
     ScreenState currentScreen; /**< State game yang aktif (MAIN_MENU / PLAY / OPTIONS) */
     ScreenState previousScreen;/**< Screen sebelum OPTIONS - buat return button */
     bool showFPS;              /**< Tampilkan FPS counter di HUD */
-} GameState;
+    
+/*==============================================================================
+     * Loading State Variables
+     *==============================================================================*/
+    /**
+     * @brief Progress loading saat ini (0-100)
+     */
+    float loadingProgress;
+    /**
+     * @brief Teks status loading yang ditampilkan
+     */
+    const char* loadingText;
+    /**
+     * @brief Flag menandakan loading sudah selesai
+     */
+    bool loadingComplete;
+    /**
+     * @brief Stage loading saat ini (reset setiap masuk LOADING state)
+     * @details Dipakai untuk tracking switch statement di UpdateLoadingScreen()
+     */
+    int loadingStage;
+    /**
+     * @brief Flag menandakan asset sudah dimuat ke memori
+     * @details Jika true, Start Game berikutnya akan skip loading texture
+     */
+    bool assetsLoaded;
+    /**
+     * @brief Flag menandakan sudah pernah masuk LOADING state
+     * @details Dipakai agar InitLoadingScreen tidak dipanggil setiap frame
+     */
+    bool enteredLoading;
+};
 
 // Pointer global ke GameState aktif
 extern GameState *gState;
@@ -85,6 +119,7 @@ void DrawRenderTexture(GameState *state);
  * @param state Pointer ke GameState aktif
  */
 void DrawUIOverlay(GameState *state);
+void DrawPlayerHUD();
 
 /**
  * @brief Konversi posisi mouse dari window space ke virtual screen space
@@ -97,6 +132,7 @@ Vector2 GetVirtualMousePosition(GameState *state);
  * @brief Jalankan seluruh update logic game per frame
  */
 void UpdateLogicAll(void);
+void SpawnEnemiesFromMap(void);
 
 /**
  * @brief Gambar virtual screen ke window asli dengan scaling
