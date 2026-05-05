@@ -70,6 +70,14 @@ if(WIN32)
         COMMENT "Copying raylib.dll to output directory"
     )
 endif()
+
+# Copy assets folder to build output directory
+add_custom_command(TARGET main POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+        "$<TARGET_FILE_DIR:main>/assets"
+    COMMENT "Copying assets folder to output directory"
+)
 elseif(UNIX)
     if(APPLE)
         target_link_libraries(main PRIVATE -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo)
