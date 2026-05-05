@@ -248,7 +248,7 @@
                         {
                          "name":"target_map",
                          "type":"string",
-                         "value":"world_json\/floorB.json"
+                         "value":"assets/maps/floorB.json"
                         }],
                  "rotation":0,
                  "type":"pass",
@@ -356,7 +356,7 @@
                         {
                          "name":"target_map",
                          "type":"string",
-                         "value":"world_json\/tutorial.json"
+                         "value":"assets/maps/tutorial.json"
                         }],
                  "rotation":0,
                  "type":"finish",
@@ -440,7 +440,7 @@
         {
          "columns":17,
          "firstgid":1,
-         "image":"..\/texture\/tiles.png",
+         "image":"..\/textures\/tiles.png",
          "imageheight":832,
          "imagewidth":544,
          "margin":0,

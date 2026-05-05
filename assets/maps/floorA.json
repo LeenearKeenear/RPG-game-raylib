@@ -1160,7 +1160,7 @@
                         {
                          "name":"target_map",
                          "type":"string",
-                         "value":"world_json\/floorB.json"
+                         "value":"assets/maps/floorB.json"
                         }],
                  "rotation":0,
                  "type":"pass",
@@ -1183,7 +1183,7 @@
                         {
                          "name":"target_map",
                          "type":"string",
-                         "value":"world_json\/tutorial.json"
+                         "value":"assets/maps/tutorial.json"
                         }],
                  "rotation":0,
                  "type":"pass",
@@ -2407,7 +2407,7 @@
         {
          "columns":14,
          "firstgid":1,
-         "image":"..\/texture\/test.png",
+         "image":"..\/textures\/test.png",
          "imageheight":428,
          "imagewidth":500,
          "margin":0,
@@ -2420,7 +2420,7 @@
         {
          "columns":17,
          "firstgid":169,
-         "image":"..\/texture\/tiles.png",
+         "image":"..\/textures\/tiles.png",
          "imageheight":832,
          "imagewidth":544,
          "margin":0,
