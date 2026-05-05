@@ -48,6 +48,15 @@ add_executable(main ${SOURCES})
 # Include directories
 target_include_directories(main PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/core>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/entities>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/items>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/map>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/systems>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/rendering>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/ui>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/debug>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/tileson>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/raylib/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/json/include>
@@ -70,6 +79,14 @@ if(WIN32)
         COMMENT "Copying raylib.dll to output directory"
     )
 endif()
+
+# Copy assets folder to build output directory
+add_custom_command(TARGET main POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+        "$<TARGET_FILE_DIR:main>/assets"
+    COMMENT "Copying assets folder to output directory"
+)
 elseif(UNIX)
     if(APPLE)
         target_link_libraries(main PRIVATE -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo)
