@@ -48,6 +48,15 @@ add_executable(main ${SOURCES})
 # Include directories
 target_include_directories(main PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/core>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/entities>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/items>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/map>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/systems>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/rendering>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/ui>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/debug>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/tileson>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/raylib/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/json/include>
