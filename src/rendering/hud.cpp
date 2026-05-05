@@ -1,8 +1,8 @@
-#include "../include/hud.h"
-#include "../include/player.h"
-#include "../include/animation.h"
-#include "../include/inventory.h"
-#include "../include/effectQueue.h"
+#include "hud.h"
+#include "player.h"
+#include "animation.h"
+#include "inventory.h"
+#include "effectQueue.h"
 #include "../lib/raylib/include/raymath.h"
 #include <cstdio>
 #include <vector>

@@ -14,19 +14,19 @@
  * InitScreen() → InitMap() → InitAll() → masuk game loop
  */
 
-#include "../include/screen.h"
-#include "../include/map.h"
-#include "../include/player.h"
-#include "../include/tiles.h"
-#include "../include/animation.h"
-#include "../include/enemy.h"
-#include "../include/entities.h"
-#include "../include/mapLogic.h"
-#include "../include/effects.h"
-#include "../include/debug.h"
-#include "../include/pauseMenu.h"
-#include "../include/combat.h"
-#include "../include/interaction.h"
+#include "screen.h"
+#include "map.h"
+#include "player.h"
+#include "tiles.h"
+#include "animation.h"
+#include "enemy.h"
+#include "entities.h"
+#include "mapLogic.h"
+#include "effects.h"
+#include "debug.h"
+#include "pauseMenu.h"
+#include "combat.h"
+#include "interaction.h"
 #include <cstdio>
 
 #include "../lib/raylib/include/raylib.h"
@@ -34,8 +34,8 @@
 #include <string>
 #include <algorithm>
 #include <cctype>
-#include "../include/hud.h"
-#include "../include/propsbehavior.h"
+#include "hud.h"
+#include "propsbehavior.h"
 
 /*==============================================================================
  * External Variables & Macros

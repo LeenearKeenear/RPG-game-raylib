@@ -10,10 +10,10 @@
  * Semua manager di-spawn via SpawnObject() yang dipanggil saat map di-load.
  */
 
-#include "../include/propsbehavior.h"
-#include "../include/item.h"
-#include "../include/enemy.h"
-#include "../include/entities.h"
+#include "propsbehavior.h"
+#include "item.h"
+#include "enemy.h"
+#include "entities.h"
 
 /*==============================================================================
  * Utility Functions

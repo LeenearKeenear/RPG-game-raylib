@@ -1,4 +1,4 @@
-#include "../include/animation.h"
+#include "animation.h"
 #include "../lib/raylib/include/raymath.h"
 
 /*==============================================================================

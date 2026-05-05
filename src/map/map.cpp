@@ -10,18 +10,18 @@
  */
 
 #include "../lib/raylib/include/raymath.h"
-#include "../include/entities.h"
-#include "../include/mapLogic.h"
-#include "../include/map.h"
-#include "../include/tiles.h"
-#include "../include/animation.h"
-#include "../include/player.h"
-#include "../include/enemy.h"
-#include "../include/item.h"
-#include "../include/mapstack.h"
-#include "../include/entities.h"
-#include "../include/movement.h"
-#include "../include/propsbehavior.h"
+#include "entities.h"
+#include "mapLogic.h"
+#include "map.h"
+#include "tiles.h"
+#include "animation.h"
+#include "player.h"
+#include "enemy.h"
+#include "item.h"
+#include "mapstack.h"
+#include "entities.h"
+#include "movement.h"
+#include "propsbehavior.h"
 #include <memory>
 #include <string>
 

@@ -6,8 +6,8 @@
  * Handle inisialisasi tombol, update input, dan rendering menu utama.
  */
 
-#include "../include/mainMenu.h"
-#include "../include/screen.h"
+#include "mainMenu.h"
+#include "screen.h"
 #include "../lib/raylib/include/raylib.h"
 #include <array>
 

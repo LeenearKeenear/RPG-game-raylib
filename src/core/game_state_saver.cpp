@@ -5,8 +5,8 @@
  * Handle save dan restore seluruh state game world.
  */
 
-#include "../include/game_state_saver.h"
-#include "../include/map.h"
+#include "game_state_saver.h"
+#include "map.h"
 
 /*==============================================================================
  * Global Saved State Variables

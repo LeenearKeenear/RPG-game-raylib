@@ -1,7 +1,7 @@
-#include "../include/effects.h"
-#include "../include/effectQueue.h"
-#include "../include/animation.h"
-#include "../include/player.h"
+#include "effects.h"
+#include "effectQueue.h"
+#include "animation.h"
+#include "player.h"
 #include <vector>
 
 namespace Effects {

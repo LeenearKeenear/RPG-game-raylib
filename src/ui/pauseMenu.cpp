@@ -7,12 +7,12 @@
 
 #include <algorithm>
 
-#include "../include/pauseMenu.h"
-#include "../include/popup.h"
-#include "../include/videoTab.h"
-#include "../include/audioTab.h"
-#include "../include/keybindsTab.h"
-#include "../include/game_state_saver.h"
+#include "pauseMenu.h"
+#include "popup.h"
+#include "videoTab.h"
+#include "audioTab.h"
+#include "keybindsTab.h"
+#include "game_state_saver.h"
 
 /*==============================================================================
  * Static Variables (Popup Notifications)

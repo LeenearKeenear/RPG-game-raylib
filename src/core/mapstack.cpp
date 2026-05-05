@@ -6,7 +6,7 @@
  * Dipakai untuk menyimpan riwayat perpindahan antar map agar fitur go back bisa jalan.
  */
 
-#include "../include/mapstack.h"
+#include "mapstack.h"
 
 /*==============================================================================
  * MapSystem Namespace Implementation

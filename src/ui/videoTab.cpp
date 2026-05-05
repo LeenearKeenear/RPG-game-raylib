@@ -5,8 +5,8 @@
  * Handle rendering dan input untuk pengaturan video.
  */
 
-#include "../include/videoTab.h"
-#include "../include/screen.h"
+#include "videoTab.h"
+#include "screen.h"
 #include "../lib/raylib/include/raylib.h"
 
 void DrawVideoTab(

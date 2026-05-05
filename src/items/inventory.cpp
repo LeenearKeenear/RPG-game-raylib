@@ -1,8 +1,8 @@
-#include "../include/item.h"
-#include "../include/inventory.h"
-#include "../include/player.h"
-#include "../include/input.h"
-#include "../include/effects.h"
+#include "item.h"
+#include "inventory.h"
+#include "player.h"
+#include "input.h"
+#include "effects.h"
 
 namespace Inventory
 {

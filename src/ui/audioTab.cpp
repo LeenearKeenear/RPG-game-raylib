@@ -5,7 +5,7 @@
  * Handle rendering untuk pengaturan audio.
  */
 
-#include "../include/audioTab.h"
+#include "audioTab.h"
 #include "../lib/raylib/include/raylib.h"
 
 void DrawAudioTab(

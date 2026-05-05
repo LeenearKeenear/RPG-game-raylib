@@ -1,6 +1,6 @@
-#include "../include/input.h"
-#include "../include/player.h"
-#include "../include/item.h"
+#include "input.h"
+#include "player.h"
+#include "item.h"
 
 PlayerInput InputInstance;
 

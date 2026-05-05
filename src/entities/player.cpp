@@ -1,12 +1,12 @@
-#include "../include/player.h"
-#include "../include/movement.h"
-#include "../include/combat.h"
-#include "../include/interaction.h"
-#include "../include/inventory.h"
-#include "../include/mapLogic.h"
-#include "../include/debug.h"
+#include "player.h"
+#include "movement.h"
+#include "combat.h"
+#include "interaction.h"
+#include "inventory.h"
+#include "mapLogic.h"
+#include "debug.h"
 #include "../lib/raylib/include/raymath.h"
-#include "../include/propsbehavior.h"
+#include "propsbehavior.h"
 #include <cmath>
 
 Player PlayerInstance;

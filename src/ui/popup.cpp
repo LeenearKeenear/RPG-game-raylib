@@ -1,7 +1,7 @@
 #include <algorithm>
 
-#include "../include/popup.h"
-#include "../include/screen.h"
+#include "popup.h"
+#include "screen.h"
 
 /**
  * @brief Default constructor.

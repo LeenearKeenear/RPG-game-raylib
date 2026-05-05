@@ -10,11 +10,11 @@
  * - Raycasting terhadap object map
  */
 
-#include "../include/mapLogic.h"
+#include "mapLogic.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/tileson/tileson.hpp"
-#include "../include/map.h"
-#include "../include/tiles.h"
+#include "map.h"
+#include "tiles.h"
 
 /*==============================================================================
  * Global Variables

@@ -1,4 +1,4 @@
-#include "../include/tiles.h"
+#include "tiles.h"
 
 Texture2D TexturesMap[MAX_TEXTURES];
 

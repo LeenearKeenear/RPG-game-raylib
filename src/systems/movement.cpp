@@ -1,9 +1,9 @@
-#include "../include/movement.h"
-#include "../include/player.h"
-#include "../include/mapLogic.h"
-#include "../include/input.h"
-#include "../include/tiles.h"
-#include "../include/debug.h"
+#include "movement.h"
+#include "player.h"
+#include "mapLogic.h"
+#include "input.h"
+#include "tiles.h"
+#include "debug.h"
 #include <cmath>
 
 namespace Movement

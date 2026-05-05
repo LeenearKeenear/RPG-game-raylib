@@ -1,10 +1,10 @@
-#include "../include/interaction.h"
-#include "../include/player.h"
-#include "../include/input.h"
-#include "../include/mapLogic.h"
-#include "../include/map.h"
-#include "../include/screen.h"
-#include "../include/propsbehavior.h"
+#include "interaction.h"
+#include "player.h"
+#include "input.h"
+#include "mapLogic.h"
+#include "map.h"
+#include "screen.h"
+#include "propsbehavior.h"
 #include "../lib/raylib/include/raymath.h"
 
 namespace Interaction

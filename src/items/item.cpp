@@ -10,15 +10,15 @@
  * Free functions dipertahankan sebagai wrapper untuk backward compatibility.
  */
 
-#include "../include/item.h"
-#include "../include/inventory.h"
-#include "../include/combat.h"
-#include "../include/player.h"
-#include "../include/animation.h"
-#include "../include/screen.h"
-#include "../include/entities.h"
-#include "../include/enemy.h"
-#include "../include/mapLogic.h"
+#include "item.h"
+#include "inventory.h"
+#include "combat.h"
+#include "player.h"
+#include "animation.h"
+#include "screen.h"
+#include "entities.h"
+#include "enemy.h"
+#include "mapLogic.h"
 #include "../lib/raylib/include/raymath.h"
 #include <iostream>
 #include <vector>

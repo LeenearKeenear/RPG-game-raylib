@@ -5,7 +5,7 @@
  * Handle rendering untuk daftar keybinds.
  */
 
-#include "../include/keybindsTab.h"
+#include "keybindsTab.h"
 #include "../lib/raylib/include/raylib.h"
 #include <array>
 

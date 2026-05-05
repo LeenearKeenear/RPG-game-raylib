@@ -9,18 +9,18 @@
  * - Menampilkan info runtime player, map, camera, dan collision
  */
 
-#include "../include/debug.h"
+#include "debug.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
-#include "../include/screen.h"
-#include "../include/map.h"
-#include "../include/mapLogic.h"
-#include "../include/tiles.h"
-#include "../include/animation.h"
-#include "../include/player.h"
+#include "screen.h"
+#include "map.h"
+#include "mapLogic.h"
+#include "tiles.h"
+#include "animation.h"
+#include "player.h"
 #include <algorithm>
 #include <cctype>
-#include "../include/item.h"
+#include "item.h"
 
 /*==============================================================================
  * Global Variables

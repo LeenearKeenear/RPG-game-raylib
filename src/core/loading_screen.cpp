@@ -7,14 +7,14 @@
  * Juga menangani transisi map dengan loading screen yang sama.
  */
 
-#include "../include/loading_screen.h"
-#include "../include/map.h"
-#include "../include/player.h"
-#include "../include/enemy.h"
-#include "../include/item.h"
-#include "../include/mainMenu.h"
-#include "../include/game_state_saver.h"
-#include "../include/screen.h"
+#include "loading_screen.h"
+#include "map.h"
+#include "player.h"
+#include "enemy.h"
+#include "item.h"
+#include "mainMenu.h"
+#include "game_state_saver.h"
+#include "screen.h"
 #include "../lib/raylib/include/raylib.h"
 
 /*==============================================================================

@@ -1,9 +1,9 @@
-#include "../include/enemy.h"
-#include "../include/player.h"
-#include "../include/map.h"
+#include "enemy.h"
+#include "player.h"
+#include "map.h"
 #include "../lib/raylib/include/raymath.h"
-#include "../include/debug.h"
-#include "../include/entities.h"
+#include "debug.h"
+#include "entities.h"
 #include <cmath>
 
 Enemy::Enemy() {

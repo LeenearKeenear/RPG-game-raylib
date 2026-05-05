@@ -1,5 +1,5 @@
-#include "../include/entities.h"
-#include "../include/propsbehavior.h"
+#include "entities.h"
+#include "propsbehavior.h"
 #include <vector>
 #include <algorithm>
 #include <set>
