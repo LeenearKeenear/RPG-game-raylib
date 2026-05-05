@@ -15,6 +15,7 @@
 #include "mainMenu.h"
 #include "game_state_saver.h"
 #include "screen.h"
+#include "entities.h"
 #include "../lib/raylib/include/raylib.h"
 
 /*==============================================================================
