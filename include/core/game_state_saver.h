@@ -18,6 +18,7 @@
 #include "map.h"
 #include "inventory.h"
 #include <vector>
+#include <string>
 
 /*==============================================================================
  * Saved State Structures
@@ -38,9 +39,9 @@ struct SavedPlayerState {
  */
 struct SavedEnemyState {
     Vector2 position;           /**< Posisi enemy di world */
+    std::string enemyName;       /**< Nama tipe enemy ("Slime"/"Skeleton"/"Wolf") */
     int currentHP;              /**< HP enemy saat ini */
     bool isAlive;               /**< Status hidup/mati enemy */
-    EnemyType type;             /**< Tipe enemy (SLIME/SKELETON/WOLF) */
 };
 
 /**

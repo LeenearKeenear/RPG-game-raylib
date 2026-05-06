@@ -137,8 +137,8 @@ void SpawnEnemiesFromMap()
                 continue;
             }
 
-            // 1. Tentukan Tipe Musuh (Prioritas: Properti 'enemy_type' -> Nama Objek)
-            EnemyType type = SLIME;
+            // 1. Tentukan tipe musuh (Prioritas: Properti 'enemy_type' -> Nama Objek)
+            std::string enemyName = "Slime";
             bool typeFound = false;
 
             if (obj.properties.count("enemy_type"))
@@ -146,17 +146,17 @@ void SpawnEnemiesFromMap()
                 std::string typeStr = ToLower(obj.properties.at("enemy_type").getValue<std::string>());
                 if (typeStr == "skeleton")
                 {
-                    type = SKELETON;
+                    enemyName = "Skeleton";
                     typeFound = true;
                 }
                 else if (typeStr == "wolf")
                 {
-                    type = WOLF;
+                    enemyName = "Wolf";
                     typeFound = true;
                 }
                 else if (typeStr == "slime")
                 {
-                    type = SLIME;
+                    enemyName = "Slime";
                     typeFound = true;
                 }
             }
@@ -164,15 +164,15 @@ void SpawnEnemiesFromMap()
             if (!typeFound)
             {
                 if (nameLower.find("skeleton") != std::string::npos)
-                    type = SKELETON;
+                    enemyName = "Skeleton";
                 else if (nameLower.find("wolf") != std::string::npos)
-                    type = WOLF;
+                    enemyName = "Wolf";
                 else if (nameLower.find("slime") != std::string::npos)
-                    type = SLIME;
+                    enemyName = "Slime";
                 else
                 {
-                    // Gunakan GetRandomValue (cara lama) untuk menentukan tipe musuh secara acak tanpa srand()
-                    type = (EnemyType)GetRandomValue(0, 2);
+                    static const std::vector<std::string> enemyTypes = {"Slime", "Skeleton", "Wolf"};
+                    enemyName = enemyTypes[GetRandomValue(0, (int)enemyTypes.size() - 1)];
                 }
             }
 
@@ -187,17 +187,21 @@ void SpawnEnemiesFromMap()
                     radius = prop.getValue<float>();
             }
 
+            EnemyDefinition def = GetEnemyDefinition(enemyName);
+            def.stats.patrolRadius = radius;
+
             // 3. Spawn tepat 1 musuh di tengah objek spawn
             Vector2 spawnPos = {obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f};
 
             Enemy *enemy = new Enemy();
-            enemy->Init(spawnPos, obj.name.c_str(), obj.id, type, radius);
+            enemy->Init(spawnPos, enemyName.c_str(), obj.id, def);
             Entities::AddDynamic(enemy);
 
-            TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %d, ID: %d) from spawn point '%s'", (int)type, obj.id, obj.name.c_str());
+            TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %s, ID: %d) from spawn point '%s'", enemyName.c_str(), obj.id, obj.name.c_str());
         }
     }
 }
+
 
 /**
  * @brief Inisialisasi window, audio, dan render texture virtual

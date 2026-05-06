@@ -5,81 +5,126 @@
 #include "mapLogic.h"
 #include <string>
 
-/**
- * @brief Status AI untuk perilaku Musuh (FSM).
- */
-enum EnemyAIState {
-    ENEMY_IDLE,    ///< Berdiri diam atau menunggu
-    ENEMY_PATROL,  ///< Bergerak antar titik acak di sekitar titik spawn
-    ENEMY_CHASE,   ///< Mengejar pemain
-    ENEMY_ATTACK,  ///< Menjalankan animasi/logika serangan
-    ENEMY_RETURN   ///< Kembali ke titik spawn setelah kehilangan pemain
+/*==============================================================================
+ * Enums
+ *==============================================================================*/
+
+/// @brief Status AI untuk perilaku musuh (FSM).
+enum EnemyAIState
+{
+    ENEMY_IDLE,   ///< Berdiri diam atau menunggu
+    ENEMY_PATROL, ///< Bergerak antar titik acak di sekitar titik spawn
+    ENEMY_CHASE,  ///< Mengejar pemain
+    ENEMY_ATTACK, ///< Menjalankan animasi/logika serangan
+    ENEMY_RETURN  ///< Kembali ke titik spawn setelah kehilangan pemain
 };
 
-/**
- * @brief Berbagai jenis musuh dengan visual/statistik unik.
- */
-enum EnemyType {
-    SLIME,
-    SKELETON,
-    WOLF
+/*==============================================================================
+ * Data Structs (Data-Driven)
+ *==============================================================================*/
+
+/// @brief Statistik dan parameter gameplay enemy, di-load dari JSON.
+struct EnemyStats
+{
+    float maxHealth;             ///< Batas HP maksimum
+    float speed;                 ///< Kecepatan gerak saat patroli/kembali ke spawn
+    float chaseSpeed;            ///< Kecepatan gerak saat mengejar pemain
+    float damage;                ///< Damage per serangan
+    float baseDetectionRange;    ///< Jarak deteksi saat idle/patroli
+    float chaseDetectionRange;   ///< Jarak deteksi saat mengejar (lebih sulit kabur)
+    float attackRange;           ///< Jarak minimum untuk memicu serangan
+    float healthRegenRate;       ///< HP yang pulih per detik saat di luar pertempuran
+    float healthRegenDelay;      ///< Jeda (detik) setelah terkena damage sebelum regen aktif
+    float patrolRadius;          ///< Radius maksimum patroli dari titik spawn
+    float turnBaseTriggerChance; ///< Probabilitas memicu combat turn-based (0.0 - 1.0)
+    bool canTriggerTurnBased;    ///< Apakah enemy ini eligible memicu combat turn-based
 };
 
-/**
- * @brief Kelas Musuh yang mengimplementasikan logika AI dan manajemen status.
- * Mewarisi dari Entity untuk properti dasar.
- */
-class Enemy : public Entity {
+/// @brief Ukuran dan offset hitbox enemy, di-load dari JSON.
+struct EnemyHitboxData
+{
+    Vector2 size;   ///< Lebar dan tinggi hitbox {width, height}
+    Vector2 offset; ///< Offset hitbox relatif terhadap Position {offsetX, offsetY}
+};
+
+/// @brief Single source of truth untuk satu tipe enemy, di-load dari JSON.
+struct EnemyDefinition
+{
+    int id;                      ///< ID unik, digunakan sebagai key lookup
+    std::string name;            ///< Nama tipe enemy (e.g. "Slime", "Skeleton")
+    EnemyStats stats;            ///< Statistik gameplay
+    EnemyHitboxData hitbox;      ///< Konfigurasi hitbox
+    const AnimationSet *animSet; ///< Pointer ke AnimationSet global, di-resolve dari type
+};
+
+EnemyDefinition GetEnemyDefinition(const std::string &name);
+
+/*==============================================================================
+ * Enemy Class
+ *==============================================================================*/
+
+/// @brief Kelas musuh yang mengimplementasikan logika AI berbasis FSM.
+/// Mewarisi dari Entity untuk properti dasar (Position, Health, dll).
+class Enemy : public Entity
+{
 public:
     Enemy();
     virtual ~Enemy();
 
-    /**
-     * @brief Inisialisasi musuh dalam koordinat dunia (world space).
-     */
-    void Init(Vector2 pos, const char* name, int mapId, EnemyType type = SLIME, float radius = 128.0f);
+    /// @brief Inisialisasi enemy pada posisi dunia tertentu dari EnemyDefinition.
+    /// @param pos Posisi spawn dalam world space
+    /// @param name Nama instance enemy
+    /// @param mapId ID object Tiled untuk persistensi kematian
+    /// @param def Definisi tipe enemy dari EnemyDataManager
+    void Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition &def);
 
     void Update() override;
     void Render() override;
     void TakeDamage(float amount, Vector2 knockback = {0, 0}) override;
 
-    void UpdateAI();         ///< Titik masuk utama logika AI
-    bool CheckPlayerLoS();   ///< Memeriksa Line of Sight (jarak pandang) ke pemain menggunakan raycasting
+    void UpdateAI();       ///< Titik masuk utama logika AI, dipanggil tiap frame
+    bool CheckPlayerLoS(); ///< Cek Line of Sight ke pemain via raycasting
 
-    EnemyAIState AIState = ENEMY_IDLE;
-    float BaseDetectionRange = 120.0f; ///< Jarak deteksi saat idle/patroli
-    float ChaseDetectionRange = 240.0f; ///< Jarak deteksi saat sedang mengejar (lebih sulit kabur)
-    float DetectionRange = 120.0f;      ///< Jarak pandang aktif
-    float AttackRange = 16.0f;          ///< Jarak yang dibutuhkan untuk memicu serangan
-    float Damage = 5.0f;                ///< Damage yang dihasilkan per pukulan
-    float Speed = 1.0f;                 ///< Kecepatan gerak saat patroli/kembali
-    float ChaseSpeed = 1.9f;            ///< Kecepatan gerak saat mengejar
-    float HealthRegenRate = 10.0f;      ///< HP yang pulih per detik saat tidak dalam pertempuran
-    float HealthRegenTimer = 0.0f;     ///< Timer untuk jeda pemulihan HP
-    const float HealthRegenDelay = 2.0f;
+    // --- Definisi ---
+    const EnemyDefinition *Def = nullptr; ///< Pointer ke definisi tipe, di-assign saat Init
+    EnemyDefinition DefStorage;           ///< Copy definisi agar pointer tetap valid selama enemy hidup
 
-    Animation Anim;                     ///< Pengontrol animasi
-    std::string Name;                   ///< Nama musuh
-    int MapObjectID = -1;               ///< ID Objek Tiled untuk persistensi kematian
+    // --- Identitas ---
+    std::string Name;     ///< Nama instance enemy
+    int MapObjectID = -1; ///< ID object Tiled untuk persistensi kematian
 
-    Vector2 PatrolTarget;               ///< Koordinat tujuan patroli saat ini
-    Vector2 SpawnPoint;                 ///< Lokasi spawn awal (pusat area patroli)
-    float PatrolRadius = 128.0f;        ///< Seberapa jauh musuh bisa berkeliaran
-    float PatrolTimer = 0.0f;           ///< Timer untuk menunggu di titik patroli
-    const float PatrolWaitTime = 2.0f;
+    // --- AI State ---
+    EnemyAIState AIState = ENEMY_IDLE; ///< State FSM aktif saat ini
+    float DetectionRange;              ///< Jarak deteksi aktif, berubah sesuai AIState (runtime)
 
-    // Konfigurasi Hitbox
-    float HitboxWidth = 16.0f;
-    float HitboxHeight = 12.0f;
-    float HitboxOffsetX = 8.0f;
-    float HitboxOffsetY = 14.0f;
-    Rectangle GetHitbox() const override { return { Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight }; }
+    // --- Runtime Stats ---
+    float HealthRegenTimer; ///< Countdown sebelum regen aktif, reset saat terkena damage (runtime)
 
-    EnemyType Type = SLIME;
-    const AnimationSet* AnimSet = &SlimeAnimationSet;
+    // --- Turn-Based ---
+    bool isTurnBasedMode = false; ///< True jika sedang dalam mode combat turn-based
+    bool isMyTurn = false;        ///< True jika giliran enemy di mode turn-based
+
+    // --- Animasi ---
+    Animation Anim;              ///< State animasi aktif (runtime)
+    const AnimationSet *AnimSet; ///< Pointer ke AnimationSet aktif, di-resolve dari Def->type
+
+    // --- Patroli ---
+    Vector2 PatrolTarget;              ///< Titik tujuan patroli saat ini (runtime)
+    Vector2 SpawnPoint;                ///< Titik spawn awal, pusat area patroli
+    float PatrolTimer;                 ///< Timer tunggu di titik patroli (runtime)
+    const float PatrolWaitTime = 2.0f; ///< Durasi tunggu sebelum patroli ke titik berikutnya
+
+    // --- Hitbox ---
+    float HitboxWidth;
+    float HitboxHeight;
+    float HitboxOffsetX;
+    float HitboxOffsetY;
+    Rectangle GetHitbox() const override
+    {
+        return {Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight};
+    }
 
 private:
-    // Metode penanganan status (state handlers)
     void HandleIdle();
     void HandlePatrol();
     void HandleChase();
@@ -87,25 +132,28 @@ private:
     void HandleReturn();
     void PerformAttack();
 
-    RayCast Ray;                        ///< Raycast untuk pemeriksaan LoS dan pergerakan
+    RayCast Ray; ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
 
-    float AttackCooldownTimer = 0.0f;
-    const float AttackCooldown = 1.0f;
-    bool PlayerWasInRange = false;
+    float AttackCooldownTimer;         ///< Sisa waktu cooldown serangan (runtime)
+    const float AttackCooldown = 1.0f; ///< Durasi cooldown antar serangan
+    bool PlayerWasInRange = false;     ///< Flag mencegah serangan ganda dalam satu frame
 
-    // Feedback dan status kematian
-    float HitFlashTimer = 0.0f;
-    Vector2 KnockbackVelocity = {0, 0};
-    float DeathTimer = 0.0f;
-    const float DeathDuration = 1.2f;
+    // --- Feedback Visual & Kematian ---
+    float HitFlashTimer;              ///< Timer tint merah saat terkena damage (runtime)
+    Vector2 KnockbackVelocity;        ///< Vektor knockback aktif (runtime)
+    float DeathTimer;                 ///< Timer animasi kematian (runtime)
+    const float DeathDuration = 1.2f; ///< Durasi animasi kematian sebelum di-deactivate
+
+    void MoveTowards(Vector2 target, float speed); ///< Helper gerak ke target dengan collision check
 };
 
-// Utility functions (definisi: src/enemy.cpp)
-int GetRandomDamage(int min, int max);
+/*==============================================================================
+ * Utility Functions
+ *==============================================================================*/
+
 void InitEnemy();
-void InitEnemyTextures();
 void SpawnRandomWave();
 void SpawnRandomEnemy();
-void SaveEnemiesForMap(const std::string& mapPath);
-bool LoadEnemiesForMap(const std::string& mapPath);
+void SaveEnemiesForMap(const std::string &mapPath);
+bool LoadEnemiesForMap(const std::string &mapPath);
 void ClearEnemies();
