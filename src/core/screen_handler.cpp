@@ -171,8 +171,8 @@ void SpawnEnemiesFromMap()
                     enemyName = "Slime";
                 else
                 {
-                    static const std::vector<std::string> enemyTypes = {"Slime", "Skeleton", "Wolf"};
-                    enemyName = enemyTypes[GetRandomValue(0, (int)enemyTypes.size() - 1)];
+                    const auto &names = EnemyDataManager::Instance().GetAllNames();
+                    enemyName = names[GetRandomValue(0, (int)names.size() - 1)];
                 }
             }
 
@@ -187,7 +187,7 @@ void SpawnEnemiesFromMap()
                     radius = prop.getValue<float>();
             }
 
-            EnemyDefinition def = GetEnemyDefinition(enemyName);
+            EnemyDefinition def = EnemyDataManager::Instance().Get(enemyName);
             def.stats.patrolRadius = radius;
 
             // 3. Spawn tepat 1 musuh di tengah objek spawn
@@ -201,7 +201,6 @@ void SpawnEnemiesFromMap()
         }
     }
 }
-
 
 /**
  * @brief Inisialisasi window, audio, dan render texture virtual

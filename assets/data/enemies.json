@@ -1,0 +1,67 @@
+{
+    "enemies": {
+        "Slime": {
+            "id": 0,
+            "stats": {
+                "maxHealth": 100.0,
+                "speed": 1.0,
+                "chaseSpeed": 1.5,
+                "damage": 5.0,
+                "baseDetectionRange": 120.0,
+                "chaseDetectionRange": 240.0,
+                "attackRange": 16.0,
+                "healthRegenRate": 10.0,
+                "healthRegenDelay": 2.0,
+                "patrolRadius": 128.0,
+                "turnBaseTriggerChance": 0.0,
+                "canTriggerTurnBased": false
+            },
+            "hitbox": {
+                "size": { "x": 16.0, "y": 12.0 },
+                "offset": { "x": 8.0, "y": 14.0 }
+            }
+        },
+        "Skeleton": {
+            "id": 1,
+            "stats": {
+                "maxHealth": 100.0,
+                "speed": 1.0,
+                "chaseSpeed": 1.75,
+                "damage": 10.0,
+                "baseDetectionRange": 120.0,
+                "chaseDetectionRange": 240.0,
+                "attackRange": 32.0,
+                "healthRegenRate": 10.0,
+                "healthRegenDelay": 2.0,
+                "patrolRadius": 128.0,
+                "turnBaseTriggerChance": 0.0,
+                "canTriggerTurnBased": false
+            },
+            "hitbox": {
+                "size": { "x": 20.0, "y": 16.0 },
+                "offset": { "x": 6.0, "y": 12.0 }
+            }
+        },
+        "Wolf": {
+            "id": 2,
+            "stats": {
+                "maxHealth": 150.0,
+                "speed": 1.0,
+                "chaseSpeed": 2.5,
+                "damage": 20.0,
+                "baseDetectionRange": 120.0,
+                "chaseDetectionRange": 240.0,
+                "attackRange": 16.0,
+                "healthRegenRate": 10.0,
+                "healthRegenDelay": 2.0,
+                "patrolRadius": 128.0,
+                "turnBaseTriggerChance": 0.0,
+                "canTriggerTurnBased": false
+            },
+            "hitbox": {
+                "size": { "x": 24.0, "y": 16.0 },
+                "offset": { "x": 4.0, "y": 12.0 }
+            }
+        }
+    }
+}

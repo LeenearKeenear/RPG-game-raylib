@@ -1,10 +1,78 @@
 #include "enemy.h"
 #include "player.h"
 #include "map.h"
+#include "datadriven.h"
 #include "../lib/raylib/include/raymath.h"
+#include "../lib/json/include/nlohmann/json.hpp"
 #include "debug.h"
 #include "entities.h"
 #include <cmath>
+#include <fstream>
+#include <stdexcept>
+
+using json = nlohmann::json;
+using namespace DataDriven;
+
+EnemyDataManager &EnemyDataManager::Instance()
+{
+    static EnemyDataManager instance;
+    return instance;
+}
+
+void EnemyDataManager::Load(const std::string &path)
+{
+    std::ifstream file(path);
+    if (!file.is_open())
+        throw std::runtime_error("Cannot open: " + path);
+
+    json root = json::parse(file);
+
+    for (auto &[name, data] : root.at("enemies").items())
+    {
+        EnemyDefinition def;
+        def.id = SafeGet<int>(data, "id", -1);
+        def.name = name;
+
+        const auto &s = data.at("stats");
+        def.stats.maxHealth = SafeGet<float>(s, "maxHealth", 100.f);
+        def.stats.speed = SafeGet<float>(s, "speed", 1.f);
+        def.stats.chaseSpeed = SafeGet<float>(s, "chaseSpeed", 1.5f);
+        def.stats.damage = SafeGet<float>(s, "damage", 10.f);
+        def.stats.baseDetectionRange = SafeGet<float>(s, "baseDetectionRange", 120.f);
+        def.stats.chaseDetectionRange = SafeGet<float>(s, "chaseDetectionRange", 240.f);
+        def.stats.attackRange = SafeGet<float>(s, "attackRange", 32.f);
+        def.stats.healthRegenRate = SafeGet<float>(s, "healthRegenRate", 10.f);
+        def.stats.healthRegenDelay = SafeGet<float>(s, "healthRegenDelay", 2.f);
+        def.stats.patrolRadius = SafeGet<float>(s, "patrolRadius", 128.f);
+        def.stats.turnBaseTriggerChance = SafeGet<float>(s, "turnBaseTriggerChance", 0.f);
+        def.stats.canTriggerTurnBased = SafeGet<bool>(s, "canTriggerTurnBased", false);
+
+        const auto &h = data.at("hitbox");
+        def.hitbox.size = ParseVector2(h.at("size"));
+        def.hitbox.offset = ParseVector2(h.at("offset"));
+
+        def.animSet = ResolveAnimSet(name);
+
+        definitions_[name] = std::move(def);
+    }
+}
+
+const EnemyDefinition &EnemyDataManager::Get(const std::string &name) const
+{
+    auto it = definitions_.find(name);
+    if (it == definitions_.end())
+        throw std::runtime_error("EnemyDefinition not found: " + name);
+    return it->second;
+}
+
+std::vector<std::string> EnemyDataManager::GetAllNames() const
+{
+    std::vector<std::string> names;
+    names.reserve(definitions_.size());
+    for (auto &[k, _] : definitions_)
+        names.push_back(k);
+    return names;
+}
 
 Enemy::Enemy()
 {
@@ -13,85 +81,11 @@ Enemy::Enemy()
 
 Enemy::~Enemy() {}
 
-static EnemyDefinition MakeSlimeDefinition()
-{
-    return EnemyDefinition{
-        .id = 0,
-        .name = "Slime",
-        .stats = {
-            .maxHealth = 100.0f,
-            .speed = 1.0f,
-            .chaseSpeed = 1.5f,
-            .damage = 5.0f,
-            .baseDetectionRange = 120.0f,
-            .chaseDetectionRange = 240.0f,
-            .attackRange = 16.0f,
-            .healthRegenRate = 10.0f,
-            .healthRegenDelay = 2.0f,
-            .patrolRadius = 128.0f,
-            .turnBaseTriggerChance = 0.0f,
-            .canTriggerTurnBased = false},
-        .hitbox = {.size = {16.0f, 12.0f}, .offset = {8.0f, 14.0f}},
-        .animSet = &SlimeAnimationSet};
-}
-
-static EnemyDefinition MakeSkeletonDefinition()
-{
-    return EnemyDefinition{
-        .id = 1,
-        .name = "Skeleton",
-        .stats = {
-            .maxHealth = 100.0f,
-            .speed = 1.0f,
-            .chaseSpeed = 1.75f,
-            .damage = 10.0f,
-            .baseDetectionRange = 120.0f,
-            .chaseDetectionRange = 240.0f,
-            .attackRange = 32.0f,
-            .healthRegenRate = 10.0f,
-            .healthRegenDelay = 2.0f,
-            .patrolRadius = 128.0f,
-            .turnBaseTriggerChance = 0.0f,
-            .canTriggerTurnBased = false},
-        .hitbox = {.size = {20.0f, 16.0f}, .offset = {6.0f, 12.0f}},
-        .animSet = &SkeletonAnimationSet};
-}
-
-static EnemyDefinition MakeWolfDefinition()
-{
-    return EnemyDefinition{
-        .id = 2,
-        .name = "Wolf",
-        .stats = {
-            .maxHealth = 150.0f,
-            .speed = 1.0f,
-            .chaseSpeed = 2.5f,
-            .damage = 20.0f,
-            .baseDetectionRange = 120.0f,
-            .chaseDetectionRange = 240.0f,
-            .attackRange = 16.0f,
-            .healthRegenRate = 10.0f,
-            .healthRegenDelay = 2.0f,
-            .patrolRadius = 128.0f,
-            .turnBaseTriggerChance = 0.0f,
-            .canTriggerTurnBased = false},
-        .hitbox = {.size = {24.0f, 16.0f}, .offset = {4.0f, 12.0f}},
-        .animSet = &WolfAnimationSet};
-}
-
-EnemyDefinition GetEnemyDefinition(const std::string &name)
-{
-    if (name == "Skeleton")
-        return MakeSkeletonDefinition();
-    if (name == "Wolf")
-        return MakeWolfDefinition();
-    return MakeSlimeDefinition();
-}
-
 void Enemy::Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition &def)
 {
     DefStorage = def;
     Def = &DefStorage;
+    AnimSet = Def->animSet;
     MapObjectID = mapId;
     SpawnPoint = pos;
     Name = name;
@@ -466,6 +460,7 @@ void Enemy::Render()
 void InitEnemy()
 {
     LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
+    EnemyDataManager::Instance().Load("assets/data/enemies.json");
 }
 
 void SpawnRandomWave()
@@ -477,11 +472,12 @@ void SpawnRandomWave()
 
 void SpawnRandomEnemy()
 {
-    if (!tilesonMap) return;
+    if (!tilesonMap)
+        return;
 
-    static const std::vector<std::string> enemyTypes = {"Slime", "Skeleton", "Wolf"};
-    const std::string& picked = enemyTypes[GetRandomValue(0, 2)];
-    EnemyDefinition def = GetEnemyDefinition(picked);
+    const auto &names = EnemyDataManager::Instance().GetAllNames();
+    const std::string &picked = names[GetRandomValue(0, (int)names.size() - 1)];
+    const EnemyDefinition &def = EnemyDataManager::Instance().Get(picked);
 
     Vector2 randomPos;
     bool validPos = false;
@@ -501,7 +497,7 @@ void SpawnRandomEnemy()
 
     if (validPos)
     {
-        Enemy* en = new Enemy();
+        Enemy *en = new Enemy();
         en->Init(randomPos, picked.c_str(), -1, def);
         Entities::AddDynamic(en);
     }
@@ -534,4 +530,14 @@ void Enemy::MoveTowards(Vector2 target, float speed)
         Anim.direction = (dir.x > 0) ? RIGHT : LEFT;
     else
         Anim.direction = (dir.y > 0) ? DOWN : UP;
+}
+
+// helper function buat resolve animationset
+const AnimationSet *ResolveAnimSet(const std::string &name)
+{
+    if (name == "Skeleton")
+        return &SkeletonAnimationSet;
+    if (name == "Wolf")
+        return &WolfAnimationSet;
+    return &SlimeAnimationSet;
 }

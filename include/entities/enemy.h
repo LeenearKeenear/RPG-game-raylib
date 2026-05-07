@@ -4,6 +4,8 @@
 #include "animation.h"
 #include "mapLogic.h"
 #include <string>
+#include <vector>
+#include <unordered_map>
 
 /*==============================================================================
  * Enums
@@ -57,8 +59,22 @@ struct EnemyDefinition
     const AnimationSet *animSet; ///< Pointer ke AnimationSet global, di-resolve dari type
 };
 
-EnemyDefinition GetEnemyDefinition(const std::string &name);
+// data driven management class
+class EnemyDataManager
+{
+public:
+    static EnemyDataManager &Instance();
 
+    void Load(const std::string &path);
+    const EnemyDefinition &Get(const std::string &name) const;
+    std::vector<std::string> GetAllNames() const;
+
+private:
+    EnemyDataManager() = default;
+    std::unordered_map<std::string, EnemyDefinition> definitions_;
+};
+
+const AnimationSet *ResolveAnimSet(const std::string &name);
 /*==============================================================================
  * Enemy Class
  *==============================================================================*/

@@ -163,7 +163,7 @@ void LoadMap(const char *mapPath)
     for (int i = 0; i < (int)tilesetList.size(); i++)
     {
         tson::Tileset *tileset = &tilesetList[i];
-        std::string imagePath = "assets/textures/" + tileset->getImagePath().filename().u8string();
+        std::string imagePath = "assets/textures/" + tileset->getImagePath().filename().string();
         TraceLog(LOG_INFO, "Tileson: Loading tileset: %s", imagePath.c_str());
 
         TilesetInfo info;
