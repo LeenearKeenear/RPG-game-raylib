@@ -524,7 +524,7 @@ void Debug::DrawWorldOverlay(void)
     {
         if (!item.isPickedUp)
         {
-            const ItemDefinition &def = itemDefs.Get(item.definitionId);
+            const ItemDefinition &def = itemDefs.GetById(item.definitionId);
             DrawRectangleLinesEx(item.hitbox, 1.5f, PINK);
             DrawText(def.name.c_str(), (int)item.hitbox.x, (int)item.hitbox.y - 12, 10, PINK);
         }

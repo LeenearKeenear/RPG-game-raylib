@@ -34,7 +34,7 @@ static void DrawItemIcon(const InventoryItem &item, Rectangle dest)
 {
     if (item.definitionId == -1)
         return;
-    const ItemDefinition &def = itemDefs.Get(item.definitionId);
+    const ItemDefinition &def = itemDefs.GetById(item.definitionId);
     DrawTileTexture(TEXTURE_ITEMS, (int)def.sheetCoord.x, (int)def.sheetCoord.y, dest);
 }
 
@@ -91,7 +91,7 @@ static void HandleSplitDragSlot(int slotIndex, Rectangle slotRect, Vector2 mouse
     // Mulai drag split jika klik kanan di slot berisi item stackable
     if (isHovered && InputInstance.IsRightClickDown() && dragSlot == -1 && item.definitionId != -1)
     {
-        const ItemDefinition &def = itemDefs.Get(item.definitionId);
+        const ItemDefinition &def = itemDefs.GetById(item.definitionId);
         if (def.isStackable && item.amount > 1)
         {
             splitTotalAmount = item.amount;
@@ -159,7 +159,7 @@ static void HandleMergeStack(int slotIndex)
     if (target.definitionId == -1)
         return;
 
-    const ItemDefinition &def = itemDefs.Get(target.definitionId);
+    const ItemDefinition &def = itemDefs.GetById(target.definitionId);
     if (!def.isStackable)
         return;
     if (target.amount >= def.maxStack)
@@ -229,7 +229,7 @@ static void HandleDrop(int toSlot)
 
     InventoryItem &src = GetItemBySlotIndex(dragSlot);
     InventoryItem &dst = GetItemBySlotIndex(toSlot);
-    const ItemDefinition &def = itemDefs.Get(dragItem.definitionId);
+    const ItemDefinition &def = itemDefs.GetById(dragItem.definitionId);
 
     bool canStack = dst.definitionId != -1 && dst.definitionId == dragItem.definitionId && def.isStackable;
 

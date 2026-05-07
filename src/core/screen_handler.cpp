@@ -28,7 +28,7 @@
 #include "combat.h"
 #include "interaction.h"
 #include <cstdio>
-
+#include "enemy_ai.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include <string>
@@ -94,6 +94,7 @@ void InitAll()
     // Spawn musuh dari map aktif
     SpawnEnemiesFromMap();
     SpawnObject();
+    globalFlowField.Invalidate(); // nanti diganti kalo nambah method ai nya
 }
 
 /**
@@ -137,8 +138,8 @@ void SpawnEnemiesFromMap()
                 continue;
             }
 
-            // 1. Tentukan Tipe Musuh (Prioritas: Properti 'enemy_type' -> Nama Objek)
-            EnemyType type = SLIME;
+            // 1. Tentukan tipe musuh (Prioritas: Properti 'enemy_type' -> Nama Objek)
+            std::string enemyName = "Slime";
             bool typeFound = false;
 
             if (obj.properties.count("enemy_type"))
@@ -146,17 +147,17 @@ void SpawnEnemiesFromMap()
                 std::string typeStr = ToLower(obj.properties.at("enemy_type").getValue<std::string>());
                 if (typeStr == "skeleton")
                 {
-                    type = SKELETON;
+                    enemyName = "Skeleton";
                     typeFound = true;
                 }
                 else if (typeStr == "wolf")
                 {
-                    type = WOLF;
+                    enemyName = "Wolf";
                     typeFound = true;
                 }
                 else if (typeStr == "slime")
                 {
-                    type = SLIME;
+                    enemyName = "Slime";
                     typeFound = true;
                 }
             }
@@ -164,15 +165,15 @@ void SpawnEnemiesFromMap()
             if (!typeFound)
             {
                 if (nameLower.find("skeleton") != std::string::npos)
-                    type = SKELETON;
+                    enemyName = "Skeleton";
                 else if (nameLower.find("wolf") != std::string::npos)
-                    type = WOLF;
+                    enemyName = "Wolf";
                 else if (nameLower.find("slime") != std::string::npos)
-                    type = SLIME;
+                    enemyName = "Slime";
                 else
                 {
-                    // Gunakan GetRandomValue (cara lama) untuk menentukan tipe musuh secara acak tanpa srand()
-                    type = (EnemyType)GetRandomValue(0, 2);
+                    const auto &names = enemyData.GetAllNames();
+                    enemyName = names[GetRandomValue(0, (int)names.size() - 1)];
                 }
             }
 
@@ -187,14 +188,17 @@ void SpawnEnemiesFromMap()
                     radius = prop.getValue<float>();
             }
 
+            EnemyDefinition def = enemyData.Get(enemyName);
+            def.stats.patrolRadius = radius;
+
             // 3. Spawn tepat 1 musuh di tengah objek spawn
             Vector2 spawnPos = {obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f};
 
             Enemy *enemy = new Enemy();
-            enemy->Init(spawnPos, obj.name.c_str(), obj.id, type, radius);
+            enemy->Init(spawnPos, enemyName.c_str(), obj.id, def);
             Entities::AddDynamic(enemy);
 
-            TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %d, ID: %d) from spawn point '%s'", (int)type, obj.id, obj.name.c_str());
+            TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %s, ID: %d) from spawn point '%s'", enemyName.c_str(), obj.id, obj.name.c_str());
         }
     }
 }
@@ -269,6 +273,10 @@ void UpdateGame(GameState *state)
  */
 void UpdateLogicAll()
 {
+    // update flow field sebelum enemy di-update
+    if (tilesonMap)
+        globalFlowField.Update(PlayerInstance.GetPosition(), tilesonMap->width, tilesonMap->height);
+
     // Update semua entity (Player + semua Enemy) via Entities registry
     Entities::Update();
 

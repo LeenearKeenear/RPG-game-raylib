@@ -69,7 +69,7 @@ namespace Inventory
             return;
         }
 
-        const ItemDefinition &def = itemDefs.Get(slot.definitionId);
+        const ItemDefinition &def = itemDefs.GetById(slot.definitionId);
         if (def.category != ITEM_POTION)
             return;
 
@@ -103,7 +103,7 @@ namespace Inventory
 
     bool AddToInventory(Player &player, const ItemSpawn &item)
     {
-        const ItemDefinition &def = itemDefs.Get(item.definitionId);
+        const ItemDefinition &def = itemDefs.GetById(item.definitionId);
         bool isStackable = def.isStackable;
         int maxStack = def.maxStack;
         int remaining = item.amount;
@@ -199,7 +199,7 @@ namespace Inventory
         if (activeItem.definitionId == -1)
             return;
 
-        const ItemDefinition &def = itemDefs.Get(activeItem.definitionId);
+        const ItemDefinition &def = itemDefs.GetById(activeItem.definitionId);
         if (def.category != ITEM_WEAPON)
             return;
 
@@ -262,7 +262,7 @@ namespace Inventory
         if (activeItem.definitionId == -1)
             return player.AttackManaCost;
 
-        const ItemDefinition &def = itemDefs.Get(activeItem.definitionId);
+        const ItemDefinition &def = itemDefs.GetById(activeItem.definitionId);
         if (def.category != ITEM_WEAPON)
             return player.AttackManaCost;
 

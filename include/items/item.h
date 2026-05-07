@@ -19,6 +19,7 @@
 #include <random>
 #include <algorithm>
 #include <variant>
+#include <unordered_map>
 
 /*==============================================================================
  * Enums
@@ -29,10 +30,10 @@
  */
 typedef enum
 {
-    ITEM_WEAPON, // Item senjata
-    ITEM_POTION, // Item potion/healing
-    ITEM_POISON, // Item poison
-    ITEM_ARMOR,  // Item armor
+    ITEM_WEAPON, // Item senjata (di json nanti namanya harus ditulis weapon)
+    ITEM_POTION, // Item potion/healing (di json nanti namanya harus ditulis potion)
+    ITEM_POISON, // Item poison (di json nanti namanya harus ditulis posion)
+    ITEM_ARMOR,  // Item armor (di json nanti namanya harus ditulis armor)
     ITEM_NONE    // Tidak ada item
 } ItemCategory;
 
@@ -41,8 +42,10 @@ typedef enum
  */
 typedef enum
 {
-    RARITY_COMMON, // Item biasa
-    RARITY_RARE    // Item langka
+    RARITY_COMMON,   // Item biasa (di json nanti namanya harus ditulis common)
+    RARITY_UNCOMMON, // item gak biasa (di json nanti namanya harus ditulis uncommon)
+    RARITY_RARE,     // Item langka (di json nanti namanya harus ditulis rare)
+    RARITY_EPIC      // item epik (di json nanti namanya harus ditulis epic)
 } ItemRarity;
 
 /**
@@ -63,112 +66,144 @@ typedef enum
 // Pindah dari combat.h — dipakai sebagai bagian dari WeaponData
 enum AttackType
 {
-    ATTACK_SLASH,
-    ATTACK_THRUST
+    ATTACK_SLASH, // (di json nanti namanya harus ditulis slash)
+    ATTACK_THRUST // (di json nanti namanya harus ditulis thrust)
 };
 
+/**
+ * @brief Data spesifik untuk item bertipe senjata.
+ */
 struct WeaponData
 {
-    float damage;
-    float reach;
-    float breadth;
-    float duration;
-    float knockbackForce;
-    float startAngleOffset;
-    float sweepAngle;
-    Vector2 centerOffset;
-    float manaCost;
-    AttackType attackType;
+    float damage;           // Damage yang diberikan ke musuh per hit
+    float reach;            // Jangkauan serangan (panjang hitbox)
+    float breadth;          // Lebar hitbox serangan
+    float duration;         // Durasi animasi serangan (detik)
+    float knockbackForce;   // Kekuatan knockback ke musuh
+    float startAngleOffset; // Offset sudut awal serangan (derajat)
+    float sweepAngle;       // Total sudut sapuan serangan (derajat)
+    Vector2 centerOffset;   // Offset pusat hitbox relatif ke posisi player
+    float manaCost;         // Mana yang dikonsumsi saat menyerang
+    AttackType attackType;  // Jenis serangan
 };
 
+/**
+ * @brief Data spesifik untuk item bertipe potion.
+ */
 struct PotionData
 {
-    int healValue;
-    bool isMana;
+    int healValue; // Jumlah HP atau mana yang dipulihkan
+    bool isMana;   // True jika potion memulihkan mana, bukan HP
 };
 
+/**
+ * @brief Data spesifik untuk item bertipe armor.
+ * @note Belum diimplementasikan sepenuhnya.
+ */
 struct ArmorData
 {
-    float defense;
+    float defense; // Nilai pertahanan yang ditambahkan ke player
 };
 
 /*==============================================================================
  * ItemDefinition — single source of truth
  *==============================================================================*/
 
+/**
+ * @brief Definisi statis sebuah item, dimuat dari JSON saat startup.
+ * @note Tidak boleh dimodifikasi setelah Load() selesai.
+ */
 struct ItemDefinition
 {
-    int id;
-    std::string name;
-    ItemCategory category;
-    Vector2 sheetCoord;
-    Vector2 hitboxSize;
-    ItemRarity rarity;
-    bool isStackable;
-    int maxStack;
-    std::variant<WeaponData, PotionData, ArmorData> data;
+    int id;                                               // ID numerik unik, dipakai untuk lookup di runtime
+    std::string name;                                     // Nama item, sekaligus key di unordered_map
+    ItemCategory category;                                // Kategori item (weapon, potion, armor, dll)
+    Vector2 sheetCoord;                                   // Koordinat tile di spritesheet
+    Vector2 hitboxSize;                                   // Ukuran hitbox item saat di-spawn di dunia
+    ItemRarity rarity;                                    // Rarity item, dipakai untuk drop rate dan visual
+    bool isStackable;                                     // True jika item bisa ditumpuk di inventory
+    int maxStack;                                         // Batas maksimum tumpukan per slot inventory
+    std::variant<WeaponData, PotionData, ArmorData> data; // Data spesifik berdasarkan category
 };
 
 /*==============================================================================
  * Structs
  *==============================================================================*/
 
+/**
+ * @brief Representasi satu instance item yang sudah di-spawn di dunia.
+ */
 struct ItemSpawn
 {
-    int definitionId;
-    Vector2 position;
-    Rectangle hitbox;
-    bool isPickedUp;
-    bool isAdded;
-    float spawnTime;
-    int amount = 1;
-};
-
-struct InventoryItem
-{
-    int definitionId = -1; // -1 = slot kosong
-    int amount = 0;
+    int definitionId; // Merujuk ke ItemDefinition::id
+    Vector2 position; // Posisi item di world space
+    Rectangle hitbox; // Hitbox untuk deteksi pickup oleh player
+    bool isPickedUp;  // True jika item sudah diambil player
+    bool isAdded;     // True jika item sudah ditambahkan ke inventory
+    float spawnTime;  // Timestamp saat item di-spawn (untuk efek atau despawn)
+    int amount = 1;   // Jumlah item dalam satu spawn (untuk stackable item)
 };
 
 /**
- * @brief Representasi satu area spawn item dari Tiled
+ * @brief Satu slot di inventory player.
+ */
+struct InventoryItem
+{
+    int definitionId = -1; // ID item yang ada di slot ini; -1 = slot kosong
+    int amount = 0;        // Jumlah item di slot ini
+};
+
+/**
+ * @brief Representasi satu area spawn item dari Tiled.
  */
 typedef struct
 {
-    std::string name;        // Nama area spawn dari Tiled
-    Rectangle bounds;        // Bounding box area spawn
-    SpawnAreaSize sizeClass; // Kategori ukuran area spawn
-    int minSpawn;            // Jumlah minimum item yang di-spawn
-    int maxSpawn;            // Jumlah maksimum item yang di-spawn
-    bool isActive;           // True jika area dipakai untuk spawn pada run ini
-    bool isPolygon;          // True jika area berasal dari object polygon
+    std::string name;        // Nama object layer dari Tiled, dipakai untuk identifikasi
+    Rectangle bounds;        // Bounding box area spawn di world space
+    SpawnAreaSize sizeClass; // Kategori ukuran area (small, medium, large)
+    int minSpawn;            // Jumlah minimum item yang di-spawn di area ini
+    int maxSpawn;            // Jumlah maksimum item yang di-spawn di area ini
+    bool isActive;           // True jika area ini dipilih untuk run saat ini
+    bool isPolygon;          // True jika area berasal dari polygon Tiled, bukan rectangle
 } SpawnArea;
 
 /*==============================================================================
  * ItemDefinitionManager
  *==============================================================================*/
 
+/**
+ * @brief Mengelola semua definisi item yang dimuat dari JSON.
+ *
+ * Diisi satu kali saat startup via Load(), lalu hanya dibaca.
+ * Semua lookup item di runtime dilakukan lewat class ini.
+ */
 class ItemDefinitionManager
 {
 public:
-    /** @brief Inisialisasi pool definisi item */
-    void Init();
+    /**
+     * @brief Memuat semua definisi item dari file JSON.
+     * @param path Path ke file JSON (contoh: "assets/data/items.json")
+     * @throws std::runtime_error Jika file tidak bisa dibuka
+     */
+    void Load(const std::string &path);
 
     /**
-     * @brief Ambil definisi item berdasarkan ID
+     * @brief Mencari definisi item berdasarkan ID numerik.
      * @param id ID item yang dicari
-     * @return Referensi ke ItemDefinition
+     * @return Referensi ke ItemDefinition yang cocok
+     * @throws std::runtime_error Jika ID tidak ditemukan
+     * @note Linear search — acceptable untuk pool item kecil
      */
-    const ItemDefinition &Get(int id) const;
+    const ItemDefinition &GetById(int id) const;
 
-    /** @brief Ambil seluruh pool definisi item */
-    const std::vector<ItemDefinition> &GetAll() const;
-
-    /** @brief Jumlah item yang terdaftar di pool */
-    int Count() const;
+    /**
+     * @brief Mengambil semua definisi item.
+     * @return Referensi ke map keseluruhan definisi item
+     */
+    const std::unordered_map<std::string, ItemDefinition> &GetAll() const;
 
 private:
-    std::vector<ItemDefinition> pool;
+    std::unordered_map<std::string, ItemDefinition> definitions_; // Key = nama item
 };
 
 /*==============================================================================
@@ -223,6 +258,7 @@ public:
 private:
     // Penyimpanan state item berdasarkan path map
     std::map<std::string, std::vector<ItemSpawn>> savedMapItems;
+    std::unordered_map<std::string, ItemDefinition> definitions_;
 };
 
 /*==============================================================================

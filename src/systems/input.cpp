@@ -125,7 +125,7 @@ PlayerAction PlayerInput::ResolveAction() const
     if (item.definitionId == -1)
         return ACTION_NONE;
 
-    const ItemDefinition &def = itemDefs.Get(item.definitionId);
+    const ItemDefinition &def = itemDefs.GetById(item.definitionId);
     if (def.category == ITEM_WEAPON)
         return ACTION_ATTACK;
     if (def.category == ITEM_POTION)
