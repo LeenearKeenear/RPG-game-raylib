@@ -13,11 +13,11 @@
 using json = nlohmann::json;
 using namespace DataDriven;
 
-EnemyDataManager &EnemyDataManager::Instance()
-{
-    static EnemyDataManager instance;
-    return instance;
-}
+EnemyDataManager enemyData;
+
+/*==============================================================================
+ * EnemyDataManager
+ *==============================================================================*/
 
 void EnemyDataManager::Load(const std::string &path)
 {
@@ -30,25 +30,25 @@ void EnemyDataManager::Load(const std::string &path)
     for (auto &[name, data] : root.at("enemies").items())
     {
         EnemyDefinition def;
-        def.id = SafeGet<int>(data, "id", -1);
+        def.id   = SafeGet<int>(data, "id", -1);
         def.name = name;
 
         const auto &s = data.at("stats");
-        def.stats.maxHealth = SafeGet<float>(s, "maxHealth", 100.f);
-        def.stats.speed = SafeGet<float>(s, "speed", 1.f);
-        def.stats.chaseSpeed = SafeGet<float>(s, "chaseSpeed", 1.5f);
-        def.stats.damage = SafeGet<float>(s, "damage", 10.f);
-        def.stats.baseDetectionRange = SafeGet<float>(s, "baseDetectionRange", 120.f);
-        def.stats.chaseDetectionRange = SafeGet<float>(s, "chaseDetectionRange", 240.f);
-        def.stats.attackRange = SafeGet<float>(s, "attackRange", 32.f);
-        def.stats.healthRegenRate = SafeGet<float>(s, "healthRegenRate", 10.f);
-        def.stats.healthRegenDelay = SafeGet<float>(s, "healthRegenDelay", 2.f);
-        def.stats.patrolRadius = SafeGet<float>(s, "patrolRadius", 128.f);
+        def.stats.maxHealth             = SafeGet<float>(s, "maxHealth", 100.f);
+        def.stats.speed                 = SafeGet<float>(s, "speed", 1.f);
+        def.stats.chaseSpeed            = SafeGet<float>(s, "chaseSpeed", 1.5f);
+        def.stats.damage                = SafeGet<float>(s, "damage", 10.f);
+        def.stats.baseDetectionRange    = SafeGet<float>(s, "baseDetectionRange", 120.f);
+        def.stats.chaseDetectionRange   = SafeGet<float>(s, "chaseDetectionRange", 240.f);
+        def.stats.attackRange           = SafeGet<float>(s, "attackRange", 32.f);
+        def.stats.healthRegenRate       = SafeGet<float>(s, "healthRegenRate", 10.f);
+        def.stats.healthRegenDelay      = SafeGet<float>(s, "healthRegenDelay", 1.f);
+        def.stats.patrolRadius          = SafeGet<float>(s, "patrolRadius", 130.f);
         def.stats.turnBaseTriggerChance = SafeGet<float>(s, "turnBaseTriggerChance", 0.f);
-        def.stats.canTriggerTurnBased = SafeGet<bool>(s, "canTriggerTurnBased", false);
+        def.stats.canTriggerTurnBased   = SafeGet<bool>(s, "canTriggerTurnBased", false);
 
         const auto &h = data.at("hitbox");
-        def.hitbox.size = ParseVector2(h.at("size"));
+        def.hitbox.size   = ParseVector2(h.at("size"));
         def.hitbox.offset = ParseVector2(h.at("offset"));
 
         def.animSet = ResolveAnimSet(name);
@@ -74,6 +74,10 @@ std::vector<std::string> EnemyDataManager::GetAllNames() const
     return names;
 }
 
+/*==============================================================================
+ * Enemy — Lifecycle
+ *==============================================================================*/
+
 Enemy::Enemy()
 {
     IsActive = true;
@@ -81,41 +85,52 @@ Enemy::Enemy()
 
 Enemy::~Enemy() {}
 
+/**
+ * @brief Inisialisasi enemy dari definisi yang sudah dimuat.
+ * @param pos Posisi spawn di world space
+ * @param name Nama enemy (harus cocok dengan key di enemies.json)
+ * @param mapId ID object di Tiled, dipakai untuk RegisterDeath
+ * @param def Definisi enemy yang sudah dimuat dari EnemyDataManager
+ */
 void Enemy::Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition &def)
 {
     DefStorage = def;
-    Def = &DefStorage;
-    AnimSet = Def->animSet;
+    Def        = &DefStorage;
+    AnimSet    = Def->animSet;
     MapObjectID = mapId;
-    SpawnPoint = pos;
-    Name = name;
+    SpawnPoint  = pos;
+    Name        = name;
 
-    // Assign dari definisi
-    Health = def.stats.maxHealth;
-    MaxHealth = def.stats.maxHealth;
-    HitboxWidth = def.hitbox.size.x;
+    Health       = def.stats.maxHealth;
+    MaxHealth    = def.stats.maxHealth;
+    HitboxWidth  = def.hitbox.size.x;
     HitboxHeight = def.hitbox.size.y;
     HitboxOffsetX = def.hitbox.offset.x;
     HitboxOffsetY = def.hitbox.offset.y;
 
-    // Runtime state
-    DetectionRange = def.stats.baseDetectionRange;
-    HealthRegenTimer = 0.0f;
-    PatrolTimer = 0.0f;
+    // Runtime state — reset setiap spawn
+    DetectionRange      = def.stats.baseDetectionRange;
+    HealthRegenTimer    = 0.0f;
+    PatrolTimer         = 0.0f;
     AttackCooldownTimer = 0.0f;
-    HitFlashTimer = 0.0f;
-    KnockbackVelocity = {0, 0};
-    DeathTimer = 0.0f;
-    PlayerWasInRange = false;
-    AIState = ENEMY_IDLE;
+    HitFlashTimer       = 0.0f;
+    KnockbackVelocity   = {0, 0};
+    DeathTimer          = 0.0f;
+    PlayerWasInRange    = false;
+    AIState             = ENEMY_IDLE;
 
-    Position.x = pos.x - (HitboxWidth / 2.0f) - HitboxOffsetX;
-    Position.y = pos.y - (HitboxHeight / 2.0f) - HitboxOffsetY;
+    // Posisi disesuaikan agar hitbox center-nya tepat di pos spawn
+    Position.x  = pos.x - (HitboxWidth / 2.0f) - HitboxOffsetX;
+    Position.y  = pos.y - (HitboxHeight / 2.0f) - HitboxOffsetY;
     PatrolTarget = pos;
 
     PlayAnimation(Anim, IDLE, DOWN, *Def->animSet);
     Anim.position = Position;
 }
+
+/*==============================================================================
+ * Enemy — Update
+ *==============================================================================*/
 
 void Enemy::Update()
 {
@@ -127,16 +142,14 @@ void Enemy::Update()
         if (Anim.state != DEAD)
         {
             PlayAnimation(Anim, DEAD, Anim.direction, *AnimSet);
-            AIState = ENEMY_IDLE;
+            AIState        = ENEMY_IDLE;
             DetectionRange = Def->stats.baseDetectionRange;
             Entities::RegisterDeath(GetCurrentMapPath(), MapObjectID);
         }
 
         DeathTimer += GetFrameTime();
         if (DeathTimer >= DeathDuration)
-        {
             IsActive = false;
-        }
 
         Anim.position = Position;
         UpdateAnimation(Anim, GetFrameTime());
@@ -150,7 +163,7 @@ void Enemy::Update()
 
     if (Vector2Length(KnockbackVelocity) > 0.1f)
     {
-        Vector2 move = Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f);
+        Vector2 move  = Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f);
         Vector2 nextX = {Position.x + move.x, Position.y};
         Vector2 nextY = {Position.x, Position.y + move.y};
 
@@ -172,8 +185,13 @@ void Enemy::Update()
     UpdateAnimation(Anim, GetFrameTime());
 }
 
+/*==============================================================================
+ * Enemy — AI
+ *==============================================================================*/
+
 void Enemy::UpdateAI()
 {
+    // Jika player mati, paksa idle agar enemy tidak terus mengejar posisi terakhir
     if (!PlayerInstance.IsAlive())
     {
         if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK)
@@ -184,10 +202,12 @@ void Enemy::UpdateAI()
         return;
     }
 
+    // Detection range diperluas saat mengejar agar enemy tidak langsung berhenti di tepi range
     DetectionRange = (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK)
                          ? Def->stats.chaseDetectionRange
                          : Def->stats.baseDetectionRange;
 
+    // Regen HP hanya saat tidak agresif
     if (HealthRegenTimer > 0)
     {
         HealthRegenTimer -= GetFrameTime();
@@ -201,30 +221,25 @@ void Enemy::UpdateAI()
 
     switch (AIState)
     {
-    case ENEMY_IDLE:
-        HandleIdle();
-        break;
-    case ENEMY_PATROL:
-        HandlePatrol();
-        break;
-    case ENEMY_CHASE:
-        HandleChase();
-        break;
-    case ENEMY_ATTACK:
-        HandleAttack();
-        break;
-    case ENEMY_RETURN:
-        HandleReturn();
-        break;
+    case ENEMY_IDLE:   HandleIdle();   break;
+    case ENEMY_PATROL: HandlePatrol(); break;
+    case ENEMY_CHASE:  HandleChase();  break;
+    case ENEMY_ATTACK: HandleAttack(); break;
+    case ENEMY_RETURN: HandleReturn(); break;
     }
 }
 
+/**
+ * @brief Cek apakah player dalam jangkauan dan tidak terhalang obstacle.
+ * @return True jika player terlihat
+ * @note Raycast dilakukan terhadap collision layer Tiled + dynamic obstacles
+ */
 bool Enemy::CheckPlayerLoS()
 {
     if (!tilesonMap || !PlayerInstance.IsAlive())
         return false;
 
-    Vector2 enemyCenter = GetCenter();
+    Vector2 enemyCenter  = GetCenter();
     Vector2 playerCenter = PlayerInstance.GetCenter();
 
     float dist = Vector2Distance(enemyCenter, playerCenter);
@@ -237,15 +252,14 @@ bool Enemy::CheckPlayerLoS()
     for (auto &obj : tilesonMap->Objects)
     {
         if (obj.layerName == COLLISION_LAYER_NAME)
-        {
             obstacles.push_back(obj);
-        }
     }
 
+    // Dynamic obstacles (misal: chest, benda interaktif) ikut dipertimbangkan
     for (const auto &rect : DynamicObstacles)
     {
         MapObject dynObj;
-        dynObj.bounds = rect;
+        dynObj.bounds     = rect;
         dynObj.hasPolygon = false;
         obstacles.push_back(dynObj);
     }
@@ -265,13 +279,14 @@ void Enemy::HandleIdle()
     PatrolTimer += GetFrameTime();
     if (PatrolTimer >= PatrolWaitTime)
     {
-        PatrolTimer = 0;
+        PatrolTimer  = 0;
+        PatrolTarget = SpawnPoint; // fallback jika tidak ada posisi valid
 
-        PatrolTarget = SpawnPoint; // fallback default
+        // Coba hingga 10 kali agar patrol target tidak di dalam dinding
         for (int i = 0; i < 10; i++)
         {
-            float angle = (float)GetRandomValue(0, 360) * DEG2RAD;
-            float r = (float)GetRandomValue(32, (int)Def->stats.patrolRadius);
+            float angle           = (float)GetRandomValue(0, 360) * DEG2RAD;
+            float r               = (float)GetRandomValue(32, (int)Def->stats.patrolRadius);
             Vector2 potentialTarget = Vector2Add(SpawnPoint, {cosf(angle) * r, sinf(angle) * r});
 
             if (IsPositionSafe(potentialTarget, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY))
@@ -309,6 +324,7 @@ void Enemy::HandlePatrol()
 
 void Enemy::HandleChase()
 {
+    // Tahan gerak saat cooldown serangan — enemy berdiri diam sebentar setelah menyerang
     if (AttackCooldownTimer > 0)
     {
         if (Anim.state != IDLE)
@@ -316,15 +332,16 @@ void Enemy::HandleChase()
         return;
     }
 
-    Vector2 enemyCenter = GetCenter();
+    Vector2 enemyCenter  = GetCenter();
     Vector2 playerCenter = PlayerInstance.GetCenter();
-    float dist = Vector2Distance(enemyCenter, playerCenter);
+    float dist           = Vector2Distance(enemyCenter, playerCenter);
 
     if (dist <= Def->stats.attackRange)
     {
+        // Serang hanya sekali saat player baru masuk range
         if (!PlayerWasInRange)
             PerformAttack();
-        AIState = ENEMY_ATTACK;
+        AIState          = ENEMY_ATTACK;
         PlayerWasInRange = true;
         return;
     }
@@ -333,7 +350,8 @@ void Enemy::HandleChase()
 
     if (dist > DetectionRange)
     {
-        AIState = ENEMY_RETURN;
+        // Player keluar range — pulang ke spawn
+        AIState      = ENEMY_RETURN;
         PatrolTarget = SpawnPoint;
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
         return;
@@ -366,10 +384,9 @@ void Enemy::HandleReturn()
 
 void Enemy::HandleAttack()
 {
-    Vector2 enemyCenter = GetCenter();
+    Vector2 enemyCenter  = GetCenter();
     Vector2 playerCenter = PlayerInstance.GetCenter();
-
-    float dist = Vector2Distance(enemyCenter, playerCenter);
+    float dist           = Vector2Distance(enemyCenter, playerCenter);
 
     if (dist <= Def->stats.attackRange)
     {
@@ -380,6 +397,7 @@ void Enemy::HandleAttack()
     else
     {
         PlayerWasInRange = false;
+        // Sedikit buffer (1.2x) agar enemy tidak langsung keluar ATTACK state saat player mundur tipis
         if (dist > Def->stats.attackRange * 1.2f)
         {
             AIState = ENEMY_CHASE;
@@ -388,49 +406,64 @@ void Enemy::HandleAttack()
     }
 }
 
+/*==============================================================================
+ * Enemy — Combat
+ *==============================================================================*/
+
 void Enemy::PerformAttack()
 {
-    Vector2 enemyCenter = GetCenter();
+    Vector2 enemyCenter  = GetCenter();
     Vector2 playerCenter = PlayerInstance.GetCenter();
-    Vector2 knockDir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
+    Vector2 knockDir     = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
 
     PlayerInstance.TakeDamage(Def->stats.damage, knockDir);
 
     PlayAnimation(Anim, ATTACK, Anim.direction, *AnimSet);
-    Anim.isAttacking = true;
+    Anim.isAttacking    = true;
     AttackCooldownTimer = AttackCooldown;
 }
 
+/**
+ * @brief Enemy menerima damage dan knockback.
+ * @param amount Jumlah damage
+ * @param knockback Arah knockback (normalized)
+ * @note HealthRegenTimer di-reset agar regen tidak langsung jalan setelah kena hit
+ */
 void Enemy::TakeDamage(float amount, Vector2 knockback)
 {
     Entity::TakeDamage(amount, knockback);
-    HitFlashTimer = 0.15f;
+    HitFlashTimer     = 0.15f;
     KnockbackVelocity = Vector2Scale(knockback, 6.0f);
-    HealthRegenTimer = Def->stats.healthRegenDelay;
+    HealthRegenTimer  = Def->stats.healthRegenDelay;
 }
+
+/*==============================================================================
+ * Enemy — Render
+ *==============================================================================*/
 
 void Enemy::Render()
 {
     if (!IsActive)
         return;
 
+    // Shadow sederhana di bawah enemy
     DrawEllipse((int)Position.x + 16, (int)Position.y + 30, 10, 4, {0, 0, 0, 80});
 
     bool shouldDraw = true;
     if (Health <= 0)
     {
+        // Blink makin cepat menjelang akhir death timer
         float blinkFreq = (DeathTimer / DeathDuration) * 15.0f;
-        shouldDraw = AnimEffects::ShouldBlink(DeathTimer, blinkFreq);
+        shouldDraw      = AnimEffects::ShouldBlink(DeathTimer, blinkFreq);
     }
 
     if (shouldDraw)
     {
-        Color tint = WHITE;
-        if (HitFlashTimer > 0)
-            tint = RED;
+        Color tint = (HitFlashTimer > 0) ? RED : WHITE;
         DrawAnimation(Anim, TEXTURE_ENEMIES, tint);
     }
 
+    // Health bar hanya tampil saat agresif
     if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK)
     {
         DrawRectangle((int)Position.x + 4, (int)Position.y + 38, 24, 4, BLACK);
@@ -442,14 +475,10 @@ void Enemy::Render()
         Vector2 enemyCenter = GetCenter();
         DrawCircleLinesV(enemyCenter, DetectionRange, Fade(GRAY, 0.6f));
         DrawCircleLinesV(enemyCenter, Def->stats.attackRange, RED);
-        Rectangle enemyHitbox = GetHitbox();
-        DrawRectangleLinesEx(enemyHitbox, 1.0f, VIOLET);
+        DrawRectangleLinesEx(GetHitbox(), 1.0f, VIOLET);
 
-        // Garis raycast ke player saat mengejar/menyerang
         if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK)
-        {
             DrawLineEx(enemyCenter, PlayerInstance.GetCenter(), 1.0f, RED);
-        }
     }
 }
 
@@ -460,9 +489,13 @@ void Enemy::Render()
 void InitEnemy()
 {
     LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
-    EnemyDataManager::Instance().Load("assets/data/enemies.json");
+    enemyData.Load("assets/data/enemies.json");
 }
 
+/**
+ * @brief Spawn sejumlah enemy acak sekaligus.
+ * @note Jumlah enemy per wave: 4–7
+ */
 void SpawnRandomWave()
 {
     int count = GetRandomValue(4, 7);
@@ -470,14 +503,18 @@ void SpawnRandomWave()
         SpawnRandomEnemy();
 }
 
+/**
+ * @brief Spawn satu enemy acak di posisi valid dalam map.
+ * @note Mencoba hingga 100 posisi acak — jika semuanya tidak valid, enemy tidak di-spawn
+ */
 void SpawnRandomEnemy()
 {
     if (!tilesonMap)
         return;
 
-    const auto &names = EnemyDataManager::Instance().GetAllNames();
+    const auto &names    = enemyData.GetAllNames();
     const std::string &picked = names[GetRandomValue(0, (int)names.size() - 1)];
-    const EnemyDefinition &def = EnemyDataManager::Instance().Get(picked);
+    const EnemyDefinition &def = enemyData.Get(picked);
 
     Vector2 randomPos;
     bool validPos = false;
@@ -515,10 +552,14 @@ void ClearEnemies()
     Entities::Clear();
 }
 
-// utility helper movement
+/*==============================================================================
+ * Enemy — Helper
+ *==============================================================================*/
+
+// Gerak per axis secara terpisah agar enemy bisa slide di sepanjang dinding
 void Enemy::MoveTowards(Vector2 target, float speed)
 {
-    Vector2 dir = Vector2Normalize(Vector2Subtract(target, Position));
+    Vector2 dir  = Vector2Normalize(Vector2Subtract(target, Position));
     Vector2 move = Vector2Scale(dir, speed);
 
     if (IsPositionSafe({Position.x + move.x, Position.y}, HitboxWidth, HitboxHeight, HitboxOffsetX, HitboxOffsetY))
@@ -532,12 +573,10 @@ void Enemy::MoveTowards(Vector2 target, float speed)
         Anim.direction = (dir.y > 0) ? DOWN : UP;
 }
 
-// helper function buat resolve animationset
+// Fallback ke SlimeAnimationSet jika nama tidak dikenali
 const AnimationSet *ResolveAnimSet(const std::string &name)
 {
-    if (name == "Skeleton")
-        return &SkeletonAnimationSet;
-    if (name == "Wolf")
-        return &WolfAnimationSet;
+    if (name == "Skeleton") return &SkeletonAnimationSet;
+    if (name == "Wolf")     return &WolfAnimationSet;
     return &SlimeAnimationSet;
 }

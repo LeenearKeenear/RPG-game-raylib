@@ -171,7 +171,7 @@ void SpawnEnemiesFromMap()
                     enemyName = "Slime";
                 else
                 {
-                    const auto &names = EnemyDataManager::Instance().GetAllNames();
+                    const auto &names = enemyData.GetAllNames();
                     enemyName = names[GetRandomValue(0, (int)names.size() - 1)];
                 }
             }
@@ -187,7 +187,7 @@ void SpawnEnemiesFromMap()
                     radius = prop.getValue<float>();
             }
 
-            EnemyDefinition def = EnemyDataManager::Instance().Get(enemyName);
+            EnemyDefinition def = enemyData.Get(enemyName);
             def.stats.patrolRadius = radius;
 
             // 3. Spawn tepat 1 musuh di tengah objek spawn

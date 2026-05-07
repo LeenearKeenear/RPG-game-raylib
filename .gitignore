@@ -6,6 +6,8 @@
 *.bak
 /Backups/
 
+run_backup.bat
+
 # Personal
 *.Personal.*
 

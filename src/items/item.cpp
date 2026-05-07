@@ -19,12 +19,16 @@
 #include "entities.h"
 #include "enemy.h"
 #include "mapLogic.h"
+#include "datadriven.h"
+#include "../lib/json/include/nlohmann/json.hpp"
 #include "../lib/raylib/include/raymath.h"
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <stdexcept>
 
-extern void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale);
-extern TileDefinition TileProperty[];
+using json = nlohmann::json;
+using namespace DataDriven;
 
 // instance global keempat class
 ItemDefinitionManager itemDefs;
@@ -37,6 +41,7 @@ ItemSpawnManager spawnManager;
  *==============================================================================*/
 
 /** @brief Load texture item dari spritesheet */
+// TODO: pindahin ke animation atau tile.cpp untuk loadtiletexture agar terpusat
 void InitItemTextures()
 {
     LoadTileTexture(TEXTURE_ITEMS, "assets/textures/test.png");
@@ -49,7 +54,7 @@ void InitItemTextures()
  */
 void InitItems()
 {
-    itemDefs.Init();
+    itemDefs.Load("assets/data/items.json");
     InitItemTextures();
     itemData.Init();
     spawnManager.Init(ITEM_LAYER_NAME);
@@ -81,32 +86,122 @@ std::vector<ItemSpawn> &GetActiveItems() { return itemData.activeItems; }
  * ItemDefinitionManager
  *==============================================================================*/
 
-void ItemDefinitionManager::Init()
+/**
+ * @brief Memuat semua definisi item dari file JSON.
+ * @param path Path ke file JSON (contoh: "assets/data/items.json")
+ * @throws std::runtime_error Jika file tidak bisa dibuka
+ */
+void ItemDefinitionManager::Load(const std::string &path)
 {
-    pool = {
-        {0, "Iron Sword", ITEM_WEAPON, {6, 4}, {20, 20}, RARITY_COMMON, false, 1, WeaponData{15.f, 40.f, 16.f, 0.25f, 0.6f, 0.f, 0.f, {8.f, 4.f}, 10.f, ATTACK_THRUST}},
+    std::ifstream file(path);
+    if (!file.is_open())
+        throw std::runtime_error("Cannot open: " + path);
 
-        {1, "Iron Axe", ITEM_WEAPON, {7, 4}, {20, 20}, RARITY_RARE, false, 1, WeaponData{25.f, 48.f, 56.f, 0.5f, 1.8f, 55.f, -95.f, {20.f, 20.f}, 15.f, ATTACK_SLASH}},
+    json root = json::parse(file);
 
-        {2, "Health Potion", ITEM_POTION, {7, 8}, {20, 20}, RARITY_COMMON, true, 8, PotionData{20, false}},
+    for (auto &[name, data] : root.at("items").items())
+    {
+        ItemDefinition def;
+        def.id = SafeGet<int>(data, "id", -1);
+        def.name = name;
+        def.sheetCoord = ParseVector2(data.at("sheetCoord"));
+        def.hitboxSize = ParseVector2(data.at("hitboxSize"));
+        def.isStackable = SafeGet<bool>(data, "isStackable", false); // nilai fallback false
+        def.maxStack = SafeGet<int>(data, "maxStack", 1);            // nilai fallback 1
 
-        {3, "Mana Bread", ITEM_POTION, {10, 8}, {20, 20}, RARITY_COMMON, true, 8, PotionData{15, true}},
-    };
+        // Parse category
+        std::string cat = SafeGet<std::string>(data, "category", "none"); // nilai fallback none
+        if (cat == "weapon")
+            def.category = ITEM_WEAPON;
+        else if (cat == "potion")
+            def.category = ITEM_POTION;
+        else if (cat == "poison")
+            def.category = ITEM_POISON;
+        else if (cat == "armor")
+            def.category = ITEM_ARMOR;
+        else
+            def.category = ITEM_NONE;
+
+        // Parse rarity
+        std::string rar = SafeGet<std::string>(data, "rarity", "common"); // nilai fallback common
+        if (rar == "common")
+            def.rarity = RARITY_COMMON;
+        else if (rar == "uncommon")
+            def.rarity = RARITY_UNCOMMON;
+        else if (rar == "rare")
+            def.rarity = RARITY_RARE;
+        else if (rar == "epic")
+            def.rarity = RARITY_EPIC;
+
+        // Parse variant berdasarkan category
+        if (def.category == ITEM_WEAPON)
+        {
+            const auto &w = data.at("weapon");
+            WeaponData wd;
+            wd.damage = SafeGet<float>(w, "damage", 10.f);                    // nilai fallback 10
+            wd.reach = SafeGet<float>(w, "reach", 10.f);                      // nilai fallback 10
+            wd.breadth = SafeGet<float>(w, "breadth", 10.f);                  // nilai fallback 10
+            wd.duration = SafeGet<float>(w, "duration", 3.f);                 // nilai fallback 3
+            wd.knockbackForce = SafeGet<float>(w, "knockbackForce", 1.f);     // nilai fallback 1
+            wd.startAngleOffset = SafeGet<float>(w, "startAngleOffset", 0.f); // nilai fallback 0
+            wd.sweepAngle = SafeGet<float>(w, "sweepAngle", 0.f);             // nilai fallback 0
+            wd.centerOffset = ParseVector2(w.at("centerOffset"));
+            wd.manaCost = SafeGet<float>(w, "manaCost", 25.f); // nilai fallback 25
+
+            // parse attack type
+            std::string at = SafeGet<std::string>(w, "attackType", "thrust"); // nilai fallback thrust
+            if (at == "slash")
+                wd.attackType = ATTACK_SLASH;
+            else if (at == "thrust")
+                wd.attackType = ATTACK_THRUST;
+
+            def.data = wd;
+        }
+        else if (def.category == ITEM_POTION || def.category == ITEM_POISON)
+        {
+            // ITEM_POISON berbagi struktur data yang sama dengan ITEM_POTION
+            const auto &p = data.at("potion");
+            PotionData pd;
+            pd.healValue = SafeGet<int>(p, "healValue", 0); // nilai fallback 0
+            pd.isMana = SafeGet<bool>(p, "isMana", false);  // nilai fallback false
+            def.data = pd;
+        }
+
+        // ini belum di impementasikan
+        else if (def.category == ITEM_ARMOR)
+        {
+            const auto &a = data.at("armor");
+            ArmorData ad;
+            ad.defense = SafeGet<float>(a, "defense", 0.f); // nilai fallback 0
+            def.data = ad;
+        }
+
+        definitions_[name] = std::move(def);
+    }
 }
 
-const ItemDefinition &ItemDefinitionManager::Get(int id) const
+/**
+ * @brief Mencari definisi item berdasarkan ID numerik.
+ * @param id ID item yang dicari
+ * @return Referensi ke ItemDefinition yang cocok
+ * @throws std::runtime_error Jika ID tidak ditemukan
+ * @note Linear search — acceptable untuk pool item kecil
+ */
+const ItemDefinition &ItemDefinitionManager::GetById(int id) const
 {
-    return pool[id];
+    for (auto &[_, def] : definitions_)
+        if (def.id == id)
+            return def;
+    throw std::runtime_error("ItemDefinition not found for id: " + std::to_string(id));
 }
 
-const std::vector<ItemDefinition> &ItemDefinitionManager::GetAll() const
+/**
+ * @brief Mengambil semua definisi item.
+ * @return Referensi ke map keseluruhan definisi item
+ */
+const std::unordered_map<std::string, ItemDefinition> &ItemDefinitionManager::GetAll() const
 {
-    return pool;
-}
-
-int ItemDefinitionManager::Count() const
-{
-    return (int)pool.size();
+    return definitions_;
 }
 
 /*==============================================================================
@@ -133,7 +228,7 @@ void ItemDataManager::Init()
  */
 ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
 {
-    const ItemDefinition &def = itemDefs.Get(definitionId);
+    const ItemDefinition &def = itemDefs.GetById(definitionId);
     ItemSpawn item;
     item.definitionId = definitionId;
     item.position = pos;
@@ -249,7 +344,7 @@ void ItemRenderManager::Update(std::vector<ItemSpawn> &items, Vector2 playerCent
         {
             item.isPickedUp = true;
             TraceLog(LOG_INFO, "ITEM: Picked up '%s'",
-                     itemDefs.Get(item.definitionId).name.c_str());
+                     itemDefs.GetById(item.definitionId).name.c_str());
         }
     }
 }
@@ -276,7 +371,7 @@ void ItemRenderManager::RenderAll(std::vector<ItemSpawn> &items)
  */
 void ItemRenderManager::Render(ItemSpawn &item)
 {
-    const ItemDefinition &def = itemDefs.Get(item.definitionId);
+    const ItemDefinition &def = itemDefs.GetById(item.definitionId);
     Vector2 center = {
         item.hitbox.x + item.hitbox.width / 2,
         item.hitbox.y + item.hitbox.height / 2};
@@ -305,9 +400,10 @@ void ItemRenderManager::Render(ItemSpawn &item)
 
 // Rarity chance dalam persen — total harus 100
 static const std::map<ItemRarity, int> RARITY_WEIGHTS = {
-    {RARITY_COMMON, 70},
-    {RARITY_RARE, 30},
-};
+    {RARITY_COMMON, 80},
+    {RARITY_UNCOMMON, 60},
+    {RARITY_RARE, 40},
+    {RARITY_EPIC, 20}};
 
 /**
  * @brief Generate seed dari nama area untuk randomisasi spawn
@@ -469,11 +565,16 @@ int ItemSpawnManager::PickRandomDefinitionId(std::mt19937 &rng)
 {
     // Kumpulkan semua item per rarity
     std::map<ItemRarity, std::vector<int>> byRarity;
-    for (const auto &def : itemDefs.GetAll())
+    for (const auto &[name, def] : itemDefs.GetAll())
         byRarity[def.rarity].push_back(def.id);
 
+    // Hitung total dulu
+    int total = 0;
+    for (const auto &[rarity, weight] : RARITY_WEIGHTS)
+        total += weight;
+
     // Roll rarity dulu
-    std::uniform_int_distribution<int> rollDist(1, 100);
+    std::uniform_int_distribution<int> rollDist(1, total);
     int roll = rollDist(rng);
 
     int cumulative = 0;

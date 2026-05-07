@@ -172,7 +172,7 @@ namespace Combat
                 if (player.Mana >= manaCost)
                 {
                     InventoryItem activeItem = Inventory::GetActiveHotbarItem(player);
-                    if (activeItem.definitionId == -1 || itemDefs.Get(activeItem.definitionId).category != ITEM_WEAPON)
+                    if (activeItem.definitionId == -1 || itemDefs.GetById(activeItem.definitionId).category != ITEM_WEAPON)
                     {
                         Effects::AddLog("Tidak ada senjata!");
                         player.Swing.pressRegistered = false;
@@ -316,7 +316,7 @@ namespace Combat
         if (item.definitionId == -1)
             return;
 
-        const ItemDefinition &def = itemDefs.Get(item.definitionId);
+        const ItemDefinition &def = itemDefs.GetById(item.definitionId);
         if (def.category != ITEM_WEAPON)
             return;
 

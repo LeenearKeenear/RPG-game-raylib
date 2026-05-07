@@ -63,14 +63,11 @@ struct EnemyDefinition
 class EnemyDataManager
 {
 public:
-    static EnemyDataManager &Instance();
-
     void Load(const std::string &path);
     const EnemyDefinition &Get(const std::string &name) const;
     std::vector<std::string> GetAllNames() const;
 
 private:
-    EnemyDataManager() = default;
     std::unordered_map<std::string, EnemyDefinition> definitions_;
 };
 
@@ -173,3 +170,6 @@ void SpawnRandomEnemy();
 void SaveEnemiesForMap(const std::string &mapPath);
 bool LoadEnemiesForMap(const std::string &mapPath);
 void ClearEnemies();
+
+// intance global enemy
+extern EnemyDataManager enemyData;
