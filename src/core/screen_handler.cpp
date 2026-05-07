@@ -28,7 +28,7 @@
 #include "combat.h"
 #include "interaction.h"
 #include <cstdio>
-
+#include "enemy_ai.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include <string>
@@ -94,6 +94,7 @@ void InitAll()
     // Spawn musuh dari map aktif
     SpawnEnemiesFromMap();
     SpawnObject();
+    globalFlowField.Invalidate(); // nanti diganti kalo nambah method ai nya
 }
 
 /**
@@ -272,6 +273,10 @@ void UpdateGame(GameState *state)
  */
 void UpdateLogicAll()
 {
+    // update flow field sebelum enemy di-update
+    if (tilesonMap)
+        globalFlowField.Update(PlayerInstance.GetPosition(), tilesonMap->width, tilesonMap->height);
+
     // Update semua entity (Player + semua Enemy) via Entities registry
     Entities::Update();
 

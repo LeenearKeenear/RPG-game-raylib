@@ -5,7 +5,7 @@
       "stats": {
         "maxHealth": 100.0,
         "speed": 1.0,
-        "chaseSpeed": 1.5,
+        "chaseSpeed": 1.25,
         "damage": 5.0,
         "baseDetectionRange": 120.0,
         "chaseDetectionRange": 240.0,
@@ -26,7 +26,7 @@
       "stats": {
         "maxHealth": 100.0,
         "speed": 1.0,
-        "chaseSpeed": 1.75,
+        "chaseSpeed": 1.4,
         "damage": 10.0,
         "baseDetectionRange": 120.0,
         "chaseDetectionRange": 240.0,
@@ -47,7 +47,7 @@
       "stats": {
         "maxHealth": 150.0,
         "speed": 1.0,
-        "chaseSpeed": 2.5,
+        "chaseSpeed": 1.6,
         "damage": 20.0,
         "baseDetectionRange": 120.0,
         "chaseDetectionRange": 240.0,

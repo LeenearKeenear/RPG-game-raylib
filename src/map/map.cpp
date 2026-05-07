@@ -22,6 +22,7 @@
 #include "entities.h"
 #include "movement.h"
 #include "propsbehavior.h"
+#include "enemy_ai.h"
 #include <memory>
 #include <string>
 
@@ -250,14 +251,14 @@ void UnloadMap(void)
  */
 void InitMap(void)
 {
-     // Beberapa pilihan map yang tersedia (sementara di-comment)
- 
-     // LoadMap("assets/maps/floorA.json");
-     // LoadMap("assets/maps/floorB.json");
-     // LoadMap("assets/maps/floorC.json");
-     // "assets/maps/tutorial.json"
-     // Map yang aktif saat ini
-     currentMapPath = "assets/maps/floorB.json";
+    // Beberapa pilihan map yang tersedia (sementara di-comment)
+
+    // LoadMap("assets/maps/floorA.json");
+    // LoadMap("assets/maps/floorB.json");
+    // LoadMap("assets/maps/floorC.json");
+    // "assets/maps/tutorial.json"
+    // Map yang aktif saat ini
+    currentMapPath = "assets/maps/floorB.json";
     LoadMap(currentMapPath.c_str());
 
     if (!LoadEnemiesForMap(currentMapPath))
@@ -391,13 +392,15 @@ TileRange GetVisibleTileRange(void)
 void SwitchMap(const char *newMapPath, const char *targetDoorName)
 {
     // Safety check biar gak load path kosong
-    if (newMapPath == nullptr || newMapPath[0] == '\0') {
+    if (newMapPath == nullptr || newMapPath[0] == '\0')
+    {
         TraceLog(LOG_ERROR, "SwitchMap: newMapPath is null or empty");
         return;
     }
 
     // Simpan state map lama sebelum pindah
-    if (!currentMapPath.empty()) {
+    if (!currentMapPath.empty())
+    {
         SaveEnemiesForMap(currentMapPath);
         itemData.SaveItemsForMap(currentMapPath);
         mapHistoryStack.Push(currentMapPath, "");
@@ -407,7 +410,8 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     gState->isSwitchingMap = true;
     gState->pendingMapPath = newMapPath;
     gState->pendingDoorName = (targetDoorName != nullptr && targetDoorName[0] != '\0')
-                                 ? targetDoorName : SPAWN_OBJECT_NAME;
+                                  ? targetDoorName
+                                  : SPAWN_OBJECT_NAME;
     // Reset loading state agar InitLoadingScreen() dipanggil ulang
     gState->enteredLoading = false;
     gState->loadingStage = 0;
@@ -426,7 +430,8 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
  */
 void GoBack(void)
 {
-    if (mapHistoryStack.IsEmpty()) {
+    if (mapHistoryStack.IsEmpty())
+    {
         TraceLog(LOG_WARNING, "GoBack: no map history to go back to");
         return;
     }

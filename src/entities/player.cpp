@@ -89,7 +89,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
  *
  * Urutan:
  * 1. Input polling
- * 2. Lifecycle check (revive)
+ * 2. Lifecycle checkup (revive)
  * 3. Timer & Status effects
  * 4. Physics & Knockback
  * 5. Logic modules (Movement, Combat, Inventory, Interaction)
