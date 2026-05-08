@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../lib/raylib/include/raylib.h"
+#include "map.h"
+#include "mapLogic.h"
 #include "tiles.h"
 #include <vector>
 
@@ -79,4 +81,8 @@ private:
     void BFS(int goalX, int goalY, int startX, int startY, int endX, int endY); // isi direction tiap cell dari goal
 };
 
+std::vector<MapObject> BuildObstacleList();
+
 extern FlowField globalFlowField;
+extern FlowField returnFlowField;
+extern bool returnFlowFieldBuilt;

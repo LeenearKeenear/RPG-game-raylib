@@ -18,9 +18,11 @@
 #include "tiles.h"
 #include "animation.h"
 #include "player.h"
+#include "enemy.h"
 #include <algorithm>
 #include <cctype>
 #include "item.h"
+#include "enemy_ai.h"
 
 /*==============================================================================
  * Global Variables
@@ -508,6 +510,7 @@ void Debug::DrawWorldOverlay(void)
     DrawCollisionOverlay(TRAP_LAYER_NAME, BEIGE, BEIGE, LIGHTGRAY);
     DrawCollisionOverlay(ITEM_LAYER_NAME, PINK, PINK, LIGHTGRAY);
     DrawAttackOverlay();
+    // DrawFlowFieldOverlay();
     DrawEnemySpawnOverlay();
 
     // Batas luar map
@@ -527,6 +530,92 @@ void Debug::DrawWorldOverlay(void)
             const ItemDefinition &def = itemDefs.GetById(item.definitionId);
             DrawRectangleLinesEx(item.hitbox, 1.5f, PINK);
             DrawText(def.name.c_str(), (int)item.hitbox.x, (int)item.hitbox.y - 12, 10, PINK);
+        }
+    }
+}
+
+void Debug::DrawFlowFieldOverlay()
+{
+    if (!globalFlowField.IsReady()) return;
+
+    int mapW = tilesonMap->width;
+    int mapH = tilesonMap->height;
+
+    for (int y = 0; y < mapH; y++)
+    {
+        for (int x = 0; x < mapW; x++)
+        {
+            Vector2 tileCenter = {
+                x * FLOW_FIELD_TILE_SIZE + FLOW_FIELD_TILE_SIZE * 0.5f,
+                y * FLOW_FIELD_TILE_SIZE + FLOW_FIELD_TILE_SIZE * 0.5f
+            };
+
+            Vector2 dir = globalFlowField.GetDirection(tileCenter);
+            if (dir.x == 0 && dir.y == 0) continue;
+
+            Vector2 arrowEnd = {
+                tileCenter.x + dir.x * (FLOW_FIELD_TILE_SIZE * 0.4f),
+                tileCenter.y + dir.y * (FLOW_FIELD_TILE_SIZE * 0.4f)
+            };
+
+            DrawLineV(tileCenter, arrowEnd, BLUE);
+            DrawCircleV(arrowEnd, 2.0f, ORANGE); // kepala panah
+        }
+    }
+}
+
+void Debug::DrawSteeringOverlay(Enemy &enemy)
+{
+    Vector2 pos = enemy.GetCenter();
+    float tileSize = FLOW_FIELD_TILE_SIZE;
+
+    // --- 1. Raycast line ---
+    Vector2 vel = enemy.GetVelocity();
+    Vector2 flowDir = globalFlowField.GetDirection(pos);
+    Vector2 rayDir = (Vector2LengthSqr(vel) > 0.001f) ? Vector2Normalize(vel) : flowDir;
+    Vector2 rayEnd = Vector2Add(pos, Vector2Scale(rayDir, tileSize * 2.0f));
+
+    auto obstacles = BuildObstacleList();
+    RayHitResult hit = enemy.CastDebugRay(rayDir, tileSize * 2.0f, obstacles);
+
+    Color rayColor = hit.hit ? RED : GREEN;
+    DrawLineV(pos, rayEnd, rayColor);
+    DrawCircleV(rayEnd, 3.0f, rayColor);
+
+    // --- 2. Steering dir arrow ---
+    Vector2 steerDir = enemy.GetSteeringDir();
+    if (Vector2LengthSqr(steerDir) > 0.001f)
+    {
+        Vector2 steerEnd = Vector2Add(pos, Vector2Scale(steerDir, tileSize * 0.6f));
+        DrawLineV(pos, steerEnd, BLUE);
+        DrawCircleV(steerEnd, 3.0f, BLUE);
+    }
+
+    // --- 3. 5x5 tile highlight ---
+    Vector2 flowTile = enemy.GetLastFlowTile();
+    for (int dy = -2; dy <= 2; dy++)
+    {
+        for (int dx = -2; dx <= 2; dx++)
+        {
+            if (dx == 0 && dy == 0) continue;
+
+            int tx = (int)flowTile.x + dx;
+            int ty = (int)flowTile.y + dy;
+
+            Vector2 tileCenter = {
+                tx * tileSize + tileSize * 0.5f,
+                ty * tileSize + tileSize * 0.5f
+            };
+
+            bool walkable = IsPositionSafe(tileCenter, enemy.HitboxWidth, enemy.HitboxHeight,
+                                           enemy.HitboxOffsetX, enemy.HitboxOffsetY);
+
+            Rectangle tileRect = {
+                tx * tileSize, ty * tileSize,
+                tileSize, tileSize
+            };
+
+            DrawRectangleLinesEx(tileRect, 1.0f, walkable ? GREEN : RED);
         }
     }
 }

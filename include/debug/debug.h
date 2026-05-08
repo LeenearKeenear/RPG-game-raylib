@@ -9,6 +9,7 @@
  */
 
 #include "../lib/raylib/include/raylib.h"
+#include "enemy.h"
 #include <string>
 #include <vector>
 
@@ -44,6 +45,8 @@ public:
      * @brief Render overlay debug langsung di world space
      */
     void DrawWorldOverlay(void);
+
+    static void DrawSteeringOverlay(Enemy &enemy);
 
 private:
     /*==========================================================================
@@ -94,6 +97,7 @@ private:
     void DrawRaycastOverlay(void);
     void DrawAttackOverlay(void);
     void DrawEnemySpawnOverlay(void);
+    void DrawFlowFieldOverlay(void);
 
     /**
      * @brief Gambar frame panel debug

@@ -335,6 +335,8 @@ void Enemy::HandlePatrol()
 
 void Enemy::HandleChase()
 {
+    returnFlowFieldBuilt = false;
+
     // Tahan gerak saat cooldown serangan — enemy berdiri diam sebentar setelah menyerang
     if (AttackCooldownTimer > 0)
     {
@@ -368,19 +370,25 @@ void Enemy::HandleChase()
         return;
     }
 
-    // pakai flow field jika siap, fallback ke MoveTowards langsung
-    Vector2 dir = globalFlowField.GetDirection(enemyCenter);
-    if (dir.x != 0 || dir.y != 0)
+    if (SteeringFlipCount >= 4)
     {
-        Vector2 target = Vector2Add(enemyCenter, Vector2Scale(dir, FLOW_FIELD_TILE_SIZE));
-        MoveTowards(target, Def->stats.chaseSpeed);
+        SteeringFlipCount = 0;
+        AIState = ENEMY_PATROL;
+        return;
+    }
+
+    Vector2 steerDir = ComputeSteering(STEERING_CHASE);
+    Velocity = steerDir;
+
+    if (Vector2LengthSqr(steerDir) > 0.001f)
+    {
+        MoveTowards(SteeringTarget, Def->stats.chaseSpeed);
     }
     else
     {
         MoveTowards(PlayerInstance.GetPosition(), Def->stats.chaseSpeed);
     }
 
-    MoveTowards(PlayerInstance.GetPosition(), Def->stats.chaseSpeed);
     if (Anim.state != WALK)
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
 }
@@ -400,7 +408,27 @@ void Enemy::HandleReturn()
         return;
     }
 
-    MoveTowards(SpawnPoint, Def->stats.speed);
+    if (!returnFlowFieldBuilt && tilesonMap)
+    {
+        returnFlowField.Build(SpawnPoint, tilesonMap->width, tilesonMap->height);
+        returnFlowFieldBuilt = true;
+    }
+
+    if (SteeringFlipCount >= 4)
+    {
+        SteeringFlipCount = 0;
+        AIState = ENEMY_IDLE;
+        return;
+    }
+
+    Vector2 steerDir = ComputeSteering(STEERING_RETURN);
+    Velocity = steerDir;
+
+    if (Vector2LengthSqr(steerDir) > 0.001f)
+        MoveTowards(SteeringTarget, Def->stats.speed);
+    else
+        MoveTowards(SpawnPoint, Def->stats.speed);
+
     if (Anim.state != WALK)
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
 }
@@ -502,6 +530,10 @@ void Enemy::Render()
 
         if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK)
             DrawLineEx(enemyCenter, PlayerInstance.GetCenter(), 1.0f, RED);
+
+        // Steering debug
+        if (AIState == ENEMY_CHASE || AIState == ENEMY_RETURN)
+            Debug::DrawSteeringOverlay(*this);
     }
 }
 

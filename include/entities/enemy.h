@@ -1,8 +1,10 @@
 #pragma once
 
 #include "entity.h"
+#include "../lib/raylib/include/raylib.h"
 #include "animation.h"
 #include "mapLogic.h"
+#include "enemy_ai.h"
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -57,6 +59,13 @@ struct EnemyDefinition
     EnemyStats stats;            ///< Statistik gameplay
     EnemyHitboxData hitbox;      ///< Konfigurasi hitbox
     const AnimationSet *animSet; ///< Pointer ke AnimationSet global, di-resolve dari type
+};
+
+// enum buat jenis behavior movement enemynya
+enum SteeringMode
+{
+    STEERING_CHASE,
+    STEERING_RETURN
 };
 
 // data driven management class
@@ -137,6 +146,16 @@ public:
         return {Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight};
     }
 
+    // getter function
+    Vector2 GetSteeringDir() { return SteeringDir; }
+    Vector2 GetVelocity() { return Velocity; }
+    Vector2 GetLastFlowTile() { return LastFlowTile; }
+    RayHitResult CastDebugRay(Vector2 dir, float maxDist, std::vector<MapObject> &obstacles)
+    {
+        return Ray.Cast(GetCenter(), dir, maxDist, obstacles);
+    }
+    float GetSteeringCooldown() { return SteeringCooldown; }
+
 private:
     void HandleIdle();
     void HandlePatrol();
@@ -145,7 +164,17 @@ private:
     void HandleReturn();
     void PerformAttack();
 
-    RayCast Ray; ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
+    Vector2 Velocity = {0, 0};       // arah gerak frame sebelumnya (dinormalisasi)
+    Vector2 SteeringDir = {0, 0};    // hasil obstacle evaluation terakhir
+    Vector2 LastFlowTile = {-1, -1}; // tile terakhir saat evaluation jalan
+
+    Vector2 ComputeSteering(SteeringMode mode); // return arah gerak dengan obstacle avoidance
+    Vector2 SteeringTarget = {0.f, 0.f};
+    int SteeringFlipCount = 0;
+    float SteeringFlipTimer = 0.f;
+    float SteeringCooldown = 0;
+
+        RayCast Ray; ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
 
     float AttackCooldownTimer;         ///< Sisa waktu cooldown serangan (runtime)
     const float AttackCooldown = 1.0f; ///< Durasi cooldown antar serangan
