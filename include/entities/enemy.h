@@ -182,7 +182,7 @@ private:
     Vector2 ComputeSteering(SteeringMode mode, int abc);
     Vector2 SteeringTarget = {0.f, 0.f};
     int SteeringFlipCount = 0;             // inisialisasi
-    int MaxSteeringFlipCount = 4;        // jumlah maksimum buat enemy flipping
+    int MaxSteeringFlipCount = 2;        // jumlah maksimum buat enemy flipping
     float SteeringFlipTimer;               // inisialisasi buat fliptimer
     float SteeringFlipeTimerWindow = 0.2f; // window untuk handle flip steering (makin lama. makin lama juga enemy bikin decission)
     float SteeringCooldown;                // enemy akan update path nya tiap jumlah/detik (saat ini 4/detik)

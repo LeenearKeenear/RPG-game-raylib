@@ -66,6 +66,8 @@ public:
      */
     void Update(Vector2 playerWorld, int mapWidth, int mapHeight);
 
+    float GetCost(Vector2 worldPos) const;
+
 private:
     struct Cell
     {
@@ -85,7 +87,7 @@ private:
     float rebuildCooldown_ = 0.f;     // sisa waktu cooldown rebuild
 
     bool IsValidTile(int x, int y) const;
-    bool IsTileWalkable(int tileX, int tileY) const;                            // pakai IsPositionSafe
+    bool IsTileWalkable(int tileX, int tileY) const;                                 // pakai IsPositionSafe
     void Dijkstra(int goalX, int goalY, int startX, int startY, int endX, int endY); // isi direction tiap cell dari goal
     float ComputeTileCost(int x, int y);
 };

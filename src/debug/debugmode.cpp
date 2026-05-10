@@ -511,7 +511,7 @@ void Debug::DrawWorldOverlay(void)
     DrawCollisionOverlay(TRAP_LAYER_NAME, BEIGE, BEIGE, LIGHTGRAY);
     DrawCollisionOverlay(ITEM_LAYER_NAME, PINK, PINK, LIGHTGRAY);
     DrawAttackOverlay();
-    // DrawFlowFieldOverlay();
+    DrawFlowFieldOverlay();
     DrawEnemySpawnOverlay();
 
     // Batas luar map

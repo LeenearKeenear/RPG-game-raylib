@@ -2,6 +2,7 @@
 #include "enemy.h"
 #include "map.h"
 #include "mapLogic.h"
+#include "player.h"
 #include "../lib/raylib/include/raymath.h"
 #include <queue>
 #include <cfloat>
@@ -208,6 +209,17 @@ bool FlowField::IsValidTile(int x, int y) const
     return x >= 0 && x < gridWidth_ && y >= 0 && y < gridHeight_;
 }
 
+float FlowField::GetCost(Vector2 worldPos) const
+{
+    int x = (int)(worldPos.x / FLOW_FIELD_TILE_SIZE);
+    int y = (int)(worldPos.y / FLOW_FIELD_TILE_SIZE);
+    if (!IsValidTile(x, y))
+        return FLT_MAX;
+    if (!grid_[y][x].reached)
+        return FLT_MAX;
+    return grid_[y][x].cost;
+}
+
 // File-local helper — bangun obstacle list buat raycast
 std::vector<MapObject> BuildObstacleList()
 {
@@ -291,6 +303,7 @@ Vector2 Enemy::ComputeSteering(SteeringMode mode)
     // --- 5x5 tile evaluation ---
     float bestScore = -FLT_MAX;
     Vector2 bestDir = flowDir;
+    Vector2 prevDir = SteeringDir; // simpan sebelum loop
 
     SteeringTarget = Vector2Add(Position, Vector2Scale(flowDir, FLOW_FIELD_TILE_SIZE)); // fallback
 
@@ -329,6 +342,26 @@ Vector2 Enemy::ComputeSteering(SteeringMode mode)
             Vector2 toTile = Vector2Normalize({tileCenter.x - Position.x,
                                                tileCenter.y - Position.y});
 
+            // anti-flip filter DULU sebelum scoring
+            if (SteeringFlipCount >= MaxSteeringFlipCount / 2)
+            {
+                float cost = globalFlowField.GetCost(tileCenter);
+
+                // skip kalau tile ini bakal bikin enemy keluar detection range
+                float distToPlayer = Vector2Distance(tileCenter, PlayerInstance.GetCenter());
+                if (distToPlayer > DetectionRange)
+                    continue;
+
+                float score = -cost;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestDir = toTile;
+                    SteeringTarget = tileCenter;
+                }
+                continue;
+            }
+
             float dot = Vector2DotProduct(toTile, flowDir);
             float momentum = Vector2DotProduct(toTile, SteeringDir) * ScoreMultiplier;
             float score = dot + momentum;
@@ -342,8 +375,7 @@ Vector2 Enemy::ComputeSteering(SteeringMode mode)
         }
     }
 
-    Vector2 prevDir = SteeringDir; // simpan dulu
-    SteeringDir = bestDir;
+    SteeringDir = bestDir; // assign SETELAH loop selesai
 
     float dirChange = Vector2DotProduct(bestDir, prevDir); // bandingkan baru vs lama
     if (dirChange < 0.f)                                   // arah kebalik
