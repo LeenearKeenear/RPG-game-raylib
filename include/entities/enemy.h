@@ -155,6 +155,16 @@ public:
         return Ray.Cast(GetCenter(), dir, maxDist, obstacles);
     }
     float GetSteeringCooldown() { return SteeringCooldown; }
+    float GetRayLength() { return rayLength; }
+    RayHitResult *GetLastRays() { return LastRays; }
+
+    float TileCenterOffset = TILE_SIZE * 0.5f;
+    float HitBoxValue = 20.0f;
+    float OffSetValue = 0.0f;
+
+    bool IsPlayerInRange(Vector2 playerPos);
+    RayHitResult LastRays[8] = {};                               ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
+    float rayLength = TILE_SIZE * 2.0f;
 
 private:
     void HandleIdle();
@@ -164,17 +174,20 @@ private:
     void HandleReturn();
     void PerformAttack();
 
-    Vector2 Velocity = {0, 0};       // arah gerak frame sebelumnya (dinormalisasi)
-    Vector2 SteeringDir = {0, 0};    // hasil obstacle evaluation terakhir
-    Vector2 LastFlowTile = {-1, -1}; // tile terakhir saat evaluation jalan
-
+    // buat handle logic ai path finding
+    Vector2 Velocity = {0, 0};                  // arah gerak frame sebelumnya (dinormalisasi)
+    Vector2 SteeringDir = {0, 0};               // hasil obstacle evaluation terakhir
+    Vector2 LastFlowTile = {-1, -1};            // tile terakhir saat evaluation jalan
     Vector2 ComputeSteering(SteeringMode mode); // return arah gerak dengan obstacle avoidance
+    Vector2 ComputeSteering(SteeringMode mode, int abc);
     Vector2 SteeringTarget = {0.f, 0.f};
-    int SteeringFlipCount = 0;
-    float SteeringFlipTimer = 0.f;
-    float SteeringCooldown = 0;
-
-        RayCast Ray; ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
+    int SteeringFlipCount = 0;             // inisialisasi
+    int MaxSteeringFlipCount = 4;        // jumlah maksimum buat enemy flipping
+    float SteeringFlipTimer;               // inisialisasi buat fliptimer
+    float SteeringFlipeTimerWindow = 0.2f; // window untuk handle flip steering (makin lama. makin lama juga enemy bikin decission)
+    float SteeringCooldown;                // enemy akan update path nya tiap jumlah/detik (saat ini 4/detik)
+    float ScoreMultiplier = 0.9f;          // momentum multiplier buat weight pathfinding
+    RayCast Ray;                           ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
 
     float AttackCooldownTimer;         ///< Sisa waktu cooldown serangan (runtime)
     const float AttackCooldown = 1.0f; ///< Durasi cooldown antar serangan

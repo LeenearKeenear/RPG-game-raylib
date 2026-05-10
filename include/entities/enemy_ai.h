@@ -10,8 +10,15 @@
  * FlowField
  *==============================================================================*/
 constexpr int FLOW_FIELD_TILE_SIZE = TILE_SIZE;
-constexpr float FLOW_FIELD_REBUILD_COOLDOWN = 0.1f; // throttle max 10x/detik
+constexpr float FLOW_FIELD_CENTER_OFFSET = FLOW_FIELD_TILE_SIZE * 0.5f;
+constexpr float FLOW_FIELD_REBUILD_COOLDOWN = 0.3f; // throttle max 10x/detik
 constexpr int FLOW_FIELD_RADIUS = 15;               // area aktif sekitar player (dalam satuan tile)
+constexpr int STEERING_GRID_RADIUS = 2;             // 1 = 3x3, 2 = 5x5, 3 = 7 x 7, 4 = 9 x 9
+
+constexpr int FLOW_FIELD_OBSTACLE_CHECK_RADIUS = 1; // jarak sample proximity (dalam tile)
+constexpr float FLOW_FIELD_OBSTACLE_PENALTY = 5.f;  // cost tambahan tile deket obstacle
+constexpr float FLOW_FIELD_DIAGONAL_COST = 1.414f;  // sqrt(2)
+constexpr float FLOW_FIELD_CARDINAL_COST = 1.0f;
 
 /**
  * @brief Grid arah menuju player, dihitung sekali dan dibaca semua enemy.
@@ -65,6 +72,7 @@ private:
         Vector2 direction = {0, 0}; // arah normalized menuju goal
         bool walkable = false;      // false jika tile ini obstacle
         bool reached = false;       // false jika tile tidak reachable dari goal
+        float cost = 1.f;           // base cost, naik kalau deket obstacle
     };
 
     std::vector<std::vector<Cell>> grid_; // grid_[y][x]
@@ -78,7 +86,8 @@ private:
 
     bool IsValidTile(int x, int y) const;
     bool IsTileWalkable(int tileX, int tileY) const;                            // pakai IsPositionSafe
-    void BFS(int goalX, int goalY, int startX, int startY, int endX, int endY); // isi direction tiap cell dari goal
+    void Dijkstra(int goalX, int goalY, int startX, int startY, int endX, int endY); // isi direction tiap cell dari goal
+    float ComputeTileCost(int x, int y);
 };
 
 std::vector<MapObject> BuildObstacleList();

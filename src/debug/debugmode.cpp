@@ -17,6 +17,7 @@
 #include "mapLogic.h"
 #include "tiles.h"
 #include "animation.h"
+#include "entities.h"
 #include "player.h"
 #include "enemy.h"
 #include <algorithm>
@@ -536,7 +537,8 @@ void Debug::DrawWorldOverlay(void)
 
 void Debug::DrawFlowFieldOverlay()
 {
-    if (!globalFlowField.IsReady()) return;
+    if (!globalFlowField.IsReady())
+        return;
 
     int mapW = tilesonMap->width;
     int mapH = tilesonMap->height;
@@ -546,17 +548,16 @@ void Debug::DrawFlowFieldOverlay()
         for (int x = 0; x < mapW; x++)
         {
             Vector2 tileCenter = {
-                x * FLOW_FIELD_TILE_SIZE + FLOW_FIELD_TILE_SIZE * 0.5f,
-                y * FLOW_FIELD_TILE_SIZE + FLOW_FIELD_TILE_SIZE * 0.5f
-            };
+                x * FLOW_FIELD_TILE_SIZE + FLOW_FIELD_CENTER_OFFSET,
+                y * FLOW_FIELD_TILE_SIZE + FLOW_FIELD_CENTER_OFFSET};
 
             Vector2 dir = globalFlowField.GetDirection(tileCenter);
-            if (dir.x == 0 && dir.y == 0) continue;
+            if (dir.x == 0 && dir.y == 0)
+                continue;
 
             Vector2 arrowEnd = {
                 tileCenter.x + dir.x * (FLOW_FIELD_TILE_SIZE * 0.4f),
-                tileCenter.y + dir.y * (FLOW_FIELD_TILE_SIZE * 0.4f)
-            };
+                tileCenter.y + dir.y * (FLOW_FIELD_TILE_SIZE * 0.4f)};
 
             DrawLineV(tileCenter, arrowEnd, BLUE);
             DrawCircleV(arrowEnd, 2.0f, ORANGE); // kepala panah
@@ -591,31 +592,36 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
         DrawCircleV(steerEnd, 3.0f, BLUE);
     }
 
-    // --- 3. 5x5 tile highlight ---
-    Vector2 flowTile = enemy.GetLastFlowTile();
-    for (int dy = -2; dy <= 2; dy++)
+    // --- 3. 5x5 tile highlight --- (skip kalau in range)
+    if (!enemy.IsPlayerInRange(PlayerInstance.GetCenter()))
     {
-        for (int dx = -2; dx <= 2; dx++)
+        Vector2 flowTile = enemy.GetLastFlowTile();
+        for (int dy = -STEERING_GRID_RADIUS; dy <= STEERING_GRID_RADIUS; dy++)
         {
-            if (dx == 0 && dy == 0) continue;
+            for (int dx = -STEERING_GRID_RADIUS; dx <= STEERING_GRID_RADIUS; dx++)
+            {
+                if (dx == 0 && dy == 0)
+                    continue;
 
-            int tx = (int)flowTile.x + dx;
-            int ty = (int)flowTile.y + dy;
+                int tx = (int)flowTile.x + dx;
+                int ty = (int)flowTile.y + dy;
 
-            Vector2 tileCenter = {
-                tx * tileSize + tileSize * 0.5f,
-                ty * tileSize + tileSize * 0.5f
-            };
+                Vector2 tileCenter = {
+                    tx * tileSize + tileSize * 0.5f,
+                    ty * tileSize + tileSize * 0.5f};
 
-            bool walkable = IsPositionSafe(tileCenter, enemy.HitboxWidth, enemy.HitboxHeight,
-                                           enemy.HitboxOffsetX, enemy.HitboxOffsetY);
+                bool walkable = IsPositionSafe(tileCenter, enemy.HitboxWidth, enemy.HitboxHeight,
+                                               enemy.HitboxOffsetX, enemy.HitboxOffsetY);
 
-            Rectangle tileRect = {
-                tx * tileSize, ty * tileSize,
-                tileSize, tileSize
-            };
+                Rectangle tileRect = {
+                    tx * tileSize, ty * tileSize,
+                    tileSize, tileSize};
 
-            DrawRectangleLinesEx(tileRect, 1.0f, walkable ? GREEN : RED);
+                DrawRectangleLinesEx(tileRect, 1.0f, walkable ? GREEN : RED);
+            }
         }
     }
+
+    // --- 4. IsPlayerInRange radius ---
+    DrawCircleV(pos, enemy.rayLength, Fade(YELLOW, 0.2f));
 }

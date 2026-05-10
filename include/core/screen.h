@@ -203,7 +203,10 @@ Rectangle GetMonitorResolution(void);
 
 /**
  * @brief IsFullscreen()
- * Cek apakah sedang dalam mode fullscreen.
+ * Cek aohpakah sedang dalam mode fullscreen.
  * @return true kalo fullscreen
  */
 bool IsFullscreen(void);
+
+// sementara aja
+constexpr int ENEMY_SPAWN_COUNT = 1; // jumlah enemy per spawn point

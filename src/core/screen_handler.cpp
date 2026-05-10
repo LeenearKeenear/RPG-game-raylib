@@ -194,9 +194,12 @@ void SpawnEnemiesFromMap()
             // 3. Spawn tepat 1 musuh di tengah objek spawn
             Vector2 spawnPos = {obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f};
 
-            Enemy *enemy = new Enemy();
-            enemy->Init(spawnPos, enemyName.c_str(), obj.id, def);
-            Entities::AddDynamic(enemy);
+            for (int i = 0; i < ENEMY_SPAWN_COUNT; i++)
+            {
+                Enemy *enemy = new Enemy();
+                enemy->Init(spawnPos, enemyName.c_str(), obj.id, def);
+                Entities::AddDynamic(enemy);
+            }
 
             TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %s, ID: %d) from spawn point '%s'", enemyName.c_str(), obj.id, obj.name.c_str());
         }

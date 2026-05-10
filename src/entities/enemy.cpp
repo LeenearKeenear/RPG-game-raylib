@@ -370,25 +370,31 @@ void Enemy::HandleChase()
         return;
     }
 
-    if (SteeringFlipCount >= 4)
+    // ganti bagian ini di HandleChase
+    // if (SteeringFlipCount >= MaxSteeringFlipCount) ... sampai MoveTowards
+
+    if (SteeringFlipCount >= MaxSteeringFlipCount)
     {
         SteeringFlipCount = 0;
         AIState = ENEMY_PATROL;
         return;
     }
 
-    Vector2 steerDir = ComputeSteering(STEERING_CHASE);
-    Velocity = steerDir;
-
-    if (Vector2LengthSqr(steerDir) > 0.001f)
+    if (IsPlayerInRange(playerCenter))
     {
-        MoveTowards(SteeringTarget, Def->stats.chaseSpeed);
+        // skip steering, langsung ke player
+        MoveTowards(playerCenter, Def->stats.chaseSpeed);
     }
     else
     {
-        MoveTowards(PlayerInstance.GetPosition(), Def->stats.chaseSpeed);
-    }
+        Vector2 steerDir = ComputeSteering(STEERING_CHASE);
+        Velocity = steerDir;
 
+        if (Vector2LengthSqr(steerDir) > 0.001f)
+            MoveTowards(SteeringTarget, Def->stats.chaseSpeed);
+        else
+            MoveTowards(playerCenter, Def->stats.chaseSpeed);
+    }
     if (Anim.state != WALK)
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
 }
@@ -401,7 +407,7 @@ void Enemy::HandleReturn()
         return;
     }
 
-    if (Vector2Distance(GetCenter(), SpawnPoint) < 5.0f)
+    if (Vector2Distance(GetCenter(), SpawnPoint) < TILE_SIZE * 3.0f)
     {
         AIState = ENEMY_IDLE;
         PlayAnimation(Anim, IDLE, Anim.direction, *Def->animSet);
@@ -414,7 +420,7 @@ void Enemy::HandleReturn()
         returnFlowFieldBuilt = true;
     }
 
-    if (SteeringFlipCount >= 4)
+    if (SteeringFlipCount >= MaxSteeringFlipCount)
     {
         SteeringFlipCount = 0;
         AIState = ENEMY_IDLE;
@@ -465,8 +471,17 @@ void Enemy::PerformAttack()
 {
     Vector2 enemyCenter = GetCenter();
     Vector2 playerCenter = PlayerInstance.GetCenter();
-    Vector2 knockDir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
 
+    // cek ada obstacle nggak antara enemy dan player
+    Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
+    float dist = Vector2Distance(enemyCenter, playerCenter);
+    auto obstacles = BuildObstacleList();
+    RayHitResult hit = Ray.Cast(enemyCenter, dir, dist, obstacles);
+
+    if (hit.hit)
+        return; // ada obstacle, batal serang
+
+    Vector2 knockDir = dir;
     PlayerInstance.TakeDamage(Def->stats.damage, knockDir);
 
     PlayAnimation(Anim, ATTACK, Anim.direction, *AnimSet);
