@@ -584,7 +584,7 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
     DrawCircleV(rayEnd, 3.0f, rayColor);
 
     // --- 2. Steering dir arrow ---
-    Vector2 steerDir = enemy.GetSteeringDir();
+    Vector2 steerDir = enemy.Steering.SteeringDir;
     if (Vector2LengthSqr(steerDir) > 0.001f)
     {
         Vector2 steerEnd = Vector2Add(pos, Vector2Scale(steerDir, tileSize * 0.6f));
@@ -593,9 +593,9 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
     }
 
     // --- 3. 5x5 tile highlight --- (skip kalau in range)
-    if (!enemy.IsPlayerInRange(PlayerInstance.GetCenter()))
+    if (!enemy.Steering.IsInRangeDebug(enemy.GetCenter(), PlayerInstance.GetCenter(), enemy.GetrayLength()))
     {
-        Vector2 flowTile = enemy.GetLastFlowTile();
+        Vector2 flowTile = enemy.Steering.LastFlowTile;   
         for (int dy = -STEERING_GRID_RADIUS; dy <= STEERING_GRID_RADIUS; dy++)
         {
             for (int dx = -STEERING_GRID_RADIUS; dx <= STEERING_GRID_RADIUS; dx++)
@@ -610,8 +610,8 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
                     tx * tileSize + tileSize * 0.5f,
                     ty * tileSize + tileSize * 0.5f};
 
-                bool walkable = IsPositionSafe(tileCenter, enemy.HitboxWidth, enemy.HitboxHeight,
-                                               enemy.HitboxOffsetX, enemy.HitboxOffsetY);
+                bool walkable = IsPositionSafe(tileCenter, enemy.GetHitboxValue(), enemy.GetHitboxValue(),
+                                               enemy.GetOffSetValue(), enemy.GetOffSetValue());
 
                 Rectangle tileRect = {
                     tx * tileSize, ty * tileSize,
@@ -623,5 +623,5 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
     }
 
     // --- 4. IsPlayerInRange radius ---
-    DrawCircleV(pos, enemy.rayLength, Fade(YELLOW, 0.2f));
+    DrawCircleV(pos, enemy.GetrayLength(), Fade(YELLOW, 0.2f));
 }

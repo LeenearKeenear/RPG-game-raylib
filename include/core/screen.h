@@ -209,4 +209,4 @@ Rectangle GetMonitorResolution(void);
 bool IsFullscreen(void);
 
 // sementara aja
-constexpr int ENEMY_SPAWN_COUNT = 1; // jumlah enemy per spawn point
+constexpr int ENEMY_SPAWN_COUNT = 10; // jumlah enemy per spawn point

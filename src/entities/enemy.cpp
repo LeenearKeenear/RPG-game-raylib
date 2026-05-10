@@ -335,9 +335,8 @@ void Enemy::HandlePatrol()
 
 void Enemy::HandleChase()
 {
-    returnFlowFieldBuilt = false;
+    SteeringContext ctx = BuildSteeringContext();
 
-    // Tahan gerak saat cooldown serangan — enemy berdiri diam sebentar setelah menyerang
     if (AttackCooldownTimer > 0)
     {
         if (Anim.state != IDLE)
@@ -351,7 +350,6 @@ void Enemy::HandleChase()
 
     if (dist <= Def->stats.attackRange)
     {
-        // Serang hanya sekali saat player baru masuk range
         if (!PlayerWasInRange)
             PerformAttack();
         AIState = ENEMY_ATTACK;
@@ -363,44 +361,42 @@ void Enemy::HandleChase()
 
     if (dist > DetectionRange)
     {
-        // Player keluar range — pulang ke spawn
         AIState = ENEMY_RETURN;
         PatrolTarget = SpawnPoint;
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
         return;
     }
 
-    // ganti bagian ini di HandleChase
-    // if (SteeringFlipCount >= MaxSteeringFlipCount) ... sampai MoveTowards
-
-    if (SteeringFlipCount >= MaxSteeringFlipCount)
+    if (Steering.SteeringFlipCount >= Steering.MaxSteeringFlipCount)
     {
-        SteeringFlipCount = 0;
+        Steering.SteeringFlipCount = 0;
         AIState = ENEMY_PATROL;
         return;
     }
 
-    if (IsPlayerInRange(playerCenter))
+    if (Steering.IsPlayerInRange(ctx, Ray))
     {
-        // skip steering, langsung ke player
         MoveTowards(playerCenter, Def->stats.chaseSpeed);
     }
     else
     {
-        Vector2 steerDir = ComputeSteering(STEERING_CHASE);
+        Vector2 steerDir = Steering.Compute(STEERING_CHASE, ctx, Ray);
         Velocity = steerDir;
 
         if (Vector2LengthSqr(steerDir) > 0.001f)
-            MoveTowards(SteeringTarget, Def->stats.chaseSpeed);
+            MoveTowards(Steering.SteeringTarget, Def->stats.chaseSpeed);
         else
             MoveTowards(playerCenter, Def->stats.chaseSpeed);
     }
+
     if (Anim.state != WALK)
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
 }
 
 void Enemy::HandleReturn()
 {
+    SteeringContext ctx = BuildSteeringContext();
+
     if (CheckPlayerLoS())
     {
         AIState = ENEMY_CHASE;
@@ -420,18 +416,18 @@ void Enemy::HandleReturn()
         returnFlowFieldBuilt = true;
     }
 
-    if (SteeringFlipCount >= MaxSteeringFlipCount)
+    if (Steering.SteeringFlipCount >= Steering.MaxSteeringFlipCount)
     {
-        SteeringFlipCount = 0;
+        Steering.SteeringFlipCount = 0;
         AIState = ENEMY_IDLE;
         return;
     }
 
-    Vector2 steerDir = ComputeSteering(STEERING_RETURN);
+    Vector2 steerDir = Steering.Compute(STEERING_RETURN, ctx, Ray);
     Velocity = steerDir;
 
     if (Vector2LengthSqr(steerDir) > 0.001f)
-        MoveTowards(SteeringTarget, Def->stats.speed);
+        MoveTowards(Steering.SteeringTarget, Def->stats.speed);
     else
         MoveTowards(SpawnPoint, Def->stats.speed);
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../lib/raylib/include/raylib.h"
+#include "enemy.h"
 #include "map.h"
 #include "mapLogic.h"
 #include "tiles.h"
@@ -90,6 +91,49 @@ private:
     bool IsTileWalkable(int tileX, int tileY) const;                                 // pakai IsPositionSafe
     void Dijkstra(int goalX, int goalY, int startX, int startY, int endX, int endY); // isi direction tiap cell dari goal
     float ComputeTileCost(int x, int y);
+};
+
+// EnemySteering.h
+
+// enum buat jenis behavior movement enemynya
+enum SteeringMode
+{
+    STEERING_CHASE,
+    STEERING_RETURN
+};
+
+struct SteeringContext
+{
+    Vector2 Position;
+    Vector2 Velocity;
+    float HitBoxValue;
+    float OffsetValue;
+    float TileCenterOffset;
+    float DetectionRange;
+    float rayLength;
+    Vector2 PlayerCenter;
+    Vector2 SpawnPoint;
+};
+
+class EnemySteering
+{
+public:
+    Vector2 Compute(SteeringMode mode, const SteeringContext &ctx, RayCast &ray);
+    bool IsPlayerInRange(const SteeringContext &ctx, RayCast &ray);
+
+    // state
+    Vector2 SteeringDir = {0, 0};
+    Vector2 LastFlowTile = {-1, -1};
+    Vector2 SteeringTarget = {0.f, 0.f};
+
+    int SteeringFlipCount = 0;
+    int MaxSteeringFlipCount = 4;
+    float SteeringFlipTimer = 0.f;
+    float SteeringFlipeTimerWindow = 0.3f;
+    float SteeringCooldown = 0.f;
+    float ScoreMultiplier = 0.9f;
+
+    bool IsInRangeDebug(Vector2 enemyCenter, Vector2 playerCenter, float rayLength);
 };
 
 std::vector<MapObject> BuildObstacleList();
