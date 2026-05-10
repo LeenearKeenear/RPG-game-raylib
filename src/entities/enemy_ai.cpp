@@ -256,62 +256,21 @@ std::vector<MapObject> BuildObstacleList()
 
     return result;
 }
-
-Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, RayCast &ray)
+Vector2 EnemySteering::EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir, SteeringMode mode)
 {
-    Vector2 flowDir;
-    if (mode == STEERING_CHASE)
-        flowDir = globalFlowField.GetDirection(ctx.Position);
-    else if (mode == STEERING_RETURN)
-        flowDir = returnFlowField.GetDirection(ctx.Position);
-    else
-        flowDir = globalFlowField.GetDirection(ctx.Position);
+    float bestScore = -FLT_MAX;
+    Vector2 bestDir = flowDir;
 
-    // kalau flow field belum ready, balik zero
-    if (Vector2LengthSqr(flowDir) < 0.001f)
-        return flowDir;
+    SteeringTarget = Vector2Add(ctx.Position, Vector2Scale(flowDir, FLOW_FIELD_TILE_SIZE));
 
-    // tile posisi enemy sekarang
     Vector2 currentFlowTile = {
         floorf(ctx.Position.x / FLOW_FIELD_TILE_SIZE),
         floorf(ctx.Position.y / FLOW_FIELD_TILE_SIZE)};
-
-    // arah raycast — pakai velocity kalau ada, fallback ke flowDir
-    Vector2 rayDir = (Vector2LengthSqr(ctx.Velocity) > 0.001f)
-                         ? Vector2Normalize(ctx.Velocity)
-                         : flowDir;
-
-    // inisialisasi SteeringDir dengan flowDir kalau belum pernah di-set
-    if (Vector2LengthSqr(SteeringDir) < 0.001f)
-        SteeringDir = flowDir;
-
-    auto obstacles = BuildObstacleList();
-    ray.Cast(ctx.Position, rayDir, ctx.rayLength, obstacles);
-
-    SteeringCooldown -= GetFrameTime();
-
-    bool tileChanged = (currentFlowTile.x != LastFlowTile.x ||
-                        currentFlowTile.y != LastFlowTile.y);
-
-    // mulus — pakai hasil terakhir
-    if (!tileChanged && SteeringCooldown > 0.f)
-        return SteeringDir;
-
-    LastFlowTile = currentFlowTile;
-    SteeringCooldown = 0.3f; // reset cooldown setelah evaluate
-
-    // --- 5x5 tile evaluation ---
-    float bestScore = -FLT_MAX;
-    Vector2 bestDir = flowDir;
-    Vector2 prevDir = SteeringDir; // simpan sebelum loop
-
-    SteeringTarget = Vector2Add(ctx.Position, Vector2Scale(flowDir, FLOW_FIELD_TILE_SIZE));
 
     for (int dy = -STEERING_GRID_RADIUS; dy <= STEERING_GRID_RADIUS; dy++)
     {
         for (int dx = -STEERING_GRID_RADIUS; dx <= STEERING_GRID_RADIUS; dx++)
         {
-            // skip tile enemy sendiri
             if (dx == 0 && dy == 0)
                 continue;
 
@@ -339,14 +298,14 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
             Vector2 toTile = Vector2Normalize({tileCenter.x - ctx.Position.x,
                                                tileCenter.y - ctx.Position.y});
 
-            // anti-flip filter DULU sebelum scoring
             if (SteeringFlipCount >= MaxSteeringFlipCount / 2)
             {
-                float cost = globalFlowField.GetCost(tileCenter);
+                float cost = (mode == STEERING_CHASE)
+                                 ? globalFlowField.GetCost(tileCenter)
+                                 : returnFlowField.GetCost(tileCenter);
 
-                // skip kalau tile ini bakal bikin enemy keluar detection range
-                float distToPlayer = Vector2Distance(tileCenter, PlayerInstance.GetCenter());
-                if (distToPlayer > ctx.DetectionRange)
+                float distToPlayer = Vector2Distance(tileCenter, ctx.PlayerCenter);
+                if (mode == STEERING_CHASE && distToPlayer > ctx.DetectionRange)
                     continue;
 
                 float score = -cost;
@@ -372,10 +331,13 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
         }
     }
 
-    SteeringDir = bestDir; // assign SETELAH loop selesai
+    return bestDir;
+}
 
-    float dirChange = Vector2DotProduct(bestDir, prevDir); // bandingkan baru vs lama
-    if (dirChange < 0.f)                                   // arah kebalik
+void EnemySteering::ApplyAntiFlip(Vector2 bestDir, Vector2 prevDir)
+{
+    float dirChange = Vector2DotProduct(bestDir, prevDir);
+    if (dirChange < 0.f)
     {
         SteeringFlipCount++;
         SteeringFlipTimer = SteeringFlipeTimerWindow;
@@ -384,6 +346,51 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
     SteeringFlipTimer -= GetFrameTime();
     if (SteeringFlipTimer <= 0.f)
         SteeringFlipCount = 0;
+}
+
+Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, RayCast &ray)
+{
+    Vector2 flowDir;
+    if (mode == STEERING_CHASE)
+        flowDir = globalFlowField.GetDirection(ctx.Position);
+    else if (mode == STEERING_RETURN)
+        flowDir = returnFlowField.GetDirection(ctx.Position);
+    else
+        flowDir = globalFlowField.GetDirection(ctx.Position);
+
+    if (Vector2LengthSqr(flowDir) < 0.001f)
+        return flowDir;
+
+    Vector2 currentFlowTile = {
+        floorf(ctx.Position.x / FLOW_FIELD_TILE_SIZE),
+        floorf(ctx.Position.y / FLOW_FIELD_TILE_SIZE)};
+
+    Vector2 rayDir = (Vector2LengthSqr(ctx.Velocity) > 0.001f)
+                         ? Vector2Normalize(ctx.Velocity)
+                         : flowDir;
+
+    if (Vector2LengthSqr(SteeringDir) < 0.001f)
+        SteeringDir = flowDir;
+
+    auto obstacles = BuildObstacleList();
+    ray.Cast(ctx.Position, rayDir, ctx.rayLength, obstacles);
+
+    SteeringCooldown -= GetFrameTime();
+
+    bool tileChanged = (currentFlowTile.x != LastFlowTile.x ||
+                        currentFlowTile.y != LastFlowTile.y);
+
+    if (!tileChanged && SteeringCooldown > 0.f)
+        return SteeringDir;
+
+    LastFlowTile = currentFlowTile;
+    SteeringCooldown = 0.3f;
+
+    Vector2 prevDir = SteeringDir;
+    Vector2 bestDir = EvaluateGrid(ctx, flowDir, mode);
+
+    SteeringDir = bestDir;
+    ApplyAntiFlip(bestDir, prevDir);
 
     return SteeringDir;
 }

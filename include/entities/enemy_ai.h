@@ -120,6 +120,7 @@ class EnemySteering
 public:
     Vector2 Compute(SteeringMode mode, const SteeringContext &ctx, RayCast &ray);
     bool IsPlayerInRange(const SteeringContext &ctx, RayCast &ray);
+    bool IsInRangeDebug(Vector2 enemyCenter, Vector2 playerCenter, float rayLength);
 
     // state
     Vector2 SteeringDir = {0, 0};
@@ -133,7 +134,9 @@ public:
     float SteeringCooldown = 0.f;
     float ScoreMultiplier = 0.9f;
 
-    bool IsInRangeDebug(Vector2 enemyCenter, Vector2 playerCenter, float rayLength);
+private:
+    Vector2 EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir, SteeringMode mode);
+    void ApplyAntiFlip(Vector2 bestDir, Vector2 prevDir);
 };
 
 std::vector<MapObject> BuildObstacleList();
