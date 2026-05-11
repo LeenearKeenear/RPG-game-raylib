@@ -20,6 +20,7 @@
 #include "tiles.h"
 #include "animation.h"
 #include "enemy.h"
+#include "enemy_ai.h"
 #include "entities.h"
 #include "mapLogic.h"
 #include "effects.h"
@@ -91,10 +92,10 @@ void InitAll()
     // Daftarkan player ke sistem entitas agar diupdate & dirender otomatis (Index 0)
     Entities::Add(&PlayerInstance);
 
-    // Spawn musuh dari map aktif
-    SpawnEnemiesFromMap();
     SpawnObject();
     globalFlowField.Invalidate(); // nanti diganti kalo nambah method ai nya
+    // Spawn musuh dari map aktif
+    SpawnEnemiesFromMap();
 }
 
 /**
@@ -194,10 +195,13 @@ void SpawnEnemiesFromMap()
             // 3. Spawn tepat 1 musuh di tengah objek spawn
             Vector2 spawnPos = {obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f};
 
+            BuildSpawnFlowFields(spawnPos, obj.id, tilesonMap->width, tilesonMap->height);
+
             for (int i = 0; i < ENEMY_SPAWN_COUNT; i++)
             {
                 Enemy *enemy = new Enemy();
                 enemy->Init(spawnPos, enemyName.c_str(), obj.id, def);
+                enemy->SetReturnFlowField(&spawnFlowFields[obj.id].field);
                 Entities::AddDynamic(enemy);
             }
 
@@ -279,6 +283,14 @@ void UpdateLogicAll()
     // update flow field sebelum enemy di-update
     if (tilesonMap)
         globalFlowField.Update(PlayerInstance.GetPosition(), tilesonMap->width, tilesonMap->height);
+
+    if (!spawnFlowFieldRebuildQueue.empty() && tilesonMap)
+    {
+        int id = spawnFlowFieldRebuildQueue.front();
+        spawnFlowFieldRebuildQueue.pop();
+        auto &entry = spawnFlowFields[id];
+        entry.field.Build(entry.spawnPos, tilesonMap->width, tilesonMap->height, FLOW_FIELD_RETURN_RADIUS);
+    }
 
     // Update semua entity (Player + semua Enemy) via Entities registry
     Entities::Update();

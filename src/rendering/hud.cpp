@@ -313,7 +313,7 @@ void DrawInventory()
 
     const float slotSize = 50.0f;
     const float padding = 6.0f;
-    const int gridSize = 5;
+    const int gridSize = 4; // ukuran grid maksimum yang digambar di inventory
     const float totalGridSize = (slotSize * gridSize) + (padding * (gridSize - 1));
     const float startX = (GameScreenWidth - totalGridSize) / 2.0f;
     const float startY = (GameScreenHeight - totalGridSize) / 2.0f;

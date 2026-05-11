@@ -395,8 +395,6 @@ void Enemy::HandleChase()
 
 void Enemy::HandleReturn()
 {
-    SteeringContext ctx = BuildSteeringContext();
-
     if (CheckPlayerLoS())
     {
         AIState = ENEMY_CHASE;
@@ -410,16 +408,32 @@ void Enemy::HandleReturn()
         return;
     }
 
-    if (!returnFlowFieldBuilt && tilesonMap)
+    // throttle scan spawn flow field
+    ReturnScanTimer -= GetFrameTime();
+    if (ReturnScanTimer <= 0.f)
     {
-        returnFlowField.Build(SpawnPoint, tilesonMap->width, tilesonMap->height);
-        returnFlowFieldBuilt = true;
+        ReturnScanTimer = RETURN_SCAN_INTERVAL;
+
+        if (ReturnFlowField == nullptr ||
+            Vector2LengthSqr(ReturnFlowField->GetDirection(GetCenter())) < 0.001f)
+        {
+            ReturnFlowField = FindNearestSpawnFlowField(GetCenter());
+        }
     }
+
+    SteeringContext ctx = BuildSteeringContext();
 
     if (Steering.SteeringFlipCount >= Steering.MaxSteeringFlipCount)
     {
         Steering.SteeringFlipCount = 0;
         AIState = ENEMY_IDLE;
+        return;
+    }
+
+    if (ReturnFlowField == nullptr)
+    {
+        // fallback — jalan lurus ke spawn point
+        MoveTowards(SpawnPoint, Def->stats.speed);
         return;
     }
 

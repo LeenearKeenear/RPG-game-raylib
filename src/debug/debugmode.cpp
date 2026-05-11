@@ -34,6 +34,7 @@ Debug DebugInstance;
 
 /** Flag untuk menentukan apakah debug mode sedang aktif */
 bool isDebugMode = false;
+bool showFlowFieldOverlay = false;
 
 /*==============================================================================
  * Private Helper Methods
@@ -287,6 +288,10 @@ void Debug::Toggle(void)
         isDebugMode = !isDebugMode;
         TraceLog(LOG_INFO, "Debug mode: %s", isDebugMode ? "ON" : "OFF");
     }
+    if (IsKeyPressed(KEY_BACKSLASH))
+    {
+        showFlowFieldOverlay = !showFlowFieldOverlay;
+    }
 }
 
 /**
@@ -511,7 +516,19 @@ void Debug::DrawWorldOverlay(void)
     DrawCollisionOverlay(TRAP_LAYER_NAME, BEIGE, BEIGE, LIGHTGRAY);
     DrawCollisionOverlay(ITEM_LAYER_NAME, PINK, PINK, LIGHTGRAY);
     DrawAttackOverlay();
-    DrawFlowFieldOverlay();
+    // DrawFlowFieldOverlay(globalFlowField);
+    if (showFlowFieldOverlay)
+    {
+        for (auto *entity : Entities::GetRegistry())
+        {
+            Enemy *enemy = dynamic_cast<Enemy *>(entity);
+            if (!enemy)
+                continue;
+            const FlowField *ff = enemy->GetReturnFlowField();
+            if (ff && ff->IsReady())
+                DrawFlowFieldOverlay(*ff);
+        }
+    }
     DrawEnemySpawnOverlay();
 
     // Batas luar map
@@ -535,9 +552,9 @@ void Debug::DrawWorldOverlay(void)
     }
 }
 
-void Debug::DrawFlowFieldOverlay()
+void Debug::DrawFlowFieldOverlay(const FlowField &field)
 {
-    if (!globalFlowField.IsReady())
+    if (!field.IsReady())
         return;
 
     int mapW = tilesonMap->width;
@@ -551,7 +568,7 @@ void Debug::DrawFlowFieldOverlay()
                 x * FLOW_FIELD_TILE_SIZE + FLOW_FIELD_CENTER_OFFSET,
                 y * FLOW_FIELD_TILE_SIZE + FLOW_FIELD_CENTER_OFFSET};
 
-            Vector2 dir = globalFlowField.GetDirection(tileCenter);
+            Vector2 dir = field.GetDirection(tileCenter);
             if (dir.x == 0 && dir.y == 0)
                 continue;
 
@@ -560,7 +577,7 @@ void Debug::DrawFlowFieldOverlay()
                 tileCenter.y + dir.y * (FLOW_FIELD_TILE_SIZE * 0.4f)};
 
             DrawLineV(tileCenter, arrowEnd, BLUE);
-            DrawCircleV(arrowEnd, 2.0f, ORANGE); // kepala panah
+            DrawCircleV(arrowEnd, 2.0f, ORANGE);
         }
     }
 }
@@ -593,9 +610,9 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
     }
 
     // --- 3. 5x5 tile highlight --- (skip kalau in range)
-    if (!enemy.Steering.IsInRangeDebug(enemy.GetCenter(), PlayerInstance.GetCenter(), enemy.GetrayLength()))
+    if (!enemy.Steering.IsInRangeDebug(enemy.GetCenter(), PlayerInstance.GetCenter(), enemy.GetRayLength()))
     {
-        Vector2 flowTile = enemy.Steering.LastFlowTile;   
+        Vector2 flowTile = enemy.Steering.LastFlowTile;
         for (int dy = -STEERING_GRID_RADIUS; dy <= STEERING_GRID_RADIUS; dy++)
         {
             for (int dx = -STEERING_GRID_RADIUS; dx <= STEERING_GRID_RADIUS; dx++)
@@ -623,5 +640,5 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
     }
 
     // --- 4. IsPlayerInRange radius ---
-    DrawCircleV(pos, enemy.GetrayLength(), Fade(YELLOW, 0.2f));
+    DrawCircleV(pos, enemy.GetRayLength(), Fade(YELLOW, 0.2f));
 }

@@ -151,7 +151,9 @@ public:
     float GetHitboxValue() { return HitBoxValue; }
     float GetOffSetValue() { return OffSetValue; }
     float GetTileCenterOffset() { return TileCenterOffset; }
-    float GetrayLength() { return rayLength; }
+
+    const FlowField *GetReturnFlowField() const { return ReturnFlowField; }
+    void SetReturnFlowField(FlowField *ff) { ReturnFlowField = ff; }
 
     SteeringContext BuildSteeringContext() const
     {
@@ -165,6 +167,7 @@ public:
         ctx.rayLength = rayLength;
         ctx.PlayerCenter = PlayerInstance.GetCenter();
         ctx.SpawnPoint = SpawnPoint;
+        ctx.ReturnFlowField = ReturnFlowField;
         return ctx;
     }
 
@@ -176,13 +179,16 @@ private:
     void HandleReturn();
     void PerformAttack();
 
+    FlowField *ReturnFlowField = nullptr;
+
     // buat handle logic ai path finding
-    Vector2 Velocity = {0, 0}; // arah gerak frame sebelumnya (dinormalisasi)
-    RayCast Ray;               ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
-    float TileCenterOffset = TILE_SIZE * 0.5f;
-    float HitBoxValue = 24.0f;
-    float OffSetValue = 0.0f;
-    float rayLength = TILE_SIZE * 2.0f;
+    Vector2 Velocity = {0, 0};                 // arah gerak frame sebelumnya (dinormalisasi)
+    RayCast Ray;                               ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
+    float TileCenterOffset = TILE_SIZE * 0.5f; // offset untuk ai pathfinding
+    float HitBoxValue = 24.0f;                 // hitbox untuk ai pathfinding
+    float OffSetValue = 0.0f;                  // offset untuk ai path finding
+    float rayLength = TILE_SIZE * 2.0f;        // panjang raycast untuk ai path finding
+    float ReturnScanTimer = 0.f;
 
     float AttackCooldownTimer;         ///< Sisa waktu cooldown serangan (runtime)
     const float AttackCooldown = 1.0f; ///< Durasi cooldown antar serangan

@@ -97,7 +97,7 @@ private:
     void DrawRaycastOverlay(void);
     void DrawAttackOverlay(void);
     void DrawEnemySpawnOverlay(void);
-    void DrawFlowFieldOverlay(void);
+    void DrawFlowFieldOverlay(const FlowField &field);
 
     /**
      * @brief Gambar frame panel debug
@@ -153,3 +153,4 @@ extern Debug DebugInstance;
 
 // Flag status debug mode
 extern bool isDebugMode;
+extern bool showFlowFieldOverlay;

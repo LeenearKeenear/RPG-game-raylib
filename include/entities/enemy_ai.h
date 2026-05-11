@@ -6,6 +6,7 @@
 #include "mapLogic.h"
 #include "tiles.h"
 #include <vector>
+#include <queue>
 
 /*==============================================================================
  * FlowField
@@ -13,7 +14,8 @@
 constexpr int FLOW_FIELD_TILE_SIZE = TILE_SIZE;
 constexpr float FLOW_FIELD_CENTER_OFFSET = FLOW_FIELD_TILE_SIZE * 0.5f;
 constexpr float FLOW_FIELD_REBUILD_COOLDOWN = 0.3f; // throttle max 10x/detik
-constexpr int FLOW_FIELD_RADIUS = 15;               // area aktif sekitar player (dalam satuan tile)
+constexpr int FLOW_FIELD_PLAYER_RADIUS = 15;        // area aktif sekitar player (dalam satuan tile)
+constexpr int FLOW_FIELD_RETURN_RADIUS = 18;        // area aktif untuk return enemy (dalam satuan tile)
 constexpr int STEERING_GRID_RADIUS = 2;             // 1 = 3x3, 2 = 5x5, 3 = 7 x 7, 4 = 9 x 9
 
 constexpr int FLOW_FIELD_OBSTACLE_CHECK_RADIUS = 1; // jarak sample proximity (dalam tile)
@@ -40,7 +42,7 @@ public:
      * @param mapHeight Tinggi map dalam satuan tile
      * @note Pakai BFS dari goal — tile non-walkable di-skip
      */
-    void Build(Vector2 goalWorld, int mapWidth, int mapHeight);
+    void Build(Vector2 goalWorld, int mapWidth, int mapHeight, int radius);
 
     /**
      * @brief Ambil arah gerak untuk posisi world space tertentu.
@@ -113,6 +115,7 @@ struct SteeringContext
     float rayLength;
     Vector2 PlayerCenter;
     Vector2 SpawnPoint;
+    const FlowField *ReturnFlowField = nullptr;
 };
 
 class EnemySteering
@@ -141,6 +144,20 @@ private:
 
 std::vector<MapObject> BuildObstacleList();
 
+const float RETURN_SCAN_INTERVAL = 1.5f;
+
+struct SpawnFlowFieldEntry
+{
+    Vector2 spawnPos;
+    FlowField field;
+};
+
+extern std::unordered_map<int, SpawnFlowFieldEntry> spawnFlowFields;
+extern std::queue<int> spawnFlowFieldRebuildQueue;
+
+void BuildSpawnFlowFields(Vector2 spawnPos, int objId, int mapWidth, int mapHeight); // dipanggil dari SpawnEnemiesFromMap
+void RebuildAllSpawnFlowFields();
+FlowField *FindNearestSpawnFlowField(Vector2 position); // dipanggil dari HandleReturn
+void MarkSpawnFlowFieldsDirty(Vector2 explosionPos);
+
 extern FlowField globalFlowField;
-extern FlowField returnFlowField;
-extern bool returnFlowFieldBuilt;

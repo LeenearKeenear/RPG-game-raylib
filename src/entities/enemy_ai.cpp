@@ -10,8 +10,8 @@
 #include <tuple>
 
 FlowField globalFlowField;
-FlowField returnFlowField;
-bool returnFlowFieldBuilt = false;
+std::unordered_map<int, SpawnFlowFieldEntry> spawnFlowFields;
+std::queue<int> spawnFlowFieldRebuildQueue;
 
 void FlowField::Invalidate()
 {
@@ -37,11 +37,11 @@ void FlowField::Update(Vector2 playerWorld, int mapWidth, int mapHeight)
     if (currentTile.x == lastGoalTile_.x && currentTile.y == lastGoalTile_.y)
         return;
 
-    Build(playerWorld, mapWidth, mapHeight);
+    Build(playerWorld, mapWidth, mapHeight, FLOW_FIELD_PLAYER_RADIUS);
     rebuildCooldown_ = FLOW_FIELD_REBUILD_COOLDOWN;
 }
 
-void FlowField::Build(Vector2 goalWorld, int mapWidth, int mapHeight)
+void FlowField::Build(Vector2 goalWorld, int mapWidth, int mapHeight, int radius)
 {
     gridWidth_ = mapWidth;
     gridHeight_ = mapHeight;
@@ -53,10 +53,10 @@ void FlowField::Build(Vector2 goalWorld, int mapWidth, int mapHeight)
     int goalY = Clamp((int)(goalWorld.y / FLOW_FIELD_TILE_SIZE), 0, gridHeight_ - 1);
 
     // hitung batas area aktif
-    int startX = std::max(0, goalX - FLOW_FIELD_RADIUS);
-    int startY = std::max(0, goalY - FLOW_FIELD_RADIUS);
-    int endX = std::min(gridWidth_ - 1, goalX + FLOW_FIELD_RADIUS);
-    int endY = std::min(gridHeight_ - 1, goalY + FLOW_FIELD_RADIUS);
+    int startX = std::max(0, goalX - radius);
+    int startY = std::max(0, goalY - radius);
+    int endX = std::min(gridWidth_ - 1, goalX + radius);
+    int endY = std::min(gridHeight_ - 1, goalY + radius);
 
     // mark walkable hanya dalam area aktif
     for (int y = startY; y <= endY; y++)
@@ -256,6 +256,7 @@ std::vector<MapObject> BuildObstacleList()
 
     return result;
 }
+
 Vector2 EnemySteering::EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir, SteeringMode mode)
 {
     float bestScore = -FLT_MAX;
@@ -302,7 +303,7 @@ Vector2 EnemySteering::EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir,
             {
                 float cost = (mode == STEERING_CHASE)
                                  ? globalFlowField.GetCost(tileCenter)
-                                 : returnFlowField.GetCost(tileCenter);
+                                 : ctx.ReturnFlowField->GetCost(tileCenter);
 
                 float distToPlayer = Vector2Distance(tileCenter, ctx.PlayerCenter);
                 if (mode == STEERING_CHASE && distToPlayer > ctx.DetectionRange)
@@ -354,7 +355,7 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
     if (mode == STEERING_CHASE)
         flowDir = globalFlowField.GetDirection(ctx.Position);
     else if (mode == STEERING_RETURN)
-        flowDir = returnFlowField.GetDirection(ctx.Position);
+        flowDir = ctx.ReturnFlowField->GetDirection(ctx.Position);
     else
         flowDir = globalFlowField.GetDirection(ctx.Position);
 
@@ -384,7 +385,7 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
         return SteeringDir;
 
     LastFlowTile = currentFlowTile;
-    SteeringCooldown = 0.3f;
+    SteeringCooldown = 0.3f; // throtle buat update steering per 0.3 detik
 
     Vector2 prevDir = SteeringDir;
     Vector2 bestDir = EvaluateGrid(ctx, flowDir, mode);
@@ -411,4 +412,58 @@ bool EnemySteering::IsPlayerInRange(const SteeringContext &ctx, RayCast &ray)
 bool EnemySteering::IsInRangeDebug(Vector2 enemyCenter, Vector2 playerCenter, float rayLength)
 {
     return Vector2Distance(enemyCenter, playerCenter) <= rayLength;
+}
+
+void BuildSpawnFlowFields(Vector2 spawnPos, int objId, int mapWidth, int mapHeight)
+{
+    if (spawnFlowFields.count(objId))
+        return;
+
+    spawnFlowFields[objId].spawnPos = spawnPos;
+    spawnFlowFields[objId].field.Build(spawnPos, mapWidth, mapHeight, FLOW_FIELD_RETURN_RADIUS);
+}
+
+FlowField *FindNearestSpawnFlowField(Vector2 position)
+{
+    FlowField *best = nullptr;
+    float bestDist = FLT_MAX;
+
+    for (auto &[id, ff] : spawnFlowFields)
+    {
+        if (!ff.field.IsReady())
+            continue;
+        if (ff.field.GetDirection(position).x == 0 && ff.field.GetDirection(position).y == 0)
+            continue;
+
+        // pakai goal tile sebagai proxy jarak
+        Vector2 dir = ff.field.GetDirection(position);
+        if (Vector2LengthSqr(dir) < 0.001f)
+            continue;
+
+        // cari berdasarkan cost — makin kecil makin dekat ke goal
+        float cost = ff.field.GetCost(position);
+        if (cost < bestDist)
+        {
+            bestDist = cost;
+            best = &ff.field;
+        }
+    }
+
+    return best; // nullptr kalau semua unreachable
+}
+
+void RebuildAllSpawnFlowFields()
+{
+    for (auto &[id, entry] : spawnFlowFields)
+        entry.field.Build(entry.spawnPos, tilesonMap->width, tilesonMap->height, FLOW_FIELD_RETURN_RADIUS);
+}
+
+void MarkSpawnFlowFieldsDirty(Vector2 explosionPos)
+{
+    for (auto &[id, entry] : spawnFlowFields)
+    {
+        float dist = Vector2Distance(entry.spawnPos, explosionPos);
+        if (dist < FLOW_FIELD_RETURN_RADIUS * FLOW_FIELD_TILE_SIZE)
+            spawnFlowFieldRebuildQueue.push(id);
+    }
 }

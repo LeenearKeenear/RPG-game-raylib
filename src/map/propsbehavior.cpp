@@ -13,6 +13,7 @@
 #include "propsbehavior.h"
 #include "item.h"
 #include "enemy.h"
+#include "enemy_ai.h"
 #include "entities.h"
 
 /*==============================================================================
@@ -499,6 +500,7 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
         std::remove_if(DynamicObstacles.begin(), DynamicObstacles.end(), [&](const Rectangle &r)
                        { return r.x == bomb.tile.bounds.x && r.y == bomb.tile.bounds.y; }),
         DynamicObstacles.end());
+    MarkSpawnFlowFieldsDirty(bomb.tile.position);
 
     if (IsInExplosionRadius(bomb.tile.position, playerBounds))
         if (player)
