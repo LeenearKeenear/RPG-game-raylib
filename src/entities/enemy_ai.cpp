@@ -12,6 +12,7 @@
 FlowField globalFlowField;
 std::unordered_map<int, SpawnFlowFieldEntry> spawnFlowFields;
 std::queue<int> spawnFlowFieldRebuildQueue;
+std::vector<MapObject> cachedObstacleList;
 
 void FlowField::Invalidate()
 {
@@ -373,7 +374,7 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
     if (Vector2LengthSqr(SteeringDir) < 0.001f)
         SteeringDir = flowDir;
 
-    auto obstacles = BuildObstacleList();
+    auto obstacles = cachedObstacleList;
     ray.Cast(ctx.Position, rayDir, ctx.rayLength, obstacles);
 
     SteeringCooldown -= GetFrameTime();
@@ -403,7 +404,7 @@ bool EnemySteering::IsPlayerInRange(const SteeringContext &ctx, RayCast &ray)
         return false;
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(ctx.PlayerCenter, ctx.Position));
-    auto obstacles = BuildObstacleList();
+    auto obstacles = cachedObstacleList;
     RayHitResult hit = ray.Cast(ctx.Position, dir, dist, obstacles);
 
     return !hit.hit;
@@ -452,18 +453,17 @@ FlowField *FindNearestSpawnFlowField(Vector2 position)
     return best; // nullptr kalau semua unreachable
 }
 
-void RebuildAllSpawnFlowFields()
-{
-    for (auto &[id, entry] : spawnFlowFields)
-        entry.field.Build(entry.spawnPos, tilesonMap->width, tilesonMap->height, FLOW_FIELD_RETURN_RADIUS);
-}
-
-void MarkSpawnFlowFieldsDirty(Vector2 explosionPos)
+void MarkSpawnFlowFieldsDirty(Vector2 position)
 {
     for (auto &[id, entry] : spawnFlowFields)
     {
-        float dist = Vector2Distance(entry.spawnPos, explosionPos);
+        float dist = Vector2Distance(entry.spawnPos, position);
         if (dist < FLOW_FIELD_RETURN_RADIUS * FLOW_FIELD_TILE_SIZE)
             spawnFlowFieldRebuildQueue.push(id);
     }
+}
+
+void RebuildObstacleCache()
+{
+    cachedObstacleList = BuildObstacleList();
 }

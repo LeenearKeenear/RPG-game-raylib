@@ -593,7 +593,7 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
     Vector2 rayDir = (Vector2LengthSqr(vel) > 0.001f) ? Vector2Normalize(vel) : flowDir;
     Vector2 rayEnd = Vector2Add(pos, Vector2Scale(rayDir, tileSize * 2.0f));
 
-    auto obstacles = BuildObstacleList();
+    auto obstacles = cachedObstacleList;
     RayHitResult hit = enemy.CastDebugRay(rayDir, tileSize * 2.0f, obstacles);
 
     Color rayColor = hit.hit ? RED : GREEN;

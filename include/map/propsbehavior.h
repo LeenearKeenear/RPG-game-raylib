@@ -89,10 +89,12 @@ public:
     void Interact(Vector2 hitPos);
 
     /** @brief Render semua chest (placeholder sprite) */
-    void Render();
+    int Render(Rectangle viewRect);
 
     /** @brief Bersihkan semua data chest */
     void Clear();
+
+    size_t GetCount() const { return chests.size(); }
 
 private:
     std::vector<TileObject> chests;
@@ -140,10 +142,12 @@ public:
     void Update(float deltaTime, Rectangle playerBounds, Player *player);
 
     /** @brief Render semua spike (placeholder sprite) */
-    void Render();
+    int Render(Rectangle viewRect);
 
     /** @brief Bersihkan semua data spike */
     void Clear();
+
+    size_t GetCount() const { return spikes.size(); }
 
 private:
     /**
@@ -217,7 +221,7 @@ public:
     void Update(float deltaTime, Rectangle playerBounds, Player *player);
 
     /** @brief Render semua bomb (placeholder sprite) */
-    void Render();
+    int Render(Rectangle viewRect);
 
     /** @brief Bersihkan semua data bomb */
     void Clear();
@@ -240,6 +244,8 @@ public:
      * @param player Pointer ke player
      */
     void HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player);
+
+    size_t GetCount() const { return bombs.size(); }
 
 private:
     /**

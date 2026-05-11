@@ -89,6 +89,7 @@ void UpdateLoadingScreen(GameState *state)
         case 0:
             state->loadingText = isBack ? "Returning to previous map..." : "Unloading current map...";
             UnloadMap();
+            spawnFlowFields.clear();
             state->loadingStage++;
             state->loadingProgress = (float)state->loadingStage / MAP_SWITCH_STAGES * 100.0F;
             break;
@@ -98,6 +99,7 @@ void UpdateLoadingScreen(GameState *state)
             LoadMap(state->pendingMapPath.c_str());
             BuildMapObjectIndex();
             SpawnObject();
+            RebuildObstacleCache();
             globalFlowField.Invalidate(); // nanti diganti kalo nambah method ai nya
             state->loadingStage++;
             state->loadingProgress = (float)state->loadingStage / MAP_SWITCH_STAGES * 100.0F;

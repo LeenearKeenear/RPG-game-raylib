@@ -286,7 +286,7 @@ public:
      * @brief Render semua item yang belum diambil
      * @param items Daftar item yang akan dirender
      */
-    void RenderAll(std::vector<ItemSpawn> &items);
+    int RenderAll(std::vector<ItemSpawn> &items, Rectangle viewRect);
 
     /**
      * @brief Render satu item

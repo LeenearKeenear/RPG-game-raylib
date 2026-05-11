@@ -102,6 +102,8 @@ struct TileRange
  */
 TileRange GetVisibleTileRange(void);
 
+Rectangle GetVisibleWorldRect(void);
+
 /*==============================================================================
  * Debug Variables
  *==============================================================================*/

@@ -93,6 +93,7 @@ void InitAll()
     Entities::Add(&PlayerInstance);
 
     SpawnObject();
+    RebuildObstacleCache();
     globalFlowField.Invalidate(); // nanti diganti kalo nambah method ai nya
     // Spawn musuh dari map aktif
     SpawnEnemiesFromMap();
@@ -356,9 +357,10 @@ void DrawRenderTexture(GameState *state)
 
     // layer 2: entities, items, effects & world overlay (world space)
     BeginMode2D(camera);
-    RenderTileProps();
-    itemRender.RenderAll(itemData.activeItems);
-    Entities::Render();
+    Rectangle viewRect = GetVisibleWorldRect();
+    RenderTileProps(viewRect);
+    itemRender.RenderAll(itemData.activeItems, viewRect);
+    Entities::Render(viewRect);
     Effects::Draw();
     DebugInstance.DrawWorldOverlay();
     EndMode2D();

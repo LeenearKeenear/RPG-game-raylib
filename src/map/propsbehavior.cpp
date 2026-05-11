@@ -202,16 +202,21 @@ void ChestManager::TriggerLoot(TileObject &chest)
  *
  * State Closed = BROWN, Open = WHITE. Placeholder, belum pakai sprite.
  */
-void ChestManager::Render()
+int ChestManager::Render(Rectangle viewRect)
 {
-    // placeholder: switch gambar based on state
+    int rendered = 0;
     for (auto &c : chests)
     {
+        if (!CheckCollisionRecs(c.bounds, viewRect))
+            continue;
+        rendered++;
+
         if (c.state == ObjectState::Closed)
             DrawRectangleRec(c.bounds, BROWN); // placeholder harus diganti pake skin
         else
             DrawRectangleRec(c.bounds, WHITE); // placeholder harus diganti pake skin
     }
+    return rendered;
 }
 
 /**
@@ -384,15 +389,21 @@ void SpikeManager::Update(float deltaTime, Rectangle playerBounds, Player *playe
  *
  * Active = RED, Inactive = GRAY. Placeholder, belum pakai sprite.
  */
-void SpikeManager::Render()
+int SpikeManager::Render(Rectangle viewRect)
 {
+    int rendered = 0;
     for (auto &spike : spikes)
     {
+        if (!CheckCollisionRecs(spike.tile.bounds, viewRect))
+            continue;
+        rendered++;
+
         if (spike.tile.state == ObjectState::Active)
             DrawRectangleRec(spike.tile.bounds, RED); // placeholder harus diganti pake skin
         else
             DrawRectangleRec(spike.tile.bounds, GRAY); // placeholder harus diganti pake skin
     }
+    return rendered;
 }
 
 /**
@@ -501,6 +512,7 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
                        { return r.x == bomb.tile.bounds.x && r.y == bomb.tile.bounds.y; }),
         DynamicObstacles.end());
     MarkSpawnFlowFieldsDirty(bomb.tile.position);
+    RebuildObstacleCache();
 
     if (IsInExplosionRadius(bomb.tile.position, playerBounds))
         if (player)
@@ -634,18 +646,23 @@ TileObject *BombManager::FindBomb(Vector2 hitPos, float threshold)
  * Exploding = lingkaran orange transparan radius BOMB_EXPLOSION_RADIUS.
  * Idle = kotak RED. Placeholder, belum pakai sprite.
  */
-void BombManager::Render()
+int BombManager::Render(Rectangle viewRect)
 {
+    int rendered = 0;
     for (auto &bomb : bombs)
     {
         if (!bomb.isAlive)
             continue;
+        if (!CheckCollisionRecs(bomb.tile.bounds, viewRect))
+            continue;
+        rendered++;
 
         if (bomb.isExploding)
             DrawCircleV(bomb.tile.position, BOMB_EXPLOSION_RADIUS, Fade(ORANGE, 0.4f));
         else
-            DrawRectangleRec(bomb.tile.bounds, RED); // placeholder, ganti sprite
+            DrawRectangleRec(bomb.tile.bounds, RED);
     }
+    return rendered;
 }
 
 /**

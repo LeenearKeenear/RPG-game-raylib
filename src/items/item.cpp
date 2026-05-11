@@ -353,13 +353,18 @@ void ItemRenderManager::Update(std::vector<ItemSpawn> &items, Vector2 playerCent
  * @brief Render semua item yang belum di-pickup
  * @param items Referensi ke activeItems
  */
-void ItemRenderManager::RenderAll(std::vector<ItemSpawn> &items)
+int ItemRenderManager::RenderAll(std::vector<ItemSpawn> &items, Rectangle viewRect)
 {
+    int rendered = 0;
     for (auto &item : items)
     {
-        if (!item.isPickedUp)
+        if (!item.isPickedUp && CheckCollisionRecs(item.hitbox, viewRect))
+        {
             Render(item);
+            rendered++;
+        }
     }
+    return rendered;
 }
 
 /**

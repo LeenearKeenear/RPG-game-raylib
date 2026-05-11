@@ -154,10 +154,12 @@ struct SpawnFlowFieldEntry
 
 extern std::unordered_map<int, SpawnFlowFieldEntry> spawnFlowFields;
 extern std::queue<int> spawnFlowFieldRebuildQueue;
+extern std::vector<MapObject> cachedObstacleList;
+
+void RebuildObstacleCache();
 
 void BuildSpawnFlowFields(Vector2 spawnPos, int objId, int mapWidth, int mapHeight); // dipanggil dari SpawnEnemiesFromMap
-void RebuildAllSpawnFlowFields();
 FlowField *FindNearestSpawnFlowField(Vector2 position); // dipanggil dari HandleReturn
-void MarkSpawnFlowFieldsDirty(Vector2 explosionPos);
+void MarkSpawnFlowFieldsDirty(Vector2 position);
 
 extern FlowField globalFlowField;

@@ -180,7 +180,11 @@ void Enemy::Update()
         KnockbackVelocity = {0, 0};
     }
 
-    UpdateAI();
+    // buat ngatur sejauh apa ai enemy bisa ke update
+    const float AI_UPDATE_RANGE = TILE_SIZE * 20.0f;
+
+    if (Vector2Distance(Position, PlayerInstance.GetPosition()) <= AI_UPDATE_RANGE)
+        UpdateAI();
 
     Anim.position = Position;
     UpdateAnimation(Anim, GetFrameTime());
@@ -485,7 +489,7 @@ void Enemy::PerformAttack()
     // cek ada obstacle nggak antara enemy dan player
     Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
     float dist = Vector2Distance(enemyCenter, playerCenter);
-    auto obstacles = BuildObstacleList();
+    auto obstacles = cachedObstacleList;
     RayHitResult hit = Ray.Cast(enemyCenter, dir, dist, obstacles);
 
     if (hit.hit)

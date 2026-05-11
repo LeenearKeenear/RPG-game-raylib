@@ -46,22 +46,22 @@ namespace Entities
     /**
      * Mengurutkan entitas berdasarkan koordinat Y sebelum di-render untuk mencapai kedalaman pseudo-3D (Y-sorting).
      */
-    void Render()
+    int Render(Rectangle viewRect)
     {
-        // Depth sorting: Entitas dengan nilai Y lebih besar akan di-render terakhir (tampil di depan)
-        std::sort(Registry.begin(), Registry.end(), [](Entity *a, Entity *b)
-                  {
-            if (!a) return false;
-            if (!b) return true;
-            return a->Position.y < b->Position.y; });
-
+        std::vector<Entity *> visible;
         for (auto entity : Registry)
         {
-            if (entity && entity->IsActive)
-            {
-                entity->Render();
-            }
+            if (entity && entity->IsActive && CheckCollisionRecs(entity->GetHitbox(), viewRect))
+                visible.push_back(entity);
         }
+
+        std::sort(visible.begin(), visible.end(), [](Entity *a, Entity *b)
+                  { return a->Position.y < b->Position.y; });
+
+        for (auto entity : visible)
+            entity->Render();
+
+            return (int)visible.size();
     }
 
     /**
@@ -134,11 +134,17 @@ namespace Entities
 }
 
 // rendering master buat tile prop
-void RenderTileProps(void)
+void RenderTileProps(Rectangle viewRect)
 {
-    chestManager.Render();
-    spikeManager.Render();
-    bombManager.Render();
+    int chestRendered = chestManager.Render(viewRect);
+    int spikeRendered = spikeManager.Render(viewRect);
+    int bombRendered = bombManager.Render(viewRect);
+
+    // kebutuhan debug doang
+    // TraceLog(LOG_INFO, "Props rendered: chest=%d/%d spike=%d/%d bomb=%d/%d",
+    //          chestRendered, (int)chestManager.GetCount(),
+    //          spikeRendered, (int)spikeManager.GetCount(),
+    //          bombRendered, (int)bombManager.GetCount());
 }
 
 // clear master buat tile prop
