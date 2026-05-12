@@ -13,6 +13,7 @@ FlowField globalFlowField;
 std::unordered_map<int, SpawnFlowFieldEntry> spawnFlowFields;
 std::queue<int> spawnFlowFieldRebuildQueue;
 std::vector<MapObject> cachedObstacleList;
+static SpatialHash g_spatialHash;
 
 void FlowField::Invalidate()
 {
@@ -466,4 +467,41 @@ void MarkSpawnFlowFieldsDirty(Vector2 position)
 void RebuildObstacleCache()
 {
     cachedObstacleList = BuildObstacleList();
+}
+
+void RebuildSpatialHash(std::vector<Enemy *> &enemies)
+{
+    g_spatialHash.Clear();
+    for (int i = 0; i < (int)enemies.size(); i++)
+    {
+        if (!enemies[i]->IsActive && enemies[i]->IsAlive())
+            continue;
+        g_spatialHash.Insert(i, enemies[i]->Position);
+    }
+}
+
+Vector2 CalcSeparationForce(int index, std::vector<Enemy *> &enemies)
+{
+    Vector2 force = {0, 0};
+    auto neighbors = g_spatialHash.Query(enemies[index]->Position);
+
+    for (int other : neighbors)
+    {
+        if (other == index)
+            continue;
+        if (!enemies[other]->IsActive && enemies[other]->IsAlive())
+            continue;
+
+        Vector2 diff = {
+            enemies[index]->Position.x - enemies[other]->Position.x,
+            enemies[index]->Position.y - enemies[other]->Position.y};
+        float dist = sqrtf(diff.x * diff.x + diff.y * diff.y);
+        if (dist < SEPARATION_RADIUS && dist > 0.0f)
+        {
+            float scale = (SEPARATION_RADIUS - dist) / SEPARATION_RADIUS;
+            force.x += (diff.x / dist) * scale * SEPARATION_STRENGTH;
+            force.y += (diff.y / dist) * scale * SEPARATION_STRENGTH;
+        }
+    }
+    return force;
 }

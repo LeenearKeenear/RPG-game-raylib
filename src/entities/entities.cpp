@@ -18,6 +18,8 @@ namespace Entities
      */
     static std::vector<Entity *> DynamicRegistry;
 
+    std::vector<Enemy *> EnemyRegistry;
+
     /**
      * @brief Set ID unik (map + indeks objek) untuk entitas yang tidak boleh muncul kembali (respawn).
      */
@@ -61,7 +63,7 @@ namespace Entities
         for (auto entity : visible)
             entity->Render();
 
-            return (int)visible.size();
+        return (int)visible.size();
     }
 
     /**
@@ -92,6 +94,10 @@ namespace Entities
         {
             DynamicRegistry.push_back(entity);
             Registry.push_back(entity);
+
+            Enemy *e = dynamic_cast<Enemy *>(entity);
+            if (e)
+                EnemyRegistry.push_back(e);
         }
     }
 
@@ -114,6 +120,11 @@ namespace Entities
     const std::vector<Entity *> &GetRegistry()
     {
         return Registry;
+    }
+
+    std::vector<Enemy *> &Entities::GetEnemyRegistry()
+    {
+        return EnemyRegistry;
     }
 
     /**

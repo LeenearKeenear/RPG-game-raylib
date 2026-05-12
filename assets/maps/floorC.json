@@ -212,14 +212,14 @@
          "name":"enemy",
          "objects":[
                 {
-                 "height":608,
+                 "height":928,
                  "id":18,
                  "name":"enemy_spawn",
                  "opacity":1,
                  "rotation":0,
                  "type":"spawn",
                  "visible":true,
-                 "width":544,
+                 "width":704,
                  "x":512,
                  "y":1088
                 }],

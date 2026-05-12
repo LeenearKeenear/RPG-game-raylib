@@ -1,12 +1,15 @@
 #pragma once
 
 #include "../lib/raylib/include/raylib.h"
-#include "enemy.h"
 #include "map.h"
 #include "mapLogic.h"
 #include "tiles.h"
 #include <vector>
 #include <queue>
+#include <unordered_map>
+#include <cmath>
+
+class Enemy;
 
 /*==============================================================================
  * FlowField
@@ -22,6 +25,10 @@ constexpr int FLOW_FIELD_OBSTACLE_CHECK_RADIUS = 1; // jarak sample proximity (d
 constexpr float FLOW_FIELD_OBSTACLE_PENALTY = 5.f;  // cost tambahan tile deket obstacle
 constexpr float FLOW_FIELD_DIAGONAL_COST = 1.414f;  // sqrt(2)
 constexpr float FLOW_FIELD_CARDINAL_COST = 1.0f;
+
+static constexpr float SEPARATION_RADIUS = 24.0f;
+static constexpr float SEPARATION_STRENGTH = 25.0f;
+static constexpr int CELL_SIZE = TILE_SIZE * 2.0f;
 
 /**
  * @brief Grid arah menuju player, dihitung sekali dan dibaca semua enemy.
@@ -152,14 +159,53 @@ struct SpawnFlowFieldEntry
     FlowField field;
 };
 
+// enemy separation
+struct SpatialHash
+{
+    std::unordered_map<uint64_t, std::vector<int>> cells; // int = enemy index
+
+    uint64_t Key(int cellX, int cellY)
+    {
+        return ((uint64_t)(uint32_t)cellX << 32) | (uint32_t)cellY;
+    }
+
+    void Clear() { cells.clear(); }
+
+    void Insert(int index, Vector2 pos)
+    {
+        int cx = (int)std::floor(pos.x / CELL_SIZE);
+        int cy = (int)std::floor(pos.y / CELL_SIZE);
+        cells[Key(cx, cy)].push_back(index);
+    }
+
+    // Query semua index di cell sekitar pos (3x3 neighborhood)
+    std::vector<int> Query(Vector2 pos)
+    {
+        int cx = (int)std::floor(pos.x / CELL_SIZE);
+        int cy = (int)std::floor(pos.y / CELL_SIZE);
+        std::vector<int> result;
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                auto it = cells.find(Key(cx + dx, cy + dy));
+                if (it != cells.end())
+                    for (int idx : it->second)
+                        result.push_back(idx);
+            }
+        return result;
+    }
+};
+
 extern std::unordered_map<int, SpawnFlowFieldEntry> spawnFlowFields;
 extern std::queue<int> spawnFlowFieldRebuildQueue;
 extern std::vector<MapObject> cachedObstacleList;
 
 void RebuildObstacleCache();
-
 void BuildSpawnFlowFields(Vector2 spawnPos, int objId, int mapWidth, int mapHeight); // dipanggil dari SpawnEnemiesFromMap
-FlowField *FindNearestSpawnFlowField(Vector2 position); // dipanggil dari HandleReturn
+FlowField *FindNearestSpawnFlowField(Vector2 position);                              // dipanggil dari HandleReturn
 void MarkSpawnFlowFieldsDirty(Vector2 position);
+
+void RebuildSpatialHash(std::vector<Enemy *> &enemies);
+Vector2 CalcSeparationForce(int index, std::vector<Enemy *> &enemies);
 
 extern FlowField globalFlowField;

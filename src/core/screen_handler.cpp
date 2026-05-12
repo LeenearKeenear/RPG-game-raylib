@@ -293,6 +293,25 @@ void UpdateLogicAll()
         entry.field.Build(entry.spawnPos, tilesonMap->width, tilesonMap->height, FLOW_FIELD_RETURN_RADIUS);
     }
 
+    RebuildSpatialHash(Entities::GetEnemyRegistry());
+
+    auto &enemyReg = Entities::GetEnemyRegistry();
+    for (int i = 0; i < (int)enemyReg.size(); i++)
+    {
+        if (!enemyReg[i]->IsActive)
+            continue;
+        Vector2 sep = CalcSeparationForce(i, enemyReg);
+        Vector2 newPos = {
+            enemyReg[i]->Position.x + sep.x * GetFrameTime(),
+            enemyReg[i]->Position.y + sep.y * GetFrameTime()};
+
+        if (IsPositionSafe(newPos, enemyReg[i]->HitboxWidth, enemyReg[i]->HitboxHeight,
+                           enemyReg[i]->HitboxOffsetX, enemyReg[i]->HitboxOffsetY))
+        {
+            enemyReg[i]->Position = newPos;
+        }
+    }
+    
     // Update semua entity (Player + semua Enemy) via Entities registry
     Entities::Update();
 

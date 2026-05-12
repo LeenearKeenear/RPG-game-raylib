@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include "entity.h"
+#include "enemy.h"
 
 /**
  * @brief Sistem registri dan manajemen global untuk entitas.
@@ -9,6 +10,7 @@
  */
 namespace Entities
 {
+    extern std::vector<Enemy *> EnemyRegistry;
     void Init();                    ///< Inisialisasi sistem entitas
     void Update();                  ///< Update semua entitas yang aktif
     int Render(Rectangle viewRect); ///< Render semua entitas yang aktif
@@ -40,6 +42,9 @@ namespace Entities
      * @brief Memeriksa apakah suatu entitas sudah pernah dibunuh sebelumnya di suatu map.
      */
     bool IsAlreadyDead(const std::string &mapPath, int objectId);
+
+    std::vector<Enemy *> &GetEnemyRegistry();
+
 }
 
 // master render untuk object tile kek chest, trap dll
