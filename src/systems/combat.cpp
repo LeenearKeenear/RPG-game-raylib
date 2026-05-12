@@ -1,4 +1,5 @@
 #include "combat.h"
+#include "screen.h"
 #include "animation.h"
 #include "entities.h"
 #include "input.h"
@@ -126,13 +127,13 @@ namespace Combat
         // Logika Regenerasi Mana
         if (player.ManaRegenTimer > 0)
         {
-            player.ManaRegenTimer -= GetFrameTime();
+            player.ManaRegenTimer -= Time::DELTA_TIME;
         }
         else
         {
             if (player.Mana < player.MaxMana)
             {
-                player.Mana += player.ManaRegenRate * GetFrameTime();
+                player.Mana += player.ManaRegenRate * Time::DELTA_TIME;
                 if (player.Mana > player.MaxMana)
                     player.Mana = player.MaxMana;
             }

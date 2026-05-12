@@ -1,4 +1,5 @@
 #include "player.h"
+#include "screen.h"
 #include "movement.h"
 #include "combat.h"
 #include "interaction.h"
@@ -114,12 +115,12 @@ void Player::Update()
 
     // 3. Timer & Efek Status
     if (HitFlashTimer > 0)
-        HitFlashTimer -= GetFrameTime();
+        HitFlashTimer -= Time::DELTA_TIME;
 
     // 4. Fisika & Pergerakan (termasuk Knockback)
     if (Vector2Length(KnockbackVelocity) > 0.1f)
     {
-        Vector2 nextPos = Vector2Add(Position, Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f));
+        Vector2 nextPos = Vector2Add(Position, Vector2Scale(KnockbackVelocity, Time::DELTA_TIME * 60.0f));
         if (Movement::CanMove(*this, nextPos))
         {
             Position = nextPos;
@@ -153,9 +154,9 @@ void Player::Update()
     HandleAction();
 
     // 6. Update Animasi & Kamera
-    Combat::UpdateSwingAttack(*this, GetFrameTime());
+    Combat::UpdateSwingAttack(*this, Time::DELTA_TIME);
     Anim.position = Position;
-    UpdateAnimation(Anim, GetFrameTime());
+    UpdateAnimation(Anim, Time::DELTA_TIME);
     Movement::UpdateCamera(*this);
 
     // 7. Handle map transitions

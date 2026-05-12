@@ -1,8 +1,10 @@
 #include "enemy_ai.h"
+#include "screen.h"
 #include "enemy.h"
 #include "map.h"
 #include "mapLogic.h"
 #include "player.h"
+#include "screen.h"
 #include "../lib/raylib/include/raymath.h"
 #include <queue>
 #include <cfloat>
@@ -27,7 +29,7 @@ void FlowField::Update(Vector2 playerWorld, int mapWidth, int mapHeight)
     // throttle — jangan rebuild lebih dari sekali per FLOW_FIELD_REBUILD_COOLDOWN detik
     if (rebuildCooldown_ > 0.f)
     {
-        rebuildCooldown_ -= GetFrameTime();
+        rebuildCooldown_ -= Time::DELTA_TIME;
         return;
     }
 
@@ -346,7 +348,7 @@ void EnemySteering::ApplyAntiFlip(Vector2 bestDir, Vector2 prevDir)
         SteeringFlipTimer = SteeringFlipeTimerWindow;
     }
 
-    SteeringFlipTimer -= GetFrameTime();
+    SteeringFlipTimer -= Time::DELTA_TIME;
     if (SteeringFlipTimer <= 0.f)
         SteeringFlipCount = 0;
 }
@@ -378,7 +380,7 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
     auto obstacles = cachedObstacleList;
     ray.Cast(ctx.Position, rayDir, ctx.rayLength, obstacles);
 
-    SteeringCooldown -= GetFrameTime();
+    SteeringCooldown -= Time::DELTA_TIME;
 
     bool tileChanged = (currentFlowTile.x != LastFlowTile.x ||
                         currentFlowTile.y != LastFlowTile.y);

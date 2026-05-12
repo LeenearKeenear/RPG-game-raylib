@@ -53,6 +53,8 @@ int main()
     // Step 6: init main menu (needed for menu buttons to render)
     InitMainMenu(&state);
 
+    float accumulator = 0.0f;
+
     // Main Game Loop
     while (!WindowShouldClose())
     {
@@ -135,10 +137,23 @@ int main()
                 pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
             }
 
+            // Fixed timestep
+            float frameTime = GetFrameTime();
+
+            if (frameTime > Time::MAX_FRAME)
+                frameTime = Time::MAX_FRAME;
+
+            accumulator += frameTime;
+
             // update semua logic game - skip when paused
-            if (!pauseMenu.IsActive())
+            while (accumulator >= Time::DELTA_TIME)
             {
-                UpdateLogicAll();
+                if (!pauseMenu.IsActive())
+                {
+                    UpdateLogicAll();
+                }
+
+                accumulator -= Time::DELTA_TIME;
             }
 
             // render semua ke layar virtual

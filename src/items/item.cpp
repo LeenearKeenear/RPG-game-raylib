@@ -11,6 +11,7 @@
  */
 
 #include "item.h"
+#include "screen.h"
 #include "inventory.h"
 #include "combat.h"
 #include "player.h"
@@ -334,8 +335,8 @@ void ItemRenderManager::Update(std::vector<ItemSpawn> &items, Vector2 playerCent
         if (dist <= magnetRadius)
         {
             Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, itemCenter));
-            item.position.x += dir.x * itemSpeed * GetFrameTime();
-            item.position.y += dir.y * itemSpeed * GetFrameTime();
+            item.position.x += dir.x * itemSpeed * Time::DELTA_TIME;
+            item.position.y += dir.y * itemSpeed * Time::DELTA_TIME;
             item.hitbox.x = item.position.x;
             item.hitbox.y = item.position.y;
         }

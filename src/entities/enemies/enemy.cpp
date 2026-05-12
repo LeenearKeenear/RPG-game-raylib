@@ -1,4 +1,5 @@
 #include "enemy.h"
+#include "screen.h"
 #include "enemy_ai.h"
 #include "player.h"
 #include "map.h"
@@ -148,23 +149,23 @@ void Enemy::Update()
             Entities::RegisterDeath(GetCurrentMapPath(), MapObjectID);
         }
 
-        DeathTimer += GetFrameTime();
+        DeathTimer += Time::DELTA_TIME;
         if (DeathTimer >= DeathDuration)
             IsActive = false;
 
         Anim.position = Position;
-        UpdateAnimation(Anim, GetFrameTime());
+        UpdateAnimation(Anim, Time::DELTA_TIME);
         return;
     }
 
     if (HitFlashTimer > 0)
-        HitFlashTimer -= GetFrameTime();
+        HitFlashTimer -= Time::DELTA_TIME;
     if (AttackCooldownTimer > 0)
-        AttackCooldownTimer -= GetFrameTime();
+        AttackCooldownTimer -= Time::DELTA_TIME;
 
     if (Vector2Length(KnockbackVelocity) > 0.1f)
     {
-        Vector2 move = Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f);
+        Vector2 move = Vector2Scale(KnockbackVelocity, Time::DELTA_TIME * 60.0f);
         Vector2 nextX = {Position.x + move.x, Position.y};
         Vector2 nextY = {Position.x, Position.y + move.y};
 
@@ -187,7 +188,7 @@ void Enemy::Update()
         UpdateAI();
 
     Anim.position = Position;
-    UpdateAnimation(Anim, GetFrameTime());
+    UpdateAnimation(Anim, Time::DELTA_TIME);
 }
 
 /*==============================================================================
@@ -215,11 +216,11 @@ void Enemy::UpdateAI()
     // Regen HP hanya saat tidak agresif
     if (HealthRegenTimer > 0)
     {
-        HealthRegenTimer -= GetFrameTime();
+        HealthRegenTimer -= Time::DELTA_TIME;
     }
     else if (AIState != ENEMY_CHASE && AIState != ENEMY_ATTACK && Health < MaxHealth)
     {
-        Health += Def->stats.healthRegenRate * GetFrameTime();
+        Health += Def->stats.healthRegenRate * Time::DELTA_TIME;
         if (Health > MaxHealth)
             Health = MaxHealth;
     }
@@ -291,7 +292,7 @@ void Enemy::HandleIdle()
         return;
     }
 
-    PatrolTimer += GetFrameTime();
+    PatrolTimer += Time::DELTA_TIME;
     if (PatrolTimer >= PatrolWaitTime)
     {
         PatrolTimer = 0;
@@ -413,7 +414,7 @@ void Enemy::HandleReturn()
     }
 
     // throttle scan spawn flow field
-    ReturnScanTimer -= GetFrameTime();
+    ReturnScanTimer -= Time::DELTA_TIME;
     if (ReturnScanTimer <= 0.f)
     {
         ReturnScanTimer = RETURN_SCAN_INTERVAL;

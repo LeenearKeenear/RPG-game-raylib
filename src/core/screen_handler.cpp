@@ -302,8 +302,8 @@ void UpdateLogicAll()
             continue;
         Vector2 sep = CalcSeparationForce(i, enemyReg);
         Vector2 newPos = {
-            enemyReg[i]->Position.x + sep.x * GetFrameTime(),
-            enemyReg[i]->Position.y + sep.y * GetFrameTime()};
+            enemyReg[i]->Position.x + sep.x * Time::DELTA_TIME,
+            enemyReg[i]->Position.y + sep.y * Time::DELTA_TIME};
 
         if (IsPositionSafe(newPos, enemyReg[i]->HitboxWidth, enemyReg[i]->HitboxHeight,
                            enemyReg[i]->HitboxOffsetX, enemyReg[i]->HitboxOffsetY))
@@ -311,7 +311,7 @@ void UpdateLogicAll()
             enemyReg[i]->Position = newPos;
         }
     }
-    
+
     // Update semua entity (Player + semua Enemy) via Entities registry
     Entities::Update();
 
@@ -319,9 +319,9 @@ void UpdateLogicAll()
     Interaction::ExecutePendingTransitions(PlayerInstance);
 
     // Update Effects (Popups, Logs, etc)
-    Effects::Update(GetFrameTime());
-    spikeManager.Update(GetFrameTime(), PlayerInstance.GetHitbox(), &PlayerInstance);
-    bombManager.Update(GetFrameTime(), PlayerInstance.GetHitbox(), &PlayerInstance);
+    Effects::Update(Time::DELTA_TIME);
+    spikeManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
+    bombManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
 
     // Update item magnet/pickup
     Vector2 center = PlayerInstance.GetCenter();

@@ -13,6 +13,12 @@
 #include <cstdint>
 #include <string>
 
+namespace Time
+{
+    inline constexpr float DELTA_TIME = 1.0f / 60.0f;
+    inline constexpr float MAX_FRAME = 0.25f;
+}
+
 /*==============================================================================
  * Virtual Screen Constants
  *==============================================================================*/
@@ -28,8 +34,7 @@ extern const int GameScreenHeight;
 /**
  * @brief Daftar state utama game
  */
-using ScreenState = enum : std::uint8_t
-{
+using ScreenState = enum : std::uint8_t {
     MAIN_MENU, // State menu utama
     LOADING,   // State loading aset
     PLAY,      // State gameplay aktif
@@ -45,15 +50,15 @@ using ScreenState = enum : std::uint8_t
  */
 using GameState = struct
 {
-    RenderTexture2D Dungeon;   /**< Render texture virtual (1280x720) - target rendering semua game */
-    float ScaleMultiplier;     /**< Rasio scale layar virtual ke window asli (dihitung tiap frame) */
-    int WindowScreenWidth;     /**< Ukuran window asli saat ini (bisa berubah kalo resize) */
-    int WindowScreenHeight;    /**< Ukuran window asli saat ini (bisa berubah kalo resize) */
-    ScreenState currentScreen; /**< State game yang aktif (MAIN_MENU / PLAY / OPTIONS) */
-    ScreenState previousScreen;/**< Screen sebelum OPTIONS - buat return button */
-    bool showFPS;              /**< Tampilkan FPS counter di HUD */
-    
-/*==============================================================================
+    RenderTexture2D Dungeon;    /**< Render texture virtual (1280x720) - target rendering semua game */
+    float ScaleMultiplier;      /**< Rasio scale layar virtual ke window asli (dihitung tiap frame) */
+    int WindowScreenWidth;      /**< Ukuran window asli saat ini (bisa berubah kalo resize) */
+    int WindowScreenHeight;     /**< Ukuran window asli saat ini (bisa berubah kalo resize) */
+    ScreenState currentScreen;  /**< State game yang aktif (MAIN_MENU / PLAY / OPTIONS) */
+    ScreenState previousScreen; /**< Screen sebelum OPTIONS - buat return button */
+    bool showFPS;               /**< Tampilkan FPS counter di HUD */
+
+    /*==============================================================================
      * Loading State Variables
      *==============================================================================*/
     /**
@@ -63,7 +68,7 @@ using GameState = struct
     /**
      * @brief Teks status loading yang ditampilkan
      */
-    const char* loadingText;
+    const char *loadingText;
     /**
      * @brief Flag menandakan loading sudah selesai
      */
