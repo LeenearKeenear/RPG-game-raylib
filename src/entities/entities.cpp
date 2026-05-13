@@ -111,6 +111,7 @@ namespace Entities
             delete entity;
         }
         DynamicRegistry.clear();
+        EnemyRegistry.clear();
         Registry.clear();
     }
 

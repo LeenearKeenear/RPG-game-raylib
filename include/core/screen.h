@@ -160,7 +160,6 @@ Vector2 GetVirtualMousePosition(GameState *state);
  * @brief Jalankan seluruh update logic game per frame
  */
 void UpdateLogicAll(void);
-void SpawnEnemiesFromMap(void);
 
 /**
  * @brief Gambar virtual screen ke window asli dengan scaling

@@ -2,6 +2,7 @@
   "enemies": {
     "Slime": {
       "id": 0,
+      "rank": "normal",
       "stats": {
         "maxHealth": 100.0,
         "speed": 1.0,
@@ -23,6 +24,7 @@
     },
     "Skeleton": {
       "id": 1,
+      "rank": "normal",
       "stats": {
         "maxHealth": 100.0,
         "speed": 1.0,
@@ -44,6 +46,7 @@
     },
     "Wolf": {
       "id": 2,
+      "rank": "normal",
       "stats": {
         "maxHealth": 150.0,
         "speed": 1.0,

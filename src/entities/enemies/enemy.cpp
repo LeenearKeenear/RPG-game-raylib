@@ -21,6 +21,26 @@ EnemyDataManager enemyData;
  * EnemyDataManager
  *==============================================================================*/
 
+EnemyRank ParseRank(const std::string &s)
+{
+    if (s == "elite")
+        return ENEMY_ELITE;
+    if (s == "boss")
+        return ENEMY_BOSS;
+    return ENEMY_NORMAL;
+}
+
+std::vector<std::string> GetNamesByRank(EnemyRank rank)
+{
+    std::vector<std::string> result;
+    for (const auto &name : enemyData.GetAllNames())
+    {
+        if (enemyData.Get(name).rank == rank)
+            result.push_back(name);
+    }
+    return result;
+}
+
 void EnemyDataManager::Load(const std::string &path)
 {
     std::ifstream file(path);
@@ -34,6 +54,7 @@ void EnemyDataManager::Load(const std::string &path)
         EnemyDefinition def;
         def.id = SafeGet<int>(data, "id", -1);
         def.name = name;
+        def.rank = ParseRank(SafeGet<std::string>(data, "rank", "normal"));
 
         const auto &s = data.at("stats");
         def.stats.maxHealth = SafeGet<float>(s, "maxHealth", 100.f);
@@ -102,6 +123,7 @@ void Enemy::Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition
     MapObjectID = mapId;
     SpawnPoint = pos;
     Name = name;
+    rank = def.rank;
 
     Health = def.stats.maxHealth;
     MaxHealth = def.stats.maxHealth;
@@ -405,7 +427,11 @@ void Enemy::HandleReturn()
         return;
     }
 
-    if (Vector2Distance(GetCenter(), SpawnPoint) < TILE_SIZE * 3.0f)
+    bool hasReturned = (SpawnRect.width > 0)
+                           ? CheckCollisionPointRec(GetCenter(), SpawnRect)
+                           : Vector2Distance(GetCenter(), SpawnPoint) < TILE_SIZE * 3.0f;
+
+    if (hasReturned)
     {
         AIState = ENEMY_IDLE;
         PlayAnimation(Anim, IDLE, Anim.direction, *Def->animSet);
@@ -576,54 +602,6 @@ void InitEnemy()
     enemyData.Load("assets/data/enemies.json");
 }
 
-/**
- * @brief Spawn sejumlah enemy acak sekaligus.
- * @note Jumlah enemy per wave: 4–7
- */
-void SpawnRandomWave()
-{
-    int count = GetRandomValue(4, 7);
-    for (int i = 0; i < count; i++)
-        SpawnRandomEnemy();
-}
-
-/**
- * @brief Spawn satu enemy acak di posisi valid dalam map.
- * @note Mencoba hingga 100 posisi acak — jika semuanya tidak valid, enemy tidak di-spawn
- */
-void SpawnRandomEnemy()
-{
-    if (!tilesonMap)
-        return;
-
-    const auto &names = enemyData.GetAllNames();
-    const std::string &picked = names[GetRandomValue(0, (int)names.size() - 1)];
-    const EnemyDefinition &def = enemyData.Get(picked);
-
-    Vector2 randomPos;
-    bool validPos = false;
-    float mapW = tilesonMap->width * 32.0f;
-    float mapH = tilesonMap->height * 32.0f;
-
-    for (int i = 0; i < 100; i++)
-    {
-        randomPos = {(float)GetRandomValue(32, (int)mapW - 32), (float)GetRandomValue(32, (int)mapH - 32)};
-        if (IsPositionSafe(randomPos, def.hitbox.size.x, def.hitbox.size.y,
-                           def.hitbox.offset.x, def.hitbox.offset.y))
-        {
-            validPos = true;
-            break;
-        }
-    }
-
-    if (validPos)
-    {
-        Enemy *en = new Enemy();
-        en->Init(randomPos, picked.c_str(), -1, def);
-        Entities::AddDynamic(en);
-    }
-}
-
 void SaveEnemiesForMap(const std::string &mapPath) {}
 
 bool LoadEnemiesForMap(const std::string &mapPath)
@@ -665,4 +643,155 @@ const AnimationSet *ResolveAnimSet(const std::string &name)
     if (name == "Wolf")
         return &WolfAnimationSet;
     return &SlimeAnimationSet;
+}
+
+/*==============================================================================
+ * Enemy — spawn
+ *==============================================================================*/
+
+void SpawnAtPoint(const MapObject *obj, EnemyRank rank)
+{
+    if (!obj)
+        return;
+
+    auto pool = GetNamesByRank(rank);
+    if (pool.empty())
+        return;
+
+    std::mt19937 rng(obj->id);
+    std::uniform_int_distribution<int> pickDist(0, (int)pool.size() - 1);
+
+    std::string picked = pool[pickDist(rng)];
+    const EnemyDefinition &def = enemyData.Get(picked);
+
+    Vector2 spawnPos = {obj->bounds.x + obj->bounds.width / 2.0f,
+                        obj->bounds.y + obj->bounds.height / 2.0f};
+    if (spawnFlowFields.find(obj->id) == spawnFlowFields.end())
+        BuildSpawnFlowFields(spawnPos, obj->id, tilesonMap->width, tilesonMap->height);
+
+    Enemy *enemy = new Enemy();
+    enemy->Init(spawnPos, picked.c_str(), obj->id, def);
+    enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
+    Entities::AddDynamic(enemy);
+}
+
+void SpawnInRect(const MapObject *obj, const std::string &enemyName, float ratio)
+{
+    if (!obj)
+        return;
+
+    const EnemyDefinition &def = enemyData.Get(enemyName);
+
+    std::mt19937 rng(obj->id);
+    std::uniform_int_distribution<int> maxDist(
+        def.rank == ENEMY_ELITE ? SPAWN_RECT_ELITE_MIN : SPAWN_RECT_NORMAL_MIN,
+        def.rank == ENEMY_ELITE ? SPAWN_RECT_ELITE_MAX : SPAWN_RECT_NORMAL_MAX);
+    std::uniform_real_distribution<float> xDist(obj->bounds.x, obj->bounds.x + obj->bounds.width);
+    std::uniform_real_distribution<float> yDist(obj->bounds.y, obj->bounds.y + obj->bounds.height);
+
+    int count = (int)std::round(maxDist(rng) * ratio);
+
+    Vector2 rectCenter = {obj->bounds.x + obj->bounds.width / 2.0f,
+                          obj->bounds.y + obj->bounds.height / 2.0f};
+    if (spawnFlowFields.find(obj->id) == spawnFlowFields.end())
+        BuildSpawnFlowFields(rectCenter, obj->id, tilesonMap->width, tilesonMap->height);
+
+    for (int i = 0; i < count; i++)
+    {
+        Vector2 spawnPos;
+        bool valid = false;
+
+        for (int retry = 0; retry < SPAWN_RETRY_LIMIT; retry++)
+        {
+            spawnPos = {xDist(rng), yDist(rng)};
+            if (IsPositionSafe(spawnPos, def.hitbox.size.x, def.hitbox.size.y,
+                               def.hitbox.offset.x, def.hitbox.offset.y))
+            {
+                valid = true;
+                break;
+            }
+        }
+
+        if (!valid)
+            continue;
+
+        Enemy *enemy = new Enemy();
+        enemy->Init(spawnPos, enemyName.c_str(), obj->id, def);
+        enemy->SpawnRect = obj->bounds;
+        enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
+        Entities::AddDynamic(enemy);
+    }
+}
+
+void SpawnBoss(const MapObject *obj)
+{
+    if (!obj)
+        return;
+
+    auto pool = GetNamesByRank(ENEMY_BOSS);
+    if (pool.empty())
+        return;
+
+    std::mt19937 rng(obj->id);
+    std::uniform_int_distribution<int> pickDist(0, (int)pool.size() - 1);
+
+    std::string picked = pool[pickDist(rng)];
+    const EnemyDefinition &def = enemyData.Get(picked);
+
+    Vector2 spawnPos = {obj->bounds.x + obj->bounds.width / 2.0f,
+                        obj->bounds.y + obj->bounds.height / 2.0f};
+
+    if (spawnFlowFields.find(obj->id) == spawnFlowFields.end())
+        BuildSpawnFlowFields(spawnPos, obj->id, tilesonMap->width, tilesonMap->height);
+
+    Enemy *enemy = new Enemy();
+    enemy->Init(spawnPos, picked.c_str(), obj->id, def);
+    enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
+    Entities::AddDynamic(enemy);
+}
+
+void SpawnEnemiesFromMap()
+{
+    if (!tilesonMap)
+        return;
+
+    auto spawnObjects = TiledHelper::GetObjectsByType("spawn");
+    if (spawnObjects.empty())
+        return;
+
+    std::mt19937 rng;
+
+    for (const auto *obj : spawnObjects)
+    {
+        if (Entities::IsAlreadyDead(GetCurrentMapPath(), obj->id))
+            continue;
+
+        rng.seed(obj->id);
+        std::uniform_real_distribution<float> ratioDist(0.0f, 1.0f);
+
+        if (obj->name == ENEMY_SPAWN_NORMAL_PIN_OBJECT_NAME)
+        {
+            SpawnAtPoint(obj, ENEMY_NORMAL);
+        }
+        else if (obj->name == ENEMY_SPAWN_ELITE_PIN_OBJECT_NAME)
+        {
+            SpawnAtPoint(obj, ENEMY_ELITE);
+        }
+        else if (obj->name == ENEMY_SPAWN_NORMAL_REC_OBJECT_NAME)
+        {
+            auto pool = GetNamesByRank(ENEMY_NORMAL);
+            for (const auto &name : pool)
+                SpawnInRect(obj, name, ratioDist(rng));
+        }
+        else if (obj->name == ENEMY_SPAWN_ELITE_REC_OBJECT_NAME)
+        {
+            auto pool = GetNamesByRank(ENEMY_ELITE);
+            for (const auto &name : pool)
+                SpawnInRect(obj, name, ratioDist(rng));
+        }
+        else if (obj->name == ENEMY_SPAWN_BOSS_OBJECT_NAME)
+        {
+            SpawnBoss(obj);
+        }
+    }
 }

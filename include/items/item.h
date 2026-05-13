@@ -354,7 +354,7 @@ private:
      * @param area Area spawn target
      * @return Posisi random di dalam area
      */
-    Vector2 GetRandomPosInArea(const SpawnArea &area);
+    Vector2 GetRandomPosInArea(const SpawnArea &area, Vector2 hitboxSize);
 
     /**
      * @brief Buat seed random dari nama area
@@ -362,6 +362,15 @@ private:
      * @return Seed hasil hash nama
      */
     unsigned int SeedFromName(const std::string &name);
+
+    int SPAWN_SIZE_SMALL_MIN = 1;  // 1
+    int SPAWN_SIZE_SMALL_MAX = 2;  // 2
+    int SPAWN_SIZE_MEDIUM_MIN = 2; // 2
+    int SPAWN_SIZE_MEDIUM_MAX = 3; // 3
+    int SPAWN_SIZE_LARGE_MIN = 3;  // 3
+    int SPAWN_SIZE_LARGE_MAX = 4;  // 4
+    int SPAWN_SIZE_XLARGE_MIN = 4; // 4
+    int SPAWN_SIZE_XLARGE_MAX = 5; // 5
 };
 
 /*==============================================================================

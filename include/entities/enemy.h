@@ -9,6 +9,17 @@
 #include <vector>
 #include <unordered_map>
 
+// Spawn constants
+constexpr int SPAWN_PINPOINT_NORMAL_MIN = 1;
+constexpr int SPAWN_PINPOINT_NORMAL_MAX = 10;
+constexpr int SPAWN_PINPOINT_ELITE_MIN = 1;
+constexpr int SPAWN_PINPOINT_ELITE_MAX = 5;
+constexpr int SPAWN_RECT_NORMAL_MIN = 4;
+constexpr int SPAWN_RECT_NORMAL_MAX = 20;
+constexpr int SPAWN_RECT_ELITE_MIN = 2;
+constexpr int SPAWN_RECT_ELITE_MAX = 10;
+constexpr int SPAWN_RETRY_LIMIT = 100;
+
 /*==============================================================================
  * Enums
  *==============================================================================*/
@@ -27,6 +38,13 @@ enum RayCastMode
 {
     LINE,
     CONE
+};
+
+typedef enum EnemyRank
+{
+    ENEMY_NORMAL,
+    ENEMY_ELITE,
+    ENEMY_BOSS
 };
 
 /*==============================================================================
@@ -60,8 +78,9 @@ struct EnemyHitboxData
 /// @brief Single source of truth untuk satu tipe enemy, di-load dari JSON.
 struct EnemyDefinition
 {
-    int id;                      ///< ID unik, digunakan sebagai key lookup
-    std::string name;            ///< Nama tipe enemy (e.g. "Slime", "Skeleton")
+    int id;           ///< ID unik, digunakan sebagai key lookup
+    std::string name; ///< Nama tipe enemy (e.g. "Slime", "Skeleton")
+    EnemyRank rank;
     EnemyStats stats;            ///< Statistik gameplay
     EnemyHitboxData hitbox;      ///< Konfigurasi hitbox
     const AnimationSet *animSet; ///< Pointer ke AnimationSet global, di-resolve dari type
@@ -114,6 +133,7 @@ public:
     // --- Identitas ---
     std::string Name;     ///< Nama instance enemy
     int MapObjectID = -1; ///< ID object Tiled untuk persistensi kematian
+    EnemyRank rank;
 
     // --- AI State ---
     EnemyAIState AIState = ENEMY_IDLE; ///< State FSM aktif saat ini
@@ -133,6 +153,7 @@ public:
     // --- Patroli ---
     Vector2 PatrolTarget;              ///< Titik tujuan patroli saat ini (runtime)
     Vector2 SpawnPoint;                ///< Titik spawn awal, pusat area patroli
+    Rectangle SpawnRect;               // valid kalau spawn dari rect, otherwise {0,0,0,0}
     float PatrolTimer;                 ///< Timer tunggu di titik patroli (runtime)
     const float PatrolWaitTime = 2.0f; ///< Durasi tunggu sebelum patroli ke titik berikutnya
 
@@ -221,10 +242,16 @@ private:
 /*==============================================================================
  * Utility Functions
  *==============================================================================*/
+EnemyRank ParseRank(const std::string &s);
+std::vector<std::string> GetNamesByRank(EnemyRank rank);
 
+// Spawn functions
+void SpawnEnemiesFromMap();
+void SpawnAtPoint(const tson::Object &obj, EnemyRank rank);
+void SpawnInRect(const tson::Object &obj, EnemyRank rank);
+void SpawnBoss(const tson::Object &obj);
 void InitEnemy();
-void SpawnRandomWave();
-void SpawnRandomEnemy(void);
+
 void SaveEnemiesForMap(const std::string &mapPath);
 bool LoadEnemiesForMap(const std::string &mapPath);
 void ClearEnemies();

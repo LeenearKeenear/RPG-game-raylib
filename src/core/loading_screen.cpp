@@ -118,7 +118,7 @@ void UpdateLoadingScreen(GameState *state)
             // Load musuh yang sudah ada atau spawn baru
             if (!LoadEnemiesForMap(state->pendingMapPath))
             {
-                SpawnRandomWave();
+                SpawnEnemiesFromMap();
             }
 
             // Load items

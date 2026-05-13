@@ -483,20 +483,20 @@ void ItemSpawnManager::CategorizeAreas()
         switch (area.sizeClass)
         {
         case SPAWN_SIZE_SMALL:
-            area.minSpawn = 1;
-            area.maxSpawn = 2;
+            area.minSpawn = SPAWN_SIZE_SMALL_MIN;
+            area.maxSpawn = SPAWN_SIZE_SMALL_MAX;
             break;
         case SPAWN_SIZE_MEDIUM:
-            area.minSpawn = 2;
-            area.maxSpawn = 3;
+            area.minSpawn = SPAWN_SIZE_MEDIUM_MIN;
+            area.maxSpawn = SPAWN_SIZE_MEDIUM_MAX;
             break;
         case SPAWN_SIZE_LARGE:
-            area.minSpawn = 3;
-            area.maxSpawn = 4;
+            area.minSpawn = SPAWN_SIZE_LARGE_MIN;
+            area.maxSpawn = SPAWN_SIZE_LARGE_MAX;
             break;
         case SPAWN_SIZE_XLARGE:
-            area.minSpawn = 4;
-            area.maxSpawn = 5;
+            area.minSpawn = SPAWN_SIZE_XLARGE_MIN;
+            area.maxSpawn = SPAWN_SIZE_XLARGE_MAX;
             break;
         }
     }
@@ -549,7 +549,7 @@ void ItemSpawnManager::DetermineActiveAreas()
  * @param area SpawnArea target
  * @return Posisi valid dalam area
  */
-Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area)
+Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area, Vector2 hitboxSize)
 {
     int MaxAttempts = 100;
 
@@ -559,7 +559,7 @@ Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area)
             (float)GetRandomValue((int)area.bounds.x, (int)(area.bounds.x + area.bounds.width)),
             (float)GetRandomValue((int)area.bounds.y, (int)(area.bounds.y + area.bounds.height))};
 
-        if (IsPositionSafe(pos, TILE_SIZE, TILE_SIZE, 0, 0))
+        if (IsPositionSafe(pos, hitboxSize.x, hitboxSize.y, 0, 0))
             return pos;
     }
 
@@ -630,8 +630,9 @@ void ItemSpawnManager::SpawnAll(std::vector<ItemSpawn> &activeItems)
 
         for (int i = 0; i < spawnCount; i++)
         {
-            Vector2 pos = GetRandomPosInArea(area);
             int defId = PickRandomDefinitionId(rng);
+            const ItemDefinition &def = itemDefs.GetById(defId);
+            Vector2 pos = GetRandomPosInArea(area, def.hitboxSize);
             activeItems.push_back(itemData.CreateItem(pos, defId));
         }
     }
