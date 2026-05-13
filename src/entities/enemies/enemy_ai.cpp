@@ -309,8 +309,7 @@ Vector2 EnemySteering::EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir,
                                  ? globalFlowField.GetCost(tileCenter)
                                  : ctx.ReturnFlowField->GetCost(tileCenter);
 
-                float distToPlayer = Vector2Distance(tileCenter, ctx.PlayerCenter);
-                if (mode == STEERING_CHASE && distToPlayer > ctx.DetectionRange)
+                if (mode == STEERING_CHASE && !CheckCollisionCircleRec(tileCenter, ctx.DetectionRange, ctx.PlayerHitbox))
                     continue;
 
                 float score = -cost;
@@ -345,7 +344,7 @@ void EnemySteering::ApplyAntiFlip(Vector2 bestDir, Vector2 prevDir)
     if (dirChange < 0.f)
     {
         SteeringFlipCount++;
-        SteeringFlipTimer = SteeringFlipeTimerWindow;
+        SteeringFlipTimer = SteeringFlipTimerWindow;
     }
 
     SteeringFlipTimer -= Time::DELTA_TIME;
@@ -389,7 +388,7 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
         return SteeringDir;
 
     LastFlowTile = currentFlowTile;
-    SteeringCooldown = 0.3f; // throtle buat update steering per 0.3 detik
+    SteeringCooldown = SteeringCooldownWindow;
 
     Vector2 prevDir = SteeringDir;
     Vector2 bestDir = EvaluateGrid(ctx, flowDir, mode);
@@ -400,22 +399,14 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
     return SteeringDir;
 }
 
-bool EnemySteering::IsPlayerInRange(const SteeringContext &ctx, RayCast &ray)
+bool EnemySteering::IsPlayerInRange(const SteeringContext &ctx)
 {
-    float dist = Vector2Distance(ctx.Position, ctx.PlayerCenter);
-    if (dist > ctx.rayLength)
-        return false;
-
-    Vector2 dir = Vector2Normalize(Vector2Subtract(ctx.PlayerCenter, ctx.Position));
-    auto obstacles = cachedObstacleList;
-    RayHitResult hit = ray.Cast(ctx.Position, dir, dist, obstacles);
-
-    return !hit.hit;
+    return CheckCollisionCircleRec(ctx.Position, ctx.rayDetectionLength, ctx.PlayerHitbox);
 }
 
-bool EnemySteering::IsInRangeDebug(Vector2 enemyCenter, Vector2 playerCenter, float rayLength)
+bool EnemySteering::IsInRangeDebug(Vector2 enemyCenter, Rectangle playerHitbox, float rayLength)
 {
-    return Vector2Distance(enemyCenter, playerCenter) <= rayLength;
+    return CheckCollisionCircleRec(enemyCenter, rayLength, playerHitbox);
 }
 
 void BuildSpawnFlowFields(Vector2 spawnPos, int objId, int mapWidth, int mapHeight)
@@ -491,7 +482,7 @@ Vector2 CalcSeparationForce(int index, std::vector<Enemy *> &enemies)
     {
         if (other == index)
             continue;
-        if (!enemies[other]->IsActive && enemies[other]->IsAlive())
+        if (!enemies[other]->IsActive || !enemies[other]->IsAlive())
             continue;
 
         Vector2 diff = {
@@ -505,5 +496,13 @@ Vector2 CalcSeparationForce(int index, std::vector<Enemy *> &enemies)
             force.y += (diff.y / dist) * scale * SEPARATION_STRENGTH;
         }
     }
+
+    float len = sqrtf(force.x * force.x + force.y * force.y);
+    if (len > MAX_SEPARATION_FORCE)
+    {
+        force.x = (force.x / len) * MAX_SEPARATION_FORCE;
+        force.y = (force.y / len) * MAX_SEPARATION_FORCE;
+    }
+
     return force;
 }

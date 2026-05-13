@@ -23,6 +23,12 @@ enum EnemyAIState
     ENEMY_RETURN  ///< Kembali ke titik spawn setelah kehilangan pemain
 };
 
+enum RayCastMode
+{
+    LINE,
+    CONE
+};
+
 /*==============================================================================
  * Data Structs (Data-Driven)
  *==============================================================================*/
@@ -74,6 +80,7 @@ private:
 };
 
 const AnimationSet *ResolveAnimSet(const std::string &name);
+
 /*==============================================================================
  * Enemy Class
  *==============================================================================*/
@@ -143,11 +150,16 @@ public:
 
     // getter function
     Vector2 GetVelocity() { return Velocity; }
-    RayHitResult CastDebugRay(Vector2 dir, float maxDist, std::vector<MapObject> &obstacles)
+
+    RayHitResult CastDebugRay(Vector2 dir, float maxDist, std::vector<MapObject> &obstacles,
+                              RayCastMode mode, float halfAngleDeg, int rayCount)
     {
+        if (mode == RayCastMode::CONE)
+            return Ray.CastCone(GetCenter(), dir, maxDist, halfAngleDeg, rayCount, obstacles);
         return Ray.Cast(GetCenter(), dir, maxDist, obstacles);
     }
     float GetRayLength() { return rayLength; }
+    float GetRayDetectionLength() { return rayDetectionLength; }
     float GetHitboxValue() { return HitBoxValue; }
     float GetOffSetValue() { return OffSetValue; }
     float GetTileCenterOffset() { return TileCenterOffset; }
@@ -165,7 +177,9 @@ public:
         ctx.TileCenterOffset = TileCenterOffset;
         ctx.DetectionRange = DetectionRange;
         ctx.rayLength = rayLength;
+        ctx.rayDetectionLength = rayDetectionLength;
         ctx.PlayerCenter = PlayerInstance.GetCenter();
+        ctx.PlayerHitbox = PlayerInstance.GetHitbox();
         ctx.SpawnPoint = SpawnPoint;
         ctx.ReturnFlowField = ReturnFlowField;
         return ctx;
@@ -188,6 +202,7 @@ private:
     float HitBoxValue = 24.0f;                 // hitbox untuk ai pathfinding
     float OffSetValue = 0.0f;                  // offset untuk ai path finding
     float rayLength = TILE_SIZE * 2.0f;        // panjang raycast untuk ai path finding
+    float rayDetectionLength = TILE_SIZE * 2.1f;
     float ReturnScanTimer = 0.f;
 
     float AttackCooldownTimer;         ///< Sisa waktu cooldown serangan (runtime)
@@ -209,7 +224,7 @@ private:
 
 void InitEnemy();
 void SpawnRandomWave();
-void SpawnRandomEnemy();
+void SpawnRandomEnemy(void);
 void SaveEnemiesForMap(const std::string &mapPath);
 bool LoadEnemiesForMap(const std::string &mapPath);
 void ClearEnemies();

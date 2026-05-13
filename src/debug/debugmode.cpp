@@ -594,7 +594,7 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
     Vector2 rayEnd = Vector2Add(pos, Vector2Scale(rayDir, tileSize * 2.0f));
 
     auto obstacles = cachedObstacleList;
-    RayHitResult hit = enemy.CastDebugRay(rayDir, tileSize * 2.0f, obstacles);
+    RayHitResult hit = enemy.CastDebugRay(rayDir, tileSize * 2.0f, obstacles, LINE, 0, 0);
 
     Color rayColor = hit.hit ? RED : GREEN;
     DrawLineV(pos, rayEnd, rayColor);
@@ -610,7 +610,7 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
     }
 
     // --- 3. 5x5 tile highlight --- (skip kalau in range)
-    if (!enemy.Steering.IsInRangeDebug(enemy.GetCenter(), PlayerInstance.GetCenter(), enemy.GetRayLength()))
+    if (!enemy.Steering.IsInRangeDebug(enemy.GetCenter(), PlayerInstance.GetHitbox(), enemy.GetRayDetectionLength()))
     {
         Vector2 flowTile = enemy.Steering.LastFlowTile;
         for (int dy = -STEERING_GRID_RADIUS; dy <= STEERING_GRID_RADIUS; dy++)
@@ -640,5 +640,5 @@ void Debug::DrawSteeringOverlay(Enemy &enemy)
     }
 
     // --- 4. IsPlayerInRange radius ---
-    DrawCircleV(pos, enemy.GetRayLength(), Fade(YELLOW, 0.2f));
+    DrawCircleV(pos, enemy.GetRayDetectionLength(), Fade(YELLOW, 0.2f));
 }

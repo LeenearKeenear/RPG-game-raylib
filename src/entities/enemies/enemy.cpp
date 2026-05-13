@@ -258,8 +258,7 @@ bool Enemy::CheckPlayerLoS()
     Vector2 enemyCenter = GetCenter();
     Vector2 playerCenter = PlayerInstance.GetCenter();
 
-    float dist = Vector2Distance(enemyCenter, playerCenter);
-    if (dist > DetectionRange)
+    if (!CheckCollisionCircleRec(enemyCenter, DetectionRange, PlayerInstance.GetHitbox()))
         return false;
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
@@ -281,7 +280,7 @@ bool Enemy::CheckPlayerLoS()
     }
 
     RayHitResult hit = Ray.Cast(enemyCenter, dir, DetectionRange, obstacles);
-    return (!hit.hit || hit.distance >= dist);
+    return !hit.hit;
 }
 
 void Enemy::HandleIdle()
@@ -364,7 +363,7 @@ void Enemy::HandleChase()
 
     PlayerWasInRange = false;
 
-    if (dist > DetectionRange)
+    if (!CheckCollisionCircleRec(enemyCenter, DetectionRange, PlayerInstance.GetHitbox()))
     {
         AIState = ENEMY_RETURN;
         PatrolTarget = SpawnPoint;
@@ -379,7 +378,7 @@ void Enemy::HandleChase()
         return;
     }
 
-    if (Steering.IsPlayerInRange(ctx, Ray))
+    if (Steering.IsPlayerInRange(ctx))
     {
         MoveTowards(playerCenter, Def->stats.chaseSpeed);
     }

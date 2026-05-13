@@ -27,7 +27,8 @@ constexpr float FLOW_FIELD_DIAGONAL_COST = 1.414f;  // sqrt(2)
 constexpr float FLOW_FIELD_CARDINAL_COST = 1.0f;
 
 static constexpr float SEPARATION_RADIUS = 24.0f;
-static constexpr float SEPARATION_STRENGTH = 25.0f;
+static constexpr float SEPARATION_STRENGTH = 40.0f;
+static constexpr float MAX_SEPARATION_FORCE = 50.f;
 static constexpr int CELL_SIZE = TILE_SIZE * 2.0f;
 
 /**
@@ -120,8 +121,10 @@ struct SteeringContext
     float TileCenterOffset;
     float DetectionRange;
     float rayLength;
+    float rayDetectionLength;
     Vector2 PlayerCenter;
-    Vector2 SpawnPoint;
+    Rectangle PlayerHitbox;
+    Vector2 SpawnPoint; 
     const FlowField *ReturnFlowField = nullptr;
 };
 
@@ -129,8 +132,8 @@ class EnemySteering
 {
 public:
     Vector2 Compute(SteeringMode mode, const SteeringContext &ctx, RayCast &ray);
-    bool IsPlayerInRange(const SteeringContext &ctx, RayCast &ray);
-    bool IsInRangeDebug(Vector2 enemyCenter, Vector2 playerCenter, float rayLength);
+    bool IsPlayerInRange(const SteeringContext &ctx);
+    bool IsInRangeDebug(Vector2 enemyCenter, Rectangle playerHitbox, float rayLength);
 
     // state
     Vector2 SteeringDir = {0, 0};
@@ -140,8 +143,9 @@ public:
     int SteeringFlipCount = 0;
     int MaxSteeringFlipCount = 4;
     float SteeringFlipTimer = 0.f;
-    float SteeringFlipeTimerWindow = 0.3f;
+    float SteeringFlipTimerWindow = 0.3f;
     float SteeringCooldown = 0.f;
+    float SteeringCooldownWindow = 0.3f; // throtle buat update steering per 0.3 detik
     float ScoreMultiplier = 0.9f;
 
 private:
