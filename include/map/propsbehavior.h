@@ -61,7 +61,11 @@ struct TileObject
  */
 void SpawnObject(void);
 
-// helper encode data string
+/**
+ * @brief Encode posisi world space menjadi key string untuk tracking object.
+ * @param pos Posisi object dalam world space
+ * @return String key berbentuk "x_y"
+ */
 inline std::string EncodePos(Vector2 pos)
 {
     return std::to_string((int)pos.x) + "_" + std::to_string((int)pos.y);
@@ -94,11 +98,15 @@ public:
     /** @brief Bersihkan semua data chest */
     void Clear();
 
+    /**
+     * @brief Ambil jumlah chest yang sedang dikelola.
+     * @return Jumlah chest aktif di manager
+     */
     size_t GetCount() const { return chests.size(); }
 
 private:
-    std::vector<TileObject> chests;
-    std::unordered_set<std::string> consumedPositions;
+    std::vector<TileObject> chests;                    // daftar chest yang sedang dikelola
+    std::unordered_set<std::string> consumedPositions; // posisi chest yang sudah dikonsumsi agar tidak diproses ulang
 
     /**
      * @brief Cari chest terdekat dari titik hit
@@ -119,7 +127,7 @@ private:
  * SpikeManager
  *==============================================================================*/
 
-using SpikeCallback = std::function<void(TileObject &)>;
+using SpikeCallback = std::function<void(TileObject &)>; // callback untuk event spike yang menerima TileObject
 
 /**
  * @brief Manager untuk semua trap spike di map
@@ -147,6 +155,10 @@ public:
     /** @brief Bersihkan semua data spike */
     void Clear();
 
+    /**
+     * @brief Ambil jumlah spike yang sedang dikelola.
+     * @return Jumlah spike aktif di manager
+     */
     size_t GetCount() const { return spikes.size(); }
 
 private:
@@ -177,7 +189,7 @@ private:
     float globalPlayerDamageCooldown = 0.0f; // Cooldown damage ke player (shared semua spike)
     float globalEnemyDamageCooldown = 0.0f;  // Cooldown damage ke enemy (shared semua spike)
 
-    std::vector<SpikeData> spikes;
+    std::vector<SpikeData> spikes; // daftar spike yang sedang dikelola
 
     /**
      * @brief Generate seed dari nama object untuk randomisasi timer
@@ -197,8 +209,8 @@ private:
  * BombManager
  *==============================================================================*/
 
-using BombCallback = std::function<void(TileObject &)>;
-using BombExplodeCallback = std::function<void(TileObject &, float)>;
+using BombCallback = std::function<void(TileObject &)>;               // callback untuk event bomb yang menerima TileObject
+using BombExplodeCallback = std::function<void(TileObject &, float)>; // callback ledakan bomb dengan radius efek
 
 /**
  * @brief Manager untuk semua trap bomb di map
@@ -245,6 +257,10 @@ public:
      */
     void HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player);
 
+    /**
+     * @brief Ambil jumlah bomb yang sedang dikelola.
+     * @return Jumlah bomb aktif di manager
+     */
     size_t GetCount() const { return bombs.size(); }
 
 private:
@@ -254,13 +270,13 @@ private:
     struct BombData
     {
         TileObject tile;
-        bool isAlive;             // False jika sudah selesai meledak
-        bool isExploding;         // True selama animasi ledakan berlangsung
-        bool isTriggered = false; // Guard untuk mencegah infinite loop chain reaction
-        float explosionTimer;     // Sisa waktu animasi ledakan
-        BombCallback onHit;
-        BombExplodeCallback onExplode;
-        BombCallback onDamagePlayer;
+        bool isAlive;                  // False jika sudah selesai meledak
+        bool isExploding;              // True selama animasi ledakan berlangsung
+        bool isTriggered = false;      // Guard untuk mencegah infinite loop chain reaction
+        float explosionTimer;          // Sisa waktu animasi ledakan
+        BombCallback onHit;            // callback saat bomb terkena hit
+        BombExplodeCallback onExplode; // callback saat bomb meledak dan memberi efek radius
+        BombCallback onDamagePlayer;   // callback saat ledakan bomb memberi damage ke player
     };
 
     // Konstanta bomb
@@ -268,9 +284,9 @@ private:
     static constexpr float BOMB_DAMAGE = 25.0f;            // Damage ledakan
     static constexpr float BOMB_EXPLOSION_DURATION = 0.3f; // Durasi animasi ledakan (detik)
 
-    std::vector<BombData> bombs;
-    std::unordered_set<std::string> consumedPositions;
-    Player *playerRef = nullptr;
+    std::vector<BombData> bombs;                       // daftar bomb yang sedang dikelola
+    std::unordered_set<std::string> consumedPositions; // posisi bomb yang sudah dikonsumsi agar tidak diproses ulang
+    Player *playerRef = nullptr;                       // referensi player terakhir untuk kebutuhan update/interaction bomb
 
     /** @brief Setup callback onHit, onExplode, onDamagePlayer */
     void SetupCallbacks(BombData &bomb);
@@ -299,6 +315,6 @@ private:
  * Global Manager Instances
  *==============================================================================*/
 
-extern ChestManager chestManager;
-extern SpikeManager spikeManager;
-extern BombManager bombManager;
+extern ChestManager chestManager; // instance global manager chest
+extern SpikeManager spikeManager; // instance global manager spike
+extern BombManager bombManager;   // instance global manager bomb

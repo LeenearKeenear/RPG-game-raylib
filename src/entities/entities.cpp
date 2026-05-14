@@ -151,12 +151,6 @@ void RenderTileProps(Rectangle viewRect)
     int chestRendered = chestManager.Render(viewRect);
     int spikeRendered = spikeManager.Render(viewRect);
     int bombRendered = bombManager.Render(viewRect);
-
-    // kebutuhan debug doang
-    // TraceLog(LOG_INFO, "Props rendered: chest=%d/%d spike=%d/%d bomb=%d/%d",
-    //          chestRendered, (int)chestManager.GetCount(),
-    //          spikeRendered, (int)spikeManager.GetCount(),
-    //          bombRendered, (int)bombManager.GetCount());
 }
 
 // clear master buat tile prop

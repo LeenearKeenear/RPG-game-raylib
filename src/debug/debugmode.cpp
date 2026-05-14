@@ -34,7 +34,8 @@ Debug DebugInstance;
 
 /** Flag untuk menentukan apakah debug mode sedang aktif */
 bool isDebugMode = false;
-bool showFlowFieldOverlay = false;
+bool showFlowFieldOverlay = false;       // flag untuk menampilkan overlay flow field return enemy
+bool showFlowFieldOverlayPlayer = false; // flag untuk menampilkan overlay flow field player
 
 /*==============================================================================
  * Private Helper Methods
@@ -292,6 +293,10 @@ void Debug::Toggle(void)
     {
         showFlowFieldOverlay = !showFlowFieldOverlay;
     }
+    if (IsKeyPressed(KEY_RIGHT_BRACKET))
+    {
+        showFlowFieldOverlayPlayer = !showFlowFieldOverlayPlayer;
+    }
 }
 
 /**
@@ -516,7 +521,10 @@ void Debug::DrawWorldOverlay(void)
     DrawCollisionOverlay(TRAP_LAYER_NAME, BEIGE, BEIGE, LIGHTGRAY);
     DrawCollisionOverlay(ITEM_LAYER_NAME, PINK, PINK, LIGHTGRAY);
     DrawAttackOverlay();
-    // DrawFlowFieldOverlay(globalFlowField);
+    if (showFlowFieldOverlayPlayer)
+    {
+        DrawFlowFieldOverlay(globalFlowField);
+    }
     if (showFlowFieldOverlay)
     {
         for (auto *entity : Entities::GetRegistry())
@@ -552,6 +560,10 @@ void Debug::DrawWorldOverlay(void)
     }
 }
 
+/**
+ * @brief Gambar overlay arah flow field pada tile yang reachable.
+ * @param field Flow field yang akan divisualisasikan
+ */
 void Debug::DrawFlowFieldOverlay(const FlowField &field)
 {
     if (!field.IsReady())
@@ -582,6 +594,10 @@ void Debug::DrawFlowFieldOverlay(const FlowField &field)
     }
 }
 
+/**
+ * @brief Gambar overlay debug steering untuk satu enemy.
+ * @param enemy Enemy yang steering-nya akan divisualisasikan
+ */
 void Debug::DrawSteeringOverlay(Enemy &enemy)
 {
     Vector2 pos = enemy.GetCenter();

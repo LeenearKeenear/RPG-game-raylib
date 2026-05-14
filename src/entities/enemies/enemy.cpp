@@ -18,9 +18,14 @@ using namespace DataDriven;
 EnemyDataManager enemyData;
 
 /*==============================================================================
- * EnemyDataManager
+ * Enemy Data Utilities
  *==============================================================================*/
 
+/**
+ * @brief Konversi string rank dari data JSON menjadi enum EnemyRank.
+ * @param s String rank enemy
+ * @return Enum EnemyRank, default ENEMY_NORMAL jika string tidak dikenali
+ */
 EnemyRank ParseRank(const std::string &s)
 {
     if (s == "elite")
@@ -30,6 +35,11 @@ EnemyRank ParseRank(const std::string &s)
     return ENEMY_NORMAL;
 }
 
+/**
+ * @brief Ambil semua nama enemy yang memiliki rank tertentu.
+ * @param rank Rank enemy yang dicari
+ * @return Daftar nama enemy dengan rank yang cocok
+ */
 std::vector<std::string> GetNamesByRank(EnemyRank rank)
 {
     std::vector<std::string> result;
@@ -41,6 +51,15 @@ std::vector<std::string> GetNamesByRank(EnemyRank rank)
     return result;
 }
 
+/*==============================================================================
+ * EnemyDataManager
+ *==============================================================================*/
+
+/**
+ * @brief Load seluruh definisi enemy dari file JSON.
+ * @param path Path file JSON enemy data
+ * @note Melempar runtime_error jika file tidak bisa dibuka.
+ */
 void EnemyDataManager::Load(const std::string &path)
 {
     std::ifstream file(path);
@@ -80,6 +99,12 @@ void EnemyDataManager::Load(const std::string &path)
     }
 }
 
+/**
+ * @brief Ambil definisi enemy berdasarkan nama.
+ * @param name Nama enemy yang dicari
+ * @return Referensi definisi enemy
+ * @note Melempar runtime_error jika nama tidak ditemukan.
+ */
 const EnemyDefinition &EnemyDataManager::Get(const std::string &name) const
 {
     auto it = definitions_.find(name);
@@ -88,6 +113,10 @@ const EnemyDefinition &EnemyDataManager::Get(const std::string &name) const
     return it->second;
 }
 
+/**
+ * @brief Ambil daftar semua nama enemy yang sudah dimuat.
+ * @return Daftar nama enemy dari enemy data manager
+ */
 std::vector<std::string> EnemyDataManager::GetAllNames() const
 {
     std::vector<std::string> names;
@@ -152,10 +181,9 @@ void Enemy::Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition
     Anim.position = Position;
 }
 
-/*==============================================================================
- * Enemy — Update
- *==============================================================================*/
-
+/**
+ * @brief Update lifecycle enemy, termasuk death state, knockback, AI, dan animasi.
+ */
 void Enemy::Update()
 {
     if (!IsActive)
@@ -213,10 +241,9 @@ void Enemy::Update()
     UpdateAnimation(Anim, Time::DELTA_TIME);
 }
 
-/*==============================================================================
- * Enemy — AI
- *==============================================================================*/
-
+/**
+ * @brief Update state machine AI enemy berdasarkan kondisi player dan state aktif.
+ */
 void Enemy::UpdateAI()
 {
     // Jika player mati, paksa idle agar enemy tidak terus mengejar posisi terakhir
@@ -305,6 +332,13 @@ bool Enemy::CheckPlayerLoS()
     return !hit.hit;
 }
 
+/*==============================================================================
+ * Enemy — AI States
+ *==============================================================================*/
+
+/**
+ * @brief Jalankan state idle enemy.
+ */
 void Enemy::HandleIdle()
 {
     if (CheckPlayerLoS())
@@ -338,6 +372,9 @@ void Enemy::HandleIdle()
     }
 }
 
+/**
+ * @brief Jalankan state patrol enemy.
+ */
 void Enemy::HandlePatrol()
 {
     if (CheckPlayerLoS())
@@ -359,6 +396,9 @@ void Enemy::HandlePatrol()
         PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
 }
 
+/**
+ * @brief Jalankan state chase enemy.
+ */
 void Enemy::HandleChase()
 {
     SteeringContext ctx = BuildSteeringContext();
@@ -419,6 +459,9 @@ void Enemy::HandleChase()
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
 }
 
+/**
+ * @brief Jalankan state return enemy.
+ */
 void Enemy::HandleReturn()
 {
     if (CheckPlayerLoS())
@@ -479,6 +522,9 @@ void Enemy::HandleReturn()
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
 }
 
+/**
+ * @brief Jalankan state attack enemy.
+ */
 void Enemy::HandleAttack()
 {
     Vector2 enemyCenter = GetCenter();
@@ -507,6 +553,9 @@ void Enemy::HandleAttack()
  * Enemy — Combat
  *==============================================================================*/
 
+/**
+ * @brief Eksekusi serangan enemy ke player jika tidak terhalang obstacle.
+ */
 void Enemy::PerformAttack()
 {
     Vector2 enemyCenter = GetCenter();
@@ -547,6 +596,9 @@ void Enemy::TakeDamage(float amount, Vector2 knockback)
  * Enemy — Render
  *==============================================================================*/
 
+/**
+ * @brief Render enemy, efek visual, health bar, dan debug overlay.
+ */
 void Enemy::Render()
 {
     if (!IsActive)
@@ -593,9 +645,12 @@ void Enemy::Render()
 }
 
 /*==============================================================================
- * Global Utility Functions (definisi: src/enemy.cpp)
+ * Enemy — Global Utilities
  *==============================================================================*/
 
+/**
+ * @brief Muat texture dan data definisi enemy.
+ */
 void InitEnemy()
 {
     LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
@@ -609,6 +664,10 @@ bool LoadEnemiesForMap(const std::string &mapPath)
     return true;
 }
 
+/**
+ * @brief Hapus semua enemy aktif dari entity manager.
+ */
+
 void ClearEnemies()
 {
     Entities::Clear();
@@ -618,7 +677,12 @@ void ClearEnemies()
  * Enemy — Helper
  *==============================================================================*/
 
-// Gerak per axis secara terpisah agar enemy bisa slide di sepanjang dinding
+/**
+ * @brief Gerakkan enemy menuju target dengan collision check per axis.
+ * @param target Posisi tujuan dalam world space
+ * @param speed Kecepatan gerak enemy
+ * @note Collision dicek terpisah per axis agar enemy bisa slide di sepanjang dinding.
+ */
 void Enemy::MoveTowards(Vector2 target, float speed)
 {
     Vector2 dir = Vector2Normalize(Vector2Subtract(target, Position));
@@ -635,7 +699,11 @@ void Enemy::MoveTowards(Vector2 target, float speed)
         Anim.direction = (dir.y > 0) ? DOWN : UP;
 }
 
-// Fallback ke SlimeAnimationSet jika nama tidak dikenali
+/**
+ * @brief Pilih AnimationSet berdasarkan nama enemy.
+ * @param name Nama enemy
+ * @return Pointer ke AnimationSet yang sesuai, atau SlimeAnimationSet sebagai fallback
+ */
 const AnimationSet *ResolveAnimSet(const std::string &name)
 {
     if (name == "Skeleton")
@@ -649,6 +717,12 @@ const AnimationSet *ResolveAnimSet(const std::string &name)
  * Enemy — spawn
  *==============================================================================*/
 
+/**
+ * @brief Spawn satu enemy di posisi object spawn berdasarkan rank.
+ * @param obj Object spawn dari Tiled
+ * @param rank Rank enemy yang akan dipilih dari pool
+ * @note Pemilihan enemy deterministic berdasarkan ID object spawn.
+ */
 void SpawnAtPoint(const MapObject *obj, EnemyRank rank)
 {
     if (!obj)
@@ -675,6 +749,13 @@ void SpawnAtPoint(const MapObject *obj, EnemyRank rank)
     Entities::AddDynamic(enemy);
 }
 
+/**
+ * @brief Spawn sejumlah enemy acak di dalam rectangle spawn.
+ * @param obj Object rectangle spawn dari Tiled
+ * @param enemyName Nama enemy yang akan di-spawn
+ * @param ratio Pengali jumlah spawn hasil random
+ * @note Posisi spawn dicoba ulang sampai SPAWN_RETRY_LIMIT agar tidak masuk obstacle.
+ */
 void SpawnInRect(const MapObject *obj, const std::string &enemyName, float ratio)
 {
     if (!obj)
@@ -723,6 +804,11 @@ void SpawnInRect(const MapObject *obj, const std::string &enemyName, float ratio
     }
 }
 
+/**
+ * @brief Spawn satu boss dari object spawn.
+ * @param obj Object spawn boss dari Tiled
+ * @note Pemilihan boss deterministic berdasarkan ID object spawn.
+ */
 void SpawnBoss(const MapObject *obj)
 {
     if (!obj)
@@ -750,6 +836,10 @@ void SpawnBoss(const MapObject *obj)
     Entities::AddDynamic(enemy);
 }
 
+/**
+ * @brief Spawn semua enemy dari object spawn di map aktif.
+ * @note Object yang sudah tercatat mati untuk map saat ini akan dilewati.
+ */
 void SpawnEnemiesFromMap()
 {
     if (!tilesonMap)
@@ -759,10 +849,9 @@ void SpawnEnemiesFromMap()
     if (spawnObjects.empty())
         return;
 
-    std::mt19937 rng;
-
     for (const auto *obj : spawnObjects)
     {
+        std::mt19937 rng;
         if (Entities::IsAlreadyDead(GetCurrentMapPath(), obj->id))
             continue;
 

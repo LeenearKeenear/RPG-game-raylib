@@ -363,14 +363,14 @@ private:
      */
     unsigned int SeedFromName(const std::string &name);
 
-    int SPAWN_SIZE_SMALL_MIN = 1;  // 1
-    int SPAWN_SIZE_SMALL_MAX = 2;  // 2
-    int SPAWN_SIZE_MEDIUM_MIN = 2; // 2
-    int SPAWN_SIZE_MEDIUM_MAX = 3; // 3
-    int SPAWN_SIZE_LARGE_MIN = 3;  // 3
-    int SPAWN_SIZE_LARGE_MAX = 4;  // 4
-    int SPAWN_SIZE_XLARGE_MIN = 4; // 4
-    int SPAWN_SIZE_XLARGE_MAX = 5; // 5
+    int SPAWN_SIZE_SMALL_MIN = 1;  // jumlah minimum spawn untuk area kecil
+    int SPAWN_SIZE_SMALL_MAX = 2;  // jumlah maksimum spawn untuk area kecil
+    int SPAWN_SIZE_MEDIUM_MIN = 2; // jumlah minimum spawn untuk area sedang
+    int SPAWN_SIZE_MEDIUM_MAX = 3; // jumlah maksimum spawn untuk area sedang
+    int SPAWN_SIZE_LARGE_MIN = 3;  // jumlah minimum spawn untuk area besar
+    int SPAWN_SIZE_LARGE_MAX = 4;  // jumlah maksimum spawn untuk area besar
+    int SPAWN_SIZE_XLARGE_MIN = 4; // jumlah minimum spawn untuk area sangat besar
+    int SPAWN_SIZE_XLARGE_MAX = 5; // jumlah maksimum spawn untuk area sangat besar
 };
 
 /*==============================================================================

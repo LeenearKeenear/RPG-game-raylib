@@ -15,8 +15,8 @@
 
 namespace Time
 {
-    inline constexpr float DELTA_TIME = 1.0f / 60.0f;
-    inline constexpr float MAX_FRAME = 0.25f;
+    inline constexpr float DELTA_TIME = 1.0f / 60.0f; // timestep tetap untuk update game, setara 60 FPS
+    inline constexpr float MAX_FRAME = 0.25f;         // batas maksimum durasi frame agar update tidak meloncat terlalu jauh
 }
 
 /*==============================================================================

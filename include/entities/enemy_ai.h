@@ -14,22 +14,21 @@ class Enemy;
 /*==============================================================================
  * FlowField
  *==============================================================================*/
-constexpr int FLOW_FIELD_TILE_SIZE = TILE_SIZE;
-constexpr float FLOW_FIELD_CENTER_OFFSET = FLOW_FIELD_TILE_SIZE * 0.5f;
-constexpr float FLOW_FIELD_REBUILD_COOLDOWN = 0.3f; // throttle max 10x/detik
-constexpr int FLOW_FIELD_PLAYER_RADIUS = 15;        // area aktif sekitar player (dalam satuan tile)
-constexpr int FLOW_FIELD_RETURN_RADIUS = 18;        // area aktif untuk return enemy (dalam satuan tile)
-constexpr int STEERING_GRID_RADIUS = 2;             // 1 = 3x3, 2 = 5x5, 3 = 7 x 7, 4 = 9 x 9
+constexpr int FLOW_FIELD_TILE_SIZE = TILE_SIZE;                         // ukuran tile flow field, mengikuti TILE_SIZE map
+constexpr float FLOW_FIELD_CENTER_OFFSET = FLOW_FIELD_TILE_SIZE * 0.5f; // offset dari pojok tile ke pusat tile
+constexpr float FLOW_FIELD_REBUILD_COOLDOWN = 0.3f;                     // jeda minimum antar rebuild flow field
+constexpr int FLOW_FIELD_PLAYER_RADIUS = 15;                            // radius area aktif flow field player dalam tile
+constexpr int FLOW_FIELD_RETURN_RADIUS = 18;                            // radius area aktif flow field return dalam tile
+constexpr int STEERING_GRID_RADIUS = 2;                                 // radius grid evaluasi steering di sekitar enemy
 
-constexpr int FLOW_FIELD_OBSTACLE_CHECK_RADIUS = 1; // jarak sample proximity (dalam tile)
-constexpr float FLOW_FIELD_OBSTACLE_PENALTY = 5.f;  // cost tambahan tile deket obstacle
-constexpr float FLOW_FIELD_DIAGONAL_COST = 1.414f;  // sqrt(2)
-constexpr float FLOW_FIELD_CARDINAL_COST = 1.0f;
+constexpr float FLOW_FIELD_OBSTACLE_PENALTY = 5.f; // cost tambahan untuk tile di dekat obstacle
+constexpr float FLOW_FIELD_DIAGONAL_COST = 1.414f; // cost gerak diagonal, mendekati sqrt(2)
+constexpr float FLOW_FIELD_CARDINAL_COST = 1.0f;   // cost gerak horizontal/vertikal
 
-static constexpr float SEPARATION_RADIUS = 24.0f;
-static constexpr float SEPARATION_STRENGTH = 40.0f;
-static constexpr float MAX_SEPARATION_FORCE = 50.f;
-static constexpr int CELL_SIZE = TILE_SIZE * 2.0f;
+static constexpr float SEPARATION_RADIUS = 24.0f;   // jarak maksimum antar enemy untuk mulai saling menjauh
+static constexpr float SEPARATION_STRENGTH = 40.0f; // besar dorongan separation antar enemy
+static constexpr float MAX_SEPARATION_FORCE = 50.f; // batas maksimum gaya separation
+static constexpr int CELL_SIZE = TILE_SIZE * 2.0f;  // ukuran cell spatial hash untuk query neighbor enemy
 
 /**
  * @brief Grid arah menuju player, dihitung sekali dan dibaca semua enemy.
@@ -77,6 +76,11 @@ public:
      */
     void Update(Vector2 playerWorld, int mapWidth, int mapHeight);
 
+    /**
+     * @brief Ambil cost traversal tile pada posisi world space tertentu.
+     * @param worldPos Posisi dalam world space yang akan dicek
+     * @return Cost tile, atau FLT_MAX jika tile tidak valid atau tidak reachable
+     */
     float GetCost(Vector2 worldPos) const;
 
 private:
@@ -85,96 +89,135 @@ private:
         Vector2 direction = {0, 0}; // arah normalized menuju goal
         bool walkable = false;      // false jika tile ini obstacle
         bool reached = false;       // false jika tile tidak reachable dari goal
-        float cost = 1.f;           // base cost, naik kalau deket obstacle
+        float cost = 1.f;           // cost traversal tile, termasuk penalty obstacle
     };
 
-    std::vector<std::vector<Cell>> grid_; // grid_[y][x]
-    int gridWidth_ = 0;
-    int gridHeight_ = 0;
-    bool isReady_ = false;
+    std::vector<std::vector<Cell>> grid_; // grid flow field dengan akses grid_[y][x]
+    int gridWidth_ = 0;                   // lebar grid dalam tile
+    int gridHeight_ = 0;                  // tinggi grid dalam tile
+    bool isReady_ = false;                // status kesiapan flow field setelah build
 
     // throttle & dirty tracking
     Vector2 lastGoalTile_ = {-1, -1}; // tile terakhir saat build dilakukan
     float rebuildCooldown_ = 0.f;     // sisa waktu cooldown rebuild
 
-    bool IsValidTile(int x, int y) const;
-    bool IsTileWalkable(int tileX, int tileY) const;                                 // pakai IsPositionSafe
-    void Dijkstra(int goalX, int goalY, int startX, int startY, int endX, int endY); // isi direction tiap cell dari goal
-    float ComputeTileCost(int x, int y);
+    bool IsValidTile(int x, int y) const;                                            // cek apakah koordinat tile masih berada di dalam batas grid
+    void Dijkstra(int goalX, int goalY, int startX, int startY, int endX, int endY); // hitung jarak terpendek dan arah tiap tile menuju goal
+    float ComputeTileCost(int x, int y);                                             // hitung cost traversal tile, termasuk penalty jika dekat obstacle
 };
 
-// EnemySteering.h
-
-// enum buat jenis behavior movement enemynya
+/*==============================================================================
+ * EnemySteering
+ *==============================================================================*/
 enum SteeringMode
 {
-    STEERING_CHASE,
-    STEERING_RETURN
+    STEERING_CHASE, // steering menuju player memakai global flow field
+    STEERING_RETURN // steering kembali ke spawn memakai return flow field
 };
 
 struct SteeringContext
 {
-    Vector2 Position;
-    Vector2 Velocity;
-    float HitBoxValue;
-    float OffsetValue;
-    float TileCenterOffset;
-    float DetectionRange;
-    float rayLength;
-    float rayDetectionLength;
-    Vector2 PlayerCenter;
-    Rectangle PlayerHitbox;
-    Vector2 SpawnPoint; 
-    const FlowField *ReturnFlowField = nullptr;
+    Vector2 Position;                           // posisi enemy saat ini
+    Vector2 Velocity;                           // velocity enemy dari frame sebelumnya
+    float HitBoxValue;                          // ukuran hitbox untuk validasi pathfinding
+    float OffsetValue;                          // offset hitbox untuk validasi pathfinding
+    float TileCenterOffset;                     // offset pusat tile untuk sampling posisi
+    float DetectionRange;                       // jarak deteksi aktif enemy
+    float rayLength;                            // panjang raycast obstacle steering
+    float rayDetectionLength;                   // radius deteksi langsung ke player
+    Vector2 PlayerCenter;                       // posisi pusat player
+    Rectangle PlayerHitbox;                     // hitbox player untuk cek range
+    Vector2 SpawnPoint;                         // titik spawn enemy
+    const FlowField *ReturnFlowField = nullptr; // flow field untuk kembali ke spawn
 };
 
 class EnemySteering
 {
 public:
+    // hitung arah steering berdasarkan mode chase/return dan obstacle raycast
     Vector2 Compute(SteeringMode mode, const SteeringContext &ctx, RayCast &ray);
+
+    // cek apakah player berada dalam radius deteksi langsung enemy
     bool IsPlayerInRange(const SteeringContext &ctx);
+
+    // helper debug untuk cek overlap range enemy ke hitbox player
     bool IsInRangeDebug(Vector2 enemyCenter, Rectangle playerHitbox, float rayLength);
 
-    // state
-    Vector2 SteeringDir = {0, 0};
-    Vector2 LastFlowTile = {-1, -1};
-    Vector2 SteeringTarget = {0.f, 0.f};
+    Vector2 SteeringDir = {0, 0};        // arah steering terakhir yang dipakai
+    Vector2 LastFlowTile = {-1, -1};     // tile flow field terakhir saat steering dihitung
+    Vector2 SteeringTarget = {0.f, 0.f}; // target world space hasil evaluasi steering
 
-    int SteeringFlipCount = 0;
-    int MaxSteeringFlipCount = 4;
-    float SteeringFlipTimer = 0.f;
-    float SteeringFlipTimerWindow = 0.3f;
-    float SteeringCooldown = 0.f;
-    float SteeringCooldownWindow = 0.3f; // throtle buat update steering per 0.3 detik
-    float ScoreMultiplier = 0.9f;
+    int SteeringFlipCount = 0;            // jumlah perubahan arah berlawanan dalam window timer
+    int MaxSteeringFlipCount = 4;         // batas flip sebelum enemy keluar dari mode steering aktif
+    float SteeringFlipTimer = 0.f;        // sisa waktu window deteksi flip arah
+    float SteeringFlipTimerWindow = 0.3f; // durasi window deteksi flip arah
+    float SteeringCooldown = 0.f;         // sisa cooldown sebelum steering dievaluasi ulang
+    float SteeringCooldownWindow = 0.3f;  // durasi cooldown update steering
+    float ScoreMultiplier = 0.9f;         // bobot momentum arah lama saat scoring steering
 
 private:
+    // pilih arah terbaik dari grid kandidat di sekitar enemy
     Vector2 EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir, SteeringMode mode);
+
+    // catat perubahan arah berlawanan untuk mencegah steering bolak-balik
     void ApplyAntiFlip(Vector2 bestDir, Vector2 prevDir);
 };
 
+/*==============================================================================
+ * Obstacle Cache
+ *==============================================================================*/
 std::vector<MapObject> BuildObstacleList();
 
-const float RETURN_SCAN_INTERVAL = 1.5f;
+extern std::vector<MapObject> cachedObstacleList; // cache obstacle untuk raycast steering dan serangan
+
+void RebuildObstacleCache();
+
+/*==============================================================================
+ * Spawn Flow Fields
+ *==============================================================================*/
+const float RETURN_SCAN_INTERVAL = 1.5f; // interval pencarian ulang return flow field saat enemy pulang
 
 struct SpawnFlowFieldEntry
 {
-    Vector2 spawnPos;
-    FlowField field;
+    Vector2 spawnPos; // posisi spawn atau pusat area spawn
+    FlowField field;  // flow field return menuju spawnPos
 };
 
-// enemy separation
+extern std::unordered_map<int, SpawnFlowFieldEntry> spawnFlowFields; // flow field return per ID object spawn
+extern std::queue<int> spawnFlowFieldRebuildQueue;                   // antrean ID spawn yang perlu rebuild flow field
+
+void BuildSpawnFlowFields(Vector2 spawnPos, int objId, int mapWidth, int mapHeight);
+FlowField *FindNearestSpawnFlowField(Vector2 position);
+void MarkSpawnFlowFieldsDirty(Vector2 position);
+
+/*==============================================================================
+ * SpatialHash
+ *==============================================================================*/
 struct SpatialHash
 {
-    std::unordered_map<uint64_t, std::vector<int>> cells; // int = enemy index
+    std::unordered_map<uint64_t, std::vector<int>> cells; // daftar index enemy per cell spatial hash
 
+    /**
+     * @brief Buat key unik dari koordinat cell spatial hash.
+     * @param cellX Koordinat cell X
+     * @param cellY Koordinat cell Y
+     * @return Key 64-bit untuk lookup cell
+     */
     uint64_t Key(int cellX, int cellY)
     {
         return ((uint64_t)(uint32_t)cellX << 32) | (uint32_t)cellY;
     }
 
+    /**
+     * @brief Kosongkan semua data cell spatial hash.
+     */
     void Clear() { cells.clear(); }
 
+    /**
+     * @brief Masukkan index enemy ke cell berdasarkan posisi world space.
+     * @param index Index enemy dalam container enemy aktif
+     * @param pos Posisi enemy dalam world space
+     */
     void Insert(int index, Vector2 pos)
     {
         int cx = (int)std::floor(pos.x / CELL_SIZE);
@@ -182,7 +225,12 @@ struct SpatialHash
         cells[Key(cx, cy)].push_back(index);
     }
 
-    // Query semua index di cell sekitar pos (3x3 neighborhood)
+    /**
+     * @brief Ambil semua index enemy di cell sekitar posisi tertentu.
+     * @param pos Posisi world space yang menjadi pusat query
+     * @return Daftar index enemy dari 3x3 cell di sekitar posisi
+     * @note Hasil belum difilter berdasarkan jarak aktual atau status aktif enemy.
+     */
     std::vector<int> Query(Vector2 pos)
     {
         int cx = (int)std::floor(pos.x / CELL_SIZE);
@@ -200,16 +248,10 @@ struct SpatialHash
     }
 };
 
-extern std::unordered_map<int, SpawnFlowFieldEntry> spawnFlowFields;
-extern std::queue<int> spawnFlowFieldRebuildQueue;
-extern std::vector<MapObject> cachedObstacleList;
-
-void RebuildObstacleCache();
-void BuildSpawnFlowFields(Vector2 spawnPos, int objId, int mapWidth, int mapHeight); // dipanggil dari SpawnEnemiesFromMap
-FlowField *FindNearestSpawnFlowField(Vector2 position);                              // dipanggil dari HandleReturn
-void MarkSpawnFlowFieldsDirty(Vector2 position);
-
 void RebuildSpatialHash(std::vector<Enemy *> &enemies);
 Vector2 CalcSeparationForce(int index, std::vector<Enemy *> &enemies);
 
-extern FlowField globalFlowField;
+/*==============================================================================
+ * Globals
+ *==============================================================================*/
+extern FlowField globalFlowField; // flow field global untuk chase menuju player

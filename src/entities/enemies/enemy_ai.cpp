@@ -4,12 +4,15 @@
 #include "map.h"
 #include "mapLogic.h"
 #include "player.h"
-#include "screen.h"
 #include "../lib/raylib/include/raymath.h"
 #include <queue>
 #include <cfloat>
 #include <limits>
 #include <tuple>
+
+/*==============================================================================
+ * Globals
+ *==============================================================================*/
 
 FlowField globalFlowField;
 std::unordered_map<int, SpawnFlowFieldEntry> spawnFlowFields;
@@ -17,6 +20,13 @@ std::queue<int> spawnFlowFieldRebuildQueue;
 std::vector<MapObject> cachedObstacleList;
 static SpatialHash g_spatialHash;
 
+/*==============================================================================
+ * FlowField
+ *==============================================================================*/
+
+/**
+ * @brief Tandai flow field tidak valid dan reset state rebuild.
+ */
 void FlowField::Invalidate()
 {
     isReady_ = false;
@@ -24,6 +34,13 @@ void FlowField::Invalidate()
     rebuildCooldown_ = 0.f;
 }
 
+/**
+ * @brief Update flow field player jika goal berpindah tile dan cooldown rebuild sudah selesai.
+ * @param playerWorld Posisi player dalam world space
+ * @param mapWidth Lebar map dalam satuan tile
+ * @param mapHeight Tinggi map dalam satuan tile
+ * @note Rebuild di-throttle oleh FLOW_FIELD_REBUILD_COOLDOWN.
+ */
 void FlowField::Update(Vector2 playerWorld, int mapWidth, int mapHeight)
 {
     // throttle — jangan rebuild lebih dari sekali per FLOW_FIELD_REBUILD_COOLDOWN detik
@@ -45,6 +62,14 @@ void FlowField::Update(Vector2 playerWorld, int mapWidth, int mapHeight)
     rebuildCooldown_ = FLOW_FIELD_REBUILD_COOLDOWN;
 }
 
+/**
+ * @brief Bangun flow field dari goal dalam radius aktif tertentu.
+ * @param goalWorld Posisi goal dalam world space
+ * @param mapWidth Lebar map dalam satuan tile
+ * @param mapHeight Tinggi map dalam satuan tile
+ * @param radius Radius area aktif dari goal dalam satuan tile
+ * @note Hanya tile dalam radius aktif yang ditandai walkable dan dihitung arahnya.
+ */
 void FlowField::Build(Vector2 goalWorld, int mapWidth, int mapHeight, int radius)
 {
     gridWidth_ = mapWidth;
@@ -83,6 +108,13 @@ void FlowField::Build(Vector2 goalWorld, int mapWidth, int mapHeight, int radius
     isReady_ = true;
 }
 
+/**
+ * @brief Hitung cost tambahan tile berdasarkan kedekatan dengan obstacle.
+ * @param x Koordinat tile X dalam grid
+ * @param y Koordinat tile Y dalam grid
+ * @return Cost tile, termasuk penalty jika ada obstacle cardinal di sekitarnya
+ * @note Satu obstacle cardinal sudah cukup untuk menambah penalty, tidak akumulatif.
+ */
 float FlowField::ComputeTileCost(int x, int y)
 {
     float cost = FLOW_FIELD_CARDINAL_COST;
@@ -106,6 +138,16 @@ float FlowField::ComputeTileCost(int x, int y)
     return cost;
 }
 
+/**
+ * @brief Hitung jarak terpendek dan arah tiap tile menuju goal.
+ * @param goalX Koordinat tile X goal
+ * @param goalY Koordinat tile Y goal
+ * @param startX Batas kiri area aktif
+ * @param startY Batas atas area aktif
+ * @param endX Batas kanan area aktif
+ * @param endY Batas bawah area aktif
+ * @note Direction tiap cell diisi dari neighbor dengan distance paling kecil.
+ */
 void FlowField::Dijkstra(int goalX, int goalY, int startX, int startY, int endX, int endY)
 {
     std::vector<std::vector<float>> dist(gridHeight_,
@@ -192,6 +234,11 @@ void FlowField::Dijkstra(int goalX, int goalY, int startX, int startY, int endX,
     }
 }
 
+/**
+ * @brief Ambil arah flow field untuk posisi world space tertentu.
+ * @param worldPos Posisi dalam world space yang akan dicek
+ * @return Arah normalized menuju goal, atau {0,0} jika belum siap/tidak valid/tidak reachable
+ */
 Vector2 FlowField::GetDirection(Vector2 worldPos) const
 {
     if (!isReady_)
@@ -208,11 +255,22 @@ Vector2 FlowField::GetDirection(Vector2 worldPos) const
     return grid_[y][x].direction;
 }
 
+/**
+ * @brief Cek apakah koordinat tile berada di dalam batas grid flow field.
+ * @param x Koordinat tile X
+ * @param y Koordinat tile Y
+ * @return True jika tile valid
+ */
 bool FlowField::IsValidTile(int x, int y) const
 {
     return x >= 0 && x < gridWidth_ && y >= 0 && y < gridHeight_;
 }
 
+/**
+ * @brief Ambil cost traversal tile pada posisi world space tertentu.
+ * @param worldPos Posisi dalam world space yang akan dicek
+ * @return Cost tile, atau FLT_MAX jika tile tidak valid atau tidak reachable
+ */
 float FlowField::GetCost(Vector2 worldPos) const
 {
     int x = (int)(worldPos.x / FLOW_FIELD_TILE_SIZE);
@@ -224,7 +282,15 @@ float FlowField::GetCost(Vector2 worldPos) const
     return grid_[y][x].cost;
 }
 
-// File-local helper — bangun obstacle list buat raycast
+/*==============================================================================
+ * Obstacle Cache
+ *==============================================================================*/
+
+/**
+ * @brief Bangun daftar obstacle dari collision layer dan object dinamis map.
+ * @return Daftar MapObject yang bisa dipakai untuk raycast
+ * @note Mengambil collision rect/polygon dari Tiled serta object chest dan bomb.
+ */
 std::vector<MapObject> BuildObstacleList()
 {
     std::vector<MapObject> result;
@@ -255,12 +321,25 @@ std::vector<MapObject> BuildObstacleList()
                 result.push_back(*p);
     };
 
+    // jika ada object layer yang perlu dipertimbangkan jadi obstacle layer masukin kesini
     appendType(CHEST_TYPE_OBJECT_NAME);
     appendType(BOMB_TYPE_OBJECT_NAME);
 
     return result;
 }
 
+/*==============================================================================
+ * EnemySteering
+ *==============================================================================*/
+
+/**
+ * @brief Pilih arah steering terbaik dari grid kandidat di sekitar enemy.
+ * @param ctx Konteks steering enemy saat ini
+ * @param flowDir Arah utama dari flow field
+ * @param mode Mode steering yang sedang dipakai
+ * @return Arah steering terbaik hasil scoring kandidat
+ * @note Saat flip terlalu sering, scoring beralih memakai cost flow field.
+ */
 Vector2 EnemySteering::EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir, SteeringMode mode)
 {
     float bestScore = -FLT_MAX;
@@ -338,6 +417,11 @@ Vector2 EnemySteering::EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir,
     return bestDir;
 }
 
+/**
+ * @brief Catat perubahan arah berlawanan untuk mengurangi steering bolak-balik.
+ * @param bestDir Arah steering terbaik yang baru
+ * @param prevDir Arah steering sebelumnya
+ */
 void EnemySteering::ApplyAntiFlip(Vector2 bestDir, Vector2 prevDir)
 {
     float dirChange = Vector2DotProduct(bestDir, prevDir);
@@ -352,6 +436,14 @@ void EnemySteering::ApplyAntiFlip(Vector2 bestDir, Vector2 prevDir)
         SteeringFlipCount = 0;
 }
 
+/**
+ * @brief Hitung arah steering enemy berdasarkan flow field dan obstacle raycast.
+ * @param mode Mode steering chase atau return
+ * @param ctx Konteks steering enemy saat ini
+ * @param ray RayCast yang dipakai untuk deteksi obstacle
+ * @return Arah steering yang dipilih
+ * @note Steering di-throttle dan hanya dievaluasi ulang saat tile berubah atau cooldown habis.
+ */
 Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, RayCast &ray)
 {
     Vector2 flowDir;
@@ -399,16 +491,40 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
     return SteeringDir;
 }
 
+/**
+ * @brief Cek apakah player berada dalam radius deteksi langsung enemy.
+ * @param ctx Konteks steering enemy saat ini
+ * @return True jika hitbox player bersinggungan dengan lingkaran deteksi enemy
+ */
 bool EnemySteering::IsPlayerInRange(const SteeringContext &ctx)
 {
     return CheckCollisionCircleRec(ctx.Position, ctx.rayDetectionLength, ctx.PlayerHitbox);
 }
 
+/**
+ * @brief Cek range deteksi untuk kebutuhan debug.
+ * @param enemyCenter Posisi pusat enemy
+ * @param playerHitbox Hitbox player
+ * @param rayLength Radius deteksi yang diuji
+ * @return True jika hitbox player berada dalam radius deteksi
+ */
 bool EnemySteering::IsInRangeDebug(Vector2 enemyCenter, Rectangle playerHitbox, float rayLength)
 {
     return CheckCollisionCircleRec(enemyCenter, rayLength, playerHitbox);
 }
 
+/*==============================================================================
+ * Spawn Flow Fields
+ *==============================================================================*/
+
+/**
+ * @brief Bangun flow field return untuk satu spawn object.
+ * @param spawnPos Posisi spawn atau pusat area spawn
+ * @param objId ID object spawn dari Tiled
+ * @param mapWidth Lebar map dalam satuan tile
+ * @param mapHeight Tinggi map dalam satuan tile
+ * @note Tidak membangun ulang jika objId sudah punya flow field.
+ */
 void BuildSpawnFlowFields(Vector2 spawnPos, int objId, int mapWidth, int mapHeight)
 {
     if (spawnFlowFields.count(objId))
@@ -418,6 +534,11 @@ void BuildSpawnFlowFields(Vector2 spawnPos, int objId, int mapWidth, int mapHeig
     spawnFlowFields[objId].field.Build(spawnPos, mapWidth, mapHeight, FLOW_FIELD_RETURN_RADIUS);
 }
 
+/**
+ * @brief Cari flow field spawn terdekat yang bisa dijangkau dari posisi tertentu.
+ * @param position Posisi enemy dalam world space
+ * @return Pointer ke flow field terbaik, atau nullptr jika tidak ada yang reachable
+ */
 FlowField *FindNearestSpawnFlowField(Vector2 position)
 {
     FlowField *best = nullptr;
@@ -426,8 +547,6 @@ FlowField *FindNearestSpawnFlowField(Vector2 position)
     for (auto &[id, ff] : spawnFlowFields)
     {
         if (!ff.field.IsReady())
-            continue;
-        if (ff.field.GetDirection(position).x == 0 && ff.field.GetDirection(position).y == 0)
             continue;
 
         // pakai goal tile sebagai proxy jarak
@@ -447,6 +566,10 @@ FlowField *FindNearestSpawnFlowField(Vector2 position)
     return best; // nullptr kalau semua unreachable
 }
 
+/**
+ * @brief Tandai flow field spawn di sekitar posisi tertentu agar masuk antrean rebuild.
+ * @param position Posisi world space pusat area dirty
+ */
 void MarkSpawnFlowFieldsDirty(Vector2 position)
 {
     for (auto &[id, entry] : spawnFlowFields)
@@ -457,22 +580,41 @@ void MarkSpawnFlowFieldsDirty(Vector2 position)
     }
 }
 
+/**
+ * @brief Bangun ulang spatial hash dari daftar enemy aktif.
+ * @param enemies Daftar pointer enemy yang akan dimasukkan ke spatial hash
+ */
 void RebuildObstacleCache()
 {
     cachedObstacleList = BuildObstacleList();
 }
 
+/*==============================================================================
+ * SpatialHash & Separation
+ *==============================================================================*/
+
+/**
+ * @brief Bangun ulang spatial hash dari daftar enemy aktif.
+ * @param enemies Daftar pointer enemy yang akan dimasukkan ke spatial hash
+ */
 void RebuildSpatialHash(std::vector<Enemy *> &enemies)
 {
     g_spatialHash.Clear();
     for (int i = 0; i < (int)enemies.size(); i++)
     {
-        if (!enemies[i]->IsActive && enemies[i]->IsAlive())
+        if (!enemies[i]->IsActive && !enemies[i]->IsAlive())
             continue;
         g_spatialHash.Insert(i, enemies[i]->Position);
     }
 }
 
+/**
+ * @brief Hitung gaya separation agar enemy tidak terlalu menumpuk.
+ * @param index Index enemy yang sedang dihitung
+ * @param enemies Daftar pointer enemy aktif
+ * @return Vektor gaya separation yang sudah dibatasi maksimum
+ * @note Neighbor diambil dari spatial hash, lalu difilter lagi berdasarkan status dan jarak aktual.
+ */
 Vector2 CalcSeparationForce(int index, std::vector<Enemy *> &enemies)
 {
     Vector2 force = {0, 0};

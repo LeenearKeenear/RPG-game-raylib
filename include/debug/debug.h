@@ -154,3 +154,4 @@ extern Debug DebugInstance;
 // Flag status debug mode
 extern bool isDebugMode;
 extern bool showFlowFieldOverlay;
+extern bool showFlowFieldOverlayPlayer;

@@ -10,10 +10,6 @@
 #include <unordered_map>
 
 // Spawn constants
-constexpr int SPAWN_PINPOINT_NORMAL_MIN = 1;
-constexpr int SPAWN_PINPOINT_NORMAL_MAX = 10;
-constexpr int SPAWN_PINPOINT_ELITE_MIN = 1;
-constexpr int SPAWN_PINPOINT_ELITE_MAX = 5;
 constexpr int SPAWN_RECT_NORMAL_MIN = 4;
 constexpr int SPAWN_RECT_NORMAL_MAX = 20;
 constexpr int SPAWN_RECT_ELITE_MIN = 2;
@@ -36,15 +32,15 @@ enum EnemyAIState
 
 enum RayCastMode
 {
-    LINE,
-    CONE
+    LINE, // raycast satu garis lurus
+    CONE  // raycast berbentuk cone untuk area deteksi lebih lebar
 };
 
 typedef enum EnemyRank
 {
-    ENEMY_NORMAL,
-    ENEMY_ELITE,
-    ENEMY_BOSS
+    ENEMY_NORMAL, // enemy biasa
+    ENEMY_ELITE,  // enemy elite
+    ENEMY_BOSS    // enemy boss
 };
 
 /*==============================================================================
@@ -78,9 +74,9 @@ struct EnemyHitboxData
 /// @brief Single source of truth untuk satu tipe enemy, di-load dari JSON.
 struct EnemyDefinition
 {
-    int id;           ///< ID unik, digunakan sebagai key lookup
-    std::string name; ///< Nama tipe enemy (e.g. "Slime", "Skeleton")
-    EnemyRank rank;
+    int id;                      ///< ID unik, digunakan sebagai key lookup
+    std::string name;            ///< Nama tipe enemy (e.g. "Slime", "Skeleton")
+    EnemyRank rank;              ///< Rank enemy untuk filter spawn dan balancing
     EnemyStats stats;            ///< Statistik gameplay
     EnemyHitboxData hitbox;      ///< Konfigurasi hitbox
     const AnimationSet *animSet; ///< Pointer ke AnimationSet global, di-resolve dari type
@@ -90,15 +86,15 @@ struct EnemyDefinition
 class EnemyDataManager
 {
 public:
-    void Load(const std::string &path);
-    const EnemyDefinition &Get(const std::string &name) const;
-    std::vector<std::string> GetAllNames() const;
+    void Load(const std::string &path);                        // load seluruh definisi enemy dari file JSON
+    const EnemyDefinition &Get(const std::string &name) const; // ambil definisi enemy berdasarkan nama
+    std::vector<std::string> GetAllNames() const;              // ambil semua nama enemy yang sudah ter-load
 
 private:
-    std::unordered_map<std::string, EnemyDefinition> definitions_;
+    std::unordered_map<std::string, EnemyDefinition> definitions_; // lookup definisi enemy berdasarkan nama
 };
 
-const AnimationSet *ResolveAnimSet(const std::string &name);
+const AnimationSet *ResolveAnimSet(const std::string &name); // pilih AnimationSet berdasarkan nama enemy
 
 /*==============================================================================
  * Enemy Class
@@ -119,9 +115,9 @@ public:
     /// @param def Definisi tipe enemy dari EnemyDataManager
     void Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition &def);
 
-    void Update() override;
-    void Render() override;
-    void TakeDamage(float amount, Vector2 knockback = {0, 0}) override;
+    void Update() override;                                             // update state runtime enemy tiap frame
+    void Render() override;                                             // gambar enemy, debug overlay, dan health bar bila perlu
+    void TakeDamage(float amount, Vector2 knockback = {0, 0}) override; // terima damage dan efek knockback
 
     void UpdateAI();       ///< Titik masuk utama logika AI, dipanggil tiap frame
     bool CheckPlayerLoS(); ///< Cek Line of Sight ke pemain via raycasting
@@ -153,7 +149,7 @@ public:
     // --- Patroli ---
     Vector2 PatrolTarget;              ///< Titik tujuan patroli saat ini (runtime)
     Vector2 SpawnPoint;                ///< Titik spawn awal, pusat area patroli
-    Rectangle SpawnRect;               // valid kalau spawn dari rect, otherwise {0,0,0,0}
+    Rectangle SpawnRect;               // area spawn asal jika enemy dibuat dari rectangle spawn
     float PatrolTimer;                 ///< Timer tunggu di titik patroli (runtime)
     const float PatrolWaitTime = 2.0f; ///< Durasi tunggu sebelum patroli ke titik berikutnya
 
@@ -167,11 +163,13 @@ public:
         return {Position.x + HitboxOffsetX, Position.y + HitboxOffsetY, HitboxWidth, HitboxHeight};
     }
 
-    EnemySteering Steering;
+    EnemySteering Steering; // helper steering untuk chase dan return pathfinding
 
     // getter function
+    // ambil velocity enemy dari frame terakhir
     Vector2 GetVelocity() { return Velocity; }
 
+    // cast ray debug dari pusat enemy dengan mode line atau cone
     RayHitResult CastDebugRay(Vector2 dir, float maxDist, std::vector<MapObject> &obstacles,
                               RayCastMode mode, float halfAngleDeg, int rayCount)
     {
@@ -179,15 +177,16 @@ public:
             return Ray.CastCone(GetCenter(), dir, maxDist, halfAngleDeg, rayCount, obstacles);
         return Ray.Cast(GetCenter(), dir, maxDist, obstacles);
     }
-    float GetRayLength() { return rayLength; }
-    float GetRayDetectionLength() { return rayDetectionLength; }
-    float GetHitboxValue() { return HitBoxValue; }
-    float GetOffSetValue() { return OffSetValue; }
-    float GetTileCenterOffset() { return TileCenterOffset; }
+    float GetRayLength() { return rayLength; }                   // ambil panjang raycast steering
+    float GetRayDetectionLength() { return rayDetectionLength; } // ambil radius deteksi langsung steering
+    float GetHitboxValue() { return HitBoxValue; }               // ambil ukuran hitbox untuk validasi pathfinding
+    float GetOffSetValue() { return OffSetValue; }               // ambil offset hitbox untuk validasi pathfinding
+    float GetTileCenterOffset() { return TileCenterOffset; }     // ambil offset pusat tile
 
-    const FlowField *GetReturnFlowField() const { return ReturnFlowField; }
-    void SetReturnFlowField(FlowField *ff) { ReturnFlowField = ff; }
+    const FlowField *GetReturnFlowField() const { return ReturnFlowField; } // ambil flow field return aktif
+    void SetReturnFlowField(FlowField *ff) { ReturnFlowField = ff; }        // set flow field untuk kembali ke spawn
 
+    // bangun konteks steering dari state runtime enemy dan player saat ini
     SteeringContext BuildSteeringContext() const
     {
         SteeringContext ctx;
@@ -207,24 +206,24 @@ public:
     }
 
 private:
-    void HandleIdle();
-    void HandlePatrol();
-    void HandleChase();
-    void HandleAttack();
-    void HandleReturn();
-    void PerformAttack();
+    void HandleIdle();    // jalankan state idle
+    void HandlePatrol();  // jalankan state patrol
+    void HandleChase();   // jalankan state chase
+    void HandleAttack();  // jalankan state attack
+    void HandleReturn();  // jalankan state return
+    void PerformAttack(); // eksekusi damage ke player jika tidak terhalang obstacle
 
     FlowField *ReturnFlowField = nullptr;
 
     // buat handle logic ai path finding
-    Vector2 Velocity = {0, 0};                 // arah gerak frame sebelumnya (dinormalisasi)
-    RayCast Ray;                               ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
-    float TileCenterOffset = TILE_SIZE * 0.5f; // offset untuk ai pathfinding
-    float HitBoxValue = 24.0f;                 // hitbox untuk ai pathfinding
-    float OffSetValue = 0.0f;                  // offset untuk ai path finding
-    float rayLength = TILE_SIZE * 2.0f;        // panjang raycast untuk ai path finding
-    float rayDetectionLength = TILE_SIZE * 2.1f;
-    float ReturnScanTimer = 0.f;
+    Vector2 Velocity = {0, 0};                   // arah gerak frame sebelumnya (dinormalisasi)
+    RayCast Ray;                                 ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
+    float TileCenterOffset = TILE_SIZE * 0.5f;   // offset untuk ai pathfinding
+    float HitBoxValue = 24.0f;                   // hitbox untuk ai pathfinding
+    float OffSetValue = 0.0f;                    // offset untuk ai path finding
+    float rayLength = TILE_SIZE * 2.0f;          // panjang raycast untuk ai path finding
+    float rayDetectionLength = TILE_SIZE * 2.1f; // radius deteksi langsung ke player
+    float ReturnScanTimer = 0.f;                 // timer pencarian ulang return flow field
 
     float AttackCooldownTimer;         ///< Sisa waktu cooldown serangan (runtime)
     const float AttackCooldown = 1.0f; ///< Durasi cooldown antar serangan
@@ -242,19 +241,19 @@ private:
 /*==============================================================================
  * Utility Functions
  *==============================================================================*/
-EnemyRank ParseRank(const std::string &s);
-std::vector<std::string> GetNamesByRank(EnemyRank rank);
+EnemyRank ParseRank(const std::string &s);               // konversi string rank dari JSON ke enum EnemyRank
+std::vector<std::string> GetNamesByRank(EnemyRank rank); // ambil nama enemy yang cocok dengan rank tertentu
 
 // Spawn functions
-void SpawnEnemiesFromMap();
-void SpawnAtPoint(const tson::Object &obj, EnemyRank rank);
-void SpawnInRect(const tson::Object &obj, EnemyRank rank);
-void SpawnBoss(const tson::Object &obj);
-void InitEnemy();
+void SpawnEnemiesFromMap();                                                        // spawn enemy dari object spawn di map aktif
+void SpawnAtPoint(const MapObject *obj, EnemyRank rank);                           // spawn satu enemy di titik object berdasarkan rank
+void SpawnInRect(const MapObject *obj, const std::string &enemyName, float ratio); // spawn beberapa enemy acak di area rectangle
+void SpawnBoss(const MapObject *obj);                                              // spawn satu boss dari object spawn
+void InitEnemy();                                                                  // load texture dan data enemy
 
 void SaveEnemiesForMap(const std::string &mapPath);
 bool LoadEnemiesForMap(const std::string &mapPath);
-void ClearEnemies();
+void ClearEnemies(); // hapus semua enemy aktif dari entity manager
 
 // intance global enemy
 extern EnemyDataManager enemyData;
