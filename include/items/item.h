@@ -34,7 +34,8 @@ typedef enum
     ITEM_POTION, // Item potion/healing (di json nanti namanya harus ditulis potion)
     ITEM_POISON, // Item poison (di json nanti namanya harus ditulis posion)
     ITEM_ARMOR,  // Item armor (di json nanti namanya harus ditulis armor)
-    ITEM_NONE    // Tidak ada item
+    ITEM_NONE,   // Tidak ada item
+    ITEM_ANY
 } ItemCategory;
 
 /**
@@ -232,7 +233,7 @@ public:
      * @brief Spawn item langsung di posisi tertentu
      * @param pos Posisi spawn item
      */
-    void SpawnItemAtLocation(Vector2 pos);
+    void SpawnItemAtLocation(Vector2 pos, std::mt19937 *rng = nullptr, ItemCategory category = ITEM_ANY);
 
     /**
      * @brief Simpan state item aktif untuk map tertentu
@@ -319,7 +320,7 @@ public:
      */
     void SpawnAll(std::vector<ItemSpawn> &activeItems);
 
-    int PickRandomDefinitionId(std::mt19937 &rng);
+    int PickRandomDefinitionId(std::mt19937 &rng, ItemCategory filterCategory = ITEM_ANY);
 
 private:
     // Daftar area spawn item yang dibaca dari Tiled

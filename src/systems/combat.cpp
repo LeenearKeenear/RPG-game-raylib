@@ -88,9 +88,8 @@ namespace Combat
                 TraceLog(LOG_INFO, "COMBAT: Pemain mengenai musuh! Damage: %.1f", damage);
             }
         }
-        // ini nanti dibuatin fungsi wrapper yang isinya semua jenis
-        // object tile yang harus di hit pakai combat sistem
-        bombManager.HitByAttack(attackHitbox, PlayerInstance.GetHitbox(), &player);
+
+        HitPropsByAttack(attackHitbox, PlayerInstance.GetHitbox(), &player);
     }
 
     /**

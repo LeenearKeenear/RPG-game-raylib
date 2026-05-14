@@ -151,6 +151,7 @@ void RenderTileProps(Rectangle viewRect)
     int chestRendered = chestManager.Render(viewRect);
     int spikeRendered = spikeManager.Render(viewRect);
     int bombRendered = bombManager.Render(viewRect);
+    int crateRendered = crateManager.Render(viewRect);
 }
 
 // clear master buat tile prop
@@ -159,4 +160,5 @@ void ClearTileProps(void)
     chestManager.Clear();
     spikeManager.Clear();
     bombManager.Clear();
+    crateManager.Clear();
 }

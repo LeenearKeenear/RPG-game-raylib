@@ -118,10 +118,10 @@ extern TileRange currentVisibleRange;
  * Tiled Layer & Object Name Constants
  *==============================================================================*/
 
-constexpr const char *COLLISION_LAYER_NAME = "obstacle";       // Nama layer collision obstacle
-constexpr const char *OBJECT_LAYER_NAME = "object";            // Nama layer object placement
-constexpr const char *TRAP_LAYER_NAME = "trap";                // nama layer trap placement
-constexpr const char *ITEM_LAYER_NAME = "item";                // nama layer item placment
+constexpr const char *COLLISION_LAYER_NAME = "obstacle"; // Nama layer collision obstacle
+constexpr const char *OBJECT_LAYER_NAME = "object";      // Nama layer object placement
+constexpr const char *TRAP_LAYER_NAME = "trap";          // nama layer trap placement
+constexpr const char *ITEM_LAYER_NAME = "item";          // nama layer item placment
 // Nama objek spesifik untuk spawn musuh
 constexpr const char *ENEMY_SPAWN_NORMAL_PIN_OBJECT_NAME = "enemy_spawn_normal_pinpoint";
 constexpr const char *ENEMY_SPAWN_NORMAL_REC_OBJECT_NAME = "enemy_spawn_normal_rect";

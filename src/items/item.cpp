@@ -230,6 +230,18 @@ void ItemDataManager::Init()
 ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
 {
     const ItemDefinition &def = itemDefs.GetById(definitionId);
+
+    // cari posisi aman, maksimal 5 attempt
+    Vector2 safePos = pos;
+    for (int i = 0; i < 5; i++)
+    {
+        if (IsPositionSafe(safePos, def.hitboxSize.x, def.hitboxSize.y, 0, 0))
+            break;
+        safePos = {
+            pos.x + (float)GetRandomValue(-32, 32),
+            pos.y + (float)GetRandomValue(-32, 32)};
+    }
+
     ItemSpawn item;
     item.definitionId = definitionId;
     item.position = pos;
@@ -254,10 +266,13 @@ ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
  *
  * @param pos Posisi spawn item
  */
-void ItemDataManager::SpawnItemAtLocation(Vector2 pos)
+void ItemDataManager::SpawnItemAtLocation(Vector2 pos, std::mt19937 *rng, ItemCategory category)
 {
-    std::mt19937 rng(static_cast<unsigned int>(time(nullptr)));
-    int defId = spawnManager.PickRandomDefinitionId(rng);
+    std::mt19937 localRng(static_cast<unsigned int>(time(nullptr)));
+    std::mt19937 &useRng = rng ? *rng : localRng;
+    int defId = spawnManager.PickRandomDefinitionId(useRng, category);
+    if (defId == -1)
+        return;
     activeItems.push_back(CreateItem(pos, defId));
 }
 
@@ -567,12 +582,16 @@ Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area, Vector2 hitb
 }
 
 // Pilih definitionId random berdasarkan rarity weight
-int ItemSpawnManager::PickRandomDefinitionId(std::mt19937 &rng)
+int ItemSpawnManager::PickRandomDefinitionId(std::mt19937 &rng, ItemCategory filterCategory)
 {
     // Kumpulkan semua item per rarity
     std::map<ItemRarity, std::vector<int>> byRarity;
     for (const auto &[name, def] : itemDefs.GetAll())
+    {
+        if (filterCategory != ITEM_ANY && def.category != filterCategory)
+            continue;
         byRarity[def.rarity].push_back(def.id);
+    }
 
     // Hitung total dulu
     int total = 0;
@@ -598,6 +617,9 @@ int ItemSpawnManager::PickRandomDefinitionId(std::mt19937 &rng)
     // Kalau rarity yang ke-roll gak ada itemnya, fallback ke COMMON
     if (byRarity[pickedRarity].empty())
         pickedRarity = RARITY_COMMON;
+
+    if (byRarity[pickedRarity].empty())
+        return -1; // gak ada item yang cocok
 
     // Pilih random dari item dengan rarity itu
     std::uniform_int_distribution<int> idxDist(0, (int)byRarity[pickedRarity].size() - 1);

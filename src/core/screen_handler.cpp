@@ -220,6 +220,7 @@ void UpdateLogicAll()
     Effects::Update(Time::DELTA_TIME);
     spikeManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
     bombManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
+    crateManager.Update();
 
     // Update item magnet/pickup
     Vector2 center = PlayerInstance.GetCenter();

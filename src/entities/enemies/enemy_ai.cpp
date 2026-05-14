@@ -324,6 +324,7 @@ std::vector<MapObject> BuildObstacleList()
     // jika ada object layer yang perlu dipertimbangkan jadi obstacle layer masukin kesini
     appendType(CHEST_TYPE_OBJECT_NAME);
     appendType(BOMB_TYPE_OBJECT_NAME);
+    appendType(CRATE_TYPE_OBJECT_NAME);
 
     return result;
 }

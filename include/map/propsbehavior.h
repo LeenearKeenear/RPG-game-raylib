@@ -60,6 +60,7 @@ struct TileObject
  * Entry point yang dipanggil saat map selesai di-load.
  */
 void SpawnObject(void);
+void HitPropsByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player);
 
 /**
  * @brief Encode posisi world space menjadi key string untuk tracking object.
@@ -209,9 +210,6 @@ private:
  * BombManager
  *==============================================================================*/
 
-using BombCallback = std::function<void(TileObject &)>;               // callback untuk event bomb yang menerima TileObject
-using BombExplodeCallback = std::function<void(TileObject &, float)>; // callback ledakan bomb dengan radius efek
-
 /**
  * @brief Manager untuk semua trap bomb di map
  *
@@ -223,6 +221,14 @@ class BombManager
 public:
     /** @brief Spawn semua bomb dari object layer Tiled */
     void SpawnBombs(const std::vector<MapObject *> &bombObjects);
+
+    /**
+     * @brief Trigger ledakan bomb yang terkena hitbox serangan player
+     * @param attackHitbox Hitbox serangan player
+     * @param playerBounds Bounding box player
+     * @param player Pointer ke player
+     */
+    void HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player);
 
     /**
      * @brief Update state semua bomb tiap frame
@@ -238,66 +244,11 @@ public:
     /** @brief Bersihkan semua data bomb */
     void Clear();
 
-    /** @brief Spawn ulang semua bomb dari spawnPoints (debug only, disabled) */
-    void SpawnAll();
-
-    /**
-     * @brief Cari bomb terdekat dari titik hit
-     * @param hitPos Posisi hit
-     * @param threshold Toleransi jarak ke tepi bounds
-     * @return Pointer ke TileObject bomb terdekat, nullptr jika tidak ada
-     */
-    TileObject *FindBomb(Vector2 hitPos, float threshold = 32.0f);
-
-    /**
-     * @brief Trigger ledakan bomb yang terkena hitbox serangan player
-     * @param attackHitbox Hitbox serangan player
-     * @param playerBounds Bounding box player
-     * @param player Pointer ke player
-     */
-    void HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player);
-
     /**
      * @brief Ambil jumlah bomb yang sedang dikelola.
      * @return Jumlah bomb aktif di manager
      */
     size_t GetCount() const { return bombs.size(); }
-
-private:
-    /**
-     * @brief Data internal satu bomb
-     */
-    struct BombData
-    {
-        TileObject tile;
-        bool isAlive;                  // False jika sudah selesai meledak
-        bool isExploding;              // True selama animasi ledakan berlangsung
-        bool isTriggered = false;      // Guard untuk mencegah infinite loop chain reaction
-        float explosionTimer;          // Sisa waktu animasi ledakan
-        BombCallback onHit;            // callback saat bomb terkena hit
-        BombExplodeCallback onExplode; // callback saat bomb meledak dan memberi efek radius
-        BombCallback onDamagePlayer;   // callback saat ledakan bomb memberi damage ke player
-    };
-
-    // Konstanta bomb
-    static constexpr float BOMB_EXPLOSION_RADIUS = 80.0f;  // Radius area ledakan (pixel)
-    static constexpr float BOMB_DAMAGE = 25.0f;            // Damage ledakan
-    static constexpr float BOMB_EXPLOSION_DURATION = 0.3f; // Durasi animasi ledakan (detik)
-
-    std::vector<BombData> bombs;                       // daftar bomb yang sedang dikelola
-    std::unordered_set<std::string> consumedPositions; // posisi bomb yang sudah dikonsumsi agar tidak diproses ulang
-    Player *playerRef = nullptr;                       // referensi player terakhir untuk kebutuhan update/interaction bomb
-
-    /** @brief Setup callback onHit, onExplode, onDamagePlayer */
-    void SetupCallbacks(BombData &bomb);
-
-    /**
-     * @brief Trigger ledakan bomb, damage area, dan chain reaction
-     * @param bomb BombData yang diledakkan
-     * @param playerBounds Bounding box player
-     * @param player Pointer ke player
-     */
-    void Explode(BombData &bomb, Rectangle playerBounds, Player *player);
 
     /**
      * @brief Cek apakah target berada dalam radius ledakan
@@ -309,6 +260,76 @@ private:
      * @return true jika jarak nearest point <= BOMB_EXPLOSION_RADIUS
      */
     bool IsInExplosionRadius(Vector2 bombPos, Rectangle target);
+
+private:
+    /**
+     * @brief Data internal satu bomb
+     */
+    struct BombData
+    {
+        TileObject tile;
+        bool isAlive;             // False jika sudah selesai meledak
+        bool isExploding;         // True selama animasi ledakan berlangsung
+        bool isTriggered = false; // Guard untuk mencegah infinite loop chain reaction
+        float explosionTimer;     // Sisa waktu animasi ledakan
+    };
+
+    // Konstanta bomb
+    static constexpr float BOMB_EXPLOSION_RADIUS = 80.0f;  // Radius area ledakan (pixel)
+    static constexpr float BOMB_DAMAGE = 25.0f;            // Damage ledakan
+    static constexpr float BOMB_EXPLOSION_DURATION = 0.3f; // Durasi animasi ledakan (detik)
+
+    std::vector<BombData> bombs;                       // daftar bomb yang sedang dikelola
+    std::unordered_set<std::string> consumedPositions; // posisi bomb yang sudah dikonsumsi agar tidak diproses ulang
+    Player *playerRef = nullptr;                       // referensi player terakhir untuk kebutuhan update/interaction bomb
+
+    /**
+     * @brief Cari bomb terdekat dari titik hit
+     * @param hitPos Posisi hit
+     * @param threshold Toleransi jarak ke tepi bounds
+     * @return Pointer ke TileObject bomb terdekat, nullptr jika tidak ada
+     */
+    TileObject *FindBomb(Vector2 hitPos, float threshold = 32.0f);
+
+    /**
+     * @brief Trigger ledakan bomb, damage area, dan chain reaction
+     * @param bomb BombData yang diledakkan
+     * @param playerBounds Bounding box player
+     * @param player Pointer ke player
+     */
+    void Explode(BombData &bomb, Rectangle playerBounds, Player *player);
+};
+
+/*==============================================================================
+ * CrateManager
+ *==============================================================================*/
+
+class CrateManager
+{
+public:
+    void SpawnCrates(const std::vector<MapObject *> &crateObjects);
+    void HitByAttack(Rectangle attackHitbox);
+    void Update();
+    void HitByExplosion(Vector2 bombPos, BombManager *bomber);
+    int Render(Rectangle viewRect);
+    void Clear();
+    size_t GetCount() const { return crates.size(); }
+
+private:
+    struct CrateData
+    {
+        TileObject tile;
+        bool isAlive;
+    };
+
+    static constexpr float CRATE_LOOT_CHANCE = 0.10f; // 10% chance drop loot
+
+    std::vector<CrateData> crates;
+    std::unordered_set<std::string> consumedPositions;
+
+    TileObject *FindCrate(Vector2 hitPos, float threshold = 32.0f);
+    void Destroy(CrateData &crate);
+    void TriggerLoot(TileObject &crate);
 };
 
 /*==============================================================================
@@ -318,3 +339,4 @@ private:
 extern ChestManager chestManager; // instance global manager chest
 extern SpikeManager spikeManager; // instance global manager spike
 extern BombManager bombManager;   // instance global manager bomb
+extern CrateManager crateManager; // instance global manager crate
