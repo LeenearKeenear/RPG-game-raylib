@@ -6,6 +6,7 @@
  * - ChestManager: spawn, interaksi, dan loot chest
  * - SpikeManager: spawn, update timer aktif/nonaktif, damage player & enemy
  * - BombManager: spawn, explode, chain reaction, damage player & enemy
+ * - CrateManager: spawn, destroy, dan loot crate
  *
  * Semua manager di-spawn via SpawnObject() yang dipanggil saat map di-load.
  */
@@ -74,7 +75,7 @@ float DistToCenter(Vector2 hitPos, Rectangle bounds)
  *
  * Dipanggil sekali saat map selesai di-load. Mengambil object
  * berdasarkan type dari object layer dan mendistribusikannya
- * ke ChestManager, SpikeManager, dan BombManager.
+ * ke ChestManager, SpikeManager, BombManager, dan CrateManager.
  */
 void SpawnObject()
 {
@@ -91,6 +92,12 @@ void SpawnObject()
     crateManager.SpawnCrates(crateObjs);
 }
 
+/**
+ * @brief Trigger hit attack player ke semua props yang bisa bereaksi terhadap serangan.
+ * @param attackHitbox Hitbox serangan player
+ * @param playerBounds Bounding box player untuk efek props tertentu
+ * @param player Pointer ke player
+ */
 void HitPropsByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player)
 {
     bombManager.HitByAttack(attackHitbox, playerBounds, player);
@@ -569,6 +576,8 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
         if (IsInExplosionRadius(bomb.tile.position, other.tile.bounds))
             Explode(other, playerBounds, player);
     }
+
+    crateManager.HitByExplosion(bomb.tile.position, this);
 }
 
 /**
@@ -662,6 +671,11 @@ void BombManager::Clear()
 
 CrateManager crateManager;
 
+/**
+ * @brief Spawn semua crate dari object layer Tiled.
+ * @param crateObjects Daftar pointer MapObject bertipe crate
+ * @note Crate yang posisinya sudah tercatat hancur tidak akan di-spawn ulang.
+ */
 void CrateManager::SpawnCrates(const std::vector<MapObject *> &crateObjects)
 {
     crates.clear();
@@ -683,6 +697,11 @@ void CrateManager::SpawnCrates(const std::vector<MapObject *> &crateObjects)
     }
 }
 
+/**
+ * @brief Spawn semua crate dari object layer Tiled.
+ * @param crateObjects Daftar pointer MapObject bertipe crate
+ * @note Crate yang posisinya sudah tercatat hancur tidak akan di-spawn ulang.
+ */
 void CrateManager::HitByAttack(Rectangle attackHitbox)
 {
     for (auto &crate : crates)
@@ -695,6 +714,11 @@ void CrateManager::HitByAttack(Rectangle attackHitbox)
     }
 }
 
+/**
+ * @brief Hancurkan crate yang berada dalam radius ledakan bomb.
+ * @param bombPos Posisi pusat ledakan bomb
+ * @param bomber BombManager yang dipakai untuk cek radius ledakan
+ */
 void CrateManager::HitByExplosion(Vector2 bombPos, BombManager *bomber)
 {
     for (auto &crate : crates)
@@ -706,6 +730,9 @@ void CrateManager::HitByExplosion(Vector2 bombPos, BombManager *bomber)
     }
 }
 
+/**
+ * @brief Hapus crate yang sudah dihancurkan dari daftar runtime.
+ */
 void CrateManager::Update()
 {
     crates.erase(
@@ -714,6 +741,11 @@ void CrateManager::Update()
         crates.end());
 }
 
+/**
+ * @brief Hancurkan crate dan update obstacle/pathfinding terkait.
+ * @param crate Data crate yang akan dihancurkan
+ * @note Memanggil RebuildObstacleCache setelah crate dihapus dari DynamicObstacles.
+ */
 void CrateManager::Destroy(CrateData &crate)
 {
     crate.tile.state = ObjectState::Inactive;
@@ -730,6 +762,10 @@ void CrateManager::Destroy(CrateData &crate)
     TriggerLoot(crate.tile);
 }
 
+/**
+ * @brief Roll peluang drop loot dari crate yang dihancurkan.
+ * @param crate TileObject crate yang dihancurkan
+ */
 void CrateManager::TriggerLoot(TileObject &crate)
 {
     float roll = (float)GetRandomValue(0, 99) / 100.0f;
@@ -744,6 +780,11 @@ void CrateManager::TriggerLoot(TileObject &crate)
     itemData.SpawnItemAtLocation(spawnPos, &rng, ITEM_POTION);
 }
 
+/**
+ * @brief Render semua crate yang terlihat di viewport.
+ * @param viewRect Area kamera/viewport aktif
+ * @return Jumlah crate yang berhasil dirender
+ */
 int CrateManager::Render(Rectangle viewRect)
 {
     int rendered = 0;
@@ -759,6 +800,9 @@ int CrateManager::Render(Rectangle viewRect)
     return rendered;
 }
 
+/**
+ * @brief Bersihkan semua data crate.
+ */
 void CrateManager::Clear()
 {
     crates.clear();

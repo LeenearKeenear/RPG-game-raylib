@@ -8,6 +8,7 @@
  * - ChestManager: chest yang bisa dibuka player untuk loot item
  * - SpikeManager: trap spike dengan timer aktif/nonaktif dan damage area
  * - BombManager: trap bomb yang meledak saat dipukul, dengan chain reaction
+ * - CrateManager: crate yang bisa dihancurkan player/bomb dan punya chance drop loot
  */
 
 #include "map.h"
@@ -60,6 +61,13 @@ struct TileObject
  * Entry point yang dipanggil saat map selesai di-load.
  */
 void SpawnObject(void);
+
+/**
+ * @brief Trigger hit attack player ke props yang bisa dihancurkan.
+ * @param attackHitbox Hitbox serangan player
+ * @param playerBounds Bounding box player untuk efek props tertentu
+ * @param player Pointer ke player
+ */
 void HitPropsByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player);
 
 /**
@@ -304,32 +312,43 @@ private:
  * CrateManager
  *==============================================================================*/
 
+/**
+ * @brief Manager untuk semua crate di map.
+ *
+ * Crate bisa dihancurkan oleh serangan player atau ledakan bomb,
+ * lalu punya peluang menjatuhkan loot.
+ */
 class CrateManager
 {
 public:
-    void SpawnCrates(const std::vector<MapObject *> &crateObjects);
-    void HitByAttack(Rectangle attackHitbox);
-    void Update();
-    void HitByExplosion(Vector2 bombPos, BombManager *bomber);
-    int Render(Rectangle viewRect);
-    void Clear();
+    void SpawnCrates(const std::vector<MapObject *> &crateObjects); // spawn semua crate dari object layer Tiled
+    void HitByAttack(Rectangle attackHitbox);                       // hancurkan crate yang terkena hitbox serangan player
+    void Update();                                                  // hapus crate yang sudah tidak aktif dari daftar runtime
+    void HitByExplosion(Vector2 bombPos, BombManager *bomber);      // hancurkan crate yang terkena radius ledakan bomb
+    int Render(Rectangle viewRect);                                 // render crate yang terlihat dalam view
+    void Clear();                                                   // bersihkan semua data crate
+
+    /**
+     * @brief Ambil jumlah crate yang sedang dikelola.
+     * @return Jumlah crate aktif di manager
+     */
     size_t GetCount() const { return crates.size(); }
 
 private:
     struct CrateData
     {
-        TileObject tile;
-        bool isAlive;
+        TileObject tile; // data object crate di map
+        bool isAlive;    // false jika crate sudah dihancurkan
     };
 
     static constexpr float CRATE_LOOT_CHANCE = 0.10f; // 10% chance drop loot
 
-    std::vector<CrateData> crates;
-    std::unordered_set<std::string> consumedPositions;
+    std::vector<CrateData> crates;                     // daftar crate yang sedang dikelola
+    std::unordered_set<std::string> consumedPositions; // posisi crate yang sudah dihancurkan agar tidak spawn ulang
 
-    TileObject *FindCrate(Vector2 hitPos, float threshold = 32.0f);
-    void Destroy(CrateData &crate);
-    void TriggerLoot(TileObject &crate);
+    TileObject *FindCrate(Vector2 hitPos, float threshold = 32.0f); // cari crate terdekat dari titik hit
+    void Destroy(CrateData &crate);                                 // hancurkan crate, hapus obstacle, dan trigger loot
+    void TriggerLoot(TileObject &crate);                            // roll peluang drop loot dari crate
 };
 
 /*==============================================================================
