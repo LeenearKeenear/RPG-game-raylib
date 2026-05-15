@@ -258,8 +258,8 @@ void InitMap(void)
     // LoadMap("assets/maps/floorC.json");
     // "assets/maps/tutorial.json"
     // Map yang aktif saat ini
-    // currentMapPath = "assets/maps/tutorial.json";
-    currentMapPath = "assets/maps/floorB_tester.json.";
+    currentMapPath = "assets/maps/tutorial.json";
+    // currentMapPath = "assets/maps/floorB_tester.json";
     LoadMap(currentMapPath.c_str());
 
     if (!LoadEnemiesForMap(currentMapPath))
