@@ -18,6 +18,8 @@ namespace Entities
      */
     static std::vector<Entity *> DynamicRegistry;
 
+    std::vector<Enemy *> EnemyRegistry;
+
     /**
      * @brief Set ID unik (map + indeks objek) untuk entitas yang tidak boleh muncul kembali (respawn).
      */
@@ -46,22 +48,22 @@ namespace Entities
     /**
      * Mengurutkan entitas berdasarkan koordinat Y sebelum di-render untuk mencapai kedalaman pseudo-3D (Y-sorting).
      */
-    void Render()
+    int Render(Rectangle viewRect)
     {
-        // Depth sorting: Entitas dengan nilai Y lebih besar akan di-render terakhir (tampil di depan)
-        std::sort(Registry.begin(), Registry.end(), [](Entity *a, Entity *b)
-                  {
-            if (!a) return false;
-            if (!b) return true;
-            return a->Position.y < b->Position.y; });
-
+        std::vector<Entity *> visible;
         for (auto entity : Registry)
         {
-            if (entity && entity->IsActive)
-            {
-                entity->Render();
-            }
+            if (entity && entity->IsActive && CheckCollisionRecs(entity->GetHitbox(), viewRect))
+                visible.push_back(entity);
         }
+
+        std::sort(visible.begin(), visible.end(), [](Entity *a, Entity *b)
+                  { return a->Position.y < b->Position.y; });
+
+        for (auto entity : visible)
+            entity->Render();
+
+        return (int)visible.size();
     }
 
     /**
@@ -92,6 +94,10 @@ namespace Entities
         {
             DynamicRegistry.push_back(entity);
             Registry.push_back(entity);
+
+            Enemy *e = dynamic_cast<Enemy *>(entity);
+            if (e)
+                EnemyRegistry.push_back(e);
         }
     }
 
@@ -105,6 +111,7 @@ namespace Entities
             delete entity;
         }
         DynamicRegistry.clear();
+        EnemyRegistry.clear();
         Registry.clear();
     }
 
@@ -114,6 +121,11 @@ namespace Entities
     const std::vector<Entity *> &GetRegistry()
     {
         return Registry;
+    }
+
+    std::vector<Enemy *> &Entities::GetEnemyRegistry()
+    {
+        return EnemyRegistry;
     }
 
     /**
@@ -134,11 +146,12 @@ namespace Entities
 }
 
 // rendering master buat tile prop
-void RenderTileProps(void)
+void RenderTileProps(Rectangle viewRect)
 {
-    chestManager.Render();
-    spikeManager.Render();
-    bombManager.Render();
+    int chestRendered = chestManager.Render(viewRect);
+    int spikeRendered = spikeManager.Render(viewRect);
+    int bombRendered = bombManager.Render(viewRect);
+    int crateRendered = crateManager.Render(viewRect);
 }
 
 // clear master buat tile prop
@@ -147,4 +160,5 @@ void ClearTileProps(void)
     chestManager.Clear();
     spikeManager.Clear();
     bombManager.Clear();
+    crateManager.Clear();
 }

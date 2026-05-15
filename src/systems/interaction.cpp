@@ -45,8 +45,8 @@ namespace Interaction
     void UpdateRaycast(Player &player)
     {
         Vector2 playerCenter = {
-            player.Position.x + player.HitboxOffsetX + player.HitboxWidth / 2,
-            player.Position.y + player.HitboxOffsetY + player.HitboxHeight / 2};
+            player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
+            player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
 
         Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(player.State), camera);
         Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
@@ -59,7 +59,7 @@ namespace Interaction
                 propObjects.push_back(obj);
         }
 
-        player.LastHit = player.Ray.Cast(playerCenter, aimDir, player.INTERACT_RANGE, propObjects);
+        player.LastHit = player.Ray.Cast(playerCenter, aimDir, player.GetInteractRange(), propObjects);
     }
 
     /**
@@ -67,7 +67,7 @@ namespace Interaction
      */
     void CheckDoors(Player &player)
     {
-        Rectangle playerHitbox = BuildHitbox(player.Position, player.HitboxOffsetX, player.HitboxOffsetY, player.HitboxWidth, player.HitboxHeight);
+        Rectangle playerHitbox = BuildHitbox(player.Position, player.GetHitboxOffsetX(), player.GetHitboxOffsetY(), player.GetHitboxWidth(), player.GetHitboxHeight());
         std::vector<MapObject *> doors = TiledHelperFunction.GetObjectsByType(DOOR_TYPE_OBJECT_NAME);
 
         for (const auto &door : doors)

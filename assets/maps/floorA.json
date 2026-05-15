@@ -1006,134 +1006,105 @@
          "name":"enemy",
          "objects":[
                 {
-                 "height":0,
-                 "id":37,
-                 "name":"spawn_enemy",
+                 "height":1056,
+                 "id":233,
+                 "name":"enemy_spawn_elite_rect",
                  "opacity":1,
-                 "point":true,
                  "rotation":0,
                  "type":"spawn",
                  "visible":true,
-                 "width":0,
-                 "x":430.30303030303,
-                 "y":457.575757575758
+                 "width":704,
+                 "x":1728,
+                 "y":1184
+                }, 
+                {
+                 "height":576,
+                 "id":234,
+                 "name":"enemy_spawn_normal_rect",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"spawn",
+                 "visible":true,
+                 "width":640,
+                 "x":800,
+                 "y":1792
                 }, 
                 {
                  "height":0,
-                 "id":39,
-                 "name":"spawn_enemy",
+                 "id":235,
+                 "name":"enemy_spawn_boss",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
                  "type":"spawn",
                  "visible":true,
                  "width":0,
-                 "x":727.272727272727,
-                 "y":669.69696969697
+                 "x":2144,
+                 "y":704
                 }, 
                 {
                  "height":0,
-                 "id":40,
-                 "name":"spawn_enemy",
+                 "id":237,
+                 "name":"enemy_spawn_elite_pinpoint",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
                  "type":"spawn",
                  "visible":true,
                  "width":0,
-                 "x":348.484848484848,
-                 "y":1924.24242424242
+                 "x":1376,
+                 "y":768
                 }, 
                 {
                  "height":0,
-                 "id":42,
-                 "name":"spawn_enemy",
+                 "id":238,
+                 "name":"enemy_spawn_normal_pinpoint",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
                  "type":"spawn",
                  "visible":true,
                  "width":0,
-                 "x":2208,
-                 "y":896
+                 "x":256,
+                 "y":1568
                 }, 
                 {
                  "height":0,
-                 "id":43,
-                 "name":"spawn_enemy",
+                 "id":239,
+                 "name":"enemy_spawn_normal_pinpoint",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
                  "type":"spawn",
                  "visible":true,
                  "width":0,
-                 "x":1930.30303030303,
-                 "y":2024.24242424242
+                 "x":416,
+                 "y":1472
                 }, 
                 {
                  "height":0,
-                 "id":44,
-                 "name":"spawn_enemy",
+                 "id":241,
+                 "name":"enemy_spawn_elite_pinpoint",
                  "opacity":1,
                  "point":true,
                  "rotation":0,
                  "type":"spawn",
                  "visible":true,
                  "width":0,
-                 "x":2236.36363636364,
-                 "y":1772.72727272727
+                 "x":1408,
+                 "y":448
                 }, 
                 {
-                 "height":0,
-                 "id":46,
-                 "name":"spawn_enemy",
+                 "height":544,
+                 "id":242,
+                 "name":"enemy_spawn_normal_rect",
                  "opacity":1,
-                 "point":true,
                  "rotation":0,
                  "type":"spawn",
                  "visible":true,
-                 "width":0,
-                 "x":2112,
-                 "y":608
-                }, 
-                {
-                 "height":0,
-                 "id":47,
-                 "name":"spawn_enemy",
-                 "opacity":1,
-                 "point":true,
-                 "rotation":0,
-                 "type":"spawn",
-                 "visible":true,
-                 "width":0,
-                 "x":1390.90909090909,
-                 "y":1066.66666666667
-                }, 
-                {
-                 "height":0,
-                 "id":48,
-                 "name":"spawn_enemy",
-                 "opacity":1,
-                 "point":true,
-                 "rotation":0,
-                 "type":"spawn",
-                 "visible":true,
-                 "width":0,
-                 "x":1384.84848484848,
-                 "y":621.212121212121
-                }, 
-                {
-                 "height":0,
-                 "id":49,
-                 "name":"spawn_enemy",
-                 "opacity":1,
-                 "point":true,
-                 "rotation":0,
-                 "type":"spawn",
-                 "visible":true,
-                 "width":0,
-                 "x":1120,
-                 "y":2112
+                 "width":640,
+                 "x":288,
+                 "y":256
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -1160,7 +1131,7 @@
                         {
                          "name":"target_map",
                          "type":"string",
-                         "value":"assets/maps/floorB.json"
+                         "value":"assets\/maps\/floorB.json"
                         }],
                  "rotation":0,
                  "type":"pass",
@@ -1183,7 +1154,7 @@
                         {
                          "name":"target_map",
                          "type":"string",
-                         "value":"assets/maps/tutorial.json"
+                         "value":"assets\/maps\/tutorial.json"
                         }],
                  "rotation":0,
                  "type":"pass",
@@ -1302,7 +1273,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":true,
+         "visible":false,
          "x":0,
          "y":0
         }, 
@@ -2334,7 +2305,7 @@
                 }],
          "opacity":1,
          "type":"objectgroup",
-         "visible":true,
+         "visible":false,
          "x":0,
          "y":0
         }, 
@@ -2398,7 +2369,7 @@
          "y":0
         }],
  "nextlayerid":12,
- "nextobjectid":233,
+ "nextobjectid":243,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",

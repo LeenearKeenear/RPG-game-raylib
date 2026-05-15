@@ -17,10 +17,13 @@
 #include "mapLogic.h"
 #include "tiles.h"
 #include "animation.h"
+#include "entities.h"
 #include "player.h"
+#include "enemy.h"
 #include <algorithm>
 #include <cctype>
 #include "item.h"
+#include "enemy_ai.h"
 
 /*==============================================================================
  * Global Variables
@@ -31,6 +34,8 @@ Debug DebugInstance;
 
 /** Flag untuk menentukan apakah debug mode sedang aktif */
 bool isDebugMode = false;
+bool showFlowFieldOverlay = false;       // flag untuk menampilkan overlay flow field return enemy
+bool showFlowFieldOverlayPlayer = false; // flag untuk menampilkan overlay flow field player
 
 /*==============================================================================
  * Private Helper Methods
@@ -155,8 +160,8 @@ void Debug::DrawCollisionOverlay(const std::string &layerName, Color rectColor, 
 void Debug::DrawRaycastOverlay(void)
 {
     // Gambar titik hit jika ray mengenai object (hanya saat debug mode aktif)
-    if (isDebugMode && PlayerInstance.GetLastHit().hit)
-        DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, RED);
+    if (isDebugMode && PlayerInstance.LastHit.hit)
+        DrawCircleV(PlayerInstance.LastHit.point, 4.0f, RED);
 }
 
 /**
@@ -198,8 +203,8 @@ void Debug::DrawAttackOverlay(void)
     DrawRectangleRec(attackHitbox, Fade(RED, 0.3f));
 
     // Gambar titik hit jika ray mengenai object
-    if (PlayerInstance.GetLastHit().hit)
-        DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, VIOLET);
+    if (PlayerInstance.LastHit.hit)
+        DrawCircleV(PlayerInstance.LastHit.point, 4.0f, VIOLET);
 
     // Label
     DrawText("Attack Area (2:1 Rect)", (int)attackHitbox.x, (int)attackHitbox.y - 14, 14, RED);
@@ -284,6 +289,14 @@ void Debug::Toggle(void)
         isDebugMode = !isDebugMode;
         TraceLog(LOG_INFO, "Debug mode: %s", isDebugMode ? "ON" : "OFF");
     }
+    if (IsKeyPressed(KEY_BACKSLASH))
+    {
+        showFlowFieldOverlay = !showFlowFieldOverlay;
+    }
+    if (IsKeyPressed(KEY_RIGHT_BRACKET))
+    {
+        showFlowFieldOverlayPlayer = !showFlowFieldOverlayPlayer;
+    }
 }
 
 /**
@@ -364,7 +377,7 @@ void Debug::DrawPlayerPanel(Rectangle bounds)
     DrawPanelFrame(bounds, "[ PLAYER DEBUG ]", GREEN);
     DrawText(TextFormat("Position   : (%.1f, %.1f)", PlayerInstance.GetPosition().x, PlayerInstance.GetPosition().y),
              (int)bounds.x + 10, (int)bounds.y + 27, 16, WHITE);
-    DrawText(TextFormat("Speed      : %.1f", PlayerInstance.GetSpeed()),
+    DrawText(TextFormat("Speed      : %.1f", PlayerInstance.Speed),
              (int)bounds.x + 10, (int)bounds.y + 47, 16, WHITE);
     DrawText(TextFormat("Hitbox Size: %.1f x %.1f", PlayerInstance.GetHitboxWidth(), PlayerInstance.GetHitboxHeight()),
              (int)bounds.x + 10, (int)bounds.y + 67, 16, YELLOW);
@@ -508,6 +521,22 @@ void Debug::DrawWorldOverlay(void)
     DrawCollisionOverlay(TRAP_LAYER_NAME, BEIGE, BEIGE, LIGHTGRAY);
     DrawCollisionOverlay(ITEM_LAYER_NAME, PINK, PINK, LIGHTGRAY);
     DrawAttackOverlay();
+    if (showFlowFieldOverlayPlayer)
+    {
+        DrawFlowFieldOverlay(globalFlowField);
+    }
+    if (showFlowFieldOverlay)
+    {
+        for (auto *entity : Entities::GetRegistry())
+        {
+            Enemy *enemy = dynamic_cast<Enemy *>(entity);
+            if (!enemy)
+                continue;
+            const FlowField *ff = enemy->GetReturnFlowField();
+            if (ff && ff->IsReady())
+                DrawFlowFieldOverlay(*ff);
+        }
+    }
     DrawEnemySpawnOverlay();
 
     // Batas luar map
@@ -529,4 +558,103 @@ void Debug::DrawWorldOverlay(void)
             DrawText(def.name.c_str(), (int)item.hitbox.x, (int)item.hitbox.y - 12, 10, PINK);
         }
     }
+}
+
+/**
+ * @brief Gambar overlay arah flow field pada tile yang reachable.
+ * @param field Flow field yang akan divisualisasikan
+ */
+void Debug::DrawFlowFieldOverlay(const FlowField &field)
+{
+    if (!field.IsReady())
+        return;
+
+    int mapW = tilesonMap->width;
+    int mapH = tilesonMap->height;
+
+    for (int y = 0; y < mapH; y++)
+    {
+        for (int x = 0; x < mapW; x++)
+        {
+            Vector2 tileCenter = {
+                x * FLOW_FIELD_TILE_SIZE + FLOW_FIELD_CENTER_OFFSET,
+                y * FLOW_FIELD_TILE_SIZE + FLOW_FIELD_CENTER_OFFSET};
+
+            Vector2 dir = field.GetDirection(tileCenter);
+            if (dir.x == 0 && dir.y == 0)
+                continue;
+
+            Vector2 arrowEnd = {
+                tileCenter.x + dir.x * (FLOW_FIELD_TILE_SIZE * 0.4f),
+                tileCenter.y + dir.y * (FLOW_FIELD_TILE_SIZE * 0.4f)};
+
+            DrawLineV(tileCenter, arrowEnd, BLUE);
+            DrawCircleV(arrowEnd, 2.0f, ORANGE);
+        }
+    }
+}
+
+/**
+ * @brief Gambar overlay debug steering untuk satu enemy.
+ * @param enemy Enemy yang steering-nya akan divisualisasikan
+ */
+void Debug::DrawSteeringOverlay(Enemy &enemy)
+{
+    Vector2 pos = enemy.GetCenter();
+    float tileSize = FLOW_FIELD_TILE_SIZE;
+
+    // --- 1. Raycast line ---
+    Vector2 vel = enemy.GetVelocity();
+    Vector2 flowDir = globalFlowField.GetDirection(pos);
+    Vector2 rayDir = (Vector2LengthSqr(vel) > 0.001f) ? Vector2Normalize(vel) : flowDir;
+    Vector2 rayEnd = Vector2Add(pos, Vector2Scale(rayDir, tileSize * 2.0f));
+
+    auto obstacles = cachedObstacleList;
+    RayHitResult hit = enemy.CastDebugRay(rayDir, tileSize * 2.0f, obstacles, LINE, 0, 0);
+
+    Color rayColor = hit.hit ? RED : GREEN;
+    DrawLineV(pos, rayEnd, rayColor);
+    DrawCircleV(rayEnd, 3.0f, rayColor);
+
+    // --- 2. Steering dir arrow ---
+    Vector2 steerDir = enemy.Steering.SteeringDir;
+    if (Vector2LengthSqr(steerDir) > 0.001f)
+    {
+        Vector2 steerEnd = Vector2Add(pos, Vector2Scale(steerDir, tileSize * 0.6f));
+        DrawLineV(pos, steerEnd, BLUE);
+        DrawCircleV(steerEnd, 3.0f, BLUE);
+    }
+
+    // --- 3. 5x5 tile highlight --- (skip kalau in range)
+    if (!enemy.Steering.IsInRangeDebug(enemy.GetCenter(), PlayerInstance.GetHitbox(), enemy.GetRayDetectionLength()))
+    {
+        Vector2 flowTile = enemy.Steering.LastFlowTile;
+        for (int dy = -STEERING_GRID_RADIUS; dy <= STEERING_GRID_RADIUS; dy++)
+        {
+            for (int dx = -STEERING_GRID_RADIUS; dx <= STEERING_GRID_RADIUS; dx++)
+            {
+                if (dx == 0 && dy == 0)
+                    continue;
+
+                int tx = (int)flowTile.x + dx;
+                int ty = (int)flowTile.y + dy;
+
+                Vector2 tileCenter = {
+                    tx * tileSize + tileSize * 0.5f,
+                    ty * tileSize + tileSize * 0.5f};
+
+                bool walkable = IsPositionSafe(tileCenter, enemy.GetHitboxValue(), enemy.GetHitboxValue(),
+                                               enemy.GetOffSetValue(), enemy.GetOffSetValue());
+
+                Rectangle tileRect = {
+                    tx * tileSize, ty * tileSize,
+                    tileSize, tileSize};
+
+                DrawRectangleLinesEx(tileRect, 1.0f, walkable ? GREEN : RED);
+            }
+        }
+    }
+
+    // --- 4. IsPlayerInRange radius ---
+    DrawCircleV(pos, enemy.GetRayDetectionLength(), Fade(YELLOW, 0.2f));
 }

@@ -8,6 +8,7 @@
  * - ChestManager: chest yang bisa dibuka player untuk loot item
  * - SpikeManager: trap spike dengan timer aktif/nonaktif dan damage area
  * - BombManager: trap bomb yang meledak saat dipukul, dengan chain reaction
+ * - CrateManager: crate yang bisa dihancurkan player/bomb dan punya chance drop loot
  */
 
 #include "map.h"
@@ -61,7 +62,19 @@ struct TileObject
  */
 void SpawnObject(void);
 
-// helper encode data string
+/**
+ * @brief Trigger hit attack player ke props yang bisa dihancurkan.
+ * @param attackHitbox Hitbox serangan player
+ * @param playerBounds Bounding box player untuk efek props tertentu
+ * @param player Pointer ke player
+ */
+void HitPropsByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player);
+
+/**
+ * @brief Encode posisi world space menjadi key string untuk tracking object.
+ * @param pos Posisi object dalam world space
+ * @return String key berbentuk "x_y"
+ */
 inline std::string EncodePos(Vector2 pos)
 {
     return std::to_string((int)pos.x) + "_" + std::to_string((int)pos.y);
@@ -89,14 +102,20 @@ public:
     void Interact(Vector2 hitPos);
 
     /** @brief Render semua chest (placeholder sprite) */
-    void Render();
+    int Render(Rectangle viewRect);
 
     /** @brief Bersihkan semua data chest */
     void Clear();
 
+    /**
+     * @brief Ambil jumlah chest yang sedang dikelola.
+     * @return Jumlah chest aktif di manager
+     */
+    size_t GetCount() const { return chests.size(); }
+
 private:
-    std::vector<TileObject> chests;
-    std::unordered_set<std::string> consumedPositions;
+    std::vector<TileObject> chests;                    // daftar chest yang sedang dikelola
+    std::unordered_set<std::string> consumedPositions; // posisi chest yang sudah dikonsumsi agar tidak diproses ulang
 
     /**
      * @brief Cari chest terdekat dari titik hit
@@ -117,7 +136,7 @@ private:
  * SpikeManager
  *==============================================================================*/
 
-using SpikeCallback = std::function<void(TileObject &)>;
+using SpikeCallback = std::function<void(TileObject &)>; // callback untuk event spike yang menerima TileObject
 
 /**
  * @brief Manager untuk semua trap spike di map
@@ -140,10 +159,16 @@ public:
     void Update(float deltaTime, Rectangle playerBounds, Player *player);
 
     /** @brief Render semua spike (placeholder sprite) */
-    void Render();
+    int Render(Rectangle viewRect);
 
     /** @brief Bersihkan semua data spike */
     void Clear();
+
+    /**
+     * @brief Ambil jumlah spike yang sedang dikelola.
+     * @return Jumlah spike aktif di manager
+     */
+    size_t GetCount() const { return spikes.size(); }
 
 private:
     /**
@@ -173,7 +198,7 @@ private:
     float globalPlayerDamageCooldown = 0.0f; // Cooldown damage ke player (shared semua spike)
     float globalEnemyDamageCooldown = 0.0f;  // Cooldown damage ke enemy (shared semua spike)
 
-    std::vector<SpikeData> spikes;
+    std::vector<SpikeData> spikes; // daftar spike yang sedang dikelola
 
     /**
      * @brief Generate seed dari nama object untuk randomisasi timer
@@ -193,9 +218,6 @@ private:
  * BombManager
  *==============================================================================*/
 
-using BombCallback = std::function<void(TileObject &)>;
-using BombExplodeCallback = std::function<void(TileObject &, float)>;
-
 /**
  * @brief Manager untuk semua trap bomb di map
  *
@@ -209,6 +231,14 @@ public:
     void SpawnBombs(const std::vector<MapObject *> &bombObjects);
 
     /**
+     * @brief Trigger ledakan bomb yang terkena hitbox serangan player
+     * @param attackHitbox Hitbox serangan player
+     * @param playerBounds Bounding box player
+     * @param player Pointer ke player
+     */
+    void HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player);
+
+    /**
      * @brief Update state semua bomb tiap frame
      * @param deltaTime Waktu antar frame
      * @param playerBounds Bounding box player
@@ -217,29 +247,27 @@ public:
     void Update(float deltaTime, Rectangle playerBounds, Player *player);
 
     /** @brief Render semua bomb (placeholder sprite) */
-    void Render();
+    int Render(Rectangle viewRect);
 
     /** @brief Bersihkan semua data bomb */
     void Clear();
 
-    /** @brief Spawn ulang semua bomb dari spawnPoints (debug only, disabled) */
-    void SpawnAll();
+    /**
+     * @brief Ambil jumlah bomb yang sedang dikelola.
+     * @return Jumlah bomb aktif di manager
+     */
+    size_t GetCount() const { return bombs.size(); }
 
     /**
-     * @brief Cari bomb terdekat dari titik hit
-     * @param hitPos Posisi hit
-     * @param threshold Toleransi jarak ke tepi bounds
-     * @return Pointer ke TileObject bomb terdekat, nullptr jika tidak ada
+     * @brief Cek apakah target berada dalam radius ledakan
+     *
+     * Pakai nearest-point check, bukan center-to-center.
+     *
+     * @param bombPos Posisi center bomb
+     * @param target Bounding box target
+     * @return true jika jarak nearest point <= BOMB_EXPLOSION_RADIUS
      */
-    TileObject *FindBomb(Vector2 hitPos, float threshold = 32.0f);
-
-    /**
-     * @brief Trigger ledakan bomb yang terkena hitbox serangan player
-     * @param attackHitbox Hitbox serangan player
-     * @param playerBounds Bounding box player
-     * @param player Pointer ke player
-     */
-    void HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player);
+    bool IsInExplosionRadius(Vector2 bombPos, Rectangle target);
 
 private:
     /**
@@ -252,9 +280,6 @@ private:
         bool isExploding;         // True selama animasi ledakan berlangsung
         bool isTriggered = false; // Guard untuk mencegah infinite loop chain reaction
         float explosionTimer;     // Sisa waktu animasi ledakan
-        BombCallback onHit;
-        BombExplodeCallback onExplode;
-        BombCallback onDamagePlayer;
     };
 
     // Konstanta bomb
@@ -262,12 +287,17 @@ private:
     static constexpr float BOMB_DAMAGE = 25.0f;            // Damage ledakan
     static constexpr float BOMB_EXPLOSION_DURATION = 0.3f; // Durasi animasi ledakan (detik)
 
-    std::vector<BombData> bombs;
-    std::unordered_set<std::string> consumedPositions;
-    Player *playerRef = nullptr;
+    std::vector<BombData> bombs;                       // daftar bomb yang sedang dikelola
+    std::unordered_set<std::string> consumedPositions; // posisi bomb yang sudah dikonsumsi agar tidak diproses ulang
+    Player *playerRef = nullptr;                       // referensi player terakhir untuk kebutuhan update/interaction bomb
 
-    /** @brief Setup callback onHit, onExplode, onDamagePlayer */
-    void SetupCallbacks(BombData &bomb);
+    /**
+     * @brief Cari bomb terdekat dari titik hit
+     * @param hitPos Posisi hit
+     * @param threshold Toleransi jarak ke tepi bounds
+     * @return Pointer ke TileObject bomb terdekat, nullptr jika tidak ada
+     */
+    TileObject *FindBomb(Vector2 hitPos, float threshold = 32.0f);
 
     /**
      * @brief Trigger ledakan bomb, damage area, dan chain reaction
@@ -276,23 +306,56 @@ private:
      * @param player Pointer ke player
      */
     void Explode(BombData &bomb, Rectangle playerBounds, Player *player);
+};
+
+/*==============================================================================
+ * CrateManager
+ *==============================================================================*/
+
+/**
+ * @brief Manager untuk semua crate di map.
+ *
+ * Crate bisa dihancurkan oleh serangan player atau ledakan bomb,
+ * lalu punya peluang menjatuhkan loot.
+ */
+class CrateManager
+{
+public:
+    void SpawnCrates(const std::vector<MapObject *> &crateObjects); // spawn semua crate dari object layer Tiled
+    void HitByAttack(Rectangle attackHitbox);                       // hancurkan crate yang terkena hitbox serangan player
+    void Update();                                                  // hapus crate yang sudah tidak aktif dari daftar runtime
+    void HitByExplosion(Vector2 bombPos, BombManager *bomber);      // hancurkan crate yang terkena radius ledakan bomb
+    int Render(Rectangle viewRect);                                 // render crate yang terlihat dalam view
+    void Clear();                                                   // bersihkan semua data crate
 
     /**
-     * @brief Cek apakah target berada dalam radius ledakan
-     *
-     * Pakai nearest-point check, bukan center-to-center.
-     *
-     * @param bombPos Posisi center bomb
-     * @param target Bounding box target
-     * @return true jika jarak nearest point <= BOMB_EXPLOSION_RADIUS
+     * @brief Ambil jumlah crate yang sedang dikelola.
+     * @return Jumlah crate aktif di manager
      */
-    bool IsInExplosionRadius(Vector2 bombPos, Rectangle target);
+    size_t GetCount() const { return crates.size(); }
+
+private:
+    struct CrateData
+    {
+        TileObject tile; // data object crate di map
+        bool isAlive;    // false jika crate sudah dihancurkan
+    };
+
+    static constexpr float CRATE_LOOT_CHANCE = 0.10f; // 10% chance drop loot
+
+    std::vector<CrateData> crates;                     // daftar crate yang sedang dikelola
+    std::unordered_set<std::string> consumedPositions; // posisi crate yang sudah dihancurkan agar tidak spawn ulang
+
+    TileObject *FindCrate(Vector2 hitPos, float threshold = 32.0f); // cari crate terdekat dari titik hit
+    void Destroy(CrateData &crate);                                 // hancurkan crate, hapus obstacle, dan trigger loot
+    void TriggerLoot(TileObject &crate);                            // roll peluang drop loot dari crate
 };
 
 /*==============================================================================
  * Global Manager Instances
  *==============================================================================*/
 
-extern ChestManager chestManager;
-extern SpikeManager spikeManager;
-extern BombManager bombManager;
+extern ChestManager chestManager; // instance global manager chest
+extern SpikeManager spikeManager; // instance global manager spike
+extern BombManager bombManager;   // instance global manager bomb
+extern CrateManager crateManager; // instance global manager crate

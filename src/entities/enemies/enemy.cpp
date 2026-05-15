@@ -1,4 +1,5 @@
 #include "enemy.h"
+#include "screen.h"
 #include "enemy_ai.h"
 #include "player.h"
 #include "map.h"
@@ -17,9 +18,48 @@ using namespace DataDriven;
 EnemyDataManager enemyData;
 
 /*==============================================================================
+ * Enemy Data Utilities
+ *==============================================================================*/
+
+/**
+ * @brief Konversi string rank dari data JSON menjadi enum EnemyRank.
+ * @param s String rank enemy
+ * @return Enum EnemyRank, default ENEMY_NORMAL jika string tidak dikenali
+ */
+EnemyRank ParseRank(const std::string &s)
+{
+    if (s == "elite")
+        return ENEMY_ELITE;
+    if (s == "boss")
+        return ENEMY_BOSS;
+    return ENEMY_NORMAL;
+}
+
+/**
+ * @brief Ambil semua nama enemy yang memiliki rank tertentu.
+ * @param rank Rank enemy yang dicari
+ * @return Daftar nama enemy dengan rank yang cocok
+ */
+std::vector<std::string> GetNamesByRank(EnemyRank rank)
+{
+    std::vector<std::string> result;
+    for (const auto &name : enemyData.GetAllNames())
+    {
+        if (enemyData.Get(name).rank == rank)
+            result.push_back(name);
+    }
+    return result;
+}
+
+/*==============================================================================
  * EnemyDataManager
  *==============================================================================*/
 
+/**
+ * @brief Load seluruh definisi enemy dari file JSON.
+ * @param path Path file JSON enemy data
+ * @note Melempar runtime_error jika file tidak bisa dibuka.
+ */
 void EnemyDataManager::Load(const std::string &path)
 {
     std::ifstream file(path);
@@ -33,6 +73,7 @@ void EnemyDataManager::Load(const std::string &path)
         EnemyDefinition def;
         def.id = SafeGet<int>(data, "id", -1);
         def.name = name;
+        def.rank = ParseRank(SafeGet<std::string>(data, "rank", "normal"));
 
         const auto &s = data.at("stats");
         def.stats.maxHealth = SafeGet<float>(s, "maxHealth", 100.f);
@@ -58,6 +99,12 @@ void EnemyDataManager::Load(const std::string &path)
     }
 }
 
+/**
+ * @brief Ambil definisi enemy berdasarkan nama.
+ * @param name Nama enemy yang dicari
+ * @return Referensi definisi enemy
+ * @note Melempar runtime_error jika nama tidak ditemukan.
+ */
 const EnemyDefinition &EnemyDataManager::Get(const std::string &name) const
 {
     auto it = definitions_.find(name);
@@ -66,6 +113,10 @@ const EnemyDefinition &EnemyDataManager::Get(const std::string &name) const
     return it->second;
 }
 
+/**
+ * @brief Ambil daftar semua nama enemy yang sudah dimuat.
+ * @return Daftar nama enemy dari enemy data manager
+ */
 std::vector<std::string> EnemyDataManager::GetAllNames() const
 {
     std::vector<std::string> names;
@@ -100,7 +151,9 @@ void Enemy::Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition
     AnimSet = Def->animSet;
     MapObjectID = mapId;
     SpawnPoint = pos;
+    SpawnRect = {0, 0, 0, 0};
     Name = name;
+    rank = def.rank;
 
     Health = def.stats.maxHealth;
     MaxHealth = def.stats.maxHealth;
@@ -129,10 +182,9 @@ void Enemy::Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition
     Anim.position = Position;
 }
 
-/*==============================================================================
- * Enemy — Update
- *==============================================================================*/
-
+/**
+ * @brief Update lifecycle enemy, termasuk death state, knockback, AI, dan animasi.
+ */
 void Enemy::Update()
 {
     if (!IsActive)
@@ -148,23 +200,23 @@ void Enemy::Update()
             Entities::RegisterDeath(GetCurrentMapPath(), MapObjectID);
         }
 
-        DeathTimer += GetFrameTime();
+        DeathTimer += Time::DELTA_TIME;
         if (DeathTimer >= DeathDuration)
             IsActive = false;
 
         Anim.position = Position;
-        UpdateAnimation(Anim, GetFrameTime());
+        UpdateAnimation(Anim, Time::DELTA_TIME);
         return;
     }
 
     if (HitFlashTimer > 0)
-        HitFlashTimer -= GetFrameTime();
+        HitFlashTimer -= Time::DELTA_TIME;
     if (AttackCooldownTimer > 0)
-        AttackCooldownTimer -= GetFrameTime();
+        AttackCooldownTimer -= Time::DELTA_TIME;
 
     if (Vector2Length(KnockbackVelocity) > 0.1f)
     {
-        Vector2 move = Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f);
+        Vector2 move = Vector2Scale(KnockbackVelocity, Time::DELTA_TIME * 60.0f);
         Vector2 nextX = {Position.x + move.x, Position.y};
         Vector2 nextY = {Position.x, Position.y + move.y};
 
@@ -180,16 +232,19 @@ void Enemy::Update()
         KnockbackVelocity = {0, 0};
     }
 
-    UpdateAI();
+    // buat ngatur sejauh apa ai enemy bisa ke update
+    const float AI_UPDATE_RANGE = TILE_SIZE * 20.0f;
+
+    if (Vector2Distance(Position, PlayerInstance.GetPosition()) <= AI_UPDATE_RANGE)
+        UpdateAI();
 
     Anim.position = Position;
-    UpdateAnimation(Anim, GetFrameTime());
+    UpdateAnimation(Anim, Time::DELTA_TIME);
 }
 
-/*==============================================================================
- * Enemy — AI
- *==============================================================================*/
-
+/**
+ * @brief Update state machine AI enemy berdasarkan kondisi player dan state aktif.
+ */
 void Enemy::UpdateAI()
 {
     // Jika player mati, paksa idle agar enemy tidak terus mengejar posisi terakhir
@@ -211,11 +266,11 @@ void Enemy::UpdateAI()
     // Regen HP hanya saat tidak agresif
     if (HealthRegenTimer > 0)
     {
-        HealthRegenTimer -= GetFrameTime();
+        HealthRegenTimer -= Time::DELTA_TIME;
     }
     else if (AIState != ENEMY_CHASE && AIState != ENEMY_ATTACK && Health < MaxHealth)
     {
-        Health += Def->stats.healthRegenRate * GetFrameTime();
+        Health += Def->stats.healthRegenRate * Time::DELTA_TIME;
         if (Health > MaxHealth)
             Health = MaxHealth;
     }
@@ -253,8 +308,7 @@ bool Enemy::CheckPlayerLoS()
     Vector2 enemyCenter = GetCenter();
     Vector2 playerCenter = PlayerInstance.GetCenter();
 
-    float dist = Vector2Distance(enemyCenter, playerCenter);
-    if (dist > DetectionRange)
+    if (!CheckCollisionCircleRec(enemyCenter, DetectionRange, PlayerInstance.GetHitbox()))
         return false;
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
@@ -276,9 +330,16 @@ bool Enemy::CheckPlayerLoS()
     }
 
     RayHitResult hit = Ray.Cast(enemyCenter, dir, DetectionRange, obstacles);
-    return (!hit.hit || hit.distance >= dist);
+    return !hit.hit;
 }
 
+/*==============================================================================
+ * Enemy — AI States
+ *==============================================================================*/
+
+/**
+ * @brief Jalankan state idle enemy.
+ */
 void Enemy::HandleIdle()
 {
     if (CheckPlayerLoS())
@@ -287,7 +348,7 @@ void Enemy::HandleIdle()
         return;
     }
 
-    PatrolTimer += GetFrameTime();
+    PatrolTimer += Time::DELTA_TIME;
     if (PatrolTimer >= PatrolWaitTime)
     {
         PatrolTimer = 0;
@@ -312,6 +373,9 @@ void Enemy::HandleIdle()
     }
 }
 
+/**
+ * @brief Jalankan state patrol enemy.
+ */
 void Enemy::HandlePatrol()
 {
     if (CheckPlayerLoS())
@@ -333,9 +397,13 @@ void Enemy::HandlePatrol()
         PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
 }
 
+/**
+ * @brief Jalankan state chase enemy.
+ */
 void Enemy::HandleChase()
 {
-    // Tahan gerak saat cooldown serangan — enemy berdiri diam sebentar setelah menyerang
+    SteeringContext ctx = BuildSteeringContext();
+
     if (AttackCooldownTimer > 0)
     {
         if (Anim.state != IDLE)
@@ -349,7 +417,6 @@ void Enemy::HandleChase()
 
     if (dist <= Def->stats.attackRange)
     {
-        // Serang hanya sekali saat player baru masuk range
         if (!PlayerWasInRange)
             PerformAttack();
         AIState = ENEMY_ATTACK;
@@ -359,32 +426,43 @@ void Enemy::HandleChase()
 
     PlayerWasInRange = false;
 
-    if (dist > DetectionRange)
+    if (!CheckCollisionCircleRec(enemyCenter, DetectionRange, PlayerInstance.GetHitbox()))
     {
-        // Player keluar range — pulang ke spawn
         AIState = ENEMY_RETURN;
         PatrolTarget = SpawnPoint;
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
         return;
     }
 
-    // pakai flow field jika siap, fallback ke MoveTowards langsung
-    Vector2 dir = globalFlowField.GetDirection(enemyCenter);
-    if (dir.x != 0 || dir.y != 0)
+    if (Steering.SteeringFlipCount >= Steering.MaxSteeringFlipCount)
     {
-        Vector2 target = Vector2Add(enemyCenter, Vector2Scale(dir, FLOW_FIELD_TILE_SIZE));
-        MoveTowards(target, Def->stats.chaseSpeed);
+        Steering.SteeringFlipCount = 0;
+        AIState = ENEMY_PATROL;
+        return;
+    }
+
+    if (Steering.IsPlayerInRange(ctx))
+    {
+        MoveTowards(playerCenter, Def->stats.chaseSpeed);
     }
     else
     {
-        MoveTowards(PlayerInstance.GetPosition(), Def->stats.chaseSpeed);
+        Vector2 steerDir = Steering.Compute(STEERING_CHASE, ctx, Ray);
+        Velocity = steerDir;
+
+        if (Vector2LengthSqr(steerDir) > 0.001f)
+            MoveTowards(Steering.SteeringTarget, Def->stats.chaseSpeed);
+        else
+            MoveTowards(playerCenter, Def->stats.chaseSpeed);
     }
 
-    MoveTowards(PlayerInstance.GetPosition(), Def->stats.chaseSpeed);
     if (Anim.state != WALK)
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
 }
 
+/**
+ * @brief Jalankan state return enemy.
+ */
 void Enemy::HandleReturn()
 {
     if (CheckPlayerLoS())
@@ -393,18 +471,61 @@ void Enemy::HandleReturn()
         return;
     }
 
-    if (Vector2Distance(GetCenter(), SpawnPoint) < 5.0f)
+    bool hasReturned = (SpawnRect.width > 0)
+                           ? CheckCollisionPointRec(GetCenter(), SpawnRect)
+                           : Vector2Distance(GetCenter(), SpawnPoint) < TILE_SIZE * 4.0f;
+
+    if (hasReturned)
     {
         AIState = ENEMY_IDLE;
         PlayAnimation(Anim, IDLE, Anim.direction, *Def->animSet);
         return;
     }
 
-    MoveTowards(SpawnPoint, Def->stats.speed);
+    // throttle scan spawn flow field
+    ReturnScanTimer -= Time::DELTA_TIME;
+    if (ReturnScanTimer <= 0.f)
+    {
+        ReturnScanTimer = RETURN_SCAN_INTERVAL;
+
+        if (ReturnFlowField == nullptr ||
+            Vector2LengthSqr(ReturnFlowField->GetDirection(GetCenter())) < 0.001f)
+        {
+            ReturnFlowField = FindNearestSpawnFlowField(GetCenter());
+        }
+    }
+
+    SteeringContext ctx = BuildSteeringContext();
+
+    if (Steering.SteeringFlipCount >= Steering.MaxSteeringFlipCount)
+    {
+        Steering.SteeringFlipCount = 0;
+        AIState = ENEMY_IDLE;
+        return;
+    }
+
+    if (ReturnFlowField == nullptr)
+    {
+        // fallback — jalan lurus ke spawn point
+        MoveTowards(SpawnPoint, Def->stats.speed);
+        return;
+    }
+
+    Vector2 steerDir = Steering.Compute(STEERING_RETURN, ctx, Ray);
+    Velocity = steerDir;
+
+    if (Vector2LengthSqr(steerDir) > 0.001f)
+        MoveTowards(Steering.SteeringTarget, Def->stats.speed);
+    else
+        MoveTowards(SpawnPoint, Def->stats.speed);
+
     if (Anim.state != WALK)
         PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
 }
 
+/**
+ * @brief Jalankan state attack enemy.
+ */
 void Enemy::HandleAttack()
 {
     Vector2 enemyCenter = GetCenter();
@@ -433,12 +554,24 @@ void Enemy::HandleAttack()
  * Enemy — Combat
  *==============================================================================*/
 
+/**
+ * @brief Eksekusi serangan enemy ke player jika tidak terhalang obstacle.
+ */
 void Enemy::PerformAttack()
 {
     Vector2 enemyCenter = GetCenter();
     Vector2 playerCenter = PlayerInstance.GetCenter();
-    Vector2 knockDir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
 
+    // cek ada obstacle nggak antara enemy dan player
+    Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
+    float dist = Vector2Distance(enemyCenter, playerCenter);
+    auto obstacles = cachedObstacleList;
+    RayHitResult hit = Ray.Cast(enemyCenter, dir, dist, obstacles);
+
+    if (hit.hit)
+        return; // ada obstacle, batal serang
+
+    Vector2 knockDir = dir;
     PlayerInstance.TakeDamage(Def->stats.damage, knockDir);
 
     PlayAnimation(Anim, ATTACK, Anim.direction, *AnimSet);
@@ -464,6 +597,9 @@ void Enemy::TakeDamage(float amount, Vector2 knockback)
  * Enemy — Render
  *==============================================================================*/
 
+/**
+ * @brief Render enemy, efek visual, health bar, dan debug overlay.
+ */
 void Enemy::Render()
 {
     if (!IsActive)
@@ -502,65 +638,24 @@ void Enemy::Render()
 
         if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK)
             DrawLineEx(enemyCenter, PlayerInstance.GetCenter(), 1.0f, RED);
+
+        // Steering debug
+        if (AIState == ENEMY_CHASE || AIState == ENEMY_RETURN)
+            Debug::DrawSteeringOverlay(*this);
     }
 }
 
 /*==============================================================================
- * Global Utility Functions (definisi: src/enemy.cpp)
+ * Enemy — Global Utilities
  *==============================================================================*/
 
+/**
+ * @brief Muat texture dan data definisi enemy.
+ */
 void InitEnemy()
 {
     LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
     enemyData.Load("assets/data/enemies.json");
-}
-
-/**
- * @brief Spawn sejumlah enemy acak sekaligus.
- * @note Jumlah enemy per wave: 4–7
- */
-void SpawnRandomWave()
-{
-    int count = GetRandomValue(4, 7);
-    for (int i = 0; i < count; i++)
-        SpawnRandomEnemy();
-}
-
-/**
- * @brief Spawn satu enemy acak di posisi valid dalam map.
- * @note Mencoba hingga 100 posisi acak — jika semuanya tidak valid, enemy tidak di-spawn
- */
-void SpawnRandomEnemy()
-{
-    if (!tilesonMap)
-        return;
-
-    const auto &names = enemyData.GetAllNames();
-    const std::string &picked = names[GetRandomValue(0, (int)names.size() - 1)];
-    const EnemyDefinition &def = enemyData.Get(picked);
-
-    Vector2 randomPos;
-    bool validPos = false;
-    float mapW = tilesonMap->width * 32.0f;
-    float mapH = tilesonMap->height * 32.0f;
-
-    for (int i = 0; i < 100; i++)
-    {
-        randomPos = {(float)GetRandomValue(32, (int)mapW - 32), (float)GetRandomValue(32, (int)mapH - 32)};
-        if (IsPositionSafe(randomPos, def.hitbox.size.x, def.hitbox.size.y,
-                           def.hitbox.offset.x, def.hitbox.offset.y))
-        {
-            validPos = true;
-            break;
-        }
-    }
-
-    if (validPos)
-    {
-        Enemy *en = new Enemy();
-        en->Init(randomPos, picked.c_str(), -1, def);
-        Entities::AddDynamic(en);
-    }
 }
 
 void SaveEnemiesForMap(const std::string &mapPath) {}
@@ -569,6 +664,10 @@ bool LoadEnemiesForMap(const std::string &mapPath)
 {
     return true;
 }
+
+/**
+ * @brief Hapus semua enemy aktif dari entity manager.
+ */
 
 void ClearEnemies()
 {
@@ -579,7 +678,12 @@ void ClearEnemies()
  * Enemy — Helper
  *==============================================================================*/
 
-// Gerak per axis secara terpisah agar enemy bisa slide di sepanjang dinding
+/**
+ * @brief Gerakkan enemy menuju target dengan collision check per axis.
+ * @param target Posisi tujuan dalam world space
+ * @param speed Kecepatan gerak enemy
+ * @note Collision dicek terpisah per axis agar enemy bisa slide di sepanjang dinding.
+ */
 void Enemy::MoveTowards(Vector2 target, float speed)
 {
     Vector2 dir = Vector2Normalize(Vector2Subtract(target, Position));
@@ -596,7 +700,11 @@ void Enemy::MoveTowards(Vector2 target, float speed)
         Anim.direction = (dir.y > 0) ? DOWN : UP;
 }
 
-// Fallback ke SlimeAnimationSet jika nama tidak dikenali
+/**
+ * @brief Pilih AnimationSet berdasarkan nama enemy.
+ * @param name Nama enemy
+ * @return Pointer ke AnimationSet yang sesuai, atau SlimeAnimationSet sebagai fallback
+ */
 const AnimationSet *ResolveAnimSet(const std::string &name)
 {
     if (name == "Skeleton")
@@ -604,4 +712,187 @@ const AnimationSet *ResolveAnimSet(const std::string &name)
     if (name == "Wolf")
         return &WolfAnimationSet;
     return &SlimeAnimationSet;
+}
+
+/*==============================================================================
+ * Enemy — spawn
+ *==============================================================================*/
+
+/**
+ * @brief Spawn satu enemy di posisi object spawn berdasarkan rank.
+ * @param obj Object spawn dari Tiled
+ * @param rank Rank enemy yang akan dipilih dari pool
+ * @note Pemilihan enemy deterministic berdasarkan ID object spawn.
+ */
+void SpawnAtPoint(const MapObject *obj, EnemyRank rank)
+{
+    if (!obj)
+        return;
+
+    auto pool = GetNamesByRank(rank);
+    if (pool.empty())
+        return;
+
+    std::mt19937 rng(obj->id);
+    std::uniform_int_distribution<int> pickDist(0, (int)pool.size() - 1);
+    std::uniform_int_distribution<int> countDist(
+        rank == ENEMY_ELITE ? SPAWN_PINPOINT_ELITE_MIN : SPAWN_PINPOINT_NORMAL_MIN,
+        rank == ENEMY_ELITE ? SPAWN_PINPOINT_ELITE_MAX : SPAWN_PINPOINT_NORMAL_MAX);
+    std::uniform_real_distribution<float> offsetDist(-SEPARATION_RADIUS, SEPARATION_RADIUS);
+
+    int count = countDist(rng);
+
+    Vector2 center = {obj->bounds.x + obj->bounds.width / 2.0f,
+                      obj->bounds.y + obj->bounds.height / 2.0f};
+    if (spawnFlowFields.find(obj->id) == spawnFlowFields.end())
+        BuildSpawnFlowFields(center, obj->id, tilesonMap->width, tilesonMap->height);
+
+    for (int i = 0; i < count; i++)
+    {
+        std::string picked = pool[pickDist(rng)];
+        const EnemyDefinition &def = enemyData.Get(picked);
+
+        Vector2 spawnPos = {center.x + offsetDist(rng), center.y + offsetDist(rng)};
+
+        Enemy *enemy = new Enemy();
+        enemy->Init(spawnPos, picked.c_str(), obj->id, def);
+        enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
+        Entities::AddDynamic(enemy);
+    }
+}
+
+/**
+ * @brief Spawn sejumlah enemy acak di dalam rectangle spawn.
+ * @param obj Object rectangle spawn dari Tiled
+ * @param enemyName Nama enemy yang akan di-spawn
+ * @param ratio Pengali jumlah spawn hasil random
+ * @note Posisi spawn dicoba ulang sampai SPAWN_RETRY_LIMIT agar tidak masuk obstacle.
+ */
+void SpawnInRect(const MapObject *obj, const std::string &enemyName, float ratio)
+{
+    if (!obj)
+        return;
+
+    const EnemyDefinition &def = enemyData.Get(enemyName);
+
+    std::mt19937 rng(obj->id);
+    std::uniform_int_distribution<int> maxDist(
+        def.rank == ENEMY_ELITE ? SPAWN_RECT_ELITE_MIN : SPAWN_RECT_NORMAL_MIN,
+        def.rank == ENEMY_ELITE ? SPAWN_RECT_ELITE_MAX : SPAWN_RECT_NORMAL_MAX);
+    std::uniform_real_distribution<float> xDist(obj->bounds.x, obj->bounds.x + obj->bounds.width);
+    std::uniform_real_distribution<float> yDist(obj->bounds.y, obj->bounds.y + obj->bounds.height);
+
+    int count = (int)std::round(maxDist(rng) * ratio);
+
+    Vector2 rectCenter = {obj->bounds.x + obj->bounds.width / 2.0f,
+                          obj->bounds.y + obj->bounds.height / 2.0f};
+    if (spawnFlowFields.find(obj->id) == spawnFlowFields.end())
+        BuildSpawnFlowFields(rectCenter, obj->id, tilesonMap->width, tilesonMap->height);
+
+    for (int i = 0; i < count; i++)
+    {
+        Vector2 spawnPos;
+        bool valid = false;
+
+        for (int retry = 0; retry < SPAWN_RETRY_LIMIT; retry++)
+        {
+            spawnPos = {xDist(rng), yDist(rng)};
+            if (IsPositionSafe(spawnPos, def.hitbox.size.x, def.hitbox.size.y,
+                               def.hitbox.offset.x, def.hitbox.offset.y))
+            {
+                valid = true;
+                break;
+            }
+        }
+
+        if (!valid)
+            continue;
+
+        Enemy *enemy = new Enemy();
+        enemy->Init(spawnPos, enemyName.c_str(), obj->id, def);
+        enemy->SpawnRect = obj->bounds;
+        enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
+        Entities::AddDynamic(enemy);
+    }
+}
+
+/**
+ * @brief Spawn satu boss dari object spawn.
+ * @param obj Object spawn boss dari Tiled
+ * @note Pemilihan boss deterministic berdasarkan ID object spawn.
+ */
+void SpawnBoss(const MapObject *obj)
+{
+    if (!obj)
+        return;
+
+    auto pool = GetNamesByRank(ENEMY_BOSS);
+    if (pool.empty())
+        return;
+
+    std::mt19937 rng(obj->id);
+    std::uniform_int_distribution<int> pickDist(0, (int)pool.size() - 1);
+
+    std::string picked = pool[pickDist(rng)];
+    const EnemyDefinition &def = enemyData.Get(picked);
+
+    Vector2 spawnPos = {obj->bounds.x + obj->bounds.width / 2.0f,
+                        obj->bounds.y + obj->bounds.height / 2.0f};
+
+    if (spawnFlowFields.find(obj->id) == spawnFlowFields.end())
+        BuildSpawnFlowFields(spawnPos, obj->id, tilesonMap->width, tilesonMap->height);
+
+    Enemy *enemy = new Enemy();
+    enemy->Init(spawnPos, picked.c_str(), obj->id, def);
+    enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
+    Entities::AddDynamic(enemy);
+}
+
+/**
+ * @brief Spawn semua enemy dari object spawn di map aktif.
+ * @note Object yang sudah tercatat mati untuk map saat ini akan dilewati.
+ */
+void SpawnEnemiesFromMap()
+{
+    if (!tilesonMap)
+        return;
+
+    auto spawnObjects = TiledHelper::GetObjectsByType("spawn");
+    if (spawnObjects.empty())
+        return;
+
+    for (const auto *obj : spawnObjects)
+    {
+        std::mt19937 rng;
+        if (Entities::IsAlreadyDead(GetCurrentMapPath(), obj->id))
+            continue;
+
+        rng.seed(obj->id);
+        std::uniform_real_distribution<float> ratioDist(0.0f, 1.0f);
+
+        if (obj->name == ENEMY_SPAWN_NORMAL_PIN_OBJECT_NAME)
+        {
+            SpawnAtPoint(obj, ENEMY_NORMAL);
+        }
+        else if (obj->name == ENEMY_SPAWN_ELITE_PIN_OBJECT_NAME)
+        {
+            SpawnAtPoint(obj, ENEMY_ELITE);
+        }
+        else if (obj->name == ENEMY_SPAWN_NORMAL_REC_OBJECT_NAME)
+        {
+            auto pool = GetNamesByRank(ENEMY_NORMAL);
+            for (const auto &name : pool)
+                SpawnInRect(obj, name, ratioDist(rng));
+        }
+        else if (obj->name == ENEMY_SPAWN_ELITE_REC_OBJECT_NAME)
+        {
+            auto pool = GetNamesByRank(ENEMY_ELITE);
+            for (const auto &name : pool)
+                SpawnInRect(obj, name, ratioDist(rng));
+        }
+        else if (obj->name == ENEMY_SPAWN_BOSS_OBJECT_NAME)
+        {
+            SpawnBoss(obj);
+        }
+    }
 }

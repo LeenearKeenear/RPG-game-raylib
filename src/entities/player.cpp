@@ -1,7 +1,9 @@
 #include "player.h"
+#include "screen.h"
 #include "movement.h"
 #include "combat.h"
 #include "interaction.h"
+#include "animation.h"
 #include "inventory.h"
 #include "mapLogic.h"
 #include "debug.h"
@@ -114,12 +116,12 @@ void Player::Update()
 
     // 3. Timer & Efek Status
     if (HitFlashTimer > 0)
-        HitFlashTimer -= GetFrameTime();
+        HitFlashTimer -= Time::DELTA_TIME;
 
     // 4. Fisika & Pergerakan (termasuk Knockback)
     if (Vector2Length(KnockbackVelocity) > 0.1f)
     {
-        Vector2 nextPos = Vector2Add(Position, Vector2Scale(KnockbackVelocity, GetFrameTime() * 60.0f));
+        Vector2 nextPos = Vector2Add(Position, Vector2Scale(KnockbackVelocity, Time::DELTA_TIME * 60.0f));
         if (Movement::CanMove(*this, nextPos))
         {
             Position = nextPos;
@@ -153,9 +155,9 @@ void Player::Update()
     HandleAction();
 
     // 6. Update Animasi & Kamera
-    Combat::UpdateSwingAttack(*this, GetFrameTime());
+    Combat::UpdateSwingAttack(*this, Time::DELTA_TIME);
     Anim.position = Position;
-    UpdateAnimation(Anim, GetFrameTime());
+    UpdateAnimation(Anim, Time::DELTA_TIME);
     Movement::UpdateCamera(*this);
 
     // 7. Handle map transitions
@@ -323,9 +325,44 @@ void Player::HandleAction(void)
         Vector2 playerCenter = GetCenter();
         Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(State), camera);
         Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+
+        // Arah hadap player
+        Vector2 facingDir = {0, 0};
+        switch (Anim.direction)
+        {
+        case UP:
+            facingDir = {0, -1};
+            break;
+        case DOWN:
+            facingDir = {0, 1};
+            break;
+        case LEFT:
+            facingDir = {-1, 0};
+            break;
+        case RIGHT:
+            facingDir = {1, 0};
+            break;
+        }
+
+        Vector2 backDir = {-facingDir.x, -facingDir.y};
+        float forbiddenThreshold = cosf((90.0f - RayCastAngleItemDropBack) * DEG2RAD);
+        Vector2 dropDir = aimDir;
+
+        if (Vector2DotProduct(backDir, aimDir) > forbiddenThreshold)
+        {
+            float cross = facingDir.x * aimDir.y - facingDir.y * aimDir.x;
+            float sign = (cross >= 0) ? 1.0f : -1.0f;
+            float clampAngle = (90.0f + RayCastAngleItemDropBack) * DEG2RAD;
+            float cosA = cosf(clampAngle * sign);
+            float sinA = sinf(clampAngle * sign);
+            dropDir = {
+                facingDir.x * cosA - facingDir.y * sinA,
+                facingDir.x * sinA + facingDir.y * cosA};
+        }
+
         Vector2 dropPos = {
-            playerCenter.x + aimDir.x * INTERACT_RANGE,
-            playerCenter.y + aimDir.y * INTERACT_RANGE};
+            playerCenter.x + dropDir.x * INTERACT_RANGE,
+            playerCenter.y + dropDir.y * INTERACT_RANGE};
 
         ItemSpawn dropped = itemData.CreateItem(dropPos, slot.definitionId);
         if (dropAll)

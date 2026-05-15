@@ -6,6 +6,7 @@
  * - ChestManager: spawn, interaksi, dan loot chest
  * - SpikeManager: spawn, update timer aktif/nonaktif, damage player & enemy
  * - BombManager: spawn, explode, chain reaction, damage player & enemy
+ * - CrateManager: spawn, destroy, dan loot crate
  *
  * Semua manager di-spawn via SpawnObject() yang dipanggil saat map di-load.
  */
@@ -13,6 +14,7 @@
 #include "propsbehavior.h"
 #include "item.h"
 #include "enemy.h"
+#include "enemy_ai.h"
 #include "entities.h"
 
 /*==============================================================================
@@ -73,7 +75,7 @@ float DistToCenter(Vector2 hitPos, Rectangle bounds)
  *
  * Dipanggil sekali saat map selesai di-load. Mengambil object
  * berdasarkan type dari object layer dan mendistribusikannya
- * ke ChestManager, SpikeManager, dan BombManager.
+ * ke ChestManager, SpikeManager, BombManager, dan CrateManager.
  */
 void SpawnObject()
 {
@@ -85,6 +87,22 @@ void SpawnObject()
 
     auto bombObjs = TiledHelper::GetObjectsByType(BOMB_TYPE_OBJECT_NAME);
     bombManager.SpawnBombs(bombObjs);
+
+    auto crateObjs = TiledHelper::GetObjectsByType(CRATE_TYPE_OBJECT_NAME);
+    crateManager.SpawnCrates(crateObjs);
+}
+
+/**
+ * @brief Trigger hit attack player ke semua props yang bisa bereaksi terhadap serangan.
+ * @param attackHitbox Hitbox serangan player
+ * @param playerBounds Bounding box player untuk efek props tertentu
+ * @param player Pointer ke player
+ */
+void HitPropsByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player)
+{
+    bombManager.HitByAttack(attackHitbox, playerBounds, player);
+
+    crateManager.HitByAttack(attackHitbox);
 }
 
 /*==============================================================================
@@ -119,6 +137,7 @@ void ChestManager::SpawnChests(const std::vector<MapObject *> &chestObjects)
             c.state = ObjectState::Closed;
 
         chests.push_back(c);
+        DynamicObstacles.push_back(c.bounds);
     }
 }
 
@@ -184,6 +203,7 @@ void ChestManager::TriggerLoot(TileObject &chest)
 
     int jumlahLoot = GetRandomValue(1, 3);
 
+    std::mt19937 rng(static_cast<unsigned int>(time(nullptr)));
     for (int i = 0; i < jumlahLoot; i++)
     {
         // Kasih sedikit offset random (misal sejauh -20 sampai 20 pixel)
@@ -192,7 +212,7 @@ void ChestManager::TriggerLoot(TileObject &chest)
             chest.position.x + (float)GetRandomValue(-60, 60),
             chest.position.y + (float)GetRandomValue(-60, 60)};
 
-        itemData.SpawnItemAtLocation(spawnPos);
+        itemData.SpawnItemAtLocation(spawnPos, &rng, ITEM_ANY);
     }
 }
 
@@ -201,16 +221,21 @@ void ChestManager::TriggerLoot(TileObject &chest)
  *
  * State Closed = BROWN, Open = WHITE. Placeholder, belum pakai sprite.
  */
-void ChestManager::Render()
+int ChestManager::Render(Rectangle viewRect)
 {
-    // placeholder: switch gambar based on state
+    int rendered = 0;
     for (auto &c : chests)
     {
+        if (!CheckCollisionRecs(c.bounds, viewRect))
+            continue;
+        rendered++;
+
         if (c.state == ObjectState::Closed)
             DrawRectangleRec(c.bounds, BROWN); // placeholder harus diganti pake skin
         else
             DrawRectangleRec(c.bounds, WHITE); // placeholder harus diganti pake skin
     }
+    return rendered;
 }
 
 /**
@@ -383,15 +408,21 @@ void SpikeManager::Update(float deltaTime, Rectangle playerBounds, Player *playe
  *
  * Active = RED, Inactive = GRAY. Placeholder, belum pakai sprite.
  */
-void SpikeManager::Render()
+int SpikeManager::Render(Rectangle viewRect)
 {
+    int rendered = 0;
     for (auto &spike : spikes)
     {
+        if (!CheckCollisionRecs(spike.tile.bounds, viewRect))
+            continue;
+        rendered++;
+
         if (spike.tile.state == ObjectState::Active)
             DrawRectangleRec(spike.tile.bounds, RED); // placeholder harus diganti pake skin
         else
             DrawRectangleRec(spike.tile.bounds, GRAY); // placeholder harus diganti pake skin
     }
+    return rendered;
 }
 
 /**
@@ -435,37 +466,57 @@ void BombManager::SpawnBombs(const std::vector<MapObject *> &bombObjects)
         data.isExploding = false;
         data.explosionTimer = 0.0f;
 
-        SetupCallbacks(data);
         bombs.push_back(data);
         DynamicObstacles.push_back(data.tile.bounds);
     }
 }
 
 /**
- * @brief Setup callback untuk event bomb
+ * @brief Cari bomb terdekat dari titik hit
  *
- * - onHit: log saat bomb kena serangan
- * - onExplode: log saat bomb meledak
- * - onDamagePlayer: log saat bomb damage player
- *
- * @param bomb BombData yang akan di-setup callbacknya
+ * @param hitPos Posisi hit
+ * @param threshold Toleransi jarak ke tepi bounds
+ * @return Pointer ke TileObject bomb terdekat, nullptr jika tidak ada
  */
-void BombManager::SetupCallbacks(BombData &bomb)
+TileObject *BombManager::FindBomb(Vector2 hitPos, float threshold)
 {
-    bomb.onHit = [](TileObject &tile)
-    {
-        TraceLog(LOG_INFO, "Bomb '%s' hit at (%.1f, %.1f)", tile.name.c_str(), tile.position.x, tile.position.y);
-    };
+    TileObject *closest = nullptr;
+    float minDist = threshold;
 
-    bomb.onExplode = [](TileObject &tile, float radius)
+    for (auto &bomb : bombs)
     {
-        TraceLog(LOG_INFO, "Bomb '%s' exploded! radius=%.1f at (%.1f, %.1f)", tile.name.c_str(), radius, tile.position.x, tile.position.y);
-    };
+        if (!bomb.isAlive)
+            continue;
+        if (IsHitInBounds(hitPos, bomb.tile.bounds, threshold))
+        {
+            float dist = DistToCenter(hitPos, bomb.tile.bounds);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                closest = &bomb.tile;
+            }
+        }
+    }
+    return closest;
+}
 
-    bomb.onDamagePlayer = [](TileObject &tile)
+/**
+ * @brief Trigger ledakan bomb yang terkena hitbox serangan player
+ *
+ * @param attackHitbox Hitbox serangan player
+ * @param playerBounds Bounding box player
+ * @param player Pointer ke player
+ */
+void BombManager::HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player)
+{
+    for (auto &bomb : bombs)
     {
-        TraceLog(LOG_INFO, "Bomb '%s' damaged player", tile.name.c_str());
-    };
+        if (!bomb.isAlive || bomb.isExploding)
+            continue;
+        if (!CheckCollisionAgainstRects(attackHitbox, {bomb.tile.bounds}))
+            continue;
+        Explode(bomb, playerBounds, player);
+    }
 }
 
 /**
@@ -499,11 +550,12 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
         std::remove_if(DynamicObstacles.begin(), DynamicObstacles.end(), [&](const Rectangle &r)
                        { return r.x == bomb.tile.bounds.x && r.y == bomb.tile.bounds.y; }),
         DynamicObstacles.end());
+    MarkSpawnFlowFieldsDirty(bomb.tile.position);
+    RebuildObstacleCache();
 
     if (IsInExplosionRadius(bomb.tile.position, playerBounds))
         if (player)
             player->TakeDamage(BOMB_DAMAGE);
-    // enemy nanti ditambah di
 
     for (auto entity : Entities::GetRegistry())
     {
@@ -524,6 +576,8 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
         if (IsInExplosionRadius(bomb.tile.position, other.tile.bounds))
             Explode(other, playerBounds, player);
     }
+
+    crateManager.HitByExplosion(bomb.tile.position, this);
 }
 
 /**
@@ -579,71 +633,28 @@ void BombManager::Update(float deltaTime, Rectangle playerBounds, Player *player
 }
 
 /**
- * @brief Trigger ledakan bomb yang terkena hitbox serangan player
- *
- * @param attackHitbox Hitbox serangan player
- * @param playerBounds Bounding box player
- * @param player Pointer ke player
- */
-void BombManager::HitByAttack(Rectangle attackHitbox, Rectangle playerBounds, Player *player)
-{
-    for (auto &bomb : bombs)
-    {
-        if (!bomb.isAlive || bomb.isExploding)
-            continue;
-        if (!CheckCollisionAgainstRects(attackHitbox, {bomb.tile.bounds}))
-            continue;
-        Explode(bomb, playerBounds, player);
-    }
-}
-
-/**
- * @brief Cari bomb terdekat dari titik hit
- *
- * @param hitPos Posisi hit
- * @param threshold Toleransi jarak ke tepi bounds
- * @return Pointer ke TileObject bomb terdekat, nullptr jika tidak ada
- */
-TileObject *BombManager::FindBomb(Vector2 hitPos, float threshold)
-{
-    TileObject *closest = nullptr;
-    float minDist = threshold;
-
-    for (auto &bomb : bombs)
-    {
-        if (!bomb.isAlive)
-            continue;
-        if (IsHitInBounds(hitPos, bomb.tile.bounds, threshold))
-        {
-            float dist = DistToCenter(hitPos, bomb.tile.bounds);
-            if (dist < minDist)
-            {
-                minDist = dist;
-                closest = &bomb.tile;
-            }
-        }
-    }
-    return closest;
-}
-
-/**
  * @brief Render semua bomb ke layar
  *
  * Exploding = lingkaran orange transparan radius BOMB_EXPLOSION_RADIUS.
  * Idle = kotak RED. Placeholder, belum pakai sprite.
  */
-void BombManager::Render()
+int BombManager::Render(Rectangle viewRect)
 {
+    int rendered = 0;
     for (auto &bomb : bombs)
     {
         if (!bomb.isAlive)
             continue;
+        if (!CheckCollisionRecs(bomb.tile.bounds, viewRect))
+            continue;
+        rendered++;
 
         if (bomb.isExploding)
             DrawCircleV(bomb.tile.position, BOMB_EXPLOSION_RADIUS, Fade(ORANGE, 0.4f));
         else
-            DrawRectangleRec(bomb.tile.bounds, RED); // placeholder, ganti sprite
+            DrawRectangleRec(bomb.tile.bounds, RED);
     }
+    return rendered;
 }
 
 /**
@@ -652,4 +663,147 @@ void BombManager::Render()
 void BombManager::Clear()
 {
     bombs.clear();
+}
+
+/*==============================================================================
+ * CrateManager Implementation
+ *==============================================================================*/
+
+CrateManager crateManager;
+
+/**
+ * @brief Spawn semua crate dari object layer Tiled.
+ * @param crateObjects Daftar pointer MapObject bertipe crate
+ * @note Crate yang posisinya sudah tercatat hancur tidak akan di-spawn ulang.
+ */
+void CrateManager::SpawnCrates(const std::vector<MapObject *> &crateObjects)
+{
+    crates.clear();
+    for (auto *obj : crateObjects)
+    {
+        Vector2 snapped = SnapToTileGrid({obj->bounds.x, obj->bounds.y});
+        if (consumedPositions.count(EncodePos(snapped)))
+            continue; // skip yang udah hancur
+
+        CrateData data;
+        data.tile.name = obj->name;
+        data.tile.bounds = obj->bounds;
+        data.tile.position = snapped;
+        data.tile.state = ObjectState::Active;
+        data.isAlive = true;
+
+        crates.push_back(data);
+        DynamicObstacles.push_back(data.tile.bounds);
+    }
+}
+
+/**
+ * @brief Spawn semua crate dari object layer Tiled.
+ * @param crateObjects Daftar pointer MapObject bertipe crate
+ * @note Crate yang posisinya sudah tercatat hancur tidak akan di-spawn ulang.
+ */
+void CrateManager::HitByAttack(Rectangle attackHitbox)
+{
+    for (auto &crate : crates)
+    {
+        if (!crate.isAlive)
+            continue;
+        if (!CheckCollisionAgainstRects(attackHitbox, {crate.tile.bounds}))
+            continue;
+        Destroy(crate);
+    }
+}
+
+/**
+ * @brief Hancurkan crate yang berada dalam radius ledakan bomb.
+ * @param bombPos Posisi pusat ledakan bomb
+ * @param bomber BombManager yang dipakai untuk cek radius ledakan
+ */
+void CrateManager::HitByExplosion(Vector2 bombPos, BombManager *bomber)
+{
+    for (auto &crate : crates)
+    {
+        if (!crate.isAlive)
+            continue;
+        if (bomber->IsInExplosionRadius(bombPos, crate.tile.bounds))
+            Destroy(crate);
+    }
+}
+
+/**
+ * @brief Hapus crate yang sudah dihancurkan dari daftar runtime.
+ */
+void CrateManager::Update()
+{
+    crates.erase(
+        std::remove_if(crates.begin(), crates.end(), [](const CrateData &crate)
+                       { return !crate.isAlive; }),
+        crates.end());
+}
+
+/**
+ * @brief Hancurkan crate dan update obstacle/pathfinding terkait.
+ * @param crate Data crate yang akan dihancurkan
+ * @note Memanggil RebuildObstacleCache setelah crate dihapus dari DynamicObstacles.
+ */
+void CrateManager::Destroy(CrateData &crate)
+{
+    crate.tile.state = ObjectState::Inactive;
+    crate.isAlive = false;
+    consumedPositions.insert(EncodePos(crate.tile.position));
+
+    DynamicObstacles.erase(
+        std::remove_if(DynamicObstacles.begin(), DynamicObstacles.end(), [&](const Rectangle &r)
+                       { return r.x == crate.tile.bounds.x && r.y == crate.tile.bounds.y; }),
+        DynamicObstacles.end());
+    MarkSpawnFlowFieldsDirty(crate.tile.position);
+    RebuildObstacleCache();
+
+    TriggerLoot(crate.tile);
+}
+
+/**
+ * @brief Roll peluang drop loot dari crate yang dihancurkan.
+ * @param crate TileObject crate yang dihancurkan
+ */
+void CrateManager::TriggerLoot(TileObject &crate)
+{
+    float roll = (float)GetRandomValue(0, 99) / 100.0f;
+    if (roll >= CRATE_LOOT_CHANCE)
+        return;
+
+    std::mt19937 rng(static_cast<unsigned int>(time(nullptr)));
+    Vector2 spawnPos = {
+        crate.position.x + (float)GetRandomValue(-60, 60),
+        crate.position.y + (float)GetRandomValue(-60, 60)};
+
+    itemData.SpawnItemAtLocation(spawnPos, &rng, ITEM_POTION);
+}
+
+/**
+ * @brief Render semua crate yang terlihat di viewport.
+ * @param viewRect Area kamera/viewport aktif
+ * @return Jumlah crate yang berhasil dirender
+ */
+int CrateManager::Render(Rectangle viewRect)
+{
+    int rendered = 0;
+    for (auto &crate : crates)
+    {
+        if (!crate.isAlive)
+            continue;
+        if (!CheckCollisionRecs(crate.tile.bounds, viewRect))
+            continue;
+        DrawRectangleRec(crate.tile.bounds, YELLOW);
+        rendered++;
+    }
+    return rendered;
+}
+
+/**
+ * @brief Bersihkan semua data crate.
+ */
+void CrateManager::Clear()
+{
+    crates.clear();
 }

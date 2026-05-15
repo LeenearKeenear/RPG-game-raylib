@@ -258,12 +258,13 @@ void InitMap(void)
     // LoadMap("assets/maps/floorC.json");
     // "assets/maps/tutorial.json"
     // Map yang aktif saat ini
-    currentMapPath = "assets/maps/floorB.json";
+    currentMapPath = "assets/maps/tutorial.json";
+    // currentMapPath = "assets/maps/floorB_tester.json";
     LoadMap(currentMapPath.c_str());
 
     if (!LoadEnemiesForMap(currentMapPath))
     {
-        SpawnRandomWave();
+        SpawnEnemiesFromMap();
     }
 
     if (!itemData.LoadItemsForMap(currentMapPath))
@@ -383,6 +384,13 @@ TileRange GetVisibleTileRange(void)
         range.maxY = tilesonMap->height;
 
     return range;
+}
+
+Rectangle GetVisibleWorldRect(void)
+{
+    Vector2 worldMin = GetScreenToWorld2D({0.0f, 0.0f}, camera);
+    Vector2 worldMax = GetScreenToWorld2D({(float)GameScreenWidth, (float)GameScreenHeight}, camera);
+    return { worldMin.x, worldMin.y, worldMax.x - worldMin.x, worldMax.y - worldMin.y };
 }
 
 /*==============================================================================

@@ -63,10 +63,10 @@ static void DrawTextHUD(const char *text, int x, int y, int fontSize, Color colo
  */
 static InventoryItem &GetItemBySlotIndex(int index)
 {
-    if (index >= 0 && index < PlayerInstance.MaxBag)
-        return PlayerInstance.Bag[index];
-    if (index < PlayerInstance.MaxInventory)
-        return PlayerInstance.Hotbar[index - PlayerInstance.MaxBag];
+    if (index >= 0 && index < PlayerInstance.GetMaxBag())
+        return PlayerInstance.GetBagItem(index);
+    if (index < PlayerInstance.GetMaxInventory())
+        return PlayerInstance.GetHotbarItem(index - PlayerInstance.GetMaxBag());
     static InventoryItem empty = {-1, 0};
     return empty;
 }
@@ -166,11 +166,11 @@ static void HandleMergeStack(int slotIndex)
         return;
 
     // Kumpulkan dari bag
-    for (int i = 0; i < PlayerInstance.MaxBag && target.amount < def.maxStack; i++)
+    for (int i = 0; i < PlayerInstance.GetMaxBag() && target.amount < def.maxStack; i++)
     {
         if (i == slotIndex)
             continue;
-        InventoryItem &other = PlayerInstance.Bag[i];
+        InventoryItem &other = PlayerInstance.GetBagItem(i);
         if (other.definitionId != target.definitionId)
             continue;
         if (other.amount >= def.maxStack)
@@ -185,12 +185,12 @@ static void HandleMergeStack(int slotIndex)
     }
 
     // Kumpulkan dari hotbar
-    for (int i = 0; i < PlayerInstance.MaxHotbar && target.amount < def.maxStack; i++)
+    for (int i = 0; i < PlayerInstance.GetMaxHotbar() && target.amount < def.maxStack; i++)
     {
-        int globalIdx = PlayerInstance.MaxBag + i;
+        int globalIdx = PlayerInstance.GetMaxBag() + i;
         if (globalIdx == slotIndex)
             continue;
-        InventoryItem &other = PlayerInstance.Hotbar[i];
+        InventoryItem &other = PlayerInstance.GetHotbarItem(i);
         if (other.definitionId != target.definitionId)
             continue;
         if (other.amount >= def.maxStack)
@@ -291,7 +291,7 @@ static void DrawDragGhost(Vector2 mousePos)
 /**
  * @brief Render layar inventory beserta logika drag & drop, split, dan merge.
  * @note Hanya aktif saat inventory terbuka. Drop item ke luar area inventory
- *       akan spawn item di dunia arah mouse sejauh INTERACT_RANGE.
+ *       akan spawn item di dunia arah mouse sejauh GetInteractRange.
  */
 void DrawInventory()
 {
@@ -313,7 +313,7 @@ void DrawInventory()
 
     const float slotSize = 50.0f;
     const float padding = 6.0f;
-    const int gridSize = 5;
+    const int gridSize = 4; // ukuran grid maksimum yang digambar di inventory
     const float totalGridSize = (slotSize * gridSize) + (padding * (gridSize - 1));
     const float startX = (GameScreenWidth - totalGridSize) / 2.0f;
     const float startY = (GameScreenHeight - totalGridSize) / 2.0f;
@@ -323,7 +323,7 @@ void DrawInventory()
     bool mouseReleased = InputInstance.IsLeftClickReleased();
     bool dragHandled = false; // flag agar drop ke world tidak terpanggil jika sudah dihandle
 
-    for (int i = 0; i < PlayerInstance.MaxBag; i++)
+    for (int i = 0; i < PlayerInstance.GetMaxBag(); i++)
     {
         int row = i / gridSize;
         int col = i % gridSize;
@@ -340,7 +340,7 @@ void DrawInventory()
         DrawRectangleRounded(slotRect, 0.2f, 8, slotColor);
         DrawRectangleRoundedLines(slotRect, 0.2f, 8, isDragSource ? ColorAlpha(GOLD, 0.5f) : ColorAlpha(WHITE, 0.3f));
 
-        InventoryItem &item = PlayerInstance.Bag[i];
+        InventoryItem &item = PlayerInstance.GetBagItem(i);
 
         if (item.definitionId != -1 && !isDragSource)
         {
@@ -439,8 +439,8 @@ void DrawInventory()
         }
 
         Vector2 dropPos = {
-            playerCenter.x + dropDir.x * PlayerInstance.INTERACT_RANGE,
-            playerCenter.y + dropDir.y * PlayerInstance.INTERACT_RANGE};
+            playerCenter.x + dropDir.x * PlayerInstance.GetInteractRange(),
+            playerCenter.y + dropDir.y * PlayerInstance.GetInteractRange()};
 
         ItemSpawn dropped = itemData.CreateItem(dropPos, dragItem.definitionId);
         dropped.amount = dragItem.amount;
@@ -504,11 +504,11 @@ void DrawHotbar()
     bool mousePressed = InputInstance.IsLeftClickPressed();
     bool mouseReleased = InputInstance.IsLeftClickReleased();
 
-    for (int i = 0; i < PlayerInstance.MaxHotbar; i++)
+    for (int i = 0; i < PlayerInstance.GetMaxHotbar(); i++)
     {
         Rectangle slotRect = {startX + (i * (slotSize + padding)), startY, slotSize, slotSize};
         bool isActive = (activeSlot == (int)(i + 1));
-        int globalIdx = PlayerInstance.MaxBag + i;
+        int globalIdx = PlayerInstance.GetMaxBag() + i;
         bool isHovered = isInventoryOpen && CheckCollisionPointRec(mousePos, slotRect);
         bool isDragSource = (dragSlot == globalIdx);
 
@@ -522,7 +522,7 @@ void DrawHotbar()
         Color borderColor = (isActive || isDragSource) ? GOLD : ColorAlpha(WHITE, 0.3f);
         DrawRectangleRoundedLines(slotRect, 0.4f, 8, borderColor);
 
-        InventoryItem item = PlayerInstance.Hotbar[i];
+        InventoryItem item = PlayerInstance.GetHotbarItem(i);
         if (item.definitionId != -1 && !isDragSource)
         {
             float iconDrawSize = 42.0f;

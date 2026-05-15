@@ -102,6 +102,8 @@ struct TileRange
  */
 TileRange GetVisibleTileRange(void);
 
+Rectangle GetVisibleWorldRect(void);
+
 /*==============================================================================
  * Debug Variables
  *==============================================================================*/
@@ -116,16 +118,22 @@ extern TileRange currentVisibleRange;
  * Tiled Layer & Object Name Constants
  *==============================================================================*/
 
-constexpr const char *COLLISION_LAYER_NAME = "obstacle";       // Nama layer collision obstacle
-constexpr const char *OBJECT_LAYER_NAME = "object";            // Nama layer object placement
-constexpr const char *TRAP_LAYER_NAME = "trap";                // nama layer trap placement
-constexpr const char *ITEM_LAYER_NAME = "item";                // nama layer item placment
-constexpr const char *ENEMY_SPAWN_OBJECT_NAME = "spawn_enemy"; // Nama objek spesifik untuk spawn musuh
-constexpr const char *SPAWN_OBJECT_NAME = "spawn";             // Nama object spawn player
-constexpr const char *DOOR_TYPE_OBJECT_NAME = "pass";          // Type object untuk pintu
-constexpr const char *CHEST_TYPE_OBJECT_NAME = "chest";        // Type object untuk chest
-constexpr const char *SPIKE_TYPE_OBJECT_NAME = "spike";        // Type object unutk spike
-constexpr const char *BOMB_TYPE_OBJECT_NAME = "bomb";          // type object untuk bomb
+constexpr const char *COLLISION_LAYER_NAME = "obstacle"; // Nama layer collision obstacle
+constexpr const char *OBJECT_LAYER_NAME = "object";      // Nama layer object placement
+constexpr const char *TRAP_LAYER_NAME = "trap";          // nama layer trap placement
+constexpr const char *ITEM_LAYER_NAME = "item";          // nama layer item placment
+// Nama objek spesifik untuk spawn musuh
+constexpr const char *ENEMY_SPAWN_NORMAL_PIN_OBJECT_NAME = "enemy_spawn_normal_pinpoint";
+constexpr const char *ENEMY_SPAWN_NORMAL_REC_OBJECT_NAME = "enemy_spawn_normal_rect";
+constexpr const char *ENEMY_SPAWN_ELITE_PIN_OBJECT_NAME = "enemy_spawn_elite_pinpoint";
+constexpr const char *ENEMY_SPAWN_ELITE_REC_OBJECT_NAME = "enemy_spawn_elite_rect";
+constexpr const char *ENEMY_SPAWN_BOSS_OBJECT_NAME = "enemy_spawn_boss";
+constexpr const char *SPAWN_OBJECT_NAME = "spawn";      // Nama object spawn player
+constexpr const char *DOOR_TYPE_OBJECT_NAME = "pass";   // Type object untuk pintu
+constexpr const char *CHEST_TYPE_OBJECT_NAME = "chest"; // Type object untuk chest
+constexpr const char *SPIKE_TYPE_OBJECT_NAME = "spike"; // Type object unutk spike
+constexpr const char *BOMB_TYPE_OBJECT_NAME = "bomb";   // type object untuk bomb
+constexpr const char *CRATE_TYPE_OBJECT_NAME = "crate"; // type object untuk crate
 
 /*==============================================================================
  * Map Functions

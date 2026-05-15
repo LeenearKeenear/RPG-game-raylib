@@ -11,6 +11,7 @@
  */
 
 #include "item.h"
+#include "screen.h"
 #include "inventory.h"
 #include "combat.h"
 #include "player.h"
@@ -229,6 +230,18 @@ void ItemDataManager::Init()
 ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
 {
     const ItemDefinition &def = itemDefs.GetById(definitionId);
+
+    // cari posisi aman, maksimal 5 attempt
+    Vector2 safePos = pos;
+    for (int i = 0; i < 5; i++)
+    {
+        if (IsPositionSafe(safePos, def.hitboxSize.x, def.hitboxSize.y, 0, 0))
+            break;
+        safePos = {
+            pos.x + (float)GetRandomValue(-32, 32),
+            pos.y + (float)GetRandomValue(-32, 32)};
+    }
+
     ItemSpawn item;
     item.definitionId = definitionId;
     item.position = pos;
@@ -253,10 +266,13 @@ ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
  *
  * @param pos Posisi spawn item
  */
-void ItemDataManager::SpawnItemAtLocation(Vector2 pos)
+void ItemDataManager::SpawnItemAtLocation(Vector2 pos, std::mt19937 *rng, ItemCategory category)
 {
-    std::mt19937 rng(static_cast<unsigned int>(time(nullptr)));
-    int defId = spawnManager.PickRandomDefinitionId(rng);
+    std::mt19937 localRng(static_cast<unsigned int>(time(nullptr)));
+    std::mt19937 &useRng = rng ? *rng : localRng;
+    int defId = spawnManager.PickRandomDefinitionId(useRng, category);
+    if (defId == -1)
+        return;
     activeItems.push_back(CreateItem(pos, defId));
 }
 
@@ -334,8 +350,8 @@ void ItemRenderManager::Update(std::vector<ItemSpawn> &items, Vector2 playerCent
         if (dist <= magnetRadius)
         {
             Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, itemCenter));
-            item.position.x += dir.x * itemSpeed * GetFrameTime();
-            item.position.y += dir.y * itemSpeed * GetFrameTime();
+            item.position.x += dir.x * itemSpeed * Time::DELTA_TIME;
+            item.position.y += dir.y * itemSpeed * Time::DELTA_TIME;
             item.hitbox.x = item.position.x;
             item.hitbox.y = item.position.y;
         }
@@ -353,13 +369,18 @@ void ItemRenderManager::Update(std::vector<ItemSpawn> &items, Vector2 playerCent
  * @brief Render semua item yang belum di-pickup
  * @param items Referensi ke activeItems
  */
-void ItemRenderManager::RenderAll(std::vector<ItemSpawn> &items)
+int ItemRenderManager::RenderAll(std::vector<ItemSpawn> &items, Rectangle viewRect)
 {
+    int rendered = 0;
     for (auto &item : items)
     {
-        if (!item.isPickedUp)
+        if (!item.isPickedUp && CheckCollisionRecs(item.hitbox, viewRect))
+        {
             Render(item);
+            rendered++;
+        }
     }
+    return rendered;
 }
 
 /**
@@ -477,20 +498,20 @@ void ItemSpawnManager::CategorizeAreas()
         switch (area.sizeClass)
         {
         case SPAWN_SIZE_SMALL:
-            area.minSpawn = 1;
-            area.maxSpawn = 2;
+            area.minSpawn = SPAWN_SIZE_SMALL_MIN;
+            area.maxSpawn = SPAWN_SIZE_SMALL_MAX;
             break;
         case SPAWN_SIZE_MEDIUM:
-            area.minSpawn = 2;
-            area.maxSpawn = 3;
+            area.minSpawn = SPAWN_SIZE_MEDIUM_MIN;
+            area.maxSpawn = SPAWN_SIZE_MEDIUM_MAX;
             break;
         case SPAWN_SIZE_LARGE:
-            area.minSpawn = 3;
-            area.maxSpawn = 4;
+            area.minSpawn = SPAWN_SIZE_LARGE_MIN;
+            area.maxSpawn = SPAWN_SIZE_LARGE_MAX;
             break;
         case SPAWN_SIZE_XLARGE:
-            area.minSpawn = 4;
-            area.maxSpawn = 5;
+            area.minSpawn = SPAWN_SIZE_XLARGE_MIN;
+            area.maxSpawn = SPAWN_SIZE_XLARGE_MAX;
             break;
         }
     }
@@ -543,7 +564,7 @@ void ItemSpawnManager::DetermineActiveAreas()
  * @param area SpawnArea target
  * @return Posisi valid dalam area
  */
-Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area)
+Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area, Vector2 hitboxSize)
 {
     int MaxAttempts = 100;
 
@@ -553,7 +574,7 @@ Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area)
             (float)GetRandomValue((int)area.bounds.x, (int)(area.bounds.x + area.bounds.width)),
             (float)GetRandomValue((int)area.bounds.y, (int)(area.bounds.y + area.bounds.height))};
 
-        if (IsPositionSafe(pos, TILE_SIZE, TILE_SIZE, 0, 0))
+        if (IsPositionSafe(pos, hitboxSize.x, hitboxSize.y, 0, 0))
             return pos;
     }
 
@@ -561,12 +582,16 @@ Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area)
 }
 
 // Pilih definitionId random berdasarkan rarity weight
-int ItemSpawnManager::PickRandomDefinitionId(std::mt19937 &rng)
+int ItemSpawnManager::PickRandomDefinitionId(std::mt19937 &rng, ItemCategory filterCategory)
 {
     // Kumpulkan semua item per rarity
     std::map<ItemRarity, std::vector<int>> byRarity;
     for (const auto &[name, def] : itemDefs.GetAll())
+    {
+        if (filterCategory != ITEM_ANY && def.category != filterCategory)
+            continue;
         byRarity[def.rarity].push_back(def.id);
+    }
 
     // Hitung total dulu
     int total = 0;
@@ -592,6 +617,9 @@ int ItemSpawnManager::PickRandomDefinitionId(std::mt19937 &rng)
     // Kalau rarity yang ke-roll gak ada itemnya, fallback ke COMMON
     if (byRarity[pickedRarity].empty())
         pickedRarity = RARITY_COMMON;
+
+    if (byRarity[pickedRarity].empty())
+        return -1; // gak ada item yang cocok
 
     // Pilih random dari item dengan rarity itu
     std::uniform_int_distribution<int> idxDist(0, (int)byRarity[pickedRarity].size() - 1);
@@ -624,8 +652,9 @@ void ItemSpawnManager::SpawnAll(std::vector<ItemSpawn> &activeItems)
 
         for (int i = 0; i < spawnCount; i++)
         {
-            Vector2 pos = GetRandomPosInArea(area);
             int defId = PickRandomDefinitionId(rng);
+            const ItemDefinition &def = itemDefs.GetById(defId);
+            Vector2 pos = GetRandomPosInArea(area, def.hitboxSize);
             activeItems.push_back(itemData.CreateItem(pos, defId));
         }
     }

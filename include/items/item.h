@@ -34,7 +34,8 @@ typedef enum
     ITEM_POTION, // Item potion/healing (di json nanti namanya harus ditulis potion)
     ITEM_POISON, // Item poison (di json nanti namanya harus ditulis posion)
     ITEM_ARMOR,  // Item armor (di json nanti namanya harus ditulis armor)
-    ITEM_NONE    // Tidak ada item
+    ITEM_NONE,   // Tidak ada item
+    ITEM_ANY
 } ItemCategory;
 
 /**
@@ -232,7 +233,7 @@ public:
      * @brief Spawn item langsung di posisi tertentu
      * @param pos Posisi spawn item
      */
-    void SpawnItemAtLocation(Vector2 pos);
+    void SpawnItemAtLocation(Vector2 pos, std::mt19937 *rng = nullptr, ItemCategory category = ITEM_ANY);
 
     /**
      * @brief Simpan state item aktif untuk map tertentu
@@ -286,7 +287,7 @@ public:
      * @brief Render semua item yang belum diambil
      * @param items Daftar item yang akan dirender
      */
-    void RenderAll(std::vector<ItemSpawn> &items);
+    int RenderAll(std::vector<ItemSpawn> &items, Rectangle viewRect);
 
     /**
      * @brief Render satu item
@@ -319,7 +320,7 @@ public:
      */
     void SpawnAll(std::vector<ItemSpawn> &activeItems);
 
-    int PickRandomDefinitionId(std::mt19937 &rng);
+    int PickRandomDefinitionId(std::mt19937 &rng, ItemCategory filterCategory = ITEM_ANY);
 
 private:
     // Daftar area spawn item yang dibaca dari Tiled
@@ -354,7 +355,7 @@ private:
      * @param area Area spawn target
      * @return Posisi random di dalam area
      */
-    Vector2 GetRandomPosInArea(const SpawnArea &area);
+    Vector2 GetRandomPosInArea(const SpawnArea &area, Vector2 hitboxSize);
 
     /**
      * @brief Buat seed random dari nama area
@@ -362,6 +363,15 @@ private:
      * @return Seed hasil hash nama
      */
     unsigned int SeedFromName(const std::string &name);
+
+    int SPAWN_SIZE_SMALL_MIN = 1;  // jumlah minimum spawn untuk area kecil
+    int SPAWN_SIZE_SMALL_MAX = 2;  // jumlah maksimum spawn untuk area kecil
+    int SPAWN_SIZE_MEDIUM_MIN = 2; // jumlah minimum spawn untuk area sedang
+    int SPAWN_SIZE_MEDIUM_MAX = 3; // jumlah maksimum spawn untuk area sedang
+    int SPAWN_SIZE_LARGE_MIN = 3;  // jumlah minimum spawn untuk area besar
+    int SPAWN_SIZE_LARGE_MAX = 4;  // jumlah maksimum spawn untuk area besar
+    int SPAWN_SIZE_XLARGE_MIN = 4; // jumlah minimum spawn untuk area sangat besar
+    int SPAWN_SIZE_XLARGE_MAX = 5; // jumlah maksimum spawn untuk area sangat besar
 };
 
 /*==============================================================================

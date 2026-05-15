@@ -1,9 +1,12 @@
 #include "movement.h"
 #include "player.h"
 #include "mapLogic.h"
+#include "screen.h"
 #include "input.h"
 #include "tiles.h"
 #include "debug.h"
+#include "effects.h"
+#include "../lib/raylib/include/raymath.h"
 #include <cmath>
 
 namespace Movement
@@ -17,6 +20,8 @@ namespace Movement
         player.Velocity = {0, 0};
         bool moving = false;
         Direction nextDir = player.Anim.direction;
+
+        HandleDash(player);
 
         // Mengambil vektor input mentah
         if (InputInstance.IsMoveUp())
@@ -43,6 +48,14 @@ namespace Movement
             nextDir = RIGHT;
             moving = true;
         }
+        player.IsMoving = moving;
+
+        if (InputInstance.IsRightClickPressed() && player.DashCooldown <= 0.0f && !player.IsDashing && player.Mana <= player.DashManaCost)
+        {
+            TraceLog(LOG_WARNING, "DASH: Mana tidak cukup! Mana: %.2f, Cost: %.2f", player.Mana, player.DashManaCost);
+            Effects::AddLog("Stamina tidak cukup!");
+            return;
+        }
 
         // Memperbarui status animasi berdasarkan status pergerakan
         ::State nextState = moving ? WALK : IDLE;
@@ -58,8 +71,9 @@ namespace Movement
 
         // --- Logika Sliding Collision ---
         // Memeriksa sumbu X dan Y secara independen. Jika salah satu terhalang, sumbu lainnya masih bisa bergerak.
-        Vector2 nextX = {player.Position.x + player.Velocity.x * player.Speed, player.Position.y};
-        Vector2 nextY = {player.Position.x, player.Position.y + player.Velocity.y * player.Speed};
+        float totalSpeed = player.Speed + player.DashSpeed;
+        Vector2 nextX = {player.Position.x + player.Velocity.x * totalSpeed, player.Position.y};
+        Vector2 nextY = {player.Position.x, player.Position.y + player.Velocity.y * totalSpeed};
 
         if (CanMove(player, nextX))
         {
@@ -71,6 +85,48 @@ namespace Movement
         }
 
         player.Anim.position = player.Position;
+    }
+
+    /**
+     * @brief Memproses dash pemain, termasuk trigger, durasi, cooldown, dan deselerasi.
+     * @param player Referensi player yang state dash-nya diperbarui
+     */
+    void HandleDash(Player &player)
+    {
+        float dt = Time::DELTA_TIME;
+
+        if (InputInstance.IsRightClickPressed() && player.DashCooldown <= 0.0f && !player.IsDashing && player.Mana >= player.DashManaCost && player.IsMoving)
+        {
+            TraceLog(LOG_INFO, "DASH: mana check, mana: %.2f, cost: %.2f", player.Mana, player.DashManaCost);
+
+            player.IsDashing = true;
+            player.DashDuration = player.DashDurationMax;
+            player.DashSpeed = player.DashMaxSpeed;
+            player.Mana -= player.DashManaCost;
+            player.ManaRegenTimer = player.ManaRegenDelay;
+        }
+
+        if (player.IsDashing)
+        {
+            player.DashDuration -= dt;
+            if (player.DashDuration <= 0.0f)
+            {
+                player.IsDashing = false;
+                player.DashDuration = 0.0f;
+                player.DashCooldown = player.DashCooldownMax;
+            }
+        }
+
+        if (player.DashCooldown > 0.0f)
+            player.DashCooldown -= dt;
+
+        // deselerasi selalu jalan, selama IsDashing DashSpeed tetap max karena di-set ulang tiap trigger
+        if (!player.IsDashing)
+        {
+            player.DashSpeed = Lerp(player.DashSpeed, 0.0f, player.DashDecel);
+            if (player.DashSpeed < 0.1f)
+                player.DashSpeed = 0.0f;
+        }
     }
 
     /**
@@ -129,7 +185,7 @@ namespace Movement
      */
     bool CanMove(Player &player, Vector2 newPosition)
     {
-        Rectangle hitbox = BuildHitbox(newPosition, player.HitboxOffsetX, player.HitboxOffsetY, player.HitboxWidth, player.HitboxHeight);
+        Rectangle hitbox = BuildHitbox(newPosition, player.GetHitboxOffsetX(), player.GetHitboxOffsetY(), player.GetHitboxWidth(), player.GetHitboxHeight());
 
         // 1. Pemeriksaan batas dunia (World Boundary)
         if (!IsWithinWorldBounds(hitbox, tilesonMap->width * TILE_SIZE, tilesonMap->height * TILE_SIZE))

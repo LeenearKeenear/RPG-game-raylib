@@ -12,6 +12,7 @@
 
 #include "mapLogic.h"
 #include "../lib/raylib/include/raylib.h"
+#include "../lib/raylib/include/raymath.h"
 #include "../lib/tileson/tileson.hpp"
 #include "map.h"
 #include "tiles.h"
@@ -333,6 +334,37 @@ RayHitResult RayCast::Cast(Vector2 origin, Vector2 direction, float maxDistance,
         }
     }
     return result;
+}
+
+/**
+ * Spread ray dari -halfAngleDeg sampai +halfAngleDeg relative ke forward.
+ * Tiap ray dicek via Cast() — return hit dengan distance terkecil.
+ * Kalo forward near-zero (enemy diem), langsung return miss.
+ */
+RayHitResult RayCast::CastCone(Vector2 origin, Vector2 forward, float maxDistance,
+                               float halfAngleDeg, int rayCount,
+                               std::vector<MapObject> &objects)
+{
+    RayHitResult closest = {false, {0, 0}, maxDistance, nullptr};
+
+    if (Vector2Length(forward) < 0.01f)
+        return closest;
+
+    float baseAngle = atan2f(forward.y, forward.x);
+    float halfRad = halfAngleDeg * DEG2RAD;
+
+    for (int i = 0; i < rayCount; i++)
+    {
+        float t = (rayCount == 1) ? 0.0f : (float)i / (rayCount - 1);
+        float angle = baseAngle + Lerp(-halfRad, halfRad, t);
+        Vector2 dir = {cosf(angle), sinf(angle)};
+
+        RayHitResult hit = Cast(origin, dir, maxDistance, objects);
+        if (hit.hit && hit.distance < closest.distance)
+            closest = hit;
+    }
+
+    return closest;
 }
 
 /**

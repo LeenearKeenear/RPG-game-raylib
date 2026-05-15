@@ -7,6 +7,8 @@
 /Backups/
 
 run_backup.bat
+floorB_tester.json
+floorC_tester.json
 
 # Personal
 *.Personal.*

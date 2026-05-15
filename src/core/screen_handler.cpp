@@ -20,6 +20,7 @@
 #include "tiles.h"
 #include "animation.h"
 #include "enemy.h"
+#include "enemy_ai.h"
 #include "entities.h"
 #include "mapLogic.h"
 #include "effects.h"
@@ -91,10 +92,11 @@ void InitAll()
     // Daftarkan player ke sistem entitas agar diupdate & dirender otomatis (Index 0)
     Entities::Add(&PlayerInstance);
 
+    SpawnObject();
+    RebuildObstacleCache();
+    globalFlowField.Invalidate(); // nanti diganti kalo nambah method ai nya
     // Spawn musuh dari map aktif
     SpawnEnemiesFromMap();
-    SpawnObject();
-    globalFlowField.Invalidate(); // nanti diganti kalo nambah method ai nya
 }
 
 /**
@@ -105,102 +107,6 @@ static std::string ToLower(std::string str)
     std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c)
                    { return std::tolower(c); });
     return str;
-}
-
-// fungsi ini bingung ingin ditaruh dimana, jadi sementara disini aja
-// soalnya butuh data object dari map, tapi masih berhubungan dengan entities dan enemy
-void SpawnEnemiesFromMap()
-{
-    if (!tilesonMap)
-        return;
-
-    TraceLog(LOG_INFO, "ENEMY: Spawning enemies for current map...");
-
-    for (auto &obj : tilesonMap->Objects)
-    {
-        std::string nameLower = ToLower(obj.name);
-        std::string typeLower = ToLower(obj.type);
-
-        // Cek apakah ini adalah titik spawn musuh
-        bool isEnemySpawn = (nameLower.find("enemy") != std::string::npos ||
-                             nameLower.find("slime") != std::string::npos ||
-                             nameLower.find("skeleton") != std::string::npos ||
-                             nameLower.find("wolf") != std::string::npos ||
-                             obj.name == ENEMY_SPAWN_OBJECT_NAME ||
-                             typeLower == "enemy_spawn");
-
-        if (isEnemySpawn)
-        {
-            // 0. Cek apakah musuh ini sudah pernah dibunuh (persistence antar pindah map)
-            if (Entities::IsAlreadyDead(GetCurrentMapPath(), obj.id))
-            {
-                TraceLog(LOG_INFO, "ENEMY: Object ID %d is already dead. Skipping spawn.", obj.id);
-                continue;
-            }
-
-            // 1. Tentukan tipe musuh (Prioritas: Properti 'enemy_type' -> Nama Objek)
-            std::string enemyName = "Slime";
-            bool typeFound = false;
-
-            if (obj.properties.count("enemy_type"))
-            {
-                std::string typeStr = ToLower(obj.properties.at("enemy_type").getValue<std::string>());
-                if (typeStr == "skeleton")
-                {
-                    enemyName = "Skeleton";
-                    typeFound = true;
-                }
-                else if (typeStr == "wolf")
-                {
-                    enemyName = "Wolf";
-                    typeFound = true;
-                }
-                else if (typeStr == "slime")
-                {
-                    enemyName = "Slime";
-                    typeFound = true;
-                }
-            }
-
-            if (!typeFound)
-            {
-                if (nameLower.find("skeleton") != std::string::npos)
-                    enemyName = "Skeleton";
-                else if (nameLower.find("wolf") != std::string::npos)
-                    enemyName = "Wolf";
-                else if (nameLower.find("slime") != std::string::npos)
-                    enemyName = "Slime";
-                else
-                {
-                    const auto &names = enemyData.GetAllNames();
-                    enemyName = names[GetRandomValue(0, (int)names.size() - 1)];
-                }
-            }
-
-            // 2. Tentukan Radius Patroli (Default: 128, atau dari properti 'radius')
-            float radius = 128.0f;
-            if (obj.properties.count("radius"))
-            {
-                auto prop = obj.properties.at("radius");
-                if (prop.getType() == tson::Type::Int)
-                    radius = (float)prop.getValue<int>();
-                else if (prop.getType() == tson::Type::Float)
-                    radius = prop.getValue<float>();
-            }
-
-            EnemyDefinition def = enemyData.Get(enemyName);
-            def.stats.patrolRadius = radius;
-
-            // 3. Spawn tepat 1 musuh di tengah objek spawn
-            Vector2 spawnPos = {obj.bounds.x + obj.bounds.width / 2.0f, obj.bounds.y + obj.bounds.height / 2.0f};
-
-            Enemy *enemy = new Enemy();
-            enemy->Init(spawnPos, enemyName.c_str(), obj.id, def);
-            Entities::AddDynamic(enemy);
-
-            TraceLog(LOG_INFO, "ENEMY: Created 1 enemy (Type: %s, ID: %d) from spawn point '%s'", enemyName.c_str(), obj.id, obj.name.c_str());
-        }
-    }
 }
 
 /**
@@ -277,6 +183,37 @@ void UpdateLogicAll()
     if (tilesonMap)
         globalFlowField.Update(PlayerInstance.GetPosition(), tilesonMap->width, tilesonMap->height);
 
+    if (!spawnFlowFieldRebuildQueue.empty() && tilesonMap)
+    {
+        int id = spawnFlowFieldRebuildQueue.front();
+        spawnFlowFieldRebuildQueue.pop();
+        auto &entry = spawnFlowFields[id];
+        entry.field.Build(entry.spawnPos, tilesonMap->width, tilesonMap->height, FLOW_FIELD_RETURN_RADIUS);
+    }
+
+    RebuildSpatialHash(Entities::GetEnemyRegistry());
+
+    auto &enemyReg = Entities::GetEnemyRegistry();
+    for (int i = 0; i < (int)enemyReg.size(); i++)
+    {
+        if (!enemyReg[i]->IsActive)
+            continue;
+        Vector2 sep = CalcSeparationForce(i, enemyReg);
+        // lerp force lama ke force baru
+        enemyReg[i]->SeparationForce.x = Lerp(enemyReg[i]->SeparationForce.x, sep.x, SEPARATION_FORCE_MAGNITUDE);
+        enemyReg[i]->SeparationForce.y = Lerp(enemyReg[i]->SeparationForce.y, sep.y, SEPARATION_FORCE_MAGNITUDE);
+
+        Vector2 newPos = {
+            enemyReg[i]->Position.x + enemyReg[i]->SeparationForce.x * Time::DELTA_TIME,
+            enemyReg[i]->Position.y + enemyReg[i]->SeparationForce.y * Time::DELTA_TIME};
+
+        if (IsPositionSafe(newPos, enemyReg[i]->HitboxWidth, enemyReg[i]->HitboxHeight,
+                           enemyReg[i]->HitboxOffsetX, enemyReg[i]->HitboxOffsetY))
+        {
+            enemyReg[i]->Position = newPos;
+        }
+    }
+
     // Update semua entity (Player + semua Enemy) via Entities registry
     Entities::Update();
 
@@ -284,9 +221,10 @@ void UpdateLogicAll()
     Interaction::ExecutePendingTransitions(PlayerInstance);
 
     // Update Effects (Popups, Logs, etc)
-    Effects::Update(GetFrameTime());
-    spikeManager.Update(GetFrameTime(), PlayerInstance.GetHitbox(), &PlayerInstance);
-    bombManager.Update(GetFrameTime(), PlayerInstance.GetHitbox(), &PlayerInstance);
+    Effects::Update(Time::DELTA_TIME);
+    spikeManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
+    bombManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
+    crateManager.Update();
 
     // Update item magnet/pickup
     Vector2 center = PlayerInstance.GetCenter();
@@ -341,9 +279,10 @@ void DrawRenderTexture(GameState *state)
 
     // layer 2: entities, items, effects & world overlay (world space)
     BeginMode2D(camera);
-    RenderTileProps();
-    itemRender.RenderAll(itemData.activeItems);
-    Entities::Render();
+    Rectangle viewRect = GetVisibleWorldRect();
+    RenderTileProps(viewRect);
+    itemRender.RenderAll(itemData.activeItems, viewRect);
+    Entities::Render(viewRect);
     Effects::Draw();
     DebugInstance.DrawWorldOverlay();
     EndMode2D();

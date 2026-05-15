@@ -198,7 +198,21 @@ public:
      * @param objects List object yang mau dicek
      * @return RayHitResult dengan data hit terdekat, atau hit=false kalo miss semua
      */
-    RayHitResult Cast(Vector2 origin, Vector2 direction, float maxDistance, std::vector<MapObject> &objects);
+    RayHitResult Cast(Vector2 origin, Vector2 direction,
+                      float maxDistance, std::vector<MapObject> &objects);
+
+    /**
+     * @brief Cast multiple rays dalam bentuk cone dan return hit terdekat
+     * @param origin Titik asal cone (world space)
+     * @param forward Arah hadap — harus normalized
+     * @param maxDistance Panjang maksimum tiap ray (pixel)
+     * @param halfAngleDeg Setengah lebar cone dalam derajat (misal 45.0f = cone 90°)
+     * @param rayCount Jumlah ray yang ditembak dalam cone
+     * @param objects List object yang mau dicek
+     * @return RayHitResult dengan data hit terdekat, atau hit=false kalo semua ray miss
+     */
+    RayHitResult CastCone(Vector2 origin, Vector2 forward, float maxDistance,
+                          float halfAngleDeg, int rayCount, std::vector<MapObject> &objects);
 
 private:
     // cek ray vs rectangle — decompose jadi 4 edge lalu cek tiap edge
