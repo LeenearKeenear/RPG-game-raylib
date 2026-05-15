@@ -12,11 +12,11 @@ namespace Inventory
 
     bool HasInventorySpace(const Player &player)
     {
-        for (int i = 0; i < PlayerInstance.MaxHotbar; i++)
-            if (player.Hotbar[i].definitionId == -1)
+        for (int i = 0; i < PlayerInstance.GetMaxHotbar(); i++)
+            if (player.GetHotbarItem(i).definitionId == -1)
                 return true;
-        for (int i = 0; i < PlayerInstance.MaxBag; i++)
-            if (player.Bag[i].definitionId == -1)
+        for (int i = 0; i < PlayerInstance.GetMaxBag(); i++)
+            if (player.GetBagItem(i).definitionId == -1)
                 return true;
         return false;
     }
@@ -24,8 +24,8 @@ namespace Inventory
     InventoryItem GetActiveHotbarItem(const Player &player)
     {
         int idx = (int)InputInstance.GetActiveSlot() - 1;
-        if (idx >= 0 && idx < PlayerInstance.MaxHotbar)
-            return player.Hotbar[idx];
+        if (idx >= 0 && idx < PlayerInstance.GetMaxHotbar())
+            return player.GetHotbarItem(idx);
         return {-1, 0};
     }
 
@@ -39,6 +39,9 @@ namespace Inventory
         if (InputInstance.IsInventoryOpen())
             return;
 
+        if (PlayerInstance.IsDashing)
+            return;
+
         if (!InputInstance.IsRightClickPressed())
             return;
 
@@ -47,7 +50,7 @@ namespace Inventory
         if (action == ACTION_DRINK_POTION)
         {
             int slotIdx = (int)InputInstance.GetActiveSlot() - 1;
-            if (slotIdx >= 0 && slotIdx < PlayerInstance.MaxHotbar)
+            if (slotIdx >= 0 && slotIdx < PlayerInstance.GetMaxHotbar())
                 UsePotion(player, slotIdx);
         }
         else if (action == ACTION_EQUIP_UNEQUIP)
@@ -62,7 +65,7 @@ namespace Inventory
 
     void UsePotion(Player &player, int slotIndex)
     {
-        InventoryItem &slot = player.Hotbar[slotIndex];
+        InventoryItem &slot = player.GetHotbarItem(slotIndex);
         if (slot.definitionId == -1 || slot.amount <= 0)
         {
             Effects::AddLog("Potion telah habis!");
@@ -110,9 +113,9 @@ namespace Inventory
         int activeSlot = (int)InputInstance.GetActiveSlot() - 1;
 
         // 1. Prioritaskan slot hotbar aktif
-        if (activeSlot >= 0 && activeSlot < PlayerInstance.MaxHotbar)
+        if (activeSlot >= 0 && activeSlot < PlayerInstance.GetMaxHotbar())
         {
-            InventoryItem &active = player.Hotbar[activeSlot];
+            InventoryItem &active = player.GetHotbarItem(activeSlot);
             if (active.definitionId == -1)
             {
                 int add = std::min(remaining, maxStack);
@@ -134,25 +137,25 @@ namespace Inventory
         // 2. Merge ke stack yang sudah ada di hotbar & bag
         if (isStackable)
         {
-            for (int i = 0; i < PlayerInstance.MaxHotbar && remaining > 0; i++)
+            for (int i = 0; i < PlayerInstance.GetMaxHotbar() && remaining > 0; i++)
             {
                 if (i == activeSlot)
                     continue;
-                if (player.Hotbar[i].definitionId == item.definitionId && player.Hotbar[i].amount < maxStack)
+                if (player.GetHotbarItem(i).definitionId == item.definitionId && player.GetHotbarItem(i).amount < maxStack)
                 {
-                    int space = maxStack - player.Hotbar[i].amount;
+                    int space = maxStack - player.GetHotbarItem(i).amount;
                     int add = std::min(remaining, space);
-                    player.Hotbar[i].amount += add;
+                    player.GetHotbarItem(i).amount += add;
                     remaining -= add;
                 }
             }
-            for (int i = 0; i < PlayerInstance.MaxBag && remaining > 0; i++)
+            for (int i = 0; i < PlayerInstance.GetMaxBag() && remaining > 0; i++)
             {
-                if (player.Bag[i].definitionId == item.definitionId && player.Bag[i].amount < maxStack)
+                if (player.GetBagItem(i).definitionId == item.definitionId && player.GetBagItem(i).amount < maxStack)
                 {
-                    int space = maxStack - player.Bag[i].amount;
+                    int space = maxStack - player.GetBagItem(i).amount;
                     int add = std::min(remaining, space);
-                    player.Bag[i].amount += add;
+                    player.GetBagItem(i).amount += add;
                     remaining -= add;
                 }
             }
@@ -162,25 +165,25 @@ namespace Inventory
             return true;
 
         // 3. Slot kosong hotbar (selain active slot)
-        for (int i = 0; i < PlayerInstance.MaxHotbar && remaining > 0; i++)
+        for (int i = 0; i < PlayerInstance.GetMaxHotbar() && remaining > 0; i++)
         {
             if (i == activeSlot)
                 continue;
-            if (player.Hotbar[i].definitionId == -1)
+            if (player.GetHotbarItem(i).definitionId == -1)
             {
                 int add = std::min(remaining, maxStack);
-                player.Hotbar[i] = {item.definitionId, add};
+                player.GetHotbarItem(i) = {item.definitionId, add};
                 remaining -= add;
             }
         }
 
         // 4. Slot kosong bag sebagai fallback terakhir
-        for (int i = 0; i < PlayerInstance.MaxBag && remaining > 0; i++)
+        for (int i = 0; i < PlayerInstance.GetMaxBag() && remaining > 0; i++)
         {
-            if (player.Bag[i].definitionId == -1)
+            if (player.GetBagItem(i).definitionId == -1)
             {
                 int add = std::min(remaining, maxStack);
-                player.Bag[i] = {item.definitionId, add};
+                player.GetBagItem(i) = {item.definitionId, add};
                 remaining -= add;
             }
         }

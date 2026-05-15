@@ -3,6 +3,7 @@
 #include "movement.h"
 #include "combat.h"
 #include "interaction.h"
+#include "animation.h"
 #include "inventory.h"
 #include "mapLogic.h"
 #include "debug.h"
@@ -324,9 +325,44 @@ void Player::HandleAction(void)
         Vector2 playerCenter = GetCenter();
         Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(State), camera);
         Vector2 aimDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+
+        // Arah hadap player
+        Vector2 facingDir = {0, 0};
+        switch (Anim.direction)
+        {
+        case UP:
+            facingDir = {0, -1};
+            break;
+        case DOWN:
+            facingDir = {0, 1};
+            break;
+        case LEFT:
+            facingDir = {-1, 0};
+            break;
+        case RIGHT:
+            facingDir = {1, 0};
+            break;
+        }
+
+        Vector2 backDir = {-facingDir.x, -facingDir.y};
+        float forbiddenThreshold = cosf((90.0f - RayCastAngleItemDropBack) * DEG2RAD);
+        Vector2 dropDir = aimDir;
+
+        if (Vector2DotProduct(backDir, aimDir) > forbiddenThreshold)
+        {
+            float cross = facingDir.x * aimDir.y - facingDir.y * aimDir.x;
+            float sign = (cross >= 0) ? 1.0f : -1.0f;
+            float clampAngle = (90.0f + RayCastAngleItemDropBack) * DEG2RAD;
+            float cosA = cosf(clampAngle * sign);
+            float sinA = sinf(clampAngle * sign);
+            dropDir = {
+                facingDir.x * cosA - facingDir.y * sinA,
+                facingDir.x * sinA + facingDir.y * cosA};
+        }
+
         Vector2 dropPos = {
-            playerCenter.x + aimDir.x * INTERACT_RANGE,
-            playerCenter.y + aimDir.y * INTERACT_RANGE};
+            playerCenter.x + dropDir.x * INTERACT_RANGE,
+            playerCenter.y + dropDir.y * INTERACT_RANGE};
 
         ItemSpawn dropped = itemData.CreateItem(dropPos, slot.definitionId);
         if (dropAll)

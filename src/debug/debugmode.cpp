@@ -160,8 +160,8 @@ void Debug::DrawCollisionOverlay(const std::string &layerName, Color rectColor, 
 void Debug::DrawRaycastOverlay(void)
 {
     // Gambar titik hit jika ray mengenai object (hanya saat debug mode aktif)
-    if (isDebugMode && PlayerInstance.GetLastHit().hit)
-        DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, RED);
+    if (isDebugMode && PlayerInstance.LastHit.hit)
+        DrawCircleV(PlayerInstance.LastHit.point, 4.0f, RED);
 }
 
 /**
@@ -203,8 +203,8 @@ void Debug::DrawAttackOverlay(void)
     DrawRectangleRec(attackHitbox, Fade(RED, 0.3f));
 
     // Gambar titik hit jika ray mengenai object
-    if (PlayerInstance.GetLastHit().hit)
-        DrawCircleV(PlayerInstance.GetLastHit().point, 4.0f, VIOLET);
+    if (PlayerInstance.LastHit.hit)
+        DrawCircleV(PlayerInstance.LastHit.point, 4.0f, VIOLET);
 
     // Label
     DrawText("Attack Area (2:1 Rect)", (int)attackHitbox.x, (int)attackHitbox.y - 14, 14, RED);
@@ -377,7 +377,7 @@ void Debug::DrawPlayerPanel(Rectangle bounds)
     DrawPanelFrame(bounds, "[ PLAYER DEBUG ]", GREEN);
     DrawText(TextFormat("Position   : (%.1f, %.1f)", PlayerInstance.GetPosition().x, PlayerInstance.GetPosition().y),
              (int)bounds.x + 10, (int)bounds.y + 27, 16, WHITE);
-    DrawText(TextFormat("Speed      : %.1f", PlayerInstance.GetSpeed()),
+    DrawText(TextFormat("Speed      : %.1f", PlayerInstance.Speed),
              (int)bounds.x + 10, (int)bounds.y + 47, 16, WHITE);
     DrawText(TextFormat("Hitbox Size: %.1f x %.1f", PlayerInstance.GetHitboxWidth(), PlayerInstance.GetHitboxHeight()),
              (int)bounds.x + 10, (int)bounds.y + 67, 16, YELLOW);

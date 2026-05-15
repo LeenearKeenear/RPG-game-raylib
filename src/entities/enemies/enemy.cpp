@@ -151,6 +151,7 @@ void Enemy::Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition
     AnimSet = Def->animSet;
     MapObjectID = mapId;
     SpawnPoint = pos;
+    SpawnRect = {0, 0, 0, 0};
     Name = name;
     rank = def.rank;
 
@@ -472,7 +473,7 @@ void Enemy::HandleReturn()
 
     bool hasReturned = (SpawnRect.width > 0)
                            ? CheckCollisionPointRec(GetCenter(), SpawnRect)
-                           : Vector2Distance(GetCenter(), SpawnPoint) < TILE_SIZE * 3.0f;
+                           : Vector2Distance(GetCenter(), SpawnPoint) < TILE_SIZE * 4.0f;
 
     if (hasReturned)
     {
@@ -734,19 +735,30 @@ void SpawnAtPoint(const MapObject *obj, EnemyRank rank)
 
     std::mt19937 rng(obj->id);
     std::uniform_int_distribution<int> pickDist(0, (int)pool.size() - 1);
+    std::uniform_int_distribution<int> countDist(
+        rank == ENEMY_ELITE ? SPAWN_PINPOINT_ELITE_MIN : SPAWN_PINPOINT_NORMAL_MIN,
+        rank == ENEMY_ELITE ? SPAWN_PINPOINT_ELITE_MAX : SPAWN_PINPOINT_NORMAL_MAX);
+    std::uniform_real_distribution<float> offsetDist(-SEPARATION_RADIUS, SEPARATION_RADIUS);
 
-    std::string picked = pool[pickDist(rng)];
-    const EnemyDefinition &def = enemyData.Get(picked);
+    int count = countDist(rng);
 
-    Vector2 spawnPos = {obj->bounds.x + obj->bounds.width / 2.0f,
-                        obj->bounds.y + obj->bounds.height / 2.0f};
+    Vector2 center = {obj->bounds.x + obj->bounds.width / 2.0f,
+                      obj->bounds.y + obj->bounds.height / 2.0f};
     if (spawnFlowFields.find(obj->id) == spawnFlowFields.end())
-        BuildSpawnFlowFields(spawnPos, obj->id, tilesonMap->width, tilesonMap->height);
+        BuildSpawnFlowFields(center, obj->id, tilesonMap->width, tilesonMap->height);
 
-    Enemy *enemy = new Enemy();
-    enemy->Init(spawnPos, picked.c_str(), obj->id, def);
-    enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
-    Entities::AddDynamic(enemy);
+    for (int i = 0; i < count; i++)
+    {
+        std::string picked = pool[pickDist(rng)];
+        const EnemyDefinition &def = enemyData.Get(picked);
+
+        Vector2 spawnPos = {center.x + offsetDist(rng), center.y + offsetDist(rng)};
+
+        Enemy *enemy = new Enemy();
+        enemy->Init(spawnPos, picked.c_str(), obj->id, def);
+        enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
+        Entities::AddDynamic(enemy);
+    }
 }
 
 /**

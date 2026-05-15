@@ -121,7 +121,7 @@ PlayerAction PlayerInput::ResolveAction() const
     if (slotIdx < 0 || slotIdx >= 4)
         return ACTION_NONE;
 
-    const InventoryItem &item = PlayerInstance.Hotbar[slotIdx];
+    const InventoryItem &item = PlayerInstance.GetHotbarItem(slotIdx);
     if (item.definitionId == -1)
         return ACTION_NONE;
 

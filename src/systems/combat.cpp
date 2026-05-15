@@ -23,8 +23,8 @@ namespace Combat
     void PerformHitDetection(Player &player)
     {
         Vector2 playerCenter = {
-            player.Position.x + player.HitboxOffsetX + player.HitboxWidth / 2,
-            player.Position.y + player.HitboxOffsetY + player.HitboxHeight / 2};
+            player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
+            player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
 
         Rectangle attackHitbox;
         float reach = player.Swing.reach;     ///< Jarak serangan ke depan
@@ -34,20 +34,20 @@ namespace Combat
         switch (player.Anim.direction)
         {
         case RIGHT:
-            attackHitbox = {playerCenter.x + player.HitboxWidth / 2,
+            attackHitbox = {playerCenter.x + player.GetHitboxWidth() / 2,
                             playerCenter.y - breadth / 2, reach, breadth};
             break;
         case LEFT:
-            attackHitbox = {playerCenter.x - player.HitboxWidth / 2 - reach,
+            attackHitbox = {playerCenter.x - player.GetHitboxWidth() / 2 - reach,
                             playerCenter.y - breadth / 2, reach, breadth};
             break;
         case DOWN:
             attackHitbox = {playerCenter.x - breadth / 2,
-                            playerCenter.y + player.HitboxHeight / 2, breadth, reach};
+                            playerCenter.y + player.GetHitboxHeight() / 2, breadth, reach};
             break;
         case UP:
             attackHitbox = {playerCenter.x - breadth / 2,
-                            playerCenter.y - player.HitboxHeight / 2 - reach, breadth,
+                            playerCenter.y - player.GetHitboxHeight() / 2 - reach, breadth,
                             reach};
             break;
         }
@@ -147,8 +147,8 @@ namespace Combat
                 // Menghitung arah bidikan berdasarkan posisi mouse di dunia (world space)
                 Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(player.State), camera);
                 Vector2 playerCenter = {
-                    player.Position.x + player.HitboxOffsetX + player.HitboxWidth / 2,
-                    player.Position.y + player.HitboxOffsetY + player.HitboxHeight / 2};
+                    player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
+                    player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
                 Vector2 attackDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
 
                 // Menentukan arah hadap animasi berdasarkan sudut bidikan
@@ -231,8 +231,8 @@ namespace Combat
 
         // Pastikan pusat senjata tetap terkunci pada posisi pemain (bahkan saat terkena knockback)
         Vector2 playerCenter = {
-            player.Position.x + player.HitboxOffsetX + player.HitboxWidth / 2,
-            player.Position.y + player.HitboxOffsetY + player.HitboxHeight / 2};
+            player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
+            player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
         player.Swing.center = playerCenter;
 
         ItemSlot activeSlot = InputInstance.GetActiveSlot();

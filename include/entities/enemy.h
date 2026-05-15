@@ -10,11 +10,15 @@
 #include <unordered_map>
 
 // Spawn constants
-constexpr int SPAWN_RECT_NORMAL_MIN = 4;
-constexpr int SPAWN_RECT_NORMAL_MAX = 20;
-constexpr int SPAWN_RECT_ELITE_MIN = 2;
-constexpr int SPAWN_RECT_ELITE_MAX = 10;
-constexpr int SPAWN_RETRY_LIMIT = 100;
+constexpr int SPAWN_PINPOINT_NORMAL_MIN = 9;
+constexpr int SPAWN_PINPOINT_NORMAL_MAX = 13;
+constexpr int SPAWN_PINPOINT_ELITE_MIN = 3;
+constexpr int SPAWN_PINPOINT_ELITE_MAX = 7;
+constexpr int SPAWN_RECT_NORMAL_MIN = 20;
+constexpr int SPAWN_RECT_NORMAL_MAX = 25;
+constexpr int SPAWN_RECT_ELITE_MIN = 10;
+constexpr int SPAWN_RECT_ELITE_MAX = 15;
+constexpr int SPAWN_RETRY_LIMIT = 200;
 
 /*==============================================================================
  * Enums
@@ -204,6 +208,8 @@ public:
         ctx.ReturnFlowField = ReturnFlowField;
         return ctx;
     }
+
+    Vector2 SeparationForce = {0, 0};
 
 private:
     void HandleIdle();    // jalankan state idle

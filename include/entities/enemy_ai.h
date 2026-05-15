@@ -25,10 +25,11 @@ constexpr float FLOW_FIELD_OBSTACLE_PENALTY = 5.f; // cost tambahan untuk tile d
 constexpr float FLOW_FIELD_DIAGONAL_COST = 1.414f; // cost gerak diagonal, mendekati sqrt(2)
 constexpr float FLOW_FIELD_CARDINAL_COST = 1.0f;   // cost gerak horizontal/vertikal
 
-static constexpr float SEPARATION_RADIUS = 24.0f;   // jarak maksimum antar enemy untuk mulai saling menjauh
-static constexpr float SEPARATION_STRENGTH = 40.0f; // besar dorongan separation antar enemy
-static constexpr float MAX_SEPARATION_FORCE = 50.f; // batas maksimum gaya separation
-static constexpr int CELL_SIZE = TILE_SIZE * 2.0f;  // ukuran cell spatial hash untuk query neighbor enemy
+static constexpr float SEPARATION_RADIUS = 28.0f;   // jarak maksimum antar enemy untuk mulai saling menjauh
+static constexpr float SEPARATION_STRENGTH = 25.0f; // besar dorongan separation antar enemy
+static constexpr float MAX_SEPARATION_FORCE = 30.f; // batas maksimum gaya separation
+static constexpr int CELL_SIZE = TILE_SIZE * 1.8f;  // ukuran cell spatial hash untuk query neighbor enemy
+static constexpr float SEPARATION_FORCE_MAGNITUDE = 0.03f; // besaran nilai interpolasi untuk separation force
 
 /**
  * @brief Grid arah menuju player, dihitung sekali dan dibaca semua enemy.
@@ -175,7 +176,7 @@ void RebuildObstacleCache();
 /*==============================================================================
  * Spawn Flow Fields
  *==============================================================================*/
-const float RETURN_SCAN_INTERVAL = 1.5f; // interval pencarian ulang return flow field saat enemy pulang
+const float RETURN_SCAN_INTERVAL = 2.0f; // interval pencarian ulang return flow field saat enemy pulang
 
 struct SpawnFlowFieldEntry
 {

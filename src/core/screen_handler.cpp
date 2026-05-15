@@ -199,9 +199,13 @@ void UpdateLogicAll()
         if (!enemyReg[i]->IsActive)
             continue;
         Vector2 sep = CalcSeparationForce(i, enemyReg);
+        // lerp force lama ke force baru
+        enemyReg[i]->SeparationForce.x = Lerp(enemyReg[i]->SeparationForce.x, sep.x, SEPARATION_FORCE_MAGNITUDE);
+        enemyReg[i]->SeparationForce.y = Lerp(enemyReg[i]->SeparationForce.y, sep.y, SEPARATION_FORCE_MAGNITUDE);
+
         Vector2 newPos = {
-            enemyReg[i]->Position.x + sep.x * Time::DELTA_TIME,
-            enemyReg[i]->Position.y + sep.y * Time::DELTA_TIME};
+            enemyReg[i]->Position.x + enemyReg[i]->SeparationForce.x * Time::DELTA_TIME,
+            enemyReg[i]->Position.y + enemyReg[i]->SeparationForce.y * Time::DELTA_TIME};
 
         if (IsPositionSafe(newPos, enemyReg[i]->HitboxWidth, enemyReg[i]->HitboxHeight,
                            enemyReg[i]->HitboxOffsetX, enemyReg[i]->HitboxOffsetY))
