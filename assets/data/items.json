@@ -1,0 +1,72 @@
+{
+  "items": {
+    "Iron Sword": {
+      "id": 0,
+      "category": "weapon",
+      "sheetCoord": { "x": 6, "y": 4 },
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "common",
+      "isStackable": false,
+      "maxStack": 1,
+      "weapon": {
+        "damage": 15.0,
+        "reach": 40.0,
+        "breadth": 16.0,
+        "duration": 0.25,
+        "knockbackForce": 0.6,
+        "startAngleOffset": 0.0,
+        "sweepAngle": 0.0,
+        "centerOffset": { "x": 8.0, "y": 4.0 },
+        "manaCost": 10.0,
+        "attackType": "thrust"
+      }
+    },
+    "Iron Axe": {
+      "id": 1,
+      "category": "weapon",
+      "sheetCoord": { "x": 7, "y": 4 },
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "rare",
+      "isStackable": false,
+      "maxStack": 1,
+      "weapon": {
+        "damage": 25.0,
+        "reach": 48.0,
+        "breadth": 56.0,
+        "duration": 0.5,
+        "knockbackForce": 1.8,
+        "startAngleOffset": 55.0,
+        "sweepAngle": -95.0,
+        "centerOffset": { "x": 20.0, "y": 20.0 },
+        "manaCost": 15.0,
+        "attackType": "slash"
+      }
+    },
+    "Health Potion": {
+      "id": 2,
+      "category": "potion",
+      "sheetCoord": { "x": 7, "y": 8 },
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "common",
+      "isStackable": true,
+      "maxStack": 8,
+      "potion": {
+        "healValue": 20,
+        "isMana": false
+      }
+    },
+    "Mana Bread": {
+      "id": 3,
+      "category": "potion",
+      "sheetCoord": { "x": 10, "y": 8 },
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "common",
+      "isStackable": true,
+      "maxStack": 8,
+      "potion": {
+        "healValue": 15,
+        "isMana": true
+      }
+    }
+  }
+}
