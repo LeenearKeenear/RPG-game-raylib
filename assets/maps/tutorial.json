@@ -221,6 +221,30 @@
                  "width":32,
                  "x":256,
                  "y":352
+                }, 
+                {
+                 "height":32,
+                 "id":27,
+                 "name":"crate",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"crate",
+                 "visible":true,
+                 "width":32,
+                 "x":288,
+                 "y":352
+                }, 
+                {
+                 "height":32,
+                 "id":28,
+                 "name":"crate",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"crate",
+                 "visible":true,
+                 "width":32,
+                 "x":320,
+                 "y":352
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -252,7 +276,7 @@
          "y":0
         }],
  "nextlayerid":10,
- "nextobjectid":26,
+ "nextobjectid":29,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.1",
