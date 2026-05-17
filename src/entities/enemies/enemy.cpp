@@ -6,7 +6,7 @@
 #include "datadriven.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../lib/json/include/nlohmann/json.hpp"
-#include "debug.h"
+#include "game_debug.h"
 #include "entities.h"
 #include <cmath>
 #include <fstream>

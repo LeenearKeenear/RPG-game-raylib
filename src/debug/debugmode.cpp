@@ -9,7 +9,7 @@
  * - Menampilkan info runtime player, map, camera, dan collision
  */
 
-#include "debug.h"
+#include "game_debug.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include "screen.h"

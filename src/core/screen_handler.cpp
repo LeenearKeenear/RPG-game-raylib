@@ -24,7 +24,7 @@
 #include "entities.h"
 #include "mapLogic.h"
 #include "effects.h"
-#include "debug.h"
+#include "game_debug.h"
 #include "pauseMenu.h"
 #include "combat.h"
 #include "interaction.h"
