@@ -233,7 +233,7 @@ void Enemy::Update()
     }
 
     // buat ngatur sejauh apa ai enemy bisa ke update
-    const float AI_UPDATE_RANGE = TILE_SIZE * 20.0f;
+    const float AI_UPDATE_RANGE = FRAME_SIZE * 20.0f;
 
     if (Vector2Distance(Position, PlayerInstance.GetPosition()) <= AI_UPDATE_RANGE)
         UpdateAI();
@@ -473,7 +473,7 @@ void Enemy::HandleReturn()
 
     bool hasReturned = (SpawnRect.width > 0)
                            ? CheckCollisionPointRec(GetCenter(), SpawnRect)
-                           : Vector2Distance(GetCenter(), SpawnPoint) < TILE_SIZE * 4.0f;
+                           : Vector2Distance(GetCenter(), SpawnPoint) < FRAME_SIZE * 4.0f;
 
     if (hasReturned)
     {
@@ -619,7 +619,7 @@ void Enemy::Render()
     if (shouldDraw)
     {
         Color tint = (HitFlashTimer > 0) ? RED : WHITE;
-        DrawAnimation(Anim, TEXTURE_ENEMIES, tint);
+        DrawAnimation(Anim, SPRITESHEET_ENEMIES, tint);
     }
 
     // Health bar hanya tampil saat agresif
@@ -654,7 +654,7 @@ void Enemy::Render()
  */
 void InitEnemy()
 {
-    LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
+    LoadFrameTexture(SPRITESHEET_ENEMIES, "assets/textures/enemies.png");
     enemyData.Load("assets/data/enemies.json");
 }
 

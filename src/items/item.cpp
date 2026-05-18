@@ -45,7 +45,7 @@ ItemSpawnManager spawnManager;
 // TODO: pindahin ke animation atau tile.cpp untuk loadtiletexture agar terpusat
 void InitItemTextures()
 {
-    LoadTileTexture(TEXTURE_ITEMS, "assets/textures/test.png");
+    LoadFrameTexture(TILESET_ITEMS, "assets/textures/test.png");
 }
 
 /**
@@ -392,16 +392,24 @@ int ItemRenderManager::RenderAll(std::vector<ItemSpawn> &items, Rectangle viewRe
  */
 void ItemRenderManager::Render(ItemSpawn &item)
 {
-    const ItemDefinition &def = itemDefs.GetById(item.definitionId);
     Vector2 center = {
         item.hitbox.x + item.hitbox.width / 2,
         item.hitbox.y + item.hitbox.height / 2};
     const float scale = 0.5f;
-    float smallSize = TILE_SIZE * scale;
     Vector2 renderPos = {
-        center.x - smallSize,
-        center.y - smallSize};
-    DrawSmallSprite(TEXTURE_ITEMS, def.sheetCoord, renderPos, scale);
+        center.x - 8.0f,
+        center.y - 8.0f};
+
+    TileID tileId = POTION_HEALTH;
+    if (item.definitionId == 0) tileId = SWORD_1;
+    else if (item.definitionId == 1) tileId = SWORD_2;
+    else if (item.definitionId == 2) tileId = POTION_HEALTH;
+    else if (item.definitionId == 3) tileId = POTION_STAMINA;
+
+    Display display;
+    display.position = renderPos;
+    display.size = (int)(FRAME_SIZE * scale);
+    DrawFrame(tileId, display);
 
     if (item.amount > 1)
     {
@@ -410,7 +418,7 @@ void ItemRenderManager::Render(ItemSpawn &item)
         int textWidth = MeasureText(amountText.c_str(), fontSize);
         Vector2 textPos = {
             center.x - textWidth / 2.0f,
-            (center.y + smallSize) - 5.0f};
+            (center.y + 16.0f) - 5.0f};
         DrawText(amountText.c_str(), (int)textPos.x, (int)textPos.y, fontSize, WHITE);
     }
 }

@@ -547,8 +547,8 @@ bool IsPositionSafe(Vector2 pos, float width, float height, float offsetX, float
     Rectangle hitbox = BuildHitbox(pos, offsetX, offsetY, width, height);
 
     // 2. Cek World Bounds
-    float worldWidth = (float)tilesonMap->width * TILE_SIZE;
-    float worldHeight = (float)tilesonMap->height * TILE_SIZE;
+    float worldWidth = (float)tilesonMap->width * FRAME_SIZE;
+    float worldHeight = (float)tilesonMap->height * FRAME_SIZE;
     if (!IsWithinWorldBounds(hitbox, worldWidth, worldHeight))
         return false;
 

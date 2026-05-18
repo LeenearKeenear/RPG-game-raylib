@@ -24,13 +24,13 @@
 /**
  * @brief Snap posisi ke grid tile terdekat
  * @param rawPos Posisi mentah dari Tiled
- * @return Posisi yang sudah di-snap ke kelipatan TILE_SIZE
+ * @return Posisi yang sudah di-snap ke kelipatan FRAME_SIZE
  */
 Vector2 SnapToTileGrid(Vector2 rawPos)
 {
     return {
-        std::floor(rawPos.x / TILE_SIZE) * TILE_SIZE,
-        std::floor(rawPos.y / TILE_SIZE) * TILE_SIZE};
+        std::floor(rawPos.x / FRAME_SIZE) * FRAME_SIZE,
+        std::floor(rawPos.y / FRAME_SIZE) * FRAME_SIZE};
 }
 
 /**

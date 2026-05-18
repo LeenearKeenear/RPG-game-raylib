@@ -542,8 +542,8 @@ void Debug::DrawWorldOverlay(void)
     Rectangle mapBounds = {
         0.0f,
         0.0f,
-        (float)tilesonMap->width * TILE_SIZE,
-        (float)tilesonMap->height * TILE_SIZE};
+        (float)tilesonMap->width * FRAME_SIZE,
+        (float)tilesonMap->height * FRAME_SIZE};
 
     DrawRectangleLinesEx(mapBounds, 2.0f, GREEN);
 

@@ -1,48 +1,96 @@
 #include "animation.h"
 #include "../lib/raylib/include/raymath.h"
 
-/*==============================================================================
- * Texture & Tile Helpers (Moved from tiles.cpp)
- *==============================================================================*/
+/*
+====================
+Frames Management
+====================
+*/
 
-Texture2D TexturesMap[MAX_TEXTURES];
+Texture2D textures[MAX_TEXTURES];
 
-/**
- * Memuat tekstur dari penyimpanan (disk) ke slot tekstur GPU tertentu.
- * Memastikan data gambar di CPU dihapus setelah ditransfer ke GPU.
- */
-void LoadTileTexture(TextureAsset Slot, const char *Path)
+void LoadFrameTexture(TextureSlot slot, const char *path)
 {
-    Image img = LoadImage(Path);
-    TexturesMap[Slot] = LoadTextureFromImage(img);
+    Image img = LoadImage(path);
+    textures[slot] = LoadTextureFromImage(img);
     UnloadImage(img);
 }
 
-/**
- * Fungsi pembantu untuk menghitung rectangle sumber dari koordinat berbasis grid.
- * Berguna untuk animasi dan perenderan tile secara manual.
- */
-Rectangle GetFrame(int frameX, int frameY)
+const Frame &GetFrame(TileID id)
 {
-    return {
-        (float)(frameX * (TILE_SIZE + TILE_GAP)),
-        (float)(frameY * (TILE_SIZE + TILE_GAP)),
-        (float)TILE_SIZE,
-        (float)TILE_SIZE};
+    static const Frame tileFrames[TILE_ID_COUNT] = {
+        [SPIKE_INACTIVE] = { TILESET_MAP, 1, 5, 1, 1 },
+        [SPIKE_ACTIVE]   = { TILESET_MAP, 1, 6, 1, 1 },
+        [BOMB]           = { TILESET_ITEMS, 8, 4, 1, 1 },
+        [CHEST_CLOSED]   = { TILESET_MAP, 8, 0, 1, 1 },
+        [CHEST_OPEN]     = { TILESET_MAP, 8, 1, 1, 1 },
+        [SWORD_1]        = { TILESET_ITEMS, 6, 4, 1, 1 },
+        [SWORD_2]        = { TILESET_ITEMS, 7, 4, 1, 1 },
+        [BOW]            = { TILESET_ITEMS, 8, 4, 1, 1 },
+        [POTION_HEALTH]  = { TILESET_ITEMS, 7, 8, 1, 1 },
+        [POTION_STAMINA] = { TILESET_ITEMS, 10, 8, 1, 1 }
+    };
+    return tileFrames[id];
 }
 
-/**
- * Merender tile ke layar.
- */
-void DrawTileTexture(TextureAsset slot, int frameX, int frameY, Rectangle dest, Vector2 origin, float rotation, Color tint)
+const Frame &GetFrame(SpriteID id)
 {
-    Rectangle src = GetFrame(frameX, frameY);
-    DrawTexturePro(TexturesMap[slot], src, dest, origin, rotation, tint);
+    static const Frame spriteFrames[SPRITE_ID_COUNT] = {
+        [KNIGHT_IDLE_RIGHT_1]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
+        [KNIGHT_IDLE_RIGHT_2]  = { SPRITESHEET_KNIGHT, 1, 1, 1, 1 },
+        [KNIGHT_IDLE_LEFT_1]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
+        [KNIGHT_IDLE_LEFT_2]   = { SPRITESHEET_KNIGHT, 1, 0, 1, 1 },
+        [KNIGHT_WALK_RIGHT_1]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
+        [KNIGHT_WALK_RIGHT_2]  = { SPRITESHEET_KNIGHT, 2, 1, 1, 1 },
+        [KNIGHT_WALK_RIGHT_3]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
+        [KNIGHT_WALK_RIGHT_4]  = { SPRITESHEET_KNIGHT, 3, 1, 1, 1 },
+        [KNIGHT_WALK_RIGHT_5]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
+        [KNIGHT_WALK_RIGHT_6]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
+        [KNIGHT_WALK_RIGHT_7]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
+        [KNIGHT_WALK_LEFT_1]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
+        [KNIGHT_WALK_LEFT_2]   = { SPRITESHEET_KNIGHT, 2, 0, 1, 1 },
+        [KNIGHT_WALK_LEFT_3]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
+        [KNIGHT_WALK_LEFT_4]   = { SPRITESHEET_KNIGHT, 3, 0, 1, 1 },
+        [KNIGHT_WALK_LEFT_5]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
+        [KNIGHT_WALK_LEFT_6]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
+        [KNIGHT_WALK_LEFT_7]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
+        [KNIGHT_DEAD_RIGHT]    = { SPRITESHEET_KNIGHT, 0, 4, 1, 1 },
+        [KNIGHT_DEAD_LEFT]     = { SPRITESHEET_KNIGHT, 0, 4, 1, 1 },
+        [SLIME_IDLE_LEFT_1]    = { SPRITESHEET_ENEMIES, 0, 0, 1, 1 },
+        [SLIME_IDLE_LEFT_2]    = { SPRITESHEET_ENEMIES, 1, 0, 1, 1 },
+        [SLIME_DEAD_LEFT]      = { SPRITESHEET_ENEMIES, 0, 2, 1, 1 },
+        [SKELETON_IDLE_LEFT_1] = { SPRITESHEET_ENEMIES, 0, 1, 1, 1 },
+        [SKELETON_IDLE_LEFT_2] = { SPRITESHEET_ENEMIES, 1, 1, 1, 1 },
+        [SKELETON_DEAD_LEFT]   = { SPRITESHEET_ENEMIES, 1, 2, 1, 1 },
+        [WOLF_IDLE_LEFT_1]     = { SPRITESHEET_ENEMIES, 0, 2, 1, 1 },
+        [WOLF_IDLE_LEFT_2]     = { SPRITESHEET_ENEMIES, 1, 2, 1, 1 },
+        [WOLF_DEAD_LEFT]       = { SPRITESHEET_ENEMIES, 2, 2, 1, 1 }
+    };
+    return spriteFrames[id];
 }
 
-/*==============================================================================
- * Animation Set Data Definitions
- *==============================================================================*/
+void DrawFrame(Frame frame, Display display)
+{
+    Rectangle src = {
+        (float)(frame.positionX * (FRAME_SIZE + FRAME_GAP)),
+        (float)(frame.positionY * (FRAME_SIZE + FRAME_GAP)),
+        (float)(frame.width * FRAME_SIZE),
+        (float)(frame.height * FRAME_SIZE)
+    };
+    Rectangle dest = {
+        display.position.x + display.offset.x,
+        display.position.y + display.offset.y,
+        (float)(frame.width * display.size),
+        (float)(frame.height * display.size)
+    };
+    DrawTexturePro(textures[frame.texture], src, dest, display.origin, display.rotation, display.tint);
+}
+
+/*
+====================
+Sprites Animation
+====================
+*/
 
 const AnimationSet PlayerAnimationSet = {
     .configs = {
@@ -100,73 +148,6 @@ const AnimationSet WolfAnimationSet = {
     }
 };
 
-/*==============================================================================
- * Legacy Tile Rendering (RenderTilePNG — masih dipakai oleh beberapa modul)
- *==============================================================================*/
-
-void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
-{
-    // mapping TileType ke koordinat di spritesheet
-    // NOTE: Koordinat ini berdasarkan layout spritesheet tileset
-    TileDefinition prop;
-    switch (Type)
-    {
-    case TILE_PLAYER_NEW:
-        prop = {{3, 2}, false, false};
-        break;
-    case TILE_ENEMY_SLIME:
-        prop = {{0, 0}, false, true};
-        break;
-    case TILE_ENEMY_SKELETON:
-        prop = {{0, 1}, false, true};
-        break;
-    case TILE_ENEMY_WOLF:
-        prop = {{0, 2}, false, true};
-        break;
-    case TILE_ITEM_POTION:
-        prop = {{7, 8}, false, true};
-        break;
-    case TILE_WEAPON:
-        prop = {{6, 4}, false, true};
-        break;
-    default:
-        prop = {{0, 0}, true, false};
-        break;
-    }
-
-    Rectangle Source = {
-        (float)(prop.CoordID.x * (TILE_SIZE + TILE_GAP)),
-        (float)(prop.CoordID.y * (TILE_SIZE + TILE_GAP)),
-        (float)TILE_SIZE,
-        (float)TILE_SIZE};
-
-    Rectangle Destination = {(float)pos_x, (float)pos_y, (float)TILE_SIZE, (float)TILE_SIZE};
-    Vector2 origin = {0, 0};
-    DrawTexturePro(TexturesMap[Slot], Source, Destination, origin, Rotation, WHITE);
-}
-
-/*==============================================================================
- * Small Sprite Rendering
- *==============================================================================*/
-
-void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale) {
-    float smallSize = TILE_SIZE * scale;
-    float offset = (TILE_SIZE - smallSize) / 2.0f;
-
-    Rectangle dest = {
-        worldPos.x + offset,
-        worldPos.y + offset,
-        smallSize,
-        smallSize
-    };
-
-    DrawTileTexture(slot, (int)sheetCoord.x, (int)sheetCoord.y, dest);
-}
-
-/*==============================================================================
- * Animation Logic Implementation (Arsitektur akbarazy-2nd)
- *==============================================================================*/
-
 void UpdateAnimation(Animation &anim, float dt)
 {
     if (!anim.currentConfig) return;
@@ -203,15 +184,16 @@ void UpdateAnimation(Animation &anim, float dt)
     }
 }
 
-void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint)
+void DrawAnimation(const Animation &anim, TextureSlot texture, Color tint)
 {
     if (!anim.currentConfig) return;
 
     int frameX = anim.currentConfig->startFrame + anim.currentFrame;
     int row = anim.currentConfig->row;
 
-    Rectangle dest = { anim.position.x, anim.position.y, (float)TILE_SIZE, (float)TILE_SIZE };
-    DrawTileTexture(texture, frameX, row, dest, {0,0}, 0.0f, tint);
+    Frame customFrame = { texture, frameX, row, 1, 1 };
+    Display display = { anim.position, FRAME_SIZE, {0,0}, {0,0}, 0.0f, tint };
+    DrawFrame(customFrame, display);
 }
 
 void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set)
@@ -228,10 +210,6 @@ void PlayAnimation(Animation &anim, State newState, Direction newDir, const Anim
     anim.currentFrame = anim.currentConfig->pattern[0];
 }
 
-/*==============================================================================
- * Legacy: UpdatePlayerAttack — masih dipakai oleh Player::HandleAction()
- *==============================================================================*/
-
 void UpdatePlayerAttack(Animation &p)
 {
     if (!p.isAttacking)
@@ -243,9 +221,11 @@ void UpdatePlayerAttack(Animation &p)
     }
 }
 
-/*==============================================================================
- * AnimEffects Implementation
- *==============================================================================*/
+/*
+====================
+Procedural Animation
+====================
+*/
 
 float AnimEffects::CalculateFadeOut(float timer, float duration)
 {
@@ -269,13 +249,10 @@ bool AnimEffects::ShouldBlink(float timer, float frequency)
 
 void AnimEffects::ApplyPhysics(Vector2& pos, Vector2& vel, float gravity, float friction, float dt)
 {
-    // Update posisi berdasarkan velocity
-    pos = Vector2Add(pos, Vector2Scale(vel, dt * 60.0f)); // Skala ke 60 FPS
+    pos = Vector2Add(pos, Vector2Scale(vel, dt * 60.0f));
     
-    // Terapkan gravitasi
     vel.y += gravity;
     
-    // Terapkan friksi horisontal
     vel.x *= friction;
 }
 
@@ -292,7 +269,6 @@ float AnimEffects::CalculateThrustOffset(float progress, float maxOffset)
 
 float AnimEffects::CalculateSlashRotation(float progress, float startAngle, float sweepAngle)
 {
-    // Menggunakan easing (Sine Out) agar ayunan terasa lebih natural
     float easedProgress = sinf(progress * PI / 2.0f);
     return startAngle + (easedProgress * sweepAngle);
 }

@@ -83,7 +83,7 @@ void InitAll()
 
     // set camera ke tengah posisi spawn player
     Vector2 spawnPos = PlayerInstance.GetPosition();
-    camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
+    camera.target = {spawnPos.x + (FRAME_SIZE / 2.0F), spawnPos.y + (FRAME_SIZE / 2.0F)};
     camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
     camera.rotation = 0;
     camera.zoom = 1.0F;
@@ -370,7 +370,7 @@ Vector2 GetVirtualMousePosition(GameState *state)
 void GameShutDown(GameState *state)
 {
     for (int i = 0; i < MAX_TEXTURES; i++)
-        UnloadTexture(TexturesMap[i]);
+        UnloadTexture(textures[i]);
 
     Entities::Shutdown();
     UnloadMap();

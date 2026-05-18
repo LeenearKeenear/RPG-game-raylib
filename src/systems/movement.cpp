@@ -135,12 +135,12 @@ namespace Movement
      */
     void UpdateCamera(Player &player)
     {
-        float MapW = (float)tilesonMap->width * TILE_SIZE;
-        float MapH = (float)tilesonMap->height * TILE_SIZE;
+        float MapW = (float)tilesonMap->width * FRAME_SIZE;
+        float MapH = (float)tilesonMap->height * FRAME_SIZE;
 
         // Zoom Dinamis: Perkecil zoom sedikit untuk map yang sangat kecil agar muat di layar
         const int MinMapTileZoom = 15;
-        float AutoZoom = (float)GameScreenWidth / (MinMapTileZoom * TILE_SIZE);
+        float AutoZoom = (float)GameScreenWidth / (MinMapTileZoom * FRAME_SIZE);
         float FixedZoom = 2.0f;
         const float CameraZoom = (tilesonMap->width <= MinMapTileZoom || tilesonMap->height <= MinMapTileZoom)
                                      ? AutoZoom
@@ -150,8 +150,8 @@ namespace Movement
             camera.zoom = CameraZoom;
 
         // Menargetkan titik tengah pemain
-        camera.target.x = player.Position.x + (TILE_SIZE / 2.0f);
-        camera.target.y = player.Position.y + (TILE_SIZE / 2.0f);
+        camera.target.x = player.Position.x + (FRAME_SIZE / 2.0f);
+        camera.target.y = player.Position.y + (FRAME_SIZE / 2.0f);
 
         // Ukuran viewport kamera dalam koordinat dunia
         float halfW = (GameScreenWidth / 2.0f) / camera.zoom;
@@ -188,7 +188,7 @@ namespace Movement
         Rectangle hitbox = BuildHitbox(newPosition, player.GetHitboxOffsetX(), player.GetHitboxOffsetY(), player.GetHitboxWidth(), player.GetHitboxHeight());
 
         // 1. Pemeriksaan batas dunia (World Boundary)
-        if (!IsWithinWorldBounds(hitbox, tilesonMap->width * TILE_SIZE, tilesonMap->height * TILE_SIZE))
+        if (!IsWithinWorldBounds(hitbox, tilesonMap->width * FRAME_SIZE, tilesonMap->height * FRAME_SIZE))
             return false;
 
         // 2. Pemeriksaan layer tabrakan persegi panjang Tiled

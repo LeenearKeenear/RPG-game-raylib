@@ -327,9 +327,18 @@ namespace Combat
             visualPos.y += sinf(rad) * player.Swing.thrustOffset;
         }
 
-        Rectangle dest = {visualPos.x, visualPos.y, 20, 20};
-        Vector2 origin = {0, 24};
-        DrawTileTexture(TEXTURE_ITEMS, (int)def.sheetCoord.x, (int)def.sheetCoord.y, dest, origin, player.Swing.currentAngle + 45.0f);
+        TileID tileId = SWORD_1;
+        if (item.definitionId == 1) tileId = SWORD_2;
+
+        Display display;
+        display.position = visualPos;
+        display.size = 20;
+        display.offset = {0, 0};
+        display.origin = {0, 24};
+        display.rotation = player.Swing.currentAngle + 45.0f;
+        display.tint = WHITE;
+
+        DrawFrame(tileId, display);
     }
 
     void AddDamagePopup(Vector2 pos, float damage)

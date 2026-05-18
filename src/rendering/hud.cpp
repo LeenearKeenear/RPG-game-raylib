@@ -34,8 +34,18 @@ static void DrawItemIcon(const InventoryItem &item, Rectangle dest)
 {
     if (item.definitionId == -1)
         return;
-    const ItemDefinition &def = itemDefs.GetById(item.definitionId);
-    DrawTileTexture(TEXTURE_ITEMS, (int)def.sheetCoord.x, (int)def.sheetCoord.y, dest);
+
+    TileID tileId = POTION_HEALTH;
+    if (item.definitionId == 0) tileId = SWORD_1;
+    else if (item.definitionId == 1) tileId = SWORD_2;
+    else if (item.definitionId == 2) tileId = POTION_HEALTH;
+    else if (item.definitionId == 3) tileId = POTION_STAMINA;
+
+    Display display;
+    display.position = {dest.x, dest.y};
+    display.size = (int)dest.width;
+    display.tint = WHITE;
+    DrawFrame(tileId, display);
 }
 
 /**
@@ -597,7 +607,11 @@ void DrawPlayerHUD()
         (avatarPos.x - spriteSize / 2.0f) + 1.0f,
         avatarPos.y - spriteSize / 2.0f,
         spriteSize, spriteSize};
-    DrawTileTexture(TEXTURE_KNIGHT, 0, 2, knightDest);
+    Frame avatarFrame = { SPRITESHEET_KNIGHT, 0, 2, 1, 1 };
+    Display avatarDisplay;
+    avatarDisplay.position = {knightDest.x, knightDest.y};
+    avatarDisplay.size = (int)knightDest.width;
+    DrawFrame(avatarFrame, avatarDisplay);
 
     DrawCircleLinesV(avatarPos, radius, ColorAlpha(GOLD, 0.6f));
     DrawCircleLinesV(avatarPos, radius + 1, ColorAlpha(GOLD, 0.3f));

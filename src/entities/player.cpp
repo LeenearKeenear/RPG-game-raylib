@@ -24,9 +24,9 @@ void Player::Init(GameState *state, const char *spawnObjectName)
     // Memuat resource global pemain hanya satu kali
     if (!isInitialized)
     {
-        LoadTileTexture(TEXTURE_KNIGHT, "assets/textures/knight.png");
-        LoadTileTexture(TEXTURE_ITEMS, "assets/textures/test.png");
-        LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
+        LoadFrameTexture(SPRITESHEET_KNIGHT, "assets/textures/knight.png");
+        LoadFrameTexture(TILESET_ITEMS, "assets/textures/test.png");
+        LoadFrameTexture(SPRITESHEET_ENEMIES, "assets/textures/enemies.png");
 
         MaxHealth = 100.0f;
         Health = MaxHealth;
@@ -191,7 +191,7 @@ void Player::Render(void)
         tint = RED;
     }
 
-    DrawAnimation(Anim, TEXTURE_KNIGHT, tint);
+    DrawAnimation(Anim, SPRITESHEET_KNIGHT, tint);
     Combat::DrawSwingAttack(*this);
     DrawAimIndicator();
 }
