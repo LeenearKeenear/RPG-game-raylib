@@ -1,5 +1,6 @@
 #pragma once
 #include "../lib/raylib/include/raylib.h"
+#include <string>
 
 /*
 ====================
@@ -23,56 +24,6 @@ enum TextureSlot
     SPRITESHEET_ENEMIES
 };
 
-enum TileId
-{
-    SPIKE_INACTIVE,
-    SPIKE_ACTIVE,
-    BOMB,
-    CHEST_CLOSED,
-    CHEST_OPEN,
-    CRATE,
-    SWORD_1,
-    SWORD_2,
-    BOW,
-    POTION_HEALTH,
-    POTION_STAMINA,
-    TILE_ID_COUNT
-};
-
-enum SpriteId
-{
-    KNIGHT_IDLE_RIGHT_1,
-    KNIGHT_IDLE_RIGHT_2,
-    KNIGHT_IDLE_LEFT_1,
-    KNIGHT_IDLE_LEFT_2,
-    KNIGHT_WALK_RIGHT_1,
-    KNIGHT_WALK_RIGHT_2,
-    KNIGHT_WALK_RIGHT_3,
-    KNIGHT_WALK_RIGHT_4,
-    KNIGHT_WALK_RIGHT_5,
-    KNIGHT_WALK_RIGHT_6,
-    KNIGHT_WALK_RIGHT_7,
-    KNIGHT_WALK_LEFT_1,
-    KNIGHT_WALK_LEFT_2,
-    KNIGHT_WALK_LEFT_3,
-    KNIGHT_WALK_LEFT_4,
-    KNIGHT_WALK_LEFT_5,
-    KNIGHT_WALK_LEFT_6,
-    KNIGHT_WALK_LEFT_7,
-    KNIGHT_DEAD_RIGHT,
-    KNIGHT_DEAD_LEFT,
-    SLIME_IDLE_LEFT_1,
-    SLIME_IDLE_LEFT_2,
-    SLIME_DEAD_LEFT,
-    SKELETON_IDLE_LEFT_1,
-    SKELETON_IDLE_LEFT_2,
-    SKELETON_DEAD_LEFT,
-    WOLF_IDLE_LEFT_1,
-    WOLF_IDLE_LEFT_2,
-    WOLF_DEAD_LEFT,
-    SPRITE_ID_COUNT
-};
-
 struct Frame
 {
     TextureSlot texture;
@@ -93,17 +44,11 @@ struct Display
 };
 
 void LoadFrameTexture(TextureSlot slot, const char *path);
-const Frame &GetFrame(TileId id);
-const Frame &GetFrame(SpriteId id);
+const Frame &GetFrame(const std::string &id);
 void DrawFrame(Frame frame, Display display);
-void InitAnimationSystem();
-void CloseAnimationSystem();
-
-template <typename T>
-void DrawFrame(T id, Display display)
-{
-    DrawFrame(GetFrame(id), display);
-}
+void DrawFrame(const std::string &id, Display display);
+void InitTextures();
+void CloseTextures();
 
 /*
 ====================

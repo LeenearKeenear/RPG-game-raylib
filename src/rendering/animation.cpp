@@ -14,8 +14,7 @@ Frames Management
 */
 
 Texture2D textures[MAX_TEXTURES];
-Frame tileFrames[TILE_ID_COUNT];
-Frame spriteFrames[SPRITE_ID_COUNT];
+static std::unordered_map<std::string, Frame> loadedFrames;
 
 static TextureSlot ResolveTextureSlot(const std::string &str)
 {
@@ -30,64 +29,6 @@ static TextureSlot ResolveTextureSlot(const std::string &str)
     auto it = mapping.find(str);
     if (it != mapping.end()) return it->second;
     return TILESET_MAP_1;
-}
-
-static TileId ResolveTileId(const std::string &str)
-{
-    static const std::unordered_map<std::string, TileId> mapping = {
-        {"spikeInactive", SPIKE_INACTIVE},
-        {"spikeActive", SPIKE_ACTIVE},
-        {"bomb", BOMB},
-        {"chestClosed", CHEST_CLOSED},
-        {"chestOpen", CHEST_OPEN},
-        {"crate", CRATE},
-        {"sword1", SWORD_1},
-        {"sword2", SWORD_2},
-        {"bow", BOW},
-        {"healthPotion", POTION_HEALTH},
-        {"staminaPotion", POTION_STAMINA}
-    };
-    auto it = mapping.find(str);
-    if (it != mapping.end()) return it->second;
-    return TILE_ID_COUNT;
-}
-
-static SpriteId ResolveSpriteId(const std::string &str)
-{
-    static const std::unordered_map<std::string, SpriteId> mapping = {
-        {"knightIdleRight1", KNIGHT_IDLE_RIGHT_1},
-        {"knightIdleRight2", KNIGHT_IDLE_RIGHT_2},
-        {"knightIdleLeft1", KNIGHT_IDLE_LEFT_1},
-        {"knightIdleLeft2", KNIGHT_IDLE_LEFT_2},
-        {"knightWalkRight1", KNIGHT_WALK_RIGHT_1},
-        {"knightWalkRight2", KNIGHT_WALK_RIGHT_2},
-        {"knightWalkRight3", KNIGHT_WALK_RIGHT_3},
-        {"knightWalkRight4", KNIGHT_WALK_RIGHT_4},
-        {"knightWalkRight5", KNIGHT_WALK_RIGHT_5},
-        {"knightWalkRight6", KNIGHT_WALK_RIGHT_6},
-        {"knightWalkRight7", KNIGHT_WALK_RIGHT_7},
-        {"knightWalkLeft1", KNIGHT_WALK_LEFT_1},
-        {"knightWalkLeft2", KNIGHT_WALK_LEFT_2},
-        {"knightWalkLeft3", KNIGHT_WALK_LEFT_3},
-        {"knightWalkLeft4", KNIGHT_WALK_LEFT_4},
-        {"knightWalkLeft5", KNIGHT_WALK_LEFT_5},
-        {"knightWalkLeft6", KNIGHT_WALK_LEFT_6},
-        {"knightWalkLeft7", KNIGHT_WALK_LEFT_7},
-        {"knightDeadRight", KNIGHT_DEAD_RIGHT},
-        {"knightDeadLeft", KNIGHT_DEAD_LEFT},
-        {"slimeIdleLeft1", SLIME_IDLE_LEFT_1},
-        {"slimeIdleLeft2", SLIME_IDLE_LEFT_2},
-        {"slimeDeadLeft", SLIME_DEAD_LEFT},
-        {"skeletonIdleLeft1", SKELETON_IDLE_LEFT_1},
-        {"skeletonIdleLeft2", SKELETON_IDLE_LEFT_2},
-        {"skeletonDeadLeft", SKELETON_DEAD_LEFT},
-        {"wolfIdleLeft1", WOLF_IDLE_LEFT_1},
-        {"wolfIdleLeft2", WOLF_IDLE_LEFT_2},
-        {"wolfDeadLeft", WOLF_DEAD_LEFT}
-    };
-    auto it = mapping.find(str);
-    if (it != mapping.end()) return it->second;
-    return SPRITE_ID_COUNT;
 }
 
 static void LoadFramesFromJSON()
@@ -105,17 +46,13 @@ static void LoadFramesFromJSON()
                 json root = json::parse(file);
                 for (auto &[key, val] : root.items())
                 {
-                    TileId id = ResolveTileId(key);
-                    if (id != TILE_ID_COUNT)
-                    {
-                        Frame f;
-                        f.texture = ResolveTextureSlot(val.at("texture").get<std::string>());
-                        f.positionX = val.at("column").get<int>();
-                        f.positionY = val.at("row").get<int>();
-                        f.width = val.contains("width") ? val.at("width").get<int>() : 1;
-                        f.height = val.contains("height") ? val.at("height").get<int>() : 1;
-                        tileFrames[id] = f;
-                    }
+                    Frame f;
+                    f.texture = ResolveTextureSlot(val.at("texture").get<std::string>());
+                    f.positionX = val.at("column").get<int>();
+                    f.positionY = val.at("row").get<int>();
+                    f.width = val.contains("width") ? val.at("width").get<int>() : 1;
+                    f.height = val.contains("height") ? val.at("height").get<int>() : 1;
+                    loadedFrames[key] = f;
                 }
                 TraceLog(LOG_INFO, "ANIMATION: Successfully loaded tiles.json");
             }
@@ -139,17 +76,13 @@ static void LoadFramesFromJSON()
                 json root = json::parse(file);
                 for (auto &[key, val] : root.items())
                 {
-                    SpriteId id = ResolveSpriteId(key);
-                    if (id != SPRITE_ID_COUNT)
-                    {
-                        Frame f;
-                        f.texture = ResolveTextureSlot(val.at("texture").get<std::string>());
-                        f.positionX = val.at("column").get<int>();
-                        f.positionY = val.at("row").get<int>();
-                        f.width = val.contains("width") ? val.at("width").get<int>() : 1;
-                        f.height = val.contains("height") ? val.at("height").get<int>() : 1;
-                        spriteFrames[id] = f;
-                    }
+                    Frame f;
+                    f.texture = ResolveTextureSlot(val.at("texture").get<std::string>());
+                    f.positionX = val.at("column").get<int>();
+                    f.positionY = val.at("row").get<int>();
+                    f.width = val.contains("width") ? val.at("width").get<int>() : 1;
+                    f.height = val.contains("height") ? val.at("height").get<int>() : 1;
+                    loadedFrames[key] = f;
                 }
                 TraceLog(LOG_INFO, "ANIMATION: Successfully loaded sprites.json");
             }
@@ -168,24 +101,17 @@ void LoadFrameTexture(TextureSlot slot, const char *path)
     UnloadImage(img);
 }
 
-const Frame &GetFrame(TileId id)
+const Frame &GetFrame(const std::string &id)
 {
-    if (id < 0 || id >= TILE_ID_COUNT)
+    auto it = loadedFrames.find(id);
+    if (it != loadedFrames.end())
     {
-        static const Frame fallback = { TILESET_MAP_1, 0, 0, 1, 1 };
-        return fallback;
+        return it->second;
     }
-    return tileFrames[id];
-}
-
-const Frame &GetFrame(SpriteId id)
-{
-    if (id < 0 || id >= SPRITE_ID_COUNT)
-    {
-        static const Frame fallback = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 };
-        return fallback;
-    }
-    return spriteFrames[id];
+    
+    TraceLog(LOG_WARNING, "ANIMATION: Frame not found: %s", id.c_str());
+    static const Frame fallback = { TILESET_MAP_1, 0, 0, 1, 1 };
+    return fallback;
 }
 
 void DrawFrame(Frame frame, Display display)
@@ -205,7 +131,12 @@ void DrawFrame(Frame frame, Display display)
     DrawTexturePro(textures[frame.texture], src, dest, display.origin, display.rotation, display.tint);
 }
 
-void InitAnimationSystem()
+void DrawFrame(const std::string &id, Display display)
+{
+    DrawFrame(GetFrame(id), display);
+}
+
+void InitTextures()
 {
     LoadFrameTexture(TILESET_MAP_1, "assets/textures/tiles.png");
     LoadFrameTexture(TILESET_MAP_2, "assets/textures/test.png");
@@ -213,11 +144,10 @@ void InitAnimationSystem()
     LoadFrameTexture(TILESET_ITEMS, "assets/textures/items.png");
     LoadFrameTexture(SPRITESHEET_KNIGHT, "assets/textures/knight (1).png");
     LoadFrameTexture(SPRITESHEET_ENEMIES, "assets/textures/enemies.png");
-
     LoadFramesFromJSON();
 }
 
-void CloseAnimationSystem()
+void CloseTextures()
 {
     for (int i = 0; i < MAX_TEXTURES; i++)
     {

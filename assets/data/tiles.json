@@ -53,7 +53,7 @@
         "column": 0,
         "row": 1,
         "width": 1,
-        "height": 1
+        "height": 2
     },
     "bow": {
         "texture": "TILESET_ITEMS",

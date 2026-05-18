@@ -187,7 +187,7 @@ void UpdateLoadingScreen(GameState *state)
     {
     case 0:
         state->loadingText = "Loading game textures...";
-        InitAnimationSystem();
+        InitTextures();
         state->loadingStage++;
         state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;
         break;

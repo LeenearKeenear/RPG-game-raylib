@@ -97,6 +97,7 @@ void ItemDefinitionManager::Load(const std::string &path)
         ItemDefinition def;
         def.id = SafeGet<int>(data, "id", -1);
         def.name = name;
+        def.spriteKey = SafeGet<std::string>(data, "spriteKey", name);
         if (data.contains("sheetCoord"))
         {
             def.sheetCoord = ParseVector2(data.at("sheetCoord"));
@@ -399,16 +400,12 @@ void ItemRenderManager::Render(ItemSpawn &item)
         center.x - 8.0f,
         center.y - 8.0f};
 
-    TileId tileId = POTION_HEALTH;
-    if (item.definitionId == 0) tileId = SWORD_1;
-    else if (item.definitionId == 1) tileId = SWORD_2;
-    else if (item.definitionId == 2) tileId = POTION_HEALTH;
-    else if (item.definitionId == 3) tileId = POTION_STAMINA;
+    const ItemDefinition &def = itemDefs.GetById(item.definitionId);
 
     Display display;
     display.position = renderPos;
     display.size = (int)(FRAME_SIZE * scale);
-    DrawFrame(tileId, display);
+    DrawFrame(def.spriteKey, display);
 
     if (item.amount > 1)
     {

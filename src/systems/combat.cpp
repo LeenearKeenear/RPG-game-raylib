@@ -327,9 +327,6 @@ namespace Combat
             visualPos.y += sinf(rad) * player.Swing.thrustOffset;
         }
 
-        TileId tileId = SWORD_1;
-        if (item.definitionId == 1) tileId = SWORD_2;
-
         Display display;
         display.position = visualPos;
         display.size = 20;
@@ -338,7 +335,7 @@ namespace Combat
         display.rotation = player.Swing.currentAngle + 45.0f;
         display.tint = WHITE;
 
-        DrawFrame(tileId, display);
+        DrawFrame(def.spriteKey, display);
     }
 
     void AddDamagePopup(Vector2 pos, float damage)

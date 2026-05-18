@@ -3,6 +3,7 @@
     "ironSword": {
       "id": 0,
       "category": "weapon",
+      "spriteKey": "sword1",
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": false,
@@ -23,6 +24,7 @@
     "ironAxe": {
       "id": 1,
       "category": "weapon",
+      "spriteKey": "sword2",
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "rare",
       "isStackable": false,
@@ -43,6 +45,7 @@
     "healthPotion": {
       "id": 2,
       "category": "potion",
+      "spriteKey": "healthPotion",
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": true,
@@ -55,6 +58,7 @@
     "manaBread": {
       "id": 3,
       "category": "potion",
+      "spriteKey": "staminaPotion",
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": true,

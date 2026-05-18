@@ -369,7 +369,7 @@ Vector2 GetVirtualMousePosition(GameState *state)
  */
 void GameShutDown(GameState *state)
 {
-    CloseAnimationSystem();
+    CloseTextures();
 
     Entities::Shutdown();
     UnloadMap();

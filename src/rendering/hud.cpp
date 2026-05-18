@@ -35,17 +35,13 @@ static void DrawItemIcon(const InventoryItem &item, Rectangle dest)
     if (item.definitionId == -1)
         return;
 
-    TileId tileId = POTION_HEALTH;
-    if (item.definitionId == 0) tileId = SWORD_1;
-    else if (item.definitionId == 1) tileId = SWORD_2;
-    else if (item.definitionId == 2) tileId = POTION_HEALTH;
-    else if (item.definitionId == 3) tileId = POTION_STAMINA;
+    const ItemDefinition &def = itemDefs.GetById(item.definitionId);
 
     Display display;
     display.position = {dest.x, dest.y};
     display.size = (int)dest.width;
     display.tint = WHITE;
-    DrawFrame(tileId, display);
+    DrawFrame(def.spriteKey, display);
 }
 
 /**

@@ -118,6 +118,7 @@ struct ItemDefinition
 {
     int id;                                               // ID numerik unik, dipakai untuk lookup di runtime
     std::string name;                                     // Nama item, sekaligus key di unordered_map
+    std::string spriteKey;                                // Key visual untuk merender item (di-load dari JSON)
     ItemCategory category;                                // Kategori item (weapon, potion, armor, dll)
     Vector2 sheetCoord;                                   // Koordinat tile di spritesheet
     Vector2 hitboxSize;                                   // Ukuran hitbox item saat di-spawn di dunia

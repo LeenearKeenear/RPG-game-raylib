@@ -234,9 +234,9 @@ int ChestManager::Render(Rectangle viewRect)
         display.position = c.position;
 
         if (c.state == ObjectState::Closed)
-            DrawFrame(CHEST_CLOSED, display);
+            DrawFrame("chestClosed", display);
         else
-            DrawFrame(CHEST_OPEN, display);
+            DrawFrame("chestOpen", display);
     }
     return rendered;
 }
@@ -424,9 +424,9 @@ int SpikeManager::Render(Rectangle viewRect)
         display.position = spike.tile.position;
 
         if (spike.tile.state == ObjectState::Active)
-            DrawFrame(SPIKE_ACTIVE, display);
+            DrawFrame("spikeActive", display);
         else
-            DrawFrame(SPIKE_INACTIVE, display);
+            DrawFrame("spikeInactive", display);
     }
     return rendered;
 }
@@ -661,7 +661,7 @@ int BombManager::Render(Rectangle viewRect)
         {
             Display display;
             display.position = bomb.tile.position;
-            DrawFrame(BOMB, display);
+            DrawFrame("bomb", display);
         }
     }
     return rendered;
@@ -806,7 +806,7 @@ int CrateManager::Render(Rectangle viewRect)
             continue;
         Display display;
         display.position = crate.tile.position;
-        DrawFrame(CRATE, display);
+        DrawFrame("crate", display);
         rendered++;
     }
     return rendered;
