@@ -16,14 +16,36 @@ void LoadFrameTexture(TextureSlot slot, const char *path)
     UnloadImage(img);
 }
 
+void InitAnimationSystem()
+{
+    LoadFrameTexture(TILESET_MAP_1, "assets/textures/tiles.png");
+    LoadFrameTexture(TILESET_MAP_2, "assets/textures/test.png");
+    LoadFrameTexture(TILESET_PROPS, "assets/textures/props.png");
+    LoadFrameTexture(TILESET_ITEMS, "assets/textures/items.png");
+    LoadFrameTexture(SPRITESHEET_KNIGHT, "assets/textures/knight (1).png");
+    LoadFrameTexture(SPRITESHEET_ENEMIES, "assets/textures/enemies.png");
+}
+
+void CloseAnimationSystem()
+{
+    for (int i = 0; i < MAX_TEXTURES; i++)
+    {
+        if (textures[i].id != 0)
+        {
+            UnloadTexture(textures[i]);
+            textures[i] = {0};
+        }
+    }
+}
+
 const Frame &GetFrame(TileID id)
 {
     static const Frame tileFrames[TILE_ID_COUNT] = {
-        [SPIKE_INACTIVE] = { TILESET_MAP, 1, 5, 1, 1 },
-        [SPIKE_ACTIVE]   = { TILESET_MAP, 1, 6, 1, 1 },
+        [SPIKE_INACTIVE] = { TILESET_MAP_1, 1, 5, 1, 1 },
+        [SPIKE_ACTIVE]   = { TILESET_MAP_1, 1, 6, 1, 1 },
         [BOMB]           = { TILESET_ITEMS, 8, 4, 1, 1 },
-        [CHEST_CLOSED]   = { TILESET_MAP, 8, 0, 1, 1 },
-        [CHEST_OPEN]     = { TILESET_MAP, 8, 1, 1, 1 },
+        [CHEST_CLOSED]   = { TILESET_MAP_1, 8, 0, 1, 1 },
+        [CHEST_OPEN]     = { TILESET_MAP_1, 8, 1, 1, 1 },
         [SWORD_1]        = { TILESET_ITEMS, 6, 4, 1, 1 },
         [SWORD_2]        = { TILESET_ITEMS, 7, 4, 1, 1 },
         [BOW]            = { TILESET_ITEMS, 8, 4, 1, 1 },

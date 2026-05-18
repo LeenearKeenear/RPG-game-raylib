@@ -1,9 +1,8 @@
 {
   "items": {
-    "Iron Sword": {
+    "ironSword": {
       "id": 0,
       "category": "weapon",
-      "sheetCoord": { "x": 6, "y": 4 },
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": false,
@@ -21,10 +20,9 @@
         "attackType": "thrust"
       }
     },
-    "Iron Axe": {
+    "ironAxe": {
       "id": 1,
       "category": "weapon",
-      "sheetCoord": { "x": 7, "y": 4 },
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "rare",
       "isStackable": false,
@@ -42,10 +40,9 @@
         "attackType": "slash"
       }
     },
-    "Health Potion": {
+    "healthPotion": {
       "id": 2,
       "category": "potion",
-      "sheetCoord": { "x": 7, "y": 8 },
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": true,
@@ -55,10 +52,9 @@
         "isMana": false
       }
     },
-    "Mana Bread": {
+    "manaBread": {
       "id": 3,
       "category": "potion",
-      "sheetCoord": { "x": 10, "y": 8 },
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": true,

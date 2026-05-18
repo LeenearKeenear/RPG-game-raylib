@@ -41,13 +41,6 @@ ItemSpawnManager spawnManager;
  * Free functions (backward compat)
  *==============================================================================*/
 
-/** @brief Load texture item dari spritesheet */
-// TODO: pindahin ke animation atau tile.cpp untuk loadtiletexture agar terpusat
-void InitItemTextures()
-{
-    LoadFrameTexture(TILESET_ITEMS, "assets/textures/test.png");
-}
-
 /**
  * @brief Inisialisasi seluruh item system
  *
@@ -56,7 +49,6 @@ void InitItemTextures()
 void InitItems()
 {
     itemDefs.Load("assets/data/items.json");
-    InitItemTextures();
     itemData.Init();
     spawnManager.Init(ITEM_LAYER_NAME);
     spawnManager.SpawnAll(itemData.activeItems);

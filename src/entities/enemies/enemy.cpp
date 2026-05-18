@@ -654,7 +654,6 @@ void Enemy::Render()
  */
 void InitEnemy()
 {
-    LoadFrameTexture(SPRITESHEET_ENEMIES, "assets/textures/enemies.png");
     enemyData.Load("assets/data/enemies.json");
 }
 
@@ -707,9 +706,9 @@ void Enemy::MoveTowards(Vector2 target, float speed)
  */
 const AnimationSet *ResolveAnimSet(const std::string &name)
 {
-    if (name == "Skeleton")
+    if (name == "skeleton" || name == "Skeleton")
         return &SkeletonAnimationSet;
-    if (name == "Wolf")
+    if (name == "wolf" || name == "Wolf")
         return &WolfAnimationSet;
     return &SlimeAnimationSet;
 }

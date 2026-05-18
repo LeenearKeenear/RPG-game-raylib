@@ -1,0 +1,72 @@
+{
+    "spikeInactive": {
+        "texture": "TILESET_PROPS",
+        "column": 0,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "spikeActive": {
+        "texture": "TILESET_PROPS",
+        "column": 1,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "bomb": {
+        "texture": "TILESET_PROPS",
+        "column": 0,
+        "row": 1,
+        "width": 1,
+        "height": 1
+    },
+    "chestClosed": {
+        "texture": "TILESET_PROPS",
+        "column": 0,
+        "row": 2,
+        "width": 1,
+        "height": 1
+    },
+    "chestOpen": {
+        "texture": "TILESET_PROPS",
+        "column": 1,
+        "row": 2,
+        "width": 1,
+        "height": 1
+    },
+    "sword1": {
+        "texture": "TILESET_ITEMS",
+        "column": 0,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "sword2": {
+        "texture": "TILESET_ITEMS",
+        "column": 0,
+        "row": 1,
+        "width": 1,
+        "height": 1
+    },
+    "bow": {
+        "texture": "TILESET_ITEMS",
+        "column": 1,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "healthPotion": {
+        "texture": "TILESET_ITEMS",
+        "column": 2,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "staminaPotion": {
+        "texture": "TILESET_ITEMS",
+        "column": 3,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    }
+}

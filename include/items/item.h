@@ -379,11 +379,6 @@ private:
  *==============================================================================*/
 
 /**
- * @brief Load texture item
- */
-void InitItemTextures();
-
-/**
  * @brief Inisialisasi seluruh sistem item
  */
 void InitItems();

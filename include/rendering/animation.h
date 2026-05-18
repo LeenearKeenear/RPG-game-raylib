@@ -15,7 +15,8 @@ extern Texture2D textures[MAX_TEXTURES];
 
 enum TextureSlot
 {
-    TILESET_MAP,
+    TILESET_MAP_1,
+    TILESET_MAP_2,
     TILESET_PROPS,
     TILESET_ITEMS,
     SPRITESHEET_KNIGHT,
@@ -94,6 +95,8 @@ void LoadFrameTexture(TextureSlot slot, const char *path);
 const Frame &GetFrame(TileID id);
 const Frame &GetFrame(SpriteID id);
 void DrawFrame(Frame frame, Display display);
+void InitAnimationSystem();
+void CloseAnimationSystem();
 
 template <typename T>
 void DrawFrame(T id, Display display)

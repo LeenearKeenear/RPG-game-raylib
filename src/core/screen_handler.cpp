@@ -369,8 +369,7 @@ Vector2 GetVirtualMousePosition(GameState *state)
  */
 void GameShutDown(GameState *state)
 {
-    for (int i = 0; i < MAX_TEXTURES; i++)
-        UnloadTexture(textures[i]);
+    CloseAnimationSystem();
 
     Entities::Shutdown();
     UnloadMap();

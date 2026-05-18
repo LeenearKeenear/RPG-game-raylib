@@ -169,10 +169,25 @@ void LoadMap(const char *mapPath)
         TilesetInfo info;
 
         // Cek apakah texture tile utama sudah dimuat, reuse jika ada
-        if (textures[TILESET_MAP].id != 0 && imagePath == "assets/textures/tiles.png")
+        if (textures[TILESET_MAP_1].id != 0 && imagePath == "assets/textures/tiles.png")
         {
-            info.texture = textures[TILESET_MAP];
+            info.texture = textures[TILESET_MAP_1];
             TraceLog(LOG_INFO, "Tileson: Reusing cached texture for tiles.png");
+        }
+        else if (textures[TILESET_MAP_2].id != 0 && imagePath == "assets/textures/test.png")
+        {
+            info.texture = textures[TILESET_MAP_2];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for test.png");
+        }
+        else if (textures[TILESET_PROPS].id != 0 && imagePath == "assets/textures/props.png")
+        {
+            info.texture = textures[TILESET_PROPS];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for props.png");
+        }
+        else if (textures[TILESET_ITEMS].id != 0 && imagePath == "assets/textures/items.png")
+        {
+            info.texture = textures[TILESET_ITEMS];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for items.png");
         }
         else
         {
