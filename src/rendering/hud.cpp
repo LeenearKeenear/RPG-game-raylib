@@ -35,7 +35,7 @@ static void DrawItemIcon(const InventoryItem &item, Rectangle dest)
     if (item.definitionId == -1)
         return;
 
-    TileID tileId = POTION_HEALTH;
+    TileId tileId = POTION_HEALTH;
     if (item.definitionId == 0) tileId = SWORD_1;
     else if (item.definitionId == 1) tileId = SWORD_2;
     else if (item.definitionId == 2) tileId = POTION_HEALTH;

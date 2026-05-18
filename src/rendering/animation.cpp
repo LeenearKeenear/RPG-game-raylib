@@ -1,5 +1,11 @@
 #include "animation.h"
 #include "../lib/raylib/include/raymath.h"
+#include "../lib/json/include/nlohmann/json.hpp"
+#include <fstream>
+#include <unordered_map>
+#include <string>
+
+using json = nlohmann::json;
 
 /*
 ====================
@@ -8,6 +14,152 @@ Frames Management
 */
 
 Texture2D textures[MAX_TEXTURES];
+Frame tileFrames[TILE_ID_COUNT];
+Frame spriteFrames[SPRITE_ID_COUNT];
+
+static TextureSlot ResolveTextureSlot(const std::string &str)
+{
+    static const std::unordered_map<std::string, TextureSlot> mapping = {
+        {"TILESET_MAP_1", TILESET_MAP_1},
+        {"TILESET_MAP_2", TILESET_MAP_2},
+        {"TILESET_PROPS", TILESET_PROPS},
+        {"TILESET_ITEMS", TILESET_ITEMS},
+        {"SPRITESHEET_KNIGHT", SPRITESHEET_KNIGHT},
+        {"SPRITESHEET_ENEMIES", SPRITESHEET_ENEMIES}
+    };
+    auto it = mapping.find(str);
+    if (it != mapping.end()) return it->second;
+    return TILESET_MAP_1;
+}
+
+static TileId ResolveTileId(const std::string &str)
+{
+    static const std::unordered_map<std::string, TileId> mapping = {
+        {"spikeInactive", SPIKE_INACTIVE},
+        {"spikeActive", SPIKE_ACTIVE},
+        {"bomb", BOMB},
+        {"chestClosed", CHEST_CLOSED},
+        {"chestOpen", CHEST_OPEN},
+        {"crate", CRATE},
+        {"sword1", SWORD_1},
+        {"sword2", SWORD_2},
+        {"bow", BOW},
+        {"healthPotion", POTION_HEALTH},
+        {"staminaPotion", POTION_STAMINA}
+    };
+    auto it = mapping.find(str);
+    if (it != mapping.end()) return it->second;
+    return TILE_ID_COUNT;
+}
+
+static SpriteId ResolveSpriteId(const std::string &str)
+{
+    static const std::unordered_map<std::string, SpriteId> mapping = {
+        {"knightIdleRight1", KNIGHT_IDLE_RIGHT_1},
+        {"knightIdleRight2", KNIGHT_IDLE_RIGHT_2},
+        {"knightIdleLeft1", KNIGHT_IDLE_LEFT_1},
+        {"knightIdleLeft2", KNIGHT_IDLE_LEFT_2},
+        {"knightWalkRight1", KNIGHT_WALK_RIGHT_1},
+        {"knightWalkRight2", KNIGHT_WALK_RIGHT_2},
+        {"knightWalkRight3", KNIGHT_WALK_RIGHT_3},
+        {"knightWalkRight4", KNIGHT_WALK_RIGHT_4},
+        {"knightWalkRight5", KNIGHT_WALK_RIGHT_5},
+        {"knightWalkRight6", KNIGHT_WALK_RIGHT_6},
+        {"knightWalkRight7", KNIGHT_WALK_RIGHT_7},
+        {"knightWalkLeft1", KNIGHT_WALK_LEFT_1},
+        {"knightWalkLeft2", KNIGHT_WALK_LEFT_2},
+        {"knightWalkLeft3", KNIGHT_WALK_LEFT_3},
+        {"knightWalkLeft4", KNIGHT_WALK_LEFT_4},
+        {"knightWalkLeft5", KNIGHT_WALK_LEFT_5},
+        {"knightWalkLeft6", KNIGHT_WALK_LEFT_6},
+        {"knightWalkLeft7", KNIGHT_WALK_LEFT_7},
+        {"knightDeadRight", KNIGHT_DEAD_RIGHT},
+        {"knightDeadLeft", KNIGHT_DEAD_LEFT},
+        {"slimeIdleLeft1", SLIME_IDLE_LEFT_1},
+        {"slimeIdleLeft2", SLIME_IDLE_LEFT_2},
+        {"slimeDeadLeft", SLIME_DEAD_LEFT},
+        {"skeletonIdleLeft1", SKELETON_IDLE_LEFT_1},
+        {"skeletonIdleLeft2", SKELETON_IDLE_LEFT_2},
+        {"skeletonDeadLeft", SKELETON_DEAD_LEFT},
+        {"wolfIdleLeft1", WOLF_IDLE_LEFT_1},
+        {"wolfIdleLeft2", WOLF_IDLE_LEFT_2},
+        {"wolfDeadLeft", WOLF_DEAD_LEFT}
+    };
+    auto it = mapping.find(str);
+    if (it != mapping.end()) return it->second;
+    return SPRITE_ID_COUNT;
+}
+
+static void LoadFramesFromJSON()
+{
+    {
+        std::ifstream file("assets/data/tiles.json");
+        if (!file.is_open())
+        {
+            TraceLog(LOG_ERROR, "ANIMATION: Cannot open assets/data/tiles.json");
+        }
+        else
+        {
+            try
+            {
+                json root = json::parse(file);
+                for (auto &[key, val] : root.items())
+                {
+                    TileId id = ResolveTileId(key);
+                    if (id != TILE_ID_COUNT)
+                    {
+                        Frame f;
+                        f.texture = ResolveTextureSlot(val.at("texture").get<std::string>());
+                        f.positionX = val.at("column").get<int>();
+                        f.positionY = val.at("row").get<int>();
+                        f.width = val.contains("width") ? val.at("width").get<int>() : 1;
+                        f.height = val.contains("height") ? val.at("height").get<int>() : 1;
+                        tileFrames[id] = f;
+                    }
+                }
+                TraceLog(LOG_INFO, "ANIMATION: Successfully loaded tiles.json");
+            }
+            catch (const std::exception &e)
+            {
+                TraceLog(LOG_ERROR, "ANIMATION: Error parsing tiles.json: %s", e.what());
+            }
+        }
+    }
+
+    {
+        std::ifstream file("assets/data/sprites.json");
+        if (!file.is_open())
+        {
+            TraceLog(LOG_ERROR, "ANIMATION: Cannot open assets/data/sprites.json");
+        }
+        else
+        {
+            try
+            {
+                json root = json::parse(file);
+                for (auto &[key, val] : root.items())
+                {
+                    SpriteId id = ResolveSpriteId(key);
+                    if (id != SPRITE_ID_COUNT)
+                    {
+                        Frame f;
+                        f.texture = ResolveTextureSlot(val.at("texture").get<std::string>());
+                        f.positionX = val.at("column").get<int>();
+                        f.positionY = val.at("row").get<int>();
+                        f.width = val.contains("width") ? val.at("width").get<int>() : 1;
+                        f.height = val.contains("height") ? val.at("height").get<int>() : 1;
+                        spriteFrames[id] = f;
+                    }
+                }
+                TraceLog(LOG_INFO, "ANIMATION: Successfully loaded sprites.json");
+            }
+            catch (const std::exception &e)
+            {
+                TraceLog(LOG_ERROR, "ANIMATION: Error parsing sprites.json: %s", e.what());
+            }
+        }
+    }
+}
 
 void LoadFrameTexture(TextureSlot slot, const char *path)
 {
@@ -16,78 +168,23 @@ void LoadFrameTexture(TextureSlot slot, const char *path)
     UnloadImage(img);
 }
 
-void InitAnimationSystem()
+const Frame &GetFrame(TileId id)
 {
-    LoadFrameTexture(TILESET_MAP_1, "assets/textures/tiles.png");
-    LoadFrameTexture(TILESET_MAP_2, "assets/textures/test.png");
-    LoadFrameTexture(TILESET_PROPS, "assets/textures/props.png");
-    LoadFrameTexture(TILESET_ITEMS, "assets/textures/items.png");
-    LoadFrameTexture(SPRITESHEET_KNIGHT, "assets/textures/knight (1).png");
-    LoadFrameTexture(SPRITESHEET_ENEMIES, "assets/textures/enemies.png");
-}
-
-void CloseAnimationSystem()
-{
-    for (int i = 0; i < MAX_TEXTURES; i++)
+    if (id < 0 || id >= TILE_ID_COUNT)
     {
-        if (textures[i].id != 0)
-        {
-            UnloadTexture(textures[i]);
-            textures[i] = {0};
-        }
+        static const Frame fallback = { TILESET_MAP_1, 0, 0, 1, 1 };
+        return fallback;
     }
-}
-
-const Frame &GetFrame(TileID id)
-{
-    static const Frame tileFrames[TILE_ID_COUNT] = {
-        [SPIKE_INACTIVE] = { TILESET_MAP_1, 1, 5, 1, 1 },
-        [SPIKE_ACTIVE]   = { TILESET_MAP_1, 1, 6, 1, 1 },
-        [BOMB]           = { TILESET_ITEMS, 8, 4, 1, 1 },
-        [CHEST_CLOSED]   = { TILESET_MAP_1, 8, 0, 1, 1 },
-        [CHEST_OPEN]     = { TILESET_MAP_1, 8, 1, 1, 1 },
-        [SWORD_1]        = { TILESET_ITEMS, 6, 4, 1, 1 },
-        [SWORD_2]        = { TILESET_ITEMS, 7, 4, 1, 1 },
-        [BOW]            = { TILESET_ITEMS, 8, 4, 1, 1 },
-        [POTION_HEALTH]  = { TILESET_ITEMS, 7, 8, 1, 1 },
-        [POTION_STAMINA] = { TILESET_ITEMS, 10, 8, 1, 1 }
-    };
     return tileFrames[id];
 }
 
-const Frame &GetFrame(SpriteID id)
+const Frame &GetFrame(SpriteId id)
 {
-    static const Frame spriteFrames[SPRITE_ID_COUNT] = {
-        [KNIGHT_IDLE_RIGHT_1]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
-        [KNIGHT_IDLE_RIGHT_2]  = { SPRITESHEET_KNIGHT, 1, 1, 1, 1 },
-        [KNIGHT_IDLE_LEFT_1]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
-        [KNIGHT_IDLE_LEFT_2]   = { SPRITESHEET_KNIGHT, 1, 0, 1, 1 },
-        [KNIGHT_WALK_RIGHT_1]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
-        [KNIGHT_WALK_RIGHT_2]  = { SPRITESHEET_KNIGHT, 2, 1, 1, 1 },
-        [KNIGHT_WALK_RIGHT_3]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
-        [KNIGHT_WALK_RIGHT_4]  = { SPRITESHEET_KNIGHT, 3, 1, 1, 1 },
-        [KNIGHT_WALK_RIGHT_5]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
-        [KNIGHT_WALK_RIGHT_6]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
-        [KNIGHT_WALK_RIGHT_7]  = { SPRITESHEET_KNIGHT, 0, 1, 1, 1 },
-        [KNIGHT_WALK_LEFT_1]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
-        [KNIGHT_WALK_LEFT_2]   = { SPRITESHEET_KNIGHT, 2, 0, 1, 1 },
-        [KNIGHT_WALK_LEFT_3]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
-        [KNIGHT_WALK_LEFT_4]   = { SPRITESHEET_KNIGHT, 3, 0, 1, 1 },
-        [KNIGHT_WALK_LEFT_5]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
-        [KNIGHT_WALK_LEFT_6]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
-        [KNIGHT_WALK_LEFT_7]   = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 },
-        [KNIGHT_DEAD_RIGHT]    = { SPRITESHEET_KNIGHT, 0, 4, 1, 1 },
-        [KNIGHT_DEAD_LEFT]     = { SPRITESHEET_KNIGHT, 0, 4, 1, 1 },
-        [SLIME_IDLE_LEFT_1]    = { SPRITESHEET_ENEMIES, 0, 0, 1, 1 },
-        [SLIME_IDLE_LEFT_2]    = { SPRITESHEET_ENEMIES, 1, 0, 1, 1 },
-        [SLIME_DEAD_LEFT]      = { SPRITESHEET_ENEMIES, 0, 2, 1, 1 },
-        [SKELETON_IDLE_LEFT_1] = { SPRITESHEET_ENEMIES, 0, 1, 1, 1 },
-        [SKELETON_IDLE_LEFT_2] = { SPRITESHEET_ENEMIES, 1, 1, 1, 1 },
-        [SKELETON_DEAD_LEFT]   = { SPRITESHEET_ENEMIES, 1, 2, 1, 1 },
-        [WOLF_IDLE_LEFT_1]     = { SPRITESHEET_ENEMIES, 0, 2, 1, 1 },
-        [WOLF_IDLE_LEFT_2]     = { SPRITESHEET_ENEMIES, 1, 2, 1, 1 },
-        [WOLF_DEAD_LEFT]       = { SPRITESHEET_ENEMIES, 2, 2, 1, 1 }
-    };
+    if (id < 0 || id >= SPRITE_ID_COUNT)
+    {
+        static const Frame fallback = { SPRITESHEET_KNIGHT, 0, 0, 1, 1 };
+        return fallback;
+    }
     return spriteFrames[id];
 }
 
@@ -106,6 +203,30 @@ void DrawFrame(Frame frame, Display display)
         (float)(frame.height * display.size)
     };
     DrawTexturePro(textures[frame.texture], src, dest, display.origin, display.rotation, display.tint);
+}
+
+void InitAnimationSystem()
+{
+    LoadFrameTexture(TILESET_MAP_1, "assets/textures/tiles.png");
+    LoadFrameTexture(TILESET_MAP_2, "assets/textures/test.png");
+    LoadFrameTexture(TILESET_PROPS, "assets/textures/props.png");
+    LoadFrameTexture(TILESET_ITEMS, "assets/textures/items.png");
+    LoadFrameTexture(SPRITESHEET_KNIGHT, "assets/textures/knight (1).png");
+    LoadFrameTexture(SPRITESHEET_ENEMIES, "assets/textures/enemies.png");
+
+    LoadFramesFromJSON();
+}
+
+void CloseAnimationSystem()
+{
+    for (int i = 0; i < MAX_TEXTURES; i++)
+    {
+        if (textures[i].id != 0)
+        {
+            UnloadTexture(textures[i]);
+            textures[i] = {0};
+        }
+    }
 }
 
 /*

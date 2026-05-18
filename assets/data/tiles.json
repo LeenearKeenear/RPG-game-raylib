@@ -1,36 +1,43 @@
 {
-    "spikeInactive": {
-        "texture": "TILESET_PROPS",
-        "column": 0,
-        "row": 0,
-        "width": 1,
-        "height": 1
-    },
-    "spikeActive": {
-        "texture": "TILESET_PROPS",
-        "column": 1,
-        "row": 0,
-        "width": 1,
-        "height": 1
-    },
-    "bomb": {
-        "texture": "TILESET_PROPS",
-        "column": 0,
-        "row": 1,
-        "width": 1,
-        "height": 1
-    },
     "chestClosed": {
         "texture": "TILESET_PROPS",
         "column": 0,
-        "row": 2,
+        "row": 0,
         "width": 1,
         "height": 1
     },
     "chestOpen": {
         "texture": "TILESET_PROPS",
         "column": 1,
-        "row": 2,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "spikeActive": {
+        "texture": "TILESET_PROPS",
+        "column": 2,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "spikeInactive": {
+        "texture": "TILESET_PROPS",
+        "column": 3,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "bomb": {
+        "texture": "TILESET_PROPS",
+        "column": 4,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "crate": {
+        "texture": "TILESET_PROPS",
+        "column": 5,
+        "row": 0,
         "width": 1,
         "height": 1
     },

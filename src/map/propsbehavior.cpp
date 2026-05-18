@@ -230,10 +230,13 @@ int ChestManager::Render(Rectangle viewRect)
             continue;
         rendered++;
 
+        Display display;
+        display.position = c.position;
+
         if (c.state == ObjectState::Closed)
-            DrawRectangleRec(c.bounds, BROWN); // placeholder harus diganti pake skin
+            DrawFrame(CHEST_CLOSED, display);
         else
-            DrawRectangleRec(c.bounds, WHITE); // placeholder harus diganti pake skin
+            DrawFrame(CHEST_OPEN, display);
     }
     return rendered;
 }
@@ -417,10 +420,13 @@ int SpikeManager::Render(Rectangle viewRect)
             continue;
         rendered++;
 
+        Display display;
+        display.position = spike.tile.position;
+
         if (spike.tile.state == ObjectState::Active)
-            DrawRectangleRec(spike.tile.bounds, RED); // placeholder harus diganti pake skin
+            DrawFrame(SPIKE_ACTIVE, display);
         else
-            DrawRectangleRec(spike.tile.bounds, GRAY); // placeholder harus diganti pake skin
+            DrawFrame(SPIKE_INACTIVE, display);
     }
     return rendered;
 }
@@ -652,7 +658,11 @@ int BombManager::Render(Rectangle viewRect)
         if (bomb.isExploding)
             DrawCircleV(bomb.tile.position, BOMB_EXPLOSION_RADIUS, Fade(ORANGE, 0.4f));
         else
-            DrawRectangleRec(bomb.tile.bounds, RED);
+        {
+            Display display;
+            display.position = bomb.tile.position;
+            DrawFrame(BOMB, display);
+        }
     }
     return rendered;
 }
@@ -794,7 +804,9 @@ int CrateManager::Render(Rectangle viewRect)
             continue;
         if (!CheckCollisionRecs(crate.tile.bounds, viewRect))
             continue;
-        DrawRectangleRec(crate.tile.bounds, YELLOW);
+        Display display;
+        display.position = crate.tile.position;
+        DrawFrame(CRATE, display);
         rendered++;
     }
     return rendered;

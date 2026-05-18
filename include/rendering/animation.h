@@ -23,13 +23,14 @@ enum TextureSlot
     SPRITESHEET_ENEMIES
 };
 
-enum TileID
+enum TileId
 {
     SPIKE_INACTIVE,
     SPIKE_ACTIVE,
     BOMB,
     CHEST_CLOSED,
     CHEST_OPEN,
+    CRATE,
     SWORD_1,
     SWORD_2,
     BOW,
@@ -38,7 +39,7 @@ enum TileID
     TILE_ID_COUNT
 };
 
-enum SpriteID
+enum SpriteId
 {
     KNIGHT_IDLE_RIGHT_1,
     KNIGHT_IDLE_RIGHT_2,
@@ -92,8 +93,8 @@ struct Display
 };
 
 void LoadFrameTexture(TextureSlot slot, const char *path);
-const Frame &GetFrame(TileID id);
-const Frame &GetFrame(SpriteID id);
+const Frame &GetFrame(TileId id);
+const Frame &GetFrame(SpriteId id);
 void DrawFrame(Frame frame, Display display);
 void InitAnimationSystem();
 void CloseAnimationSystem();

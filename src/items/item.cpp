@@ -97,7 +97,14 @@ void ItemDefinitionManager::Load(const std::string &path)
         ItemDefinition def;
         def.id = SafeGet<int>(data, "id", -1);
         def.name = name;
-        def.sheetCoord = ParseVector2(data.at("sheetCoord"));
+        if (data.contains("sheetCoord"))
+        {
+            def.sheetCoord = ParseVector2(data.at("sheetCoord"));
+        }
+        else
+        {
+            def.sheetCoord = Vector2{0, 0};
+        }
         def.hitboxSize = ParseVector2(data.at("hitboxSize"));
         def.isStackable = SafeGet<bool>(data, "isStackable", false); // nilai fallback false
         def.maxStack = SafeGet<int>(data, "maxStack", 1);            // nilai fallback 1
@@ -392,7 +399,7 @@ void ItemRenderManager::Render(ItemSpawn &item)
         center.x - 8.0f,
         center.y - 8.0f};
 
-    TileID tileId = POTION_HEALTH;
+    TileId tileId = POTION_HEALTH;
     if (item.definitionId == 0) tileId = SWORD_1;
     else if (item.definitionId == 1) tileId = SWORD_2;
     else if (item.definitionId == 2) tileId = POTION_HEALTH;

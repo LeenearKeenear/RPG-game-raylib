@@ -327,7 +327,7 @@ namespace Combat
             visualPos.y += sinf(rad) * player.Swing.thrustOffset;
         }
 
-        TileID tileId = SWORD_1;
+        TileId tileId = SWORD_1;
         if (item.definitionId == 1) tileId = SWORD_2;
 
         Display display;
