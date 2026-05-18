@@ -6,7 +6,6 @@
 #include "inventory.h"
 #include "map.h"
 #include "player.h"
-#include "tiles.h"
 #include "effects.h"
 #include "propsbehavior.h"
 #include "../lib/raylib/include/raymath.h"

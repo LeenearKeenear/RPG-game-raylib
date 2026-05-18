@@ -3,7 +3,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "map.h"
 #include "mapLogic.h"
-#include "tiles.h"
+#include "animation.h"
 #include <vector>
 #include <queue>
 #include <unordered_map>

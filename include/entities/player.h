@@ -3,7 +3,6 @@
 #include "../lib/raylib/include/raylib.h"
 #include "map.h"
 #include "screen.h"
-#include "tiles.h"
 #include "animation.h"
 #include "inventory.h"
 #include "entity.h"

@@ -2,6 +2,45 @@
 #include "../lib/raylib/include/raymath.h"
 
 /*==============================================================================
+ * Texture & Tile Helpers (Moved from tiles.cpp)
+ *==============================================================================*/
+
+Texture2D TexturesMap[MAX_TEXTURES];
+
+/**
+ * Memuat tekstur dari penyimpanan (disk) ke slot tekstur GPU tertentu.
+ * Memastikan data gambar di CPU dihapus setelah ditransfer ke GPU.
+ */
+void LoadTileTexture(TextureAsset Slot, const char *Path)
+{
+    Image img = LoadImage(Path);
+    TexturesMap[Slot] = LoadTextureFromImage(img);
+    UnloadImage(img);
+}
+
+/**
+ * Fungsi pembantu untuk menghitung rectangle sumber dari koordinat berbasis grid.
+ * Berguna untuk animasi dan perenderan tile secara manual.
+ */
+Rectangle GetFrame(int frameX, int frameY)
+{
+    return {
+        (float)(frameX * (TILE_SIZE + TILE_GAP)),
+        (float)(frameY * (TILE_SIZE + TILE_GAP)),
+        (float)TILE_SIZE,
+        (float)TILE_SIZE};
+}
+
+/**
+ * Merender tile ke layar.
+ */
+void DrawTileTexture(TextureAsset slot, int frameX, int frameY, Rectangle dest, Vector2 origin, float rotation, Color tint)
+{
+    Rectangle src = GetFrame(frameX, frameY);
+    DrawTexturePro(TexturesMap[slot], src, dest, origin, rotation, tint);
+}
+
+/*==============================================================================
  * Animation Set Data Definitions
  *==============================================================================*/
 
@@ -63,7 +102,6 @@ const AnimationSet WolfAnimationSet = {
 
 /*==============================================================================
  * Legacy Tile Rendering (RenderTilePNG — masih dipakai oleh beberapa modul)
- * Definisi LoadTileTexture, GetFrame, DrawTileTexture ada di src/tiles.cpp
  *==============================================================================*/
 
 void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureAsset Slot)
@@ -111,7 +149,6 @@ void RenderTilePNG(int pos_x, int pos_y, TileType Type, float Rotation, TextureA
  * Small Sprite Rendering
  *==============================================================================*/
 
-// Definisi: src/animation.cpp (ini file ini sendiri)
 void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, float scale) {
     float smallSize = TILE_SIZE * scale;
     float offset = (TILE_SIZE - smallSize) / 2.0f;
@@ -193,7 +230,6 @@ void PlayAnimation(Animation &anim, State newState, Direction newDir, const Anim
 
 /*==============================================================================
  * Legacy: UpdatePlayerAttack — masih dipakai oleh Player::HandleAction()
- * Definisi: src/animation.cpp (ini file ini sendiri)
  *==============================================================================*/
 
 void UpdatePlayerAttack(Animation &p)

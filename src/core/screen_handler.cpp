@@ -17,7 +17,6 @@
 #include "screen.h"
 #include "map.h"
 #include "player.h"
-#include "tiles.h"
 #include "animation.h"
 #include "enemy.h"
 #include "enemy_ai.h"

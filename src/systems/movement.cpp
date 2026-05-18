@@ -3,7 +3,7 @@
 #include "mapLogic.h"
 #include "screen.h"
 #include "input.h"
-#include "tiles.h"
+#include "animation.h"
 #include "game_debug.h"
 #include "effects.h"
 #include "../lib/raylib/include/raymath.h"

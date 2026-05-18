@@ -15,7 +15,6 @@
 #include "screen.h"
 #include "map.h"
 #include "mapLogic.h"
-#include "tiles.h"
 #include "animation.h"
 #include "entities.h"
 #include "player.h"
