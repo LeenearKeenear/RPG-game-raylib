@@ -25,7 +25,7 @@
  *==============================================================================*/
 
 /** @brief Total stage loading untuk initial startup */
-#define TOTAL_LOADING_STAGES 6
+#define TOTAL_LOADING_STAGES 3
 
 /** @brief Total stage loading untuk map switch */
 #define MAP_SWITCH_STAGES 4
@@ -135,7 +135,7 @@ void UpdateLoadingScreen(GameState *state)
             state->loadingText = "Finalizing map switch...";
             // Set camera ke spawn player
             Vector2 spawnPos = PlayerInstance.GetPosition();
-            camera.target = {spawnPos.x + (TILE_SIZE / 2.0F), spawnPos.y + (TILE_SIZE / 2.0F)};
+            camera.target = {spawnPos.x + (FRAME_SIZE / 2.0F), spawnPos.y + (FRAME_SIZE / 2.0F)};
             camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
             camera.rotation = 0;
             camera.zoom = 1.0F;
@@ -186,34 +186,13 @@ void UpdateLoadingScreen(GameState *state)
     switch (state->loadingStage)
     {
     case 0:
-        state->loadingText = "Loading tilemap textures...";
-        LoadTileTexture(TEXTURE_TILEMAP, "assets/textures/tiles.png");
+        state->loadingText = "Loading game textures...";
+        InitTextures();
         state->loadingStage++;
         state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;
         break;
 
     case 1:
-        state->loadingText = "Loading character sprites...";
-        LoadTileTexture(TEXTURE_KNIGHT, "assets/textures/knight.png");
-        state->loadingStage++;
-        state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;
-        break;
-
-    case 2:
-        state->loadingText = "Loading item icons...";
-        LoadTileTexture(TEXTURE_ITEMS, "assets/textures/test.png");
-        state->loadingStage++;
-        state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;
-        break;
-
-    case 3:
-        state->loadingText = "Loading enemy textures...";
-        LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
-        state->loadingStage++;
-        state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;
-        break;
-
-    case 4:
         state->loadingText = "Loading map data...";
         // Load saved map if resuming, otherwise default
         if (HasSavedState() && !savedMapState.mapPath.empty())
@@ -228,7 +207,7 @@ void UpdateLoadingScreen(GameState *state)
         state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;
         break;
 
-    case 5:
+    case 2:
         state->loadingText = "Finalizing game assets...";
         state->loadingStage++;
         state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;

@@ -3,7 +3,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include "map.h"
 #include "mapLogic.h"
-#include "tiles.h"
+#include "animation.h"
 #include <vector>
 #include <queue>
 #include <unordered_map>
@@ -14,7 +14,7 @@ class Enemy;
 /*==============================================================================
  * FlowField
  *==============================================================================*/
-constexpr int FLOW_FIELD_TILE_SIZE = TILE_SIZE;                         // ukuran tile flow field, mengikuti TILE_SIZE map
+constexpr int FLOW_FIELD_TILE_SIZE = FRAME_SIZE;                         // ukuran tile flow field, mengikuti FRAME_SIZE map
 constexpr float FLOW_FIELD_CENTER_OFFSET = FLOW_FIELD_TILE_SIZE * 0.5f; // offset dari pojok tile ke pusat tile
 constexpr float FLOW_FIELD_REBUILD_COOLDOWN = 0.3f;                     // jeda minimum antar rebuild flow field
 constexpr int FLOW_FIELD_PLAYER_RADIUS = 15;                            // radius area aktif flow field player dalam tile
@@ -28,7 +28,7 @@ constexpr float FLOW_FIELD_CARDINAL_COST = 1.0f;   // cost gerak horizontal/vert
 static constexpr float SEPARATION_RADIUS = 28.0f;   // jarak maksimum antar enemy untuk mulai saling menjauh
 static constexpr float SEPARATION_STRENGTH = 25.0f; // besar dorongan separation antar enemy
 static constexpr float MAX_SEPARATION_FORCE = 30.f; // batas maksimum gaya separation
-static constexpr int CELL_SIZE = TILE_SIZE * 1.8f;  // ukuran cell spatial hash untuk query neighbor enemy
+static constexpr int CELL_SIZE = FRAME_SIZE * 1.8f;  // ukuran cell spatial hash untuk query neighbor enemy
 static constexpr float SEPARATION_FORCE_MAGNITUDE = 0.03f; // besaran nilai interpolasi untuk separation force
 
 /**

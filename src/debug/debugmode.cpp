@@ -9,13 +9,12 @@
  * - Menampilkan info runtime player, map, camera, dan collision
  */
 
-#include "debug.h"
+#include "game_debug.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include "screen.h"
 #include "map.h"
 #include "mapLogic.h"
-#include "tiles.h"
 #include "animation.h"
 #include "entities.h"
 #include "player.h"
@@ -543,8 +542,8 @@ void Debug::DrawWorldOverlay(void)
     Rectangle mapBounds = {
         0.0f,
         0.0f,
-        (float)tilesonMap->width * TILE_SIZE,
-        (float)tilesonMap->height * TILE_SIZE};
+        (float)tilesonMap->width * FRAME_SIZE,
+        (float)tilesonMap->height * FRAME_SIZE};
 
     DrawRectangleLinesEx(mapBounds, 2.0f, GREEN);
 

@@ -224,11 +224,11 @@ private:
     // buat handle logic ai path finding
     Vector2 Velocity = {0, 0};                   // arah gerak frame sebelumnya (dinormalisasi)
     RayCast Ray;                                 ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
-    float TileCenterOffset = TILE_SIZE * 0.5f;   // offset untuk ai pathfinding
+    float TileCenterOffset = FRAME_SIZE * 0.5f;   // offset untuk ai pathfinding
     float HitBoxValue = 24.0f;                   // hitbox untuk ai pathfinding
     float OffSetValue = 0.0f;                    // offset untuk ai path finding
-    float rayLength = TILE_SIZE * 2.0f;          // panjang raycast untuk ai path finding
-    float rayDetectionLength = TILE_SIZE * 2.1f; // radius deteksi langsung ke player
+    float rayLength = FRAME_SIZE * 2.0f;          // panjang raycast untuk ai path finding
+    float rayDetectionLength = FRAME_SIZE * 2.1f; // radius deteksi langsung ke player
     float ReturnScanTimer = 0.f;                 // timer pencarian ulang return flow field
 
     float AttackCooldownTimer;         ///< Sisa waktu cooldown serangan (runtime)

@@ -3,7 +3,6 @@
 #include "../lib/raylib/include/raylib.h"
 #include "map.h"
 #include "screen.h"
-#include "tiles.h"
 #include "animation.h"
 #include "inventory.h"
 #include "entity.h"
@@ -200,7 +199,7 @@ private:
     // magnet/pickup fields
     float MagnetRadius = 70.0f;        // default 70
     float ItemSpeed = 300.0f;          // default 300
-    const float RayCastAngle = 0.600f; ///< cos(45°) — area pandang ±45° dari arah hadap
+    const float RayCastAngle = 0.000f; ///< cos(90°) — area pandang ±90° dari arah hadap (180 derajat)
 
     // item drop angle
     const float RayCastAngleItemDrop = 0.000f;    // ±90° dari arah hadap

@@ -34,8 +34,42 @@ static void DrawItemIcon(const InventoryItem &item, Rectangle dest)
 {
     if (item.definitionId == -1)
         return;
+
     const ItemDefinition &def = itemDefs.GetById(item.definitionId);
-    DrawTileTexture(TEXTURE_ITEMS, (int)def.sheetCoord.x, (int)def.sheetCoord.y, dest);
+    const Frame &frame = GetFrame(def.spriteKey);
+
+    Rectangle src = {
+        (float)(frame.positionX * (FRAME_SIZE + FRAME_GAP)),
+        (float)(frame.positionY * (FRAME_SIZE + FRAME_GAP)),
+        (float)(frame.width * FRAME_SIZE),
+        (float)(frame.height * FRAME_SIZE)
+    };
+
+    if (def.spriteKey == "sword2")
+    {
+        src.y += 25.0f;
+        src.height -= 25.0f;
+    }
+
+    int maxDim = (src.width > src.height) ? src.width : src.height;
+    float size = dest.width / maxDim;
+
+    float renderWidth = src.width * size;
+    float renderHeight = src.height * size;
+
+    Vector2 position = {
+        dest.x + (dest.width - renderWidth) / 2.0f,
+        dest.y + (dest.height - renderHeight) / 2.0f
+    };
+
+    Rectangle drawDest = {
+        position.x,
+        position.y,
+        renderWidth,
+        renderHeight
+    };
+
+    DrawTexturePro(textures[frame.texture], src, drawDest, {0, 0}, 0.0f, WHITE);
 }
 
 /**
@@ -597,7 +631,11 @@ void DrawPlayerHUD()
         (avatarPos.x - spriteSize / 2.0f) + 1.0f,
         avatarPos.y - spriteSize / 2.0f,
         spriteSize, spriteSize};
-    DrawTileTexture(TEXTURE_KNIGHT, 0, 2, knightDest);
+    Frame avatarFrame = { SPRITESHEET_KNIGHT, 0, 2, 1, 1 };
+    Display avatarDisplay;
+    avatarDisplay.position = {knightDest.x, knightDest.y};
+    avatarDisplay.size = (int)knightDest.width;
+    DrawFrame(avatarFrame, avatarDisplay);
 
     DrawCircleLinesV(avatarPos, radius, ColorAlpha(GOLD, 0.6f));
     DrawCircleLinesV(avatarPos, radius + 1, ColorAlpha(GOLD, 0.3f));
