@@ -44,7 +44,8 @@ void Player::Init(GameState *state, const char *spawnObjectName)
         TraceLog(LOG_INFO, "Player: Resource global dan statistik telah diinisialisasi");
     }
 
-    PlayAnimation(Anim, IDLE, DOWN, PlayerAnimationSet);
+    Anim.animSet = &loadedAnimationSets["knight"];
+    PlayAnimation(Anim, IDLE, DOWN);
     CollisionRects.clear();
     CollisionPolygons.clear();
 
@@ -187,7 +188,7 @@ void Player::Render(void)
         tint = RED;
     }
 
-    DrawAnimation(Anim, SPRITESHEET_KNIGHT, tint);
+    DrawAnimation(Anim, tint);
     Combat::DrawSwingAttack(*this);
     DrawAimIndicator();
 }
@@ -203,7 +204,7 @@ void Player::TakeDamage(float amount, Vector2 knockback)
     {
         Swing.active = false;
         Anim.isAttacking = false;
-        PlayAnimation(Anim, IDLE, Anim.direction, PlayerAnimationSet);
+        PlayAnimation(Anim, IDLE, Anim.direction);
     }
 
     Vector2 center = {Position.x + 16, Position.y + 16};

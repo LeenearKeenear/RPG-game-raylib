@@ -1,6 +1,8 @@
 #pragma once
 #include "../lib/raylib/include/raylib.h"
 #include <string>
+#include <vector>
+#include <unordered_map>
 
 /*
 ====================
@@ -44,11 +46,11 @@ struct Display
 };
 
 void LoadFrameTexture(TextureSlot slot, const char *path);
+void InitTextures();
+void CloseTextures();
 const Frame &GetFrame(const std::string &id);
 void DrawFrame(Frame frame, Display display);
 void DrawFrame(const std::string &id, Display display);
-void InitTextures();
-void CloseTextures();
 
 /*
 ====================
@@ -72,31 +74,11 @@ enum Direction
     UP
 };
 
-struct AnimationSet;
-
 struct AnimationConfig
 {
-    int row;
-    int startFrame;
-    int frameCount;
+    std::vector<std::string> frameIds;
     float speed;
     bool loop;
-    int pattern[8];
-    int patternCount;
-};
-
-struct Animation
-{
-    Vector2 position;
-    State state;
-    Direction direction;
-    int currentFrame;
-    float timer;
-    int walkFrameIndex;
-    bool isAttacking;
-    bool isDead;
-    const AnimationConfig *currentConfig;
-    const AnimationSet *animSet;
 };
 
 struct AnimationSet
@@ -104,16 +86,25 @@ struct AnimationSet
     AnimationConfig configs[4][4];
 };
 
+struct Animation
+{
+    Vector2 position;
+    State state;
+    Direction direction;
+    float timer;
+    int currentFrameIndex;
+    bool isAttacking;
+    bool isDead;
+    const AnimationConfig *currentConfig;
+    const AnimationSet *animSet;
+};
+
+void LoadAnimationsFromJSON();
+void PlayAnimation(Animation &anim, State newState, Direction newDir);
 void UpdateAnimation(Animation &anim, float dt);
+void DrawAnimation(const Animation &anim, Color tint = WHITE);
 
-void DrawAnimation(const Animation &anim, TextureSlot texture, Color tint = WHITE);
-
-void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set);
-
-extern const AnimationSet PlayerAnimationSet;
-extern const AnimationSet SlimeAnimationSet;
-extern const AnimationSet SkeletonAnimationSet;
-extern const AnimationSet WolfAnimationSet;
+extern std::unordered_map<std::string, AnimationSet> loadedAnimationSets;
 
 /*
 ====================

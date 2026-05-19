@@ -59,7 +59,7 @@ namespace Movement
 
         // Memperbarui status animasi berdasarkan status pergerakan
         ::State nextState = moving ? WALK : IDLE;
-        PlayAnimation(player.Anim, nextState, nextDir, PlayerAnimationSet);
+        PlayAnimation(player.Anim, nextState, nextDir);
 
         // Normalisasi kecepatan untuk kecepatan yang konsisten di semua arah (perbaikan diagonal)
         float Length = sqrtf(player.Velocity.x * player.Velocity.x + player.Velocity.y * player.Velocity.y);

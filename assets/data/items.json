@@ -1,6 +1,6 @@
 {
   "items": {
-    "ironSword": {
+    "sword1": {
       "id": 0,
       "category": "weapon",
       "spriteKey": "sword1",
@@ -21,7 +21,7 @@
         "attackType": "thrust"
       }
     },
-    "ironAxe": {
+    "sword2": {
       "id": 1,
       "category": "weapon",
       "spriteKey": "sword2",
@@ -42,10 +42,10 @@
         "attackType": "slash"
       }
     },
-    "healthPotion": {
+    "healthPotionSmall": {
       "id": 2,
       "category": "potion",
-      "spriteKey": "healthPotion",
+      "spriteKey": "healthPotionSmall",
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": true,
@@ -55,16 +55,89 @@
         "isMana": false
       }
     },
-    "manaBread": {
+    "staminaPotionSmall": {
       "id": 3,
       "category": "potion",
-      "spriteKey": "staminaPotion",
+      "spriteKey": "staminaPotionSmall",
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": true,
       "maxStack": 8,
       "potion": {
         "healValue": 15,
+        "isMana": true
+      }
+    },
+    "bow": {
+      "id": 4,
+      "category": "weapon",
+      "spriteKey": "bow",
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "common",
+      "isStackable": false,
+      "maxStack": 1,
+      "weapon": {
+        "damage": 12.0,
+        "reach": 120.0,
+        "breadth": 8.0,
+        "duration": 0.3,
+        "knockbackForce": 0.5,
+        "startAngleOffset": 0.0,
+        "sweepAngle": 0.0,
+        "centerOffset": { "x": 8.0, "y": 4.0 },
+        "manaCost": 0.0,
+        "attackType": "thrust"
+      }
+    },
+    "healthPotionMedium": {
+      "id": 5,
+      "category": "potion",
+      "spriteKey": "healthPotionMedium",
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "uncommon",
+      "isStackable": true,
+      "maxStack": 8,
+      "potion": {
+        "healValue": 50,
+        "isMana": false
+      }
+    },
+    "staminaPotionMedium": {
+      "id": 6,
+      "category": "potion",
+      "spriteKey": "staminaPotionMedium",
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "uncommon",
+      "isStackable": true,
+      "maxStack": 8,
+      "potion": {
+        "healValue": 40,
+        "isMana": true
+      }
+    },
+    "healthPotionLarge": {
+      "id": 7,
+      "category": "potion",
+      "spriteKey": "healthPotionLarge",
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "rare",
+      "isStackable": true,
+      "maxStack": 8,
+      "potion": {
+        "healValue": 100,
+        "isMana": false
+      }
+    },
+    "staminaPotionLarge": {
+      "id": 8,
+      "category": "potion",
+      "spriteKey": "staminaPotionLarge",
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "rare",
+      "isStackable": true,
+      "maxStack": 8,
+      "potion": {
+        "healValue": 80,
         "isMana": true
       }
     }

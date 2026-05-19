@@ -101,6 +101,30 @@ void LoadFrameTexture(TextureSlot slot, const char *path)
     UnloadImage(img);
 }
 
+void InitTextures()
+{
+    LoadFrameTexture(TILESET_MAP_1, "assets/textures/tiles.png");
+    LoadFrameTexture(TILESET_MAP_2, "assets/textures/test.png");
+    LoadFrameTexture(TILESET_PROPS, "assets/textures/props.png");
+    LoadFrameTexture(TILESET_ITEMS, "assets/textures/items.png");
+    LoadFrameTexture(SPRITESHEET_KNIGHT, "assets/textures/knight (1).png");
+    LoadFrameTexture(SPRITESHEET_ENEMIES, "assets/textures/enemies.png");
+    LoadFramesFromJSON();
+    LoadAnimationsFromJSON();
+}
+
+void CloseTextures()
+{
+    for (int i = 0; i < MAX_TEXTURES; i++)
+    {
+        if (textures[i].id != 0)
+        {
+            UnloadTexture(textures[i]);
+            textures[i] = {0};
+        }
+    }
+}
+
 const Frame &GetFrame(const std::string &id)
 {
     auto it = loadedFrames.find(id);
@@ -136,162 +160,190 @@ void DrawFrame(const std::string &id, Display display)
     DrawFrame(GetFrame(id), display);
 }
 
-void InitTextures()
-{
-    LoadFrameTexture(TILESET_MAP_1, "assets/textures/tiles.png");
-    LoadFrameTexture(TILESET_MAP_2, "assets/textures/test.png");
-    LoadFrameTexture(TILESET_PROPS, "assets/textures/props.png");
-    LoadFrameTexture(TILESET_ITEMS, "assets/textures/items.png");
-    LoadFrameTexture(SPRITESHEET_KNIGHT, "assets/textures/knight (1).png");
-    LoadFrameTexture(SPRITESHEET_ENEMIES, "assets/textures/enemies.png");
-    LoadFramesFromJSON();
-}
-
-void CloseTextures()
-{
-    for (int i = 0; i < MAX_TEXTURES; i++)
-    {
-        if (textures[i].id != 0)
-        {
-            UnloadTexture(textures[i]);
-            textures[i] = {0};
-        }
-    }
-}
-
 /*
 ====================
 Sprites Animation
 ====================
 */
 
-const AnimationSet PlayerAnimationSet = {
-    .configs = {
-        [IDLE] = {
-            [LEFT]  = {0, 0, 2, 0.5f, true, {0, 1}, 2},
-            [RIGHT] = {1, 0, 2, 0.5f, true, {0, 1}, 2},
-            [DOWN]  = {2, 0, 2, 0.5f, true, {0, 1}, 2},
-            [UP]    = {3, 0, 2, 0.5f, true, {0, 1}, 2}
-        },
-        [WALK] = {
-            [LEFT]  = {0, 0, 4, 0.15f, true, {0, 2, 0, 3}, 4},
-            [RIGHT] = {1, 0, 4, 0.15f, true, {0, 2, 0, 3}, 4},
-            [DOWN]  = {2, 0, 4, 0.15f, true, {0, 2, 0, 3}, 4},
-            [UP]    = {3, 0, 4, 0.15f, true, {0, 2, 0, 3}, 4}
-        },
-        [ATTACK] = {
-            [LEFT]  = {0, 6, 2, 0.15f, false, {0, 1}, 2},
-            [RIGHT] = {1, 6, 2, 0.15f, false, {0, 1}, 2},
-            [DOWN]  = {2, 4, 2, 0.15f, false, {0, 1}, 2},
-            [UP]    = {3, 4, 2, 0.15f, false, {0, 1}, 2}
-        },
-        [DEAD] = {
-            [LEFT]  = {4, 0, 1, 1.0f, false, {0}, 1},
-            [RIGHT] = {4, 0, 1, 1.0f, false, {0}, 1},
-            [DOWN]  = {4, 0, 1, 1.0f, false, {0}, 1},
-            [UP]    = {4, 0, 1, 1.0f, false, {0}, 1}
+std::unordered_map<std::string, AnimationSet> loadedAnimationSets;
+
+static State ResolveState(const std::string &str)
+{
+    static const std::unordered_map<std::string, State> mapping = {
+        {"idle", IDLE},
+        {"walk", WALK},
+        {"attack", ATTACK},
+        {"dead", DEAD}
+    };
+    auto it = mapping.find(str);
+    if (it != mapping.end()) return it->second;
+    return IDLE;
+}
+
+static Direction ResolveDirection(const std::string &str)
+{
+    static const std::unordered_map<std::string, Direction> mapping = {
+        {"left", LEFT},
+        {"right", RIGHT},
+        {"down", DOWN},
+        {"up", UP}
+    };
+    auto it = mapping.find(str);
+    if (it != mapping.end()) return it->second;
+    return RIGHT;
+}
+
+void LoadAnimationsFromJSON()
+{
+    std::ifstream file("assets/data/animations.json");
+    if (!file.is_open())
+    {
+        TraceLog(LOG_ERROR, "ANIMATION: Gagal membuka assets/data/animations.json");
+        return;
+    }
+
+    try
+    {
+        json root = json::parse(file);
+        for (auto &[entityKey, entityVal] : root.items())
+        {
+            AnimationSet set;
+            for (int s = 0; s < 4; s++) {
+                for (int d = 0; d < 4; d++) {
+                    set.configs[s][d].speed = 0.5f;
+                    set.configs[s][d].loop = true;
+                }
+            }
+
+            for (auto &[stateKey, stateVal] : entityVal.items())
+            {
+                State state = ResolveState(stateKey);
+                
+                for (auto &[dirKey, dirVal] : stateVal.items())
+                {
+                    Direction dir = ResolveDirection(dirKey);
+                    
+                    AnimationConfig config;
+                    config.speed = dirVal.at("frameDuration").get<float>();
+                    config.loop = dirVal.at("loop").get<bool>();
+                    
+                    if (dirVal.contains("frames"))
+                    {
+                        for (auto &frame : dirVal.at("frames"))
+                        {
+                            config.frameIds.push_back(frame.get<std::string>());
+                        }
+                    }
+                    
+                    set.configs[state][dir] = config;
+                }
+                
+                for (int d = 0; d < 4; d++)
+                {
+                    if (set.configs[state][d].frameIds.empty())
+                    {
+                        if (!set.configs[state][LEFT].frameIds.empty())
+                        {
+                            set.configs[state][d] = set.configs[state][LEFT];
+                        }
+                        else if (!set.configs[state][RIGHT].frameIds.empty())
+                        {
+                            set.configs[state][d] = set.configs[state][RIGHT];
+                        }
+                    }
+                }
+            }
+            loadedAnimationSets[entityKey] = set;
+        }
+        TraceLog(LOG_INFO, "ANIMATION: Berhasil memuat %d animation sets dari JSON", (int)loadedAnimationSets.size());
+    }
+    catch (const std::exception &e)
+    {
+        TraceLog(LOG_ERROR, "ANIMATION: Gagal parse animations.json: %s", e.what());
+    }
+}
+
+void PlayAnimation(Animation &anim, State newState, Direction newDir)
+{
+    if (!anim.animSet) return;
+
+    Direction resolvedDir = newDir;
+    
+    if (anim.animSet->configs[newState][resolvedDir].frameIds.empty())
+    {
+        if (resolvedDir == UP || resolvedDir == DOWN)
+        {
+            if (anim.direction == LEFT || anim.direction == RIGHT)
+            {
+                resolvedDir = anim.direction;
+            }
+            else
+            {
+                resolvedDir = RIGHT;
+            }
+        }
+        
+        if (anim.animSet->configs[newState][resolvedDir].frameIds.empty())
+        {
+            if (!anim.animSet->configs[newState][LEFT].frameIds.empty()) resolvedDir = LEFT;
+            else if (!anim.animSet->configs[newState][RIGHT].frameIds.empty()) resolvedDir = RIGHT;
         }
     }
-};
 
-const AnimationSet SlimeAnimationSet = {
-    .configs = {
-        [IDLE]   = { {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2} },
-        [WALK]   = { {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2} },
-        [ATTACK] = { {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2}, {0, 0, 2, 0.5f, true, {0, 1}, 2} },
-        [DEAD]   = { {0, 2, 1, 1.0f, false, {0}, 1},   {0, 2, 1, 1.0f, false, {0}, 1},   {0, 2, 1, 1.0f, false, {0}, 1},   {0, 2, 1, 1.0f, false, {0}, 1} }
-    }
-};
+    if (anim.state == newState && anim.direction == resolvedDir && anim.currentConfig) return;
 
-const AnimationSet SkeletonAnimationSet = {
-    .configs = {
-        [IDLE]   = { {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2} },
-        [WALK]   = { {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2} },
-        [ATTACK] = { {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2}, {1, 0, 2, 0.5f, true, {0, 1}, 2} },
-        [DEAD]   = { {1, 2, 1, 1.0f, false, {0}, 1},   {1, 2, 1, 1.0f, false, {0}, 1},   {1, 2, 1, 1.0f, false, {0}, 1},   {1, 2, 1, 1.0f, false, {0}, 1} }
-    }
-};
-
-const AnimationSet WolfAnimationSet = {
-    .configs = {
-        [IDLE]   = { {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2} },
-        [WALK]   = { {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2} },
-        [ATTACK] = { {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2}, {2, 0, 2, 0.5f, true, {0, 1}, 2} },
-        [DEAD]   = { {2, 2, 1, 1.0f, false, {0}, 1},   {2, 2, 1, 1.0f, false, {0}, 1},   {2, 2, 1, 1.0f, false, {0}, 1},   {2, 2, 1, 1.0f, false, {0}, 1} }
-    }
-};
+    anim.state = newState;
+    anim.direction = resolvedDir;
+    anim.currentConfig = &anim.animSet->configs[newState][resolvedDir];
+    
+    anim.timer = 0.0f;
+    anim.currentFrameIndex = 0;
+}
 
 void UpdateAnimation(Animation &anim, float dt)
 {
-    if (!anim.currentConfig) return;
+    if (!anim.currentConfig || anim.currentConfig->frameIds.empty()) return;
 
     anim.timer += dt;
     if (anim.timer >= anim.currentConfig->speed)
     {
-        anim.timer = 0;
-        anim.walkFrameIndex++;
+        anim.timer = 0.0f;
+        anim.currentFrameIndex++;
 
-        if (anim.walkFrameIndex >= anim.currentConfig->patternCount)
+        if (anim.currentFrameIndex >= (int)anim.currentConfig->frameIds.size())
         {
             if (anim.currentConfig->loop)
             {
-                anim.walkFrameIndex = 0;
+                anim.currentFrameIndex = 0;
             }
             else
             {
-                anim.walkFrameIndex = anim.currentConfig->patternCount - 1;
+                anim.currentFrameIndex = (int)anim.currentConfig->frameIds.size() - 1;
                 
                 if (anim.state == ATTACK)
                 {
                     anim.isAttacking = false;
-                    if (anim.animSet) {
-                        PlayAnimation(anim, IDLE, anim.direction, *anim.animSet);
-                    } else {
-                        PlayAnimation(anim, IDLE, anim.direction, PlayerAnimationSet);
-                    }
+                    PlayAnimation(anim, IDLE, anim.direction);
                 }
             }
         }
-        
-        anim.currentFrame = anim.currentConfig->pattern[anim.walkFrameIndex];
     }
 }
 
-void DrawAnimation(const Animation &anim, TextureSlot texture, Color tint)
+void DrawAnimation(const Animation &anim, Color tint)
 {
-    if (!anim.currentConfig) return;
+    if (!anim.currentConfig || anim.currentConfig->frameIds.empty()) return;
 
-    int frameX = anim.currentConfig->startFrame + anim.currentFrame;
-    int row = anim.currentConfig->row;
-
-    Frame customFrame = { texture, frameX, row, 1, 1 };
-    Display display = { anim.position, FRAME_SIZE, {0,0}, {0,0}, 0.0f, tint };
-    DrawFrame(customFrame, display);
-}
-
-void PlayAnimation(Animation &anim, State newState, Direction newDir, const AnimationSet &set)
-{
-    if (anim.state == newState && anim.direction == newDir && anim.currentConfig) return;
-
-    anim.state = newState;
-    anim.direction = newDir;
-    anim.animSet = &set;
-    anim.currentConfig = &set.configs[newState][newDir];
-    
-    anim.timer = 0;
-    anim.walkFrameIndex = 0;
-    anim.currentFrame = anim.currentConfig->pattern[0];
-}
-
-void UpdatePlayerAttack(Animation &p)
-{
-    if (!p.isAttacking)
+    int index = anim.currentFrameIndex;
+    if (index < 0 || index >= (int)anim.currentConfig->frameIds.size())
     {
-        p.state = ATTACK;
-        p.currentFrame = 0;
-        p.timer = 0;
-        p.isAttacking = true;
+        index = 0;
     }
+
+    const std::string &frameId = anim.currentConfig->frameIds[index];
+    Display display = { anim.position, FRAME_SIZE, {0,0}, {0,0}, 0.0f, tint };
+    DrawFrame(frameId, display);
 }
 
 /*

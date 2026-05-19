@@ -395,10 +395,10 @@ void ItemRenderManager::Render(ItemSpawn &item)
     Vector2 center = {
         item.hitbox.x + item.hitbox.width / 2,
         item.hitbox.y + item.hitbox.height / 2};
-    const float scale = 0.5f;
+    const float scale = 1.0f;
     Vector2 renderPos = {
-        center.x - 8.0f,
-        center.y - 8.0f};
+        center.x - 16.0f,
+        center.y - 16.0f};
 
     const ItemDefinition &def = itemDefs.GetById(item.definitionId);
 

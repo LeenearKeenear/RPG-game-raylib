@@ -149,6 +149,7 @@ void Enemy::Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition
     DefStorage = def;
     Def = &DefStorage;
     AnimSet = Def->animSet;
+    Anim.animSet = AnimSet;
     MapObjectID = mapId;
     SpawnPoint = pos;
     SpawnRect = {0, 0, 0, 0};
@@ -178,7 +179,7 @@ void Enemy::Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition
     Position.y = pos.y - (HitboxHeight / 2.0f) - HitboxOffsetY;
     PatrolTarget = pos;
 
-    PlayAnimation(Anim, IDLE, DOWN, *Def->animSet);
+    PlayAnimation(Anim, IDLE, DOWN);
     Anim.position = Position;
 }
 
@@ -194,7 +195,7 @@ void Enemy::Update()
     {
         if (Anim.state != DEAD)
         {
-            PlayAnimation(Anim, DEAD, Anim.direction, *AnimSet);
+            PlayAnimation(Anim, DEAD, Anim.direction);
             AIState = ENEMY_IDLE;
             DetectionRange = Def->stats.baseDetectionRange;
             Entities::RegisterDeath(GetCurrentMapPath(), MapObjectID);
@@ -253,7 +254,7 @@ void Enemy::UpdateAI()
         if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK)
         {
             AIState = ENEMY_IDLE;
-            PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
+            PlayAnimation(Anim, IDLE, Anim.direction);
         }
         return;
     }
@@ -369,7 +370,7 @@ void Enemy::HandleIdle()
         }
 
         AIState = ENEMY_PATROL;
-        PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
+        PlayAnimation(Anim, WALK, Anim.direction);
     }
 }
 
@@ -388,13 +389,13 @@ void Enemy::HandlePatrol()
     if (dist < 10.0f)
     {
         AIState = ENEMY_IDLE;
-        PlayAnimation(Anim, IDLE, Anim.direction, *AnimSet);
+        PlayAnimation(Anim, IDLE, Anim.direction);
         return;
     }
 
     MoveTowards(PatrolTarget, Def->stats.speed);
     if (Anim.state != WALK)
-        PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
+        PlayAnimation(Anim, WALK, Anim.direction);
 }
 
 /**
@@ -407,7 +408,7 @@ void Enemy::HandleChase()
     if (AttackCooldownTimer > 0)
     {
         if (Anim.state != IDLE)
-            PlayAnimation(Anim, IDLE, Anim.direction, *Def->animSet);
+            PlayAnimation(Anim, IDLE, Anim.direction);
         return;
     }
 
@@ -430,7 +431,7 @@ void Enemy::HandleChase()
     {
         AIState = ENEMY_RETURN;
         PatrolTarget = SpawnPoint;
-        PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
+        PlayAnimation(Anim, WALK, Anim.direction);
         return;
     }
 
@@ -457,7 +458,7 @@ void Enemy::HandleChase()
     }
 
     if (Anim.state != WALK)
-        PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
+        PlayAnimation(Anim, WALK, Anim.direction);
 }
 
 /**
@@ -478,7 +479,7 @@ void Enemy::HandleReturn()
     if (hasReturned)
     {
         AIState = ENEMY_IDLE;
-        PlayAnimation(Anim, IDLE, Anim.direction, *Def->animSet);
+        PlayAnimation(Anim, IDLE, Anim.direction);
         return;
     }
 
@@ -520,7 +521,7 @@ void Enemy::HandleReturn()
         MoveTowards(SpawnPoint, Def->stats.speed);
 
     if (Anim.state != WALK)
-        PlayAnimation(Anim, WALK, Anim.direction, *Def->animSet);
+        PlayAnimation(Anim, WALK, Anim.direction);
 }
 
 /**
@@ -545,7 +546,7 @@ void Enemy::HandleAttack()
         if (dist > Def->stats.attackRange * 1.2f)
         {
             AIState = ENEMY_CHASE;
-            PlayAnimation(Anim, WALK, Anim.direction, *AnimSet);
+            PlayAnimation(Anim, WALK, Anim.direction);
         }
     }
 }
@@ -574,7 +575,7 @@ void Enemy::PerformAttack()
     Vector2 knockDir = dir;
     PlayerInstance.TakeDamage(Def->stats.damage, knockDir);
 
-    PlayAnimation(Anim, ATTACK, Anim.direction, *AnimSet);
+    PlayAnimation(Anim, ATTACK, Anim.direction);
     Anim.isAttacking = true;
     AttackCooldownTimer = AttackCooldown;
 }
@@ -619,7 +620,7 @@ void Enemy::Render()
     if (shouldDraw)
     {
         Color tint = (HitFlashTimer > 0) ? RED : WHITE;
-        DrawAnimation(Anim, SPRITESHEET_ENEMIES, tint);
+        DrawAnimation(Anim, tint);
     }
 
     // Health bar hanya tampil saat agresif
@@ -706,11 +707,21 @@ void Enemy::MoveTowards(Vector2 target, float speed)
  */
 const AnimationSet *ResolveAnimSet(const std::string &name)
 {
-    if (name == "skeleton" || name == "Skeleton")
-        return &SkeletonAnimationSet;
-    if (name == "wolf" || name == "Wolf")
-        return &WolfAnimationSet;
-    return &SlimeAnimationSet;
+    std::string lowerName = name;
+    for (auto &c : lowerName) c = std::tolower(c);
+    
+    auto it = loadedAnimationSets.find(lowerName);
+    if (it != loadedAnimationSets.end())
+    {
+        return &it->second;
+    }
+    
+    it = loadedAnimationSets.find("slime");
+    if (it != loadedAnimationSets.end())
+    {
+        return &it->second;
+    }
+    return nullptr;
 }
 
 /*==============================================================================

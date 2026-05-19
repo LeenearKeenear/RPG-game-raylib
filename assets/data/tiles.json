@@ -62,16 +62,44 @@
         "width": 1,
         "height": 1
     },
-    "healthPotion": {
+    "healthPotionSmall": {
         "texture": "TILESET_ITEMS",
         "column": 2,
         "row": 0,
         "width": 1,
         "height": 1
     },
-    "staminaPotion": {
+    "staminaPotionSmall": {
         "texture": "TILESET_ITEMS",
         "column": 3,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "healthPotionMedium": {
+        "texture": "TILESET_ITEMS",
+        "column": 4,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "staminaPotionMedium": {
+        "texture": "TILESET_ITEMS",
+        "column": 5,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "healthPotionLarge": {
+        "texture": "TILESET_ITEMS",
+        "column": 6,
+        "row": 0,
+        "width": 1,
+        "height": 1
+    },
+    "staminaPotionLarge": {
+        "texture": "TILESET_ITEMS",
+        "column": 7,
         "row": 0,
         "width": 1,
         "height": 1

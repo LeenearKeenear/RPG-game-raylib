@@ -117,7 +117,7 @@ namespace Combat
         if (player.Health <= 0)
         {
             player.Health = 0;
-            PlayAnimation(player.Anim, DEAD, player.Anim.direction, PlayerAnimationSet);
+            PlayAnimation(player.Anim, DEAD, player.Anim.direction);
             player.Anim.isDead = true;
             return;
         }
@@ -163,7 +163,7 @@ namespace Combat
                     attackFaceDir = LEFT;
 
                 // Mengunci arah karakter ke arah bidikan
-                PlayAnimation(player.Anim, IDLE, attackFaceDir, PlayerAnimationSet);
+                PlayAnimation(player.Anim, IDLE, attackFaceDir);
 
                 float manaCost = Inventory::GetAttackManaCost(player);
 
@@ -211,7 +211,7 @@ namespace Combat
         {
             player.Anim.isDead = false;
             player.Anim.isAttacking = false;
-            PlayAnimation(player.Anim, IDLE, player.Anim.direction, PlayerAnimationSet);
+            PlayAnimation(player.Anim, IDLE, player.Anim.direction);
             player.Health = player.MaxHealth;
             player.Mana = player.MaxMana;
             player.KnockbackVelocity = {0, 0};
