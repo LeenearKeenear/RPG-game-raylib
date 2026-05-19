@@ -165,6 +165,14 @@ void ClearSavedState(void);
 void WriteSaveFile(const std::string& path);
 
 /**
+ * @brief Write an autosave to saves/autosave/ directory
+ * @details Calls SaveGameState() then writes to saves/autosave/filename.
+ *          Creates the autosave directory if it doesn't exist.
+ * @param filename The filename within the autosave directory (e.g., "periodic.json")
+ */
+void WriteAutosave(const std::string& filename);
+
+/**
  * @brief Read saved state from JSON file
  * @details Reads and deserializes a JSON save file into the global saved state structs.
  *          Validates version == 1.

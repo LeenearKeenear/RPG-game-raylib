@@ -14,6 +14,7 @@
 #include "mainMenu.h"
 #include "pauseMenu.h"
 #include "loading_screen.h"
+#include "game_state_saver.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include <cstdio>
@@ -142,6 +143,18 @@ int main()
 
             if (frameTime > Time::MAX_FRAME)
                 frameTime = Time::MAX_FRAME;
+
+            // Autosave timer - only count when not paused
+            static float autosaveTimer = 0.0f;
+            if (!pauseMenu.IsActive())
+            {
+                autosaveTimer += frameTime;
+                if (autosaveTimer >= 60.0f)
+                {
+                    WriteAutosave("periodic.json");
+                    autosaveTimer = 0.0f;
+                }
+            }
 
             accumulator += frameTime;
 

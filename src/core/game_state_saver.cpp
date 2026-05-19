@@ -172,6 +172,17 @@ void WriteSaveFile(const std::string& path)
 }
 
 /**
+ * WriteAutosave - Save game state to saves/autosave/ directory.
+ */
+void WriteAutosave(const std::string& filename)
+{
+    SaveGameState(gState);
+    std::string dir = "saves/autosave";
+    std::filesystem::create_directories(dir);
+    WriteSaveFile(dir + "/" + filename);
+}
+
+/**
  * ReadSaveFile - Read JSON save file and deserialize into global saved state.
  */
 bool ReadSaveFile(const std::string& path)

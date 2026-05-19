@@ -149,6 +149,7 @@ void UpdateLoadingScreen(GameState *state)
             state->pendingMapPath.clear();
             state->pendingDoorName.clear();
 
+            WriteAutosave("quick.json");
             state->loadingComplete = true;
             state->loadingProgress = 100.0F;
             state->loadingText = "Map loaded!";
@@ -174,6 +175,10 @@ void UpdateLoadingScreen(GameState *state)
         if (HasSavedState())
         {
             RestoreGameState(state);
+        }
+        else
+        {
+            WriteAutosave("spawn.json");
         }
         InitMainMenu(state);
         return;
@@ -244,6 +249,10 @@ void UpdateLoadingScreen(GameState *state)
         if (HasSavedState())
         {
             RestoreGameState(state);
+        }
+        else
+        {
+            WriteAutosave("spawn.json");
         }
         InitMainMenu(state);
         break;
