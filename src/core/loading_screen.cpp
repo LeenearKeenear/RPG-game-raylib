@@ -169,6 +169,15 @@ void UpdateLoadingScreen(GameState *state)
         state->loadingComplete = true;
         state->currentScreen = PLAY;
 
+        // Fresh game: reset map to default (InitMap) so player spawns at tutorial,
+        // NOT at whatever map is still in memory from the previous session.
+        // RestoreGameState path: the map was already loaded during the PLAY session
+        // and stays in memory - no need to reload it.
+        if (!HasSavedState())
+        {
+            InitMap();
+        }
+
         // Init first, then restore saved state - order matters!
         // InitAll() sets position to spawn, then RestoreGameState overwrites it
         InitAll();
