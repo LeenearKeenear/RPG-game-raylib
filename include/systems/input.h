@@ -99,6 +99,7 @@ public:
     bool IsTestLoseHP() const { return Current.testLoseHP; }
 
     ItemSlot GetActiveSlot() const { return ActiveSlot; }
+    void SetActiveSlot(ItemSlot slot) { ActiveSlot = slot; }
     bool IsInventoryOpen() const { return InventoryOpen; }
     bool IsMapOpen() const { return MapOpen; }
 

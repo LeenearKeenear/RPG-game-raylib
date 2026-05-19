@@ -7,6 +7,8 @@
 
 #include "game_state_saver.h"
 #include "map.h"
+#include "propsbehavior.h"
+#include "entities.h"
 
 /*==============================================================================
  * Global Saved State Variables
@@ -60,26 +62,22 @@ void SaveGameState(GameState *state)
         savedPlayerState.hotbar[i] = PlayerInstance.GetHotbarItem(i);
     }
 
-    /*==============================================================================
-     * Save Enemy States
-     *==============================================================================
-     * @note Enemy saving dinonaktifkan karena sistem enemy telah diubah
-     *   menggunakan Entities namespace di codebase baru. Untuk sekarang,
-     *   enemy akan di-spawn ulang setiap kali masuk game.
-     *   TODO: Update untuk menggunakan Entities system di masa depan.
-     */
-    // savedEnemyStates.clear();
-    // for (const Enemy& enemy : activeEnemies) {
-    //     SavedEnemyState savedEnemy;
-    //     savedEnemy.position = enemy.position;
-    //     savedEnemy.currentHP = enemy.currentHP;
-    //     savedEnemy.isAlive = enemy.isAlive;
-    //     savedEnemy.type = enemy.type;
-    //     savedEnemyStates.push_back(savedEnemy);
-    // }
+    // Save new fields: max stats, inventory bag, animation state, active slot
+    savedPlayerState.maxHealth = PlayerInstance.MaxHealth;
+    savedPlayerState.maxMana = PlayerInstance.MaxMana;
+
+    for (int i = 0; i < 12; i++)
+    {
+        savedPlayerState.bag[i] = PlayerInstance.GetBagItem(i);
+    }
+
+    savedPlayerState.animState.state = PlayerInstance.Anim.state;
+    savedPlayerState.animState.direction = PlayerInstance.Anim.direction;
+    savedPlayerState.animState.isDead = PlayerInstance.Anim.isDead;
+    savedPlayerState.animState.activeSlot = InputInstance.GetActiveSlot();
 
     /*==============================================================================
-     * Save Item States
+     * Save Enemy States
      *==============================================================================*/
     savedItemStates.clear();
     for (const ItemSpawn &item : itemData.activeItems)
@@ -111,6 +109,29 @@ void SaveGameState(GameState *state)
     }
 
     /*==============================================================================
+     * Save Dead Entities (names of entities killed in this map)
+     *==============================================================================*/
+    savedMapState.deadEntities.clear();
+    {
+        const auto &deadSet = Entities::GetDeadEntities();
+        savedMapState.deadEntities.assign(deadSet.begin(), deadSet.end());
+    }
+
+    /*==============================================================================
+     * Save Consumed Chest Positions (chests already opened)
+     *==============================================================================*/
+    savedMapState.chestsOpened.clear();
+    {
+        const auto &consumed = chestManager.GetConsumedPositions();
+        savedMapState.chestsOpened.assign(consumed.begin(), consumed.end());
+    }
+
+    /*==============================================================================
+     * Save Map History (stack of visited maps)
+     *==============================================================================*/
+    savedMapState.mapHistory = mapHistoryStack.GetAllEntries();
+
+    /*==============================================================================
      * Mark as having saved state
      *==============================================================================*/
     hasSavedState = true;
@@ -128,6 +149,18 @@ void RestoreGameState(GameState *state)
      *==============================================================================*/
     if (hasSavedState)
     {
+        // Restore max stats first so SetHealth/SetMana can clamp correctly
+        if (savedPlayerState.maxHealth > 0)
+        {
+            PlayerInstance.MaxHealth = savedPlayerState.maxHealth;
+            PlayerInstance.MaxMana = savedPlayerState.maxMana;
+        }
+        else
+        {
+            PlayerInstance.MaxHealth = 100.0f;
+            PlayerInstance.MaxMana = 100.0f;
+        }
+
         PlayerInstance.SetHealth(savedPlayerState.health);
         PlayerInstance.SetMana(savedPlayerState.mana);
         PlayerInstance.SetPosition(savedPlayerState.position);
@@ -136,6 +169,20 @@ void RestoreGameState(GameState *state)
         {
             PlayerInstance.SetHotbarItem(i, savedPlayerState.hotbar[i]);
         }
+
+        // Restore bag inventory
+        for (int i = 0; i < 12; i++)
+        {
+            PlayerInstance.GetBagItem(i) = savedPlayerState.bag[i];
+        }
+
+        // Restore animation state
+        PlayerInstance.Anim.state = static_cast<State>(savedPlayerState.animState.state);
+        PlayerInstance.Anim.direction = static_cast<Direction>(savedPlayerState.animState.direction);
+        PlayerInstance.Anim.isDead = savedPlayerState.animState.isDead;
+
+        // Restore active slot
+        InputInstance.SetActiveSlot(static_cast<ItemSlot>(savedPlayerState.animState.activeSlot));
     }
 
     /*==============================================================================
@@ -183,7 +230,28 @@ void RestoreGameState(GameState *state)
         // Restore camera position
         camera.target = savedMapState.cameraTarget;
         camera.zoom = savedMapState.cameraZoom;
-        // Chest state restoration skipped for now - requires more complex tileson handling
+
+        // Restore dead entities
+        if (!savedMapState.deadEntities.empty())
+        {
+            Entities::SetDeadEntities(std::set<std::string>(
+                savedMapState.deadEntities.begin(),
+                savedMapState.deadEntities.end()));
+        }
+
+        // Restore consumed chest positions
+        if (!savedMapState.chestsOpened.empty())
+        {
+            chestManager.SetConsumedPositions(std::unordered_set<std::string>(
+                savedMapState.chestsOpened.begin(),
+                savedMapState.chestsOpened.end()));
+        }
+
+        // Restore map history
+        if (!savedMapState.mapHistory.empty())
+        {
+            mapHistoryStack.FromVector(savedMapState.mapHistory);
+        }
     }
 }
 
@@ -207,9 +275,17 @@ void ClearSavedState(void)
     savedPlayerState.position = {0};
     savedPlayerState.health = 0;
     savedPlayerState.mana = 0;
+    savedPlayerState.maxHealth = 0;
+    savedPlayerState.maxMana = 0;
     for (int i = 0; i < 4; i++)
         savedPlayerState.hotbar[i] = {-1, 0};
+    for (int i = 0; i < 12; i++)
+        savedPlayerState.bag[i] = {-1, 0};
+    savedPlayerState.animState = {0};
     savedEnemyStates.clear();
     savedItemStates.clear();
     savedMapState.chestOpened.clear();
+    savedMapState.deadEntities.clear();
+    savedMapState.chestsOpened.clear();
+    savedMapState.mapHistory.clear();
 }

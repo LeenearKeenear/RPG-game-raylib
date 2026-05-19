@@ -46,7 +46,7 @@ int lastTilesRendered = 0;
 TileRange currentVisibleRange = {0, 0, 0, 0};
 
 /** Stack riwayat perpindahan map */
-static MapSystem::MapStack mapHistoryStack;
+MapSystem::MapStack mapHistoryStack;
 
 /** Path map yang sedang aktif */
 static std::string currentMapPath = "";

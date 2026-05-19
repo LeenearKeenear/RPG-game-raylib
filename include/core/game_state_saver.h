@@ -17,6 +17,7 @@
 #include "item.h"
 #include "map.h"
 #include "inventory.h"
+#include "mapstack.h"
 #include <vector>
 #include <string>
 
@@ -31,7 +32,20 @@ struct SavedPlayerState {
     Vector2 position;           /**< Posisi player di world */
     float health;               /**< HP player saat ini */
     float mana;                 /**< Mana player saat ini */
+    float maxHealth;            /**< Max HP player */
+    float maxMana;              /**< Max Mana player */
     InventoryItem hotbar[4];    /**< Hotbar inventory player */
+    InventoryItem bag[12];      /**< Full bag inventory (12 slots) */
+
+    /**
+     * @brief Snapshot animasi dan input state
+     */
+    struct {
+        int state;              /**< Animation state (State enum) */
+        int direction;          /**< Animation direction (Direction enum) */
+        bool isDead;            /**< Apakah player mati */
+        int activeSlot;         /**< Active hotbar slot (ItemSlot enum) */
+    } animState;
 };
 
 /**
@@ -64,7 +78,10 @@ struct SavedMapState {
     std::string mapPath;                              /**< Path map saat ini */
     Vector2 cameraTarget;                          /**< Posisi camera target */
     float cameraZoom;                            /**< Zoom camera */
-    std::vector<unsigned char> chestOpened;    /**< Status opened/closed tiap chest */
+    std::vector<unsigned char> chestOpened;                   /**< Status opened/closed tiap chest */
+    std::vector<std::string> deadEntities;                    /**< Nama entitas yang sudah mati di map ini */
+    std::vector<std::string> chestsOpened;                    /**< Posisi chest yang sudah dibuka (encoded string) */
+    std::vector<MapSystem::MapHistoryEntry> mapHistory;       /**< Stack riwayat perpindahan map */
 };
 
 /*==============================================================================

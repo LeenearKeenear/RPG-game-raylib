@@ -18,13 +18,17 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include "mapstack.h"
 
 /*==============================================================================
- * Global Camera
+ * Global Camera & Map History Stack
  *==============================================================================*/
 
 // Camera global untuk rendering world
 extern Camera2D camera;
+
+// Stack riwayat perpindahan map (global agar bisa diakses oleh save system)
+extern MapSystem::MapStack mapHistoryStack;
 
 /*==============================================================================
  * MapObject Struct

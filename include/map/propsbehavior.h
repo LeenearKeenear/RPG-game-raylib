@@ -113,6 +113,12 @@ public:
      */
     size_t GetCount() const { return chests.size(); }
 
+    /** @brief Dapatkan posisi chest yang sudah dikonsumsi */
+    const std::unordered_set<std::string>& GetConsumedPositions() const { return consumedPositions; }
+
+    /** @brief Set posisi chest yang sudah dikonsumsi (untuk restore state) */
+    void SetConsumedPositions(const std::unordered_set<std::string>& positions) { consumedPositions = positions; }
+
 private:
     std::vector<TileObject> chests;                    // daftar chest yang sedang dikelola
     std::unordered_set<std::string> consumedPositions; // posisi chest yang sudah dikonsumsi agar tidak diproses ulang
