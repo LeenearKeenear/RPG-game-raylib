@@ -145,3 +145,37 @@ bool HasSavedState(void);
  * @details Untuk new game dari awal (fresh start)
  */
 void ClearSavedState(void);
+
+/*==============================================================================
+ * File I/O Functions
+ *==============================================================================*/
+
+/**
+ * @brief Write saved state to JSON file
+ * @details Serializes all global saved state structs to a JSON file.
+ *          Uses atomic write: writes to .tmp then renames.
+ * @param path Path to the save file
+ */
+void WriteSaveFile(const std::string& path);
+
+/**
+ * @brief Read saved state from JSON file
+ * @details Reads and deserializes a JSON save file into the global saved state structs.
+ *          Validates version == 1.
+ * @param path Path to the save file
+ * @return true if successful, false if file not found, parse error, or version mismatch
+ */
+bool ReadSaveFile(const std::string& path);
+
+/**
+ * @brief Check if a save file exists and has content
+ * @param path Path to the save file
+ * @return true if file exists and has non-zero size
+ */
+bool HasSaveFile(const std::string& path);
+
+/**
+ * @brief Delete a save file if it exists
+ * @param path Path to the save file to delete
+ */
+void DeleteSaveFile(const std::string& path);
