@@ -185,6 +185,7 @@ void UpdateLoadingScreen(GameState *state)
         if (HasSavedState())
         {
             RestoreGameState(state);
+            TraceLog(LOG_INFO, "LOADING: after RestoreGameState, player pos = (%.2f, %.2f)", PlayerInstance.GetPosition().x, PlayerInstance.GetPosition().y);
         }
         else
         {

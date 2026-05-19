@@ -226,6 +226,7 @@ bool ReadSaveFile(const std::string& path)
         const auto& player = root.at("player");
         savedPlayerState.position.x = player.at("position")[0].get<float>();
         savedPlayerState.position.y = player.at("position")[1].get<float>();
+        TraceLog(LOG_INFO, "LOAD: read position = (%.2f, %.2f) from %s", savedPlayerState.position.x, savedPlayerState.position.y, path.c_str());
         savedPlayerState.health = player.value("health", 100.0f);
         savedPlayerState.maxHealth = player.value("maxHealth", 100.0f);
         savedPlayerState.mana = player.value("mana", 100.0f);
@@ -396,6 +397,7 @@ void SaveGameState(GameState *state)
      * Save Player State
      *==============================================================================*/
     savedPlayerState.position = PlayerInstance.GetPosition();
+    TraceLog(LOG_INFO, "SAVE: position = (%.2f, %.2f)", savedPlayerState.position.x, savedPlayerState.position.y);
     savedPlayerState.health = PlayerInstance.GetHealth();
     savedPlayerState.mana = PlayerInstance.GetMana();
 
@@ -526,6 +528,7 @@ void RestoreGameState(GameState *state)
         PlayerInstance.SetHealth(savedPlayerState.health);
         PlayerInstance.SetMana(savedPlayerState.mana);
         PlayerInstance.SetPosition(savedPlayerState.position);
+        TraceLog(LOG_INFO, "RESTORE: SetPosition = (%.2f, %.2f)", savedPlayerState.position.x, savedPlayerState.position.y);
 
         for (int i = 0; i < 4; i++)
         {
