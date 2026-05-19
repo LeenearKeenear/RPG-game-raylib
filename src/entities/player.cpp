@@ -45,7 +45,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
     }
 
     Anim.animSet = &loadedAnimationSets["knight"];
-    PlayAnimation(Anim, IDLE, DOWN);
+    PlayAnimation(Anim, IDLE, RIGHT);
     CollisionRects.clear();
     CollisionPolygons.clear();
 
@@ -178,6 +178,8 @@ void Player::Update()
  */
 void Player::Render(void)
 {
+    DrawAimIndicator();
+
     // Bayangan (Drop shadow)
     DrawEllipse((int)Position.x + 16, (int)Position.y + 31, 10, 4, {0, 0, 0, 80});
 
@@ -190,7 +192,6 @@ void Player::Render(void)
 
     DrawAnimation(Anim, tint);
     Combat::DrawSwingAttack(*this);
-    DrawAimIndicator();
 }
 
 void Player::TakeDamage(float amount, Vector2 knockback)
@@ -234,9 +235,6 @@ Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
  */
 void Player::DrawAimIndicator(void)
 {
-    if (!isDebugMode)
-        return;
-
     Vector2 playerCenter = GetCenter();
     Vector2 facingDir = {0, 0};
     switch (Anim.direction)
@@ -262,9 +260,17 @@ void Player::DrawAimIndicator(void)
         playerCenter.y + aimDir.y * INTERACT_RANGE};
 
     float dot = Vector2DotProduct(facingDir, aimDir);
-    Color indicatorColor = (dot >= RayCastAngle) ? GREEN : WHITE;
+    bool isActive = (dot >= RayCastAngle);
+    float alpha = isActive ? 1.0f : 0.5f;
 
-    DrawLineEx(playerCenter, rayEnd, 2.0f, indicatorColor);
+    Color indicatorColor = Fade(WHITE, alpha);
+    Color outlineColor = Fade(BLACK, alpha);
+
+    // Gambar outline hitam (lebih tebal)
+    DrawLineEx(playerCenter, rayEnd, 3.5f, outlineColor);
+    // Gambar garis utama putih (lebih tipis di atas outline)
+    DrawLineEx(playerCenter, rayEnd, 1.5f, indicatorColor);
+
     // Raycast hanya terhadap object layer (garis biru) untuk titik merah
     std::vector<MapObject> debugObstacles;
     if (tilesonMap)
@@ -279,10 +285,10 @@ void Player::DrawAimIndicator(void)
     }
     LastHit = Ray.Cast(playerCenter, aimDir, INTERACT_RANGE, debugObstacles);
 
-    // Titik merah hanya di interseksi dengan garis biru (object layer)
-    if (LastHit.hit)
+    // Titik merah hanya di interseksi dengan garis biru (object layer) ketika mode debug aktif
+    if (isDebugMode && LastHit.hit)
     {
-        DrawCircleV(LastHit.point, 4.0f, RED);
+        DrawCircleV(LastHit.point, 4.0f, Fade(RED, alpha));
     }
 }
 
