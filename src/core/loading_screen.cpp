@@ -96,6 +96,7 @@ void UpdateLoadingScreen(GameState *state)
 
         case 1:
             state->loadingText = isBack ? "Reloading previous map..." : "Loading new map...";
+            TraceLog(LOG_INFO, "LOADING: Loading map: %s", state->pendingMapPath.c_str());
             LoadMap(state->pendingMapPath.c_str());
             SetCurrentMapPath(state->pendingMapPath.c_str());
             BuildMapObjectIndex();
@@ -150,6 +151,7 @@ void UpdateLoadingScreen(GameState *state)
             state->pendingMapPath.clear();
             state->pendingDoorName.clear();
 
+            TraceLog(LOG_INFO, "LOADING: Map switch complete, player at (%.2f, %.2f)", PlayerInstance.GetPosition().x, PlayerInstance.GetPosition().y);
             WriteAutosave("quick.json");
             state->loadingComplete = true;
             state->loadingProgress = 100.0F;
