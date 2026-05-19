@@ -1,7 +1,6 @@
 /build/
 /main.exe
 *.o
-/.vscode/
 .clangd
 *.bak
 /Backups/
@@ -14,6 +13,7 @@ floorC_tester.json
 *.Personal.*
 
 # AI Agents
+.sisyphus/
 
 # Auto-downloaded raylib
 raylib/
