@@ -27,6 +27,7 @@ static Texture2D logoTexture;
 static Popup startNewPopup("Start new game? Current save will be lost.", "Start New", "Cancel", 0.7f);
 static Popup loadPopup("Load saved game?", "Load Save", "Cancel", 0.7f);
 static Popup mainNoSavePopup("No save file found.", "OK", 0.7f);
+static Popup mainCorruptPopup("Save file corrupted or unreadable.", "OK", 0.7f);
 static bool waitingStartConfirm = false;
 static bool waitingLoadConfirm = false;
 
@@ -94,9 +95,16 @@ void UpdateMainMenu(GameState *state)
                 case 1:  // Load Game
                     if (HasSaveFile("saves/manual/slot0.json"))
                     {
-                        ReadSaveFile("saves/manual/slot0.json");
-                        waitingLoadConfirm = true;
-                        loadPopup.Show();
+                        if (ReadSaveFile("saves/manual/slot0.json"))
+                        {
+                            waitingLoadConfirm = true;
+                            loadPopup.Show();
+                        }
+                        else
+                        {
+                            DeleteSaveFile("saves/manual/slot0.json");
+                            mainCorruptPopup.Show();
+                        }
                     }
                     else
                     {
@@ -154,6 +162,12 @@ void UpdateMainMenu(GameState *state)
     {
         mainNoSavePopup.Update(mousePosition, mouseClicked);
     }
+
+    // Handle corrupt save popup
+    if (mainCorruptPopup.IsActive())
+    {
+        mainCorruptPopup.Update(mousePosition, mouseClicked);
+    }
 }
 
 /**
@@ -188,6 +202,9 @@ void RenderMainMenuToVirtualScreen(GameState *state)
     }
     if (mainNoSavePopup.IsActive()) {
         mainNoSavePopup.Draw(virtualMouse);
+    }
+    if (mainCorruptPopup.IsActive()) {
+        mainCorruptPopup.Draw(virtualMouse);
     }
 
     EndTextureMode();

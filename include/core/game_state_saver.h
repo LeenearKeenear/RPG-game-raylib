@@ -162,15 +162,16 @@ void ClearSavedState(void);
  *          Uses atomic write: writes to .tmp then renames.
  * @param path Path to the save file
  */
-void WriteSaveFile(const std::string& path);
+bool WriteSaveFile(const std::string& path);
 
 /**
  * @brief Write an autosave to saves/autosave/ directory
  * @details Calls SaveGameState() then writes to saves/autosave/filename.
  *          Creates the autosave directory if it doesn't exist.
  * @param filename The filename within the autosave directory (e.g., "periodic.json")
+ * @return true if successful, false if write failed
  */
-void WriteAutosave(const std::string& filename);
+bool WriteAutosave(const std::string& filename);
 
 /**
  * @brief Read saved state from JSON file

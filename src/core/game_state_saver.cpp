@@ -52,7 +52,7 @@ bool hasSavedState = false;
 /**
  * WriteSaveFile - Serialize all global saved state to a JSON file using atomic write.
  */
-void WriteSaveFile(const std::string& path)
+bool WriteSaveFile(const std::string& path)
 {
     json root;
 
@@ -164,22 +164,29 @@ void WriteSaveFile(const std::string& path)
 
     // Atomic write: write to .tmp then rename
     std::string tmpPath = path + ".tmp";
+    if (std::filesystem::exists(tmpPath))
+        std::filesystem::remove(tmpPath);
     std::ofstream file(tmpPath);
     file << root.dump(4);
     file.close();
 
     std::filesystem::rename(tmpPath, path);
+
+    if (!std::filesystem::exists(path))
+        return false;
+
+    return true;
 }
 
 /**
  * WriteAutosave - Save game state to saves/autosave/ directory.
  */
-void WriteAutosave(const std::string& filename)
+bool WriteAutosave(const std::string& filename)
 {
     SaveGameState(gState);
     std::string dir = "saves/autosave";
     std::filesystem::create_directories(dir);
-    WriteSaveFile(dir + "/" + filename);
+    return WriteSaveFile(dir + "/" + filename);
 }
 
 /**
@@ -194,6 +201,10 @@ bool ReadSaveFile(const std::string& path)
     {
         std::ifstream file(path);
         json root = json::parse(file);
+
+        // Validate required fields exist
+        if (!root.contains("version") || !root.contains("player") || !root.contains("map"))
+            return false;
 
         // Validate version
         int version = root.at("version").get<int>();
@@ -326,6 +337,10 @@ bool ReadSaveFile(const std::string& path)
         return false;
     }
     catch (const json::out_of_range&)
+    {
+        return false;
+    }
+    catch (const json::type_error&)
     {
         return false;
     }
@@ -577,6 +592,13 @@ void RestoreGameState(GameState *state)
         // Restore camera position
         camera.target = savedMapState.cameraTarget;
         camera.zoom = savedMapState.cameraZoom;
+
+        // Fall back to tutorial map if saved map file is missing
+        if (!std::filesystem::exists(savedMapState.mapPath))
+        {
+            TraceLog(LOG_WARNING, "Saved map not found: %s, falling back to assets/maps/tutorial.json", savedMapState.mapPath.c_str());
+            savedMapState.mapPath = "assets/maps/tutorial.json";
+        }
 
         // Restore dead entities
         if (!savedMapState.deadEntities.empty())
