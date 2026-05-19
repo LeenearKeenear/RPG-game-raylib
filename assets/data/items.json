@@ -18,7 +18,7 @@
         "sweepAngle": 0.0,
         "centerOffset": { "x": 8.0, "y": 4.0 },
         "manaCost": 10.0,
-        "attackType": "thrust"
+        "attackType": "slash"
       }
     },
     "sword2": {
@@ -77,7 +77,7 @@
       "isStackable": false,
       "maxStack": 1,
       "weapon": {
-        "damage": 12.0,
+        "damage": 10.0,
         "reach": 120.0,
         "breadth": 8.0,
         "duration": 0.3,
@@ -86,7 +86,7 @@
         "sweepAngle": 0.0,
         "centerOffset": { "x": 8.0, "y": 4.0 },
         "manaCost": 0.0,
-        "attackType": "thrust"
+        "attackType": "pierce"
       }
     },
     "healthPotionMedium": {

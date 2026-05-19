@@ -68,7 +68,9 @@ typedef enum
 enum AttackType
 {
     ATTACK_SLASH, // (di json nanti namanya harus ditulis slash)
-    ATTACK_THRUST // (di json nanti namanya harus ditulis thrust)
+    ATTACK_THRUST, // (di json nanti namanya harus ditulis thrust)
+    ATTACK_PIERCE, // (di json nanti namanya harus ditulis pierce)
+    ATTACK_SLAM    // (di json nanti namanya harus ditulis slam)
 };
 
 /**

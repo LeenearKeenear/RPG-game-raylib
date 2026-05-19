@@ -614,7 +614,7 @@ void Enemy::Render()
     {
         // Blink makin cepat menjelang akhir death timer
         float blinkFreq = (DeathTimer / DeathDuration) * 15.0f;
-        shouldDraw = AnimEffects::ShouldBlink(DeathTimer, blinkFreq);
+        shouldDraw = Blink(DeathTimer, blinkFreq);
     }
 
     if (shouldDraw)

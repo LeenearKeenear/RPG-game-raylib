@@ -15,10 +15,6 @@
 
 namespace Combat
 {
-    /**
-     * Pembantu internal untuk mendeteksi tabrakan antara serangan pemain dan entitas dunia.
-     * Menghitung hitbox dinamis berdasarkan arah hadap pemain dan jangkauan senjata.
-     */
     void PerformHitDetection(Player &player)
     {
         Vector2 playerCenter = {
@@ -26,10 +22,9 @@ namespace Combat
             player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
 
         Rectangle attackHitbox;
-        float reach = player.Swing.reach;     ///< Jarak serangan ke depan
-        float breadth = player.Swing.breadth; ///< Lebar serangan ke samping
+        float reach = player.Swing.reach;
+        float breadth = player.Swing.breadth;
 
-        // Menghasilkan persegi panjang hitbox serangan berdasarkan arah
         switch (player.Anim.direction)
         {
         case RIGHT:
@@ -51,7 +46,6 @@ namespace Combat
             break;
         }
 
-        // Memeriksa semua entitas aktif untuk tabrakan
         for (auto entity : Entities::GetRegistry())
         {
             Entity *playerAsEntity = &player;
@@ -91,10 +85,6 @@ namespace Combat
         HitPropsByAttack(attackHitbox, PlayerInstance.GetHitbox(), &player);
     }
 
-    /**
-     * Titik masuk utama untuk memproses logika pertarungan pemain.
-     * Menangani regenerasi mana, transisi status, dan pemicuan serangan.
-     */
     void HandleCombat(Player &player)
     {
         if (player.Anim.isDead)
@@ -103,7 +93,6 @@ namespace Combat
         if (InputInstance.IsInventoryOpen())
             return;
 
-        // Penyaringan Input: Pastikan serangan hanya terpicu jika klik dimulai dalam status yang valid
         if (InputInstance.IsLeftClickPressed())
         {
             player.Swing.pressRegistered = true;
@@ -113,7 +102,6 @@ namespace Combat
             player.Swing.pressRegistered = false;
         }
 
-        // Menangani transisi kematian pemain
         if (player.Health <= 0)
         {
             player.Health = 0;
@@ -122,7 +110,6 @@ namespace Combat
             return;
         }
 
-        // Logika Regenerasi Mana
         if (player.ManaRegenTimer > 0)
         {
             player.ManaRegenTimer -= Time::DELTA_TIME;
@@ -137,20 +124,17 @@ namespace Combat
             }
         }
 
-        // Eksekusi Serangan
         if (player.Swing.pressRegistered && !player.Anim.isAttacking)
         {
             PlayerAction action = InputInstance.ResolveAction();
             if (action == ACTION_ATTACK)
             {
-                // Menghitung arah bidikan berdasarkan posisi mouse di dunia (world space)
                 Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(player.State), camera);
                 Vector2 playerCenter = {
                     player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
                     player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
                 Vector2 attackDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
 
-                // Menentukan arah hadap animasi berdasarkan sudut bidikan
                 float angle = atan2(attackDir.y, attackDir.x) * (180.0f / PI);
                 Direction attackFaceDir;
                 if (angle >= -135.0f && angle < -45.0f)
@@ -162,12 +146,10 @@ namespace Combat
                 else
                     attackFaceDir = LEFT;
 
-                // Mengunci arah karakter ke arah bidikan
                 PlayAnimation(player.Anim, IDLE, attackFaceDir);
 
                 float manaCost = Inventory::GetAttackManaCost(player);
 
-                // Pemeriksaan Resource (Mana)
                 if (player.Mana >= manaCost)
                 {
                     InventoryItem activeItem = Inventory::GetActiveHotbarItem(player);
@@ -181,11 +163,11 @@ namespace Combat
                     player.Mana -= manaCost;
                     player.ManaRegenTimer = player.ManaRegenDelay;
 
-                    // Inisialisasi Status Serangan
                     player.Swing.active = true;
                     player.Swing.timer = 0;
                     player.Swing.damagedEntities.clear();
                     player.Swing.center = playerCenter;
+                    player.Swing.raycastAngle = angle;
 
                     Inventory::SetupAttackStats(player, attackFaceDir);
 
@@ -202,9 +184,6 @@ namespace Combat
         }
     }
 
-    /**
-     * Logika untuk memulihkan status pemain saat dihidupkan kembali (resurrection).
-     */
     void HandleRevive(Player &player)
     {
         if (player.Anim.isDead)
@@ -219,16 +198,11 @@ namespace Combat
         }
     }
 
-    /**
-     * Memperbarui status fisik dari ayunan/tusukan senjata yang aktif.
-     * Menghitung rotasi dengan easing dan melakukan deteksi hit terus-menerus.
-     */
     void UpdateSwingAttack(Player &player, float dt)
     {
         if (!player.Swing.active)
             return;
 
-        // Pastikan pusat senjata tetap terkunci pada posisi pemain (bahkan saat terkena knockback)
         Vector2 playerCenter = {
             player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
             player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
@@ -287,25 +261,37 @@ namespace Combat
         {
             float progress = player.Swing.timer / player.Swing.duration;
 
-            if (player.Swing.type == ATTACK_THRUST)
+            if (player.Swing.type == ATTACK_SLASH)
             {
-                player.Swing.thrustOffset = AnimEffects::CalculateThrustOffset(progress, 16.0f);
+                player.Swing.currentAngle = Slash(player.Swing.raycastAngle, progress);
+                player.Swing.thrustOffset = 0.0f;
+            }
+            else if (player.Swing.type == ATTACK_THRUST)
+            {
+                player.Swing.thrustOffset = progress * 16.0f;
                 player.Swing.currentAngle = player.Swing.startAngle;
+            }
+            else if (player.Swing.type == ATTACK_PIERCE)
+            {
+                player.Swing.thrustOffset = progress * 24.0f;
+                player.Swing.currentAngle = player.Swing.startAngle;
+            }
+            else if (player.Swing.type == ATTACK_SLAM)
+            {
+                float slamProgress = progress * progress;
+                player.Swing.currentAngle = player.Swing.startAngle + (slamProgress * player.Swing.sweepAngle);
+                player.Swing.thrustOffset = slamProgress * 8.0f;
             }
             else
             {
-                player.Swing.currentAngle = AnimEffects::CalculateSlashRotation(progress, player.Swing.startAngle, player.Swing.sweepAngle);
+                player.Swing.currentAngle = player.Swing.startAngle + (progress * player.Swing.sweepAngle);
                 player.Swing.thrustOffset = 0.0f;
             }
 
-            // Deteksi hit terus-menerus selama jendela aktif
             PerformHitDetection(player);
         }
     }
 
-    /**
-     * Me-render sprite senjata berdasarkan status dan tipe ayunan saat ini.
-     */
     void DrawSwingAttack(Player &player)
     {
         if (!player.Swing.active)
@@ -320,7 +306,7 @@ namespace Combat
             return;
 
         Vector2 visualPos = player.Swing.center;
-        if (player.Swing.type == ATTACK_THRUST)
+        if (player.Swing.type == ATTACK_THRUST || player.Swing.type == ATTACK_PIERCE || player.Swing.type == ATTACK_SLAM)
         {
             float rad = player.Swing.baseAngle * (PI / 180.0f);
             visualPos.x += cosf(rad) * player.Swing.thrustOffset;
@@ -342,4 +328,4 @@ namespace Combat
     {
         Effects::AddDamage(pos, damage);
     }
-} // namespace Combat
+}

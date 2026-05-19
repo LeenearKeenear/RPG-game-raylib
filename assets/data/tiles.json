@@ -103,5 +103,19 @@
         "row": 0,
         "width": 1,
         "height": 1
+    },
+    "bowDraw": {
+        "texture": "TILESET_ITEMS",
+        "column": 1,
+        "row": 1,
+        "width": 1,
+        "height": 1
+    },
+    "arrow": {
+        "texture": "TILESET_ITEMS",
+        "column": 2,
+        "row": 1,
+        "width": 1,
+        "height": 1
     }
 }

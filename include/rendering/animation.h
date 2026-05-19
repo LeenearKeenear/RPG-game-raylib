@@ -76,7 +76,7 @@ enum Direction
 
 struct AnimationConfig
 {
-    std::vector<std::string> frameIds;
+    std::vector<std::string> sprites;
     float speed;
     bool loop;
 };
@@ -100,7 +100,7 @@ struct Animation
 };
 
 void LoadAnimationsFromJSON();
-void PlayAnimation(Animation &anim, State newState, Direction newDir);
+void PlayAnimation(Animation &anim, State state, Direction direction);
 void UpdateAnimation(Animation &anim, float dt);
 void DrawAnimation(const Animation &anim, Color tint = WHITE);
 
@@ -112,21 +112,9 @@ Procedural Animation
 ====================
 */
 
-namespace AnimEffects
-{
-    float CalculateFadeOut(float timer, float duration);
-
-    float CalculateFloatOffset(float currentOffset, float speed, float dt);
-
-    bool ShouldBlink(float timer, float frequency);
-
-    void ApplyPhysics(Vector2& pos, Vector2& vel, float gravity, float friction, float dt);
-
-    Vector2 LerpTowards(Vector2 current, Vector2 target, float speed, float dt);
-
-    float CalculateThrustOffset(float progress, float maxOffset);
-
-    float CalculateSlashRotation(float progress, float startAngle, float sweepAngle);
-}
-
-void UpdatePlayerAttack(Animation &p);
+float FadeOut(float timer, float duration);
+float TextFloat(float currentOffset, float speed, float dt);
+void DamageFloat(Vector2& pos, Vector2& vel, float gravity, float friction, float dt);
+Vector2 LerpTowards(Vector2 current, Vector2 target, float speed, float dt);
+bool Blink(float timer, float frequency);
+float Slash(float raycastAngle, float progress);

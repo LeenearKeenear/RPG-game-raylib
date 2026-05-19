@@ -232,27 +232,13 @@ void LoadAnimationsFromJSON()
                     {
                         for (auto &frame : dirVal.at("frames"))
                         {
-                            config.frameIds.push_back(frame.get<std::string>());
+                            config.sprites.push_back(frame.get<std::string>());
                         }
                     }
                     
                     set.configs[state][dir] = config;
                 }
                 
-                for (int d = 0; d < 4; d++)
-                {
-                    if (set.configs[state][d].frameIds.empty())
-                    {
-                        if (!set.configs[state][LEFT].frameIds.empty())
-                        {
-                            set.configs[state][d] = set.configs[state][LEFT];
-                        }
-                        else if (!set.configs[state][RIGHT].frameIds.empty())
-                        {
-                            set.configs[state][d] = set.configs[state][RIGHT];
-                        }
-                    }
-                }
             }
             loadedAnimationSets[entityKey] = set;
         }
@@ -264,38 +250,45 @@ void LoadAnimationsFromJSON()
     }
 }
 
-void PlayAnimation(Animation &anim, State newState, Direction newDir)
+void PlayAnimation(Animation &anim, State state, Direction direction)
 {
     if (!anim.animSet) return;
 
-    Direction resolvedDir = newDir;
+    Direction resolvedDir = direction;
     
-    if (anim.animSet->configs[newState][resolvedDir].frameIds.empty())
+    if (anim.animSet->configs[state][resolvedDir].sprites.empty())
     {
         if (resolvedDir == UP || resolvedDir == DOWN)
         {
-            if (anim.direction == LEFT || anim.direction == RIGHT)
+            bool wasLeft = false;
+            bool wasRight = false;
+            
+            if (anim.currentConfig)
             {
-                resolvedDir = anim.direction;
+                for (int s = 0; s < 4; s++) {
+                    if (anim.currentConfig == &anim.animSet->configs[s][LEFT]) wasLeft = true;
+                    if (anim.currentConfig == &anim.animSet->configs[s][RIGHT]) wasRight = true;
+                }
             }
-            else
-            {
-                resolvedDir = RIGHT;
-            }
+            
+            if (wasLeft) resolvedDir = LEFT;
+            else if (wasRight) resolvedDir = RIGHT;
+            else if (anim.direction == LEFT || anim.direction == RIGHT) resolvedDir = anim.direction;
+            else resolvedDir = RIGHT;
         }
         
-        if (anim.animSet->configs[newState][resolvedDir].frameIds.empty())
+        if (anim.animSet->configs[state][resolvedDir].sprites.empty())
         {
-            if (!anim.animSet->configs[newState][LEFT].frameIds.empty()) resolvedDir = LEFT;
-            else if (!anim.animSet->configs[newState][RIGHT].frameIds.empty()) resolvedDir = RIGHT;
+            if (!anim.animSet->configs[state][RIGHT].sprites.empty()) resolvedDir = RIGHT;
+            else if (!anim.animSet->configs[state][LEFT].sprites.empty()) resolvedDir = LEFT;
         }
     }
 
-    if (anim.state == newState && anim.direction == resolvedDir && anim.currentConfig) return;
+    if (anim.state == state && anim.direction == direction && anim.currentConfig == &anim.animSet->configs[state][resolvedDir]) return;
 
-    anim.state = newState;
-    anim.direction = resolvedDir;
-    anim.currentConfig = &anim.animSet->configs[newState][resolvedDir];
+    anim.state = state;
+    anim.direction = direction;
+    anim.currentConfig = &anim.animSet->configs[state][resolvedDir];
     
     anim.timer = 0.0f;
     anim.currentFrameIndex = 0;
@@ -303,7 +296,7 @@ void PlayAnimation(Animation &anim, State newState, Direction newDir)
 
 void UpdateAnimation(Animation &anim, float dt)
 {
-    if (!anim.currentConfig || anim.currentConfig->frameIds.empty()) return;
+    if (!anim.currentConfig || anim.currentConfig->sprites.empty()) return;
 
     anim.timer += dt;
     if (anim.timer >= anim.currentConfig->speed)
@@ -311,7 +304,7 @@ void UpdateAnimation(Animation &anim, float dt)
         anim.timer = 0.0f;
         anim.currentFrameIndex++;
 
-        if (anim.currentFrameIndex >= (int)anim.currentConfig->frameIds.size())
+        if (anim.currentFrameIndex >= (int)anim.currentConfig->sprites.size())
         {
             if (anim.currentConfig->loop)
             {
@@ -319,7 +312,7 @@ void UpdateAnimation(Animation &anim, float dt)
             }
             else
             {
-                anim.currentFrameIndex = (int)anim.currentConfig->frameIds.size() - 1;
+                anim.currentFrameIndex = (int)anim.currentConfig->sprites.size() - 1;
                 
                 if (anim.state == ATTACK)
                 {
@@ -333,15 +326,15 @@ void UpdateAnimation(Animation &anim, float dt)
 
 void DrawAnimation(const Animation &anim, Color tint)
 {
-    if (!anim.currentConfig || anim.currentConfig->frameIds.empty()) return;
+    if (!anim.currentConfig || anim.currentConfig->sprites.empty()) return;
 
     int index = anim.currentFrameIndex;
-    if (index < 0 || index >= (int)anim.currentConfig->frameIds.size())
+    if (index < 0 || index >= (int)anim.currentConfig->sprites.size())
     {
         index = 0;
     }
 
-    const std::string &frameId = anim.currentConfig->frameIds[index];
+    const std::string &frameId = anim.currentConfig->sprites[index];
     Display display = { anim.position, FRAME_SIZE, {0,0}, {0,0}, 0.0f, tint };
     DrawFrame(frameId, display);
 }
@@ -352,7 +345,7 @@ Procedural Animation
 ====================
 */
 
-float AnimEffects::CalculateFadeOut(float timer, float duration)
+float FadeOut(float timer, float duration)
 {
     if (duration <= 0.0f) return 0.0f;
     float alpha = 1.0f - (timer / duration);
@@ -361,39 +354,42 @@ float AnimEffects::CalculateFadeOut(float timer, float duration)
     return alpha;
 }
 
-float AnimEffects::CalculateFloatOffset(float currentOffset, float speed, float dt)
+float TextFloat(float currentOffset, float speed, float dt)
 {
     return currentOffset - (speed * dt);
 }
 
-bool AnimEffects::ShouldBlink(float timer, float frequency)
-{
-    if (frequency <= 0.0f) return true;
-    return (int)(timer * frequency * 10.0f) % 2 == 0;
-}
-
-void AnimEffects::ApplyPhysics(Vector2& pos, Vector2& vel, float gravity, float friction, float dt)
+void DamageFloat(Vector2& pos, Vector2& vel, float gravity, float friction, float dt)
 {
     pos = Vector2Add(pos, Vector2Scale(vel, dt * 60.0f));
-    
     vel.y += gravity;
-    
     vel.x *= friction;
 }
 
-Vector2 AnimEffects::LerpTowards(Vector2 current, Vector2 target, float speed, float dt)
+Vector2 LerpTowards(Vector2 current, Vector2 target, float speed, float dt)
 {
     Vector2 dir = Vector2Normalize(Vector2Subtract(target, current));
     return Vector2Add(current, Vector2Scale(dir, speed * dt));
 }
 
-float AnimEffects::CalculateThrustOffset(float progress, float maxOffset)
+bool Blink(float timer, float frequency)
 {
-    return sinf(progress * PI) * maxOffset;
+    if (frequency <= 0.0f) return true;
+    return (int)(timer * frequency * 10.0f) % 2 == 0;
 }
 
-float AnimEffects::CalculateSlashRotation(float progress, float startAngle, float sweepAngle)
+float Slash(float raycastAngle, float progress)
 {
-    float easedProgress = sinf(progress * PI / 2.0f);
-    return startAngle + (easedProgress * sweepAngle);
+    if (progress < 1.0f / 3.0f)
+    {
+        return raycastAngle + 90.0f;
+    }
+    else if (progress < 2.0f / 3.0f)
+    {
+        return raycastAngle - 150.0f;
+    }
+    else
+    {
+        return raycastAngle - 90.0f;
+    }
 }

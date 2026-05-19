@@ -142,7 +142,7 @@ void ItemDefinitionManager::Load(const std::string &path)
             wd.damage = SafeGet<float>(w, "damage", 10.f);                    // nilai fallback 10
             wd.reach = SafeGet<float>(w, "reach", 10.f);                      // nilai fallback 10
             wd.breadth = SafeGet<float>(w, "breadth", 10.f);                  // nilai fallback 10
-            wd.duration = SafeGet<float>(w, "duration", 3.f);                 // nilai fallback 3
+            wd.duration = SafeGet<float>(w, "duration", 0.9f);                 // nilai fallback 0.9
             wd.knockbackForce = SafeGet<float>(w, "knockbackForce", 1.f);     // nilai fallback 1
             wd.startAngleOffset = SafeGet<float>(w, "startAngleOffset", 0.f); // nilai fallback 0
             wd.sweepAngle = SafeGet<float>(w, "sweepAngle", 0.f);             // nilai fallback 0
@@ -155,6 +155,10 @@ void ItemDefinitionManager::Load(const std::string &path)
                 wd.attackType = ATTACK_SLASH;
             else if (at == "thrust")
                 wd.attackType = ATTACK_THRUST;
+            else if (at == "pierce")
+                wd.attackType = ATTACK_PIERCE;
+            else if (at == "slam")
+                wd.attackType = ATTACK_SLAM;
 
             def.data = wd;
         }
