@@ -6,17 +6,17 @@
  * Handle state management (MAIN_MENU, PLAY, OPTIONS) dan pause menu.
  */
 
-#include "screen.h"
-#include "map.h"
-#include "player.h"
-#include "enemy.h"
-#include "item.h"
-#include "mainMenu.h"
-#include "pauseMenu.h"
-#include "loading_screen.h"
-#include "game_state_saver.h"
-#include "../lib/raylib/include/raylib.h"
-#include "../lib/raylib/include/raymath.h"
+#include "../../include/core/screen.h"
+#include "../../include/map/map.h"
+#include "../../include/entities/player.h"
+#include "../../include/entities/enemy.h"
+#include "../../include/items/item.h"
+#include "../../include/ui/mainMenu.h"
+#include "../../include/ui/pauseMenu.h"
+#include "../../include/core/loading_screen.h"
+#include "../../include/core/game_state_saver.h"
+#include "../../lib/raylib/include/raylib.h"
+#include "../../lib/raylib/include/raymath.h"
 #include <cstdio>
 
 /**

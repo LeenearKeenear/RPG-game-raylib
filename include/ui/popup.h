@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../lib/raylib/include/raylib.h"
+#include "../../lib/raylib/include/raylib.h"
 #include "buttonTxt.h"
 
 class Popup 
@@ -16,6 +16,8 @@ public:
     bool IsActive() const;
     bool IsConfirmClicked() const;
 
+    void SetSubMessage(const char* sub);
+
     void Update(Vector2 mousePosition, bool mouseClicked);
     void Draw(Vector2 mousePosition);
 
@@ -25,6 +27,7 @@ private:
     bool active;
     bool hasCancelButton;
     const char* message;
+    const char* subMessage;
     const char* buttonText;
     const char* cancelText;
     buttonTxt okButton;

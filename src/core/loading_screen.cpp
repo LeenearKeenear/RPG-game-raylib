@@ -7,18 +7,18 @@
  * Juga menangani transisi map dengan loading screen yang sama.
  */
 
-#include "loading_screen.h"
-#include "map.h"
-#include "player.h"
-#include "enemy.h"
-#include "item.h"
-#include "mainMenu.h"
-#include "game_state_saver.h"
-#include "screen.h"
-#include "entities.h"
-#include "propsbehavior.h"
-#include "enemy_ai.h"
-#include "../lib/raylib/include/raylib.h"
+#include "../../include/core/loading_screen.h"
+#include "../../include/map/map.h"
+#include "../../include/entities/player.h"
+#include "../../include/entities/enemy.h"
+#include "../../include/items/item.h"
+#include "../../include/ui/mainMenu.h"
+#include "../../include/core/game_state_saver.h"
+#include "../../include/core/screen.h"
+#include "../../include/entities/entities.h"
+#include "../../include/map/propsbehavior.h"
+#include "../../include/entities/enemy_ai.h"
+#include "../../lib/raylib/include/raylib.h"
 
 /*==============================================================================
  * Konstanta Loading
@@ -97,6 +97,7 @@ void UpdateLoadingScreen(GameState *state)
         case 1:
             state->loadingText = isBack ? "Reloading previous map..." : "Loading new map...";
             LoadMap(state->pendingMapPath.c_str());
+            SetCurrentMapPath(state->pendingMapPath.c_str());
             BuildMapObjectIndex();
             SpawnObject();
             RebuildObstacleCache();

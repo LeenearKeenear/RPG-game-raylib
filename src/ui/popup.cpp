@@ -1,13 +1,13 @@
 #include <algorithm>
 
-#include "popup.h"
-#include "screen.h"
+#include "../../include/ui/popup.h"
+#include "../../include/core/screen.h"
 
 /**
  * @brief Default constructor.
  */
-Popup::Popup() : active(false), hasCancelButton(false), message(nullptr), buttonText(nullptr),
-    cancelText(nullptr), hoverAmount(1.0F), confirmClicked(false), position({0, 0}), width(0), height(0)
+Popup::Popup() : active(false), hasCancelButton(false), message(nullptr), subMessage(nullptr),
+    buttonText(nullptr), cancelText(nullptr), hoverAmount(1.0F), confirmClicked(false), position({0, 0}), width(0), height(0)
 {
 }
 
@@ -18,8 +18,8 @@ Popup::Popup() : active(false), hasCancelButton(false), message(nullptr), button
  * @param hoverAmount Nilai pengurangan warna saat hover (0.0 = hitam, 1.0 = normal).
  */
 Popup::Popup(const char* message, const char* buttonText, float hoverAmount) 
-    : active(false), hasCancelButton(false), message(message), buttonText(buttonText),
-      cancelText(nullptr), hoverAmount(hoverAmount), confirmClicked(false), position({0, 0}), width(0), height(0)
+    : active(false), hasCancelButton(false), message(message), subMessage(nullptr),
+      buttonText(buttonText), cancelText(nullptr), hoverAmount(hoverAmount), confirmClicked(false), position({0, 0}), width(0), height(0)
 {
     CalculateDimensions();
 }
@@ -32,8 +32,8 @@ Popup::Popup(const char* message, const char* buttonText, float hoverAmount)
  * @param hoverAmount Nilai pengurangan warna saat hover (0.0 = hitam, 1.0 = normal).
  */
 Popup::Popup(const char* message, const char* confirmText, const char* cancelText, float hoverAmount)
-    : active(false), hasCancelButton(true), message(message), buttonText(confirmText),
-      cancelText(cancelText), hoverAmount(hoverAmount), confirmClicked(false),
+    : active(false), hasCancelButton(true), message(message), subMessage(nullptr),
+      buttonText(confirmText), cancelText(cancelText), hoverAmount(hoverAmount), confirmClicked(false),
       position({0, 0}), width(0), height(0)
 {
     CalculateDimensions();
@@ -44,6 +44,11 @@ Popup::Popup(const char* message, const char* confirmText, const char* cancelTex
  */
 Popup::~Popup()
 {
+}
+
+void Popup::SetSubMessage(const char* sub)
+{
+    subMessage = sub;
 }
 
 /**

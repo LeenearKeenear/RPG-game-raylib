@@ -6,14 +6,14 @@
  * Handle inisialisasi tombol, update input, dan rendering menu utama.
  */
 
-#include "mainMenu.h"
-#include "screen.h"
-#include "../lib/raylib/include/raylib.h"
+#include "../../include/ui/mainMenu.h"
+#include "../../include/core/screen.h"
+#include "../../lib/raylib/include/raylib.h"
 #include <array>
 #include <filesystem>
-#include "popup.h"
-#include "game_state_saver.h"
-#include "entities.h"
+#include "../../include/ui/popup.h"
+#include "../../include/core/game_state_saver.h"
+#include "../../include/entities/entities.h"
 
 /*==============================================================================
  * Static Variables
