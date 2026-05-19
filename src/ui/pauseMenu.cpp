@@ -18,15 +18,9 @@
  * Static Variables (Popup Notifications)
  *==============================================================================*/
 
-/**
- * @brief Popup notifikasi untuk save game
- */
 static Popup savePopup("Game Saved!", "OK", 0.7F);
-
-/**
- * @brief Popup notifikasi untuk load game
- */
-static Popup loadPopup("Game Loaded!", "OK", 0.7F);
+static Popup loadConfirmPopup("Load from save? Current progress will be lost.", "Load Save", "Cancel", 0.7f);
+static Popup noSavePopup("No save file found.", "OK", 0.7F);
 
 /*==============================================================================
  * OptionsScreen Implementation
@@ -356,10 +350,18 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             Hide();
             break;
         case 1:
+            WriteSaveFile("saves/manual/slot0.json");
             savePopup.Show();
             break;
         case 2:
-            loadPopup.Show();
+            if (HasSaveFile("saves/manual/slot0.json"))
+            {
+                loadConfirmPopup.Show();
+            }
+            else
+            {
+                noSavePopup.Show();
+            }
             break;
         case 3:
             state->previousScreen = PLAY;
@@ -371,6 +373,7 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             state->loadingProgress = 0.0F;
             state->loadingComplete = false;
             SaveGameState(state);
+            WriteSaveFile("saves/manual/slot0.json");
             state->currentScreen = MAIN_MENU;
             Hide();
             break;
@@ -399,8 +402,23 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
         return;
     }
 
-    if (loadPopup.IsActive()) {
-        loadPopup.Update(mousePosition, mouseClicked);
+    if (loadConfirmPopup.IsActive()) {
+        loadConfirmPopup.Update(mousePosition, mouseClicked);
+        if (loadConfirmPopup.IsConfirmClicked()) {
+            ReadSaveFile("saves/manual/slot0.json");
+            loadConfirmPopup.Hide();
+            state->enteredLoading = false;
+            state->loadingStage = 0;
+            state->loadingProgress = 0.0F;
+            state->loadingComplete = false;
+            state->currentScreen = LOADING;
+            Hide();
+        }
+        return;
+    }
+
+    if (noSavePopup.IsActive()) {
+        noSavePopup.Update(mousePosition, mouseClicked);
         return;
     }
 
@@ -441,7 +459,10 @@ void PauseMenu::Draw(Vector2 mousePosition)
     if (savePopup.IsActive()) {
         savePopup.Draw(mousePosition);
     }
-    if (loadPopup.IsActive()) {
-        loadPopup.Draw(mousePosition);
+    if (loadConfirmPopup.IsActive()) {
+        loadConfirmPopup.Draw(mousePosition);
+    }
+    if (noSavePopup.IsActive()) {
+        noSavePopup.Draw(mousePosition);
     }
 }
