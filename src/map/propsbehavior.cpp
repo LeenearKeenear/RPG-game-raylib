@@ -24,13 +24,13 @@
 /**
  * @brief Snap posisi ke grid tile terdekat
  * @param rawPos Posisi mentah dari Tiled
- * @return Posisi yang sudah di-snap ke kelipatan TILE_SIZE
+ * @return Posisi yang sudah di-snap ke kelipatan FRAME_SIZE
  */
 Vector2 SnapToTileGrid(Vector2 rawPos)
 {
     return {
-        std::floor(rawPos.x / TILE_SIZE) * TILE_SIZE,
-        std::floor(rawPos.y / TILE_SIZE) * TILE_SIZE};
+        std::floor(rawPos.x / FRAME_SIZE) * FRAME_SIZE,
+        std::floor(rawPos.y / FRAME_SIZE) * FRAME_SIZE};
 }
 
 /**
@@ -230,10 +230,13 @@ int ChestManager::Render(Rectangle viewRect)
             continue;
         rendered++;
 
+        Display display;
+        display.position = c.position;
+
         if (c.state == ObjectState::Closed)
-            DrawRectangleRec(c.bounds, BROWN); // placeholder harus diganti pake skin
+            DrawFrame("chestClosed", display);
         else
-            DrawRectangleRec(c.bounds, WHITE); // placeholder harus diganti pake skin
+            DrawFrame("chestOpen", display);
     }
     return rendered;
 }
@@ -417,10 +420,13 @@ int SpikeManager::Render(Rectangle viewRect)
             continue;
         rendered++;
 
+        Display display;
+        display.position = spike.tile.position;
+
         if (spike.tile.state == ObjectState::Active)
-            DrawRectangleRec(spike.tile.bounds, RED); // placeholder harus diganti pake skin
+            DrawFrame("spikeActive", display);
         else
-            DrawRectangleRec(spike.tile.bounds, GRAY); // placeholder harus diganti pake skin
+            DrawFrame("spikeInactive", display);
     }
     return rendered;
 }
@@ -553,7 +559,12 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
     MarkSpawnFlowFieldsDirty(bomb.tile.position);
     RebuildObstacleCache();
 
-    if (IsInExplosionRadius(bomb.tile.position, playerBounds))
+    Vector2 bombCenter = {
+        bomb.tile.position.x + FRAME_SIZE / 2.0f,
+        bomb.tile.position.y + FRAME_SIZE / 2.0f
+    };
+
+    if (IsInExplosionRadius(bombCenter, playerBounds))
         if (player)
             player->TakeDamage(BOMB_DAMAGE);
 
@@ -564,7 +575,7 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
             continue;
         if (!enemy->IsActive || enemy->Health <= 0)
             continue;
-        if (IsInExplosionRadius(bomb.tile.position, enemy->GetHitbox()))
+        if (IsInExplosionRadius(bombCenter, enemy->GetHitbox()))
             enemy->TakeDamage(BOMB_DAMAGE, {0, 0});
     }
 
@@ -573,11 +584,11 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
     {
         if (!other.isAlive || other.isExploding || other.isTriggered)
             continue;
-        if (IsInExplosionRadius(bomb.tile.position, other.tile.bounds))
+        if (IsInExplosionRadius(bombCenter, other.tile.bounds))
             Explode(other, playerBounds, player);
     }
 
-    crateManager.HitByExplosion(bomb.tile.position, this);
+    crateManager.HitByExplosion(bombCenter, this);
 }
 
 /**
@@ -650,9 +661,20 @@ int BombManager::Render(Rectangle viewRect)
         rendered++;
 
         if (bomb.isExploding)
-            DrawCircleV(bomb.tile.position, BOMB_EXPLOSION_RADIUS, Fade(ORANGE, 0.4f));
+        {
+            Vector2 bombCenter = {
+                bomb.tile.position.x + FRAME_SIZE / 2.0f,
+                bomb.tile.position.y + FRAME_SIZE / 2.0f
+            };
+            float progress = (BOMB_EXPLOSION_DURATION - bomb.explosionTimer) / BOMB_EXPLOSION_DURATION;
+            DrawExplosion(bombCenter, BOMB_EXPLOSION_RADIUS, progress);
+        }
         else
-            DrawRectangleRec(bomb.tile.bounds, RED);
+        {
+            Display display;
+            display.position = bomb.tile.position;
+            DrawFrame("bomb", display);
+        }
     }
     return rendered;
 }
@@ -794,7 +816,9 @@ int CrateManager::Render(Rectangle viewRect)
             continue;
         if (!CheckCollisionRecs(crate.tile.bounds, viewRect))
             continue;
-        DrawRectangleRec(crate.tile.bounds, YELLOW);
+        Display display;
+        display.position = crate.tile.position;
+        DrawFrame("crate", display);
         rendered++;
     }
     return rendered;

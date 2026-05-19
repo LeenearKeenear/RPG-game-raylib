@@ -6,7 +6,6 @@
 #include "inventory.h"
 #include "map.h"
 #include "player.h"
-#include "tiles.h"
 #include "effects.h"
 #include "propsbehavior.h"
 #include "../lib/raylib/include/raymath.h"
@@ -16,10 +15,6 @@
 
 namespace Combat
 {
-    /**
-     * Pembantu internal untuk mendeteksi tabrakan antara serangan pemain dan entitas dunia.
-     * Menghitung hitbox dinamis berdasarkan arah hadap pemain dan jangkauan senjata.
-     */
     void PerformHitDetection(Player &player)
     {
         Vector2 playerCenter = {
@@ -27,10 +22,9 @@ namespace Combat
             player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
 
         Rectangle attackHitbox;
-        float reach = player.Swing.reach;     ///< Jarak serangan ke depan
-        float breadth = player.Swing.breadth; ///< Lebar serangan ke samping
+        float reach = player.Swing.reach;
+        float breadth = player.Swing.breadth;
 
-        // Menghasilkan persegi panjang hitbox serangan berdasarkan arah
         switch (player.Anim.direction)
         {
         case RIGHT:
@@ -52,7 +46,6 @@ namespace Combat
             break;
         }
 
-        // Memeriksa semua entitas aktif untuk tabrakan
         for (auto entity : Entities::GetRegistry())
         {
             Entity *playerAsEntity = &player;
@@ -92,10 +85,6 @@ namespace Combat
         HitPropsByAttack(attackHitbox, PlayerInstance.GetHitbox(), &player);
     }
 
-    /**
-     * Titik masuk utama untuk memproses logika pertarungan pemain.
-     * Menangani regenerasi mana, transisi status, dan pemicuan serangan.
-     */
     void HandleCombat(Player &player)
     {
         if (player.Anim.isDead)
@@ -104,7 +93,6 @@ namespace Combat
         if (InputInstance.IsInventoryOpen())
             return;
 
-        // Penyaringan Input: Pastikan serangan hanya terpicu jika klik dimulai dalam status yang valid
         if (InputInstance.IsLeftClickPressed())
         {
             player.Swing.pressRegistered = true;
@@ -114,16 +102,14 @@ namespace Combat
             player.Swing.pressRegistered = false;
         }
 
-        // Menangani transisi kematian pemain
         if (player.Health <= 0)
         {
             player.Health = 0;
-            PlayAnimation(player.Anim, DEAD, player.Anim.direction, PlayerAnimationSet);
+            PlayAnimation(player.Anim, DEAD, player.Anim.direction);
             player.Anim.isDead = true;
             return;
         }
 
-        // Logika Regenerasi Mana
         if (player.ManaRegenTimer > 0)
         {
             player.ManaRegenTimer -= Time::DELTA_TIME;
@@ -138,20 +124,17 @@ namespace Combat
             }
         }
 
-        // Eksekusi Serangan
         if (player.Swing.pressRegistered && !player.Anim.isAttacking)
         {
             PlayerAction action = InputInstance.ResolveAction();
             if (action == ACTION_ATTACK)
             {
-                // Menghitung arah bidikan berdasarkan posisi mouse di dunia (world space)
                 Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(player.State), camera);
                 Vector2 playerCenter = {
                     player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
                     player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
                 Vector2 attackDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
 
-                // Menentukan arah hadap animasi berdasarkan sudut bidikan
                 float angle = atan2(attackDir.y, attackDir.x) * (180.0f / PI);
                 Direction attackFaceDir;
                 if (angle >= -135.0f && angle < -45.0f)
@@ -163,12 +146,12 @@ namespace Combat
                 else
                     attackFaceDir = LEFT;
 
-                // Mengunci arah karakter ke arah bidikan
-                PlayAnimation(player.Anim, IDLE, attackFaceDir, PlayerAnimationSet);
+                Direction horizDir = (attackDir.x >= 0) ? RIGHT : LEFT;
+                PlayAnimation(player.Anim, IDLE, horizDir);
+                PlayAnimation(player.Anim, IDLE, attackFaceDir);
 
                 float manaCost = Inventory::GetAttackManaCost(player);
 
-                // Pemeriksaan Resource (Mana)
                 if (player.Mana >= manaCost)
                 {
                     InventoryItem activeItem = Inventory::GetActiveHotbarItem(player);
@@ -182,11 +165,11 @@ namespace Combat
                     player.Mana -= manaCost;
                     player.ManaRegenTimer = player.ManaRegenDelay;
 
-                    // Inisialisasi Status Serangan
                     player.Swing.active = true;
                     player.Swing.timer = 0;
                     player.Swing.damagedEntities.clear();
                     player.Swing.center = playerCenter;
+                    player.Swing.raycastAngle = angle;
 
                     Inventory::SetupAttackStats(player, attackFaceDir);
 
@@ -203,16 +186,13 @@ namespace Combat
         }
     }
 
-    /**
-     * Logika untuk memulihkan status pemain saat dihidupkan kembali (resurrection).
-     */
     void HandleRevive(Player &player)
     {
         if (player.Anim.isDead)
         {
             player.Anim.isDead = false;
             player.Anim.isAttacking = false;
-            PlayAnimation(player.Anim, IDLE, player.Anim.direction, PlayerAnimationSet);
+            PlayAnimation(player.Anim, IDLE, player.Anim.direction);
             player.Health = player.MaxHealth;
             player.Mana = player.MaxMana;
             player.KnockbackVelocity = {0, 0};
@@ -220,62 +200,16 @@ namespace Combat
         }
     }
 
-    /**
-     * Memperbarui status fisik dari ayunan/tusukan senjata yang aktif.
-     * Menghitung rotasi dengan easing dan melakukan deteksi hit terus-menerus.
-     */
     void UpdateSwingAttack(Player &player, float dt)
     {
         if (!player.Swing.active)
             return;
 
-        // Pastikan pusat senjata tetap terkunci pada posisi pemain (bahkan saat terkena knockback)
         Vector2 playerCenter = {
             player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
             player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
         player.Swing.center = playerCenter;
 
-        ItemSlot activeSlot = InputInstance.GetActiveSlot();
-        if (activeSlot == SLOT_WEAPON_1)
-        {
-            switch (player.Anim.direction)
-            {
-            case UP:
-                player.Swing.center.x += 3;
-                break;
-            case DOWN:
-                player.Swing.center.x -= 3;
-                break;
-            case LEFT:
-                player.Swing.center.y -= 3;
-                break;
-            case RIGHT:
-                player.Swing.center.y += 3;
-                break;
-            }
-        }
-        else
-        {
-            switch (player.Anim.direction)
-            {
-            case UP:
-                player.Swing.center.y -= 20;
-                player.Swing.center.x += 1;
-                break;
-            case DOWN:
-                player.Swing.center.y += 20;
-                player.Swing.center.x -= 1;
-                break;
-            case LEFT:
-                player.Swing.center.x -= 20;
-                player.Swing.center.y -= 1;
-                break;
-            case RIGHT:
-                player.Swing.center.x += 20;
-                player.Swing.center.y += 1;
-                break;
-            }
-        }
 
         player.Swing.timer += dt;
         if (player.Swing.timer >= player.Swing.duration)
@@ -288,30 +222,39 @@ namespace Combat
         {
             float progress = player.Swing.timer / player.Swing.duration;
 
-            if (player.Swing.type == ATTACK_THRUST)
+            if (player.Swing.type == ATTACK_SLASH)
             {
-                player.Swing.thrustOffset = AnimEffects::CalculateThrustOffset(progress, 16.0f);
+                player.Swing.currentAngle = Slash(player.Swing.raycastAngle, progress);
+                player.Swing.thrustOffset = 0.0f;
+            }
+            else if (player.Swing.type == ATTACK_THRUST)
+            {
+                player.Swing.thrustOffset = progress * 16.0f;
                 player.Swing.currentAngle = player.Swing.startAngle;
+            }
+            else if (player.Swing.type == ATTACK_PIERCE)
+            {
+                player.Swing.thrustOffset = progress * 24.0f;
+                player.Swing.currentAngle = player.Swing.startAngle;
+            }
+            else if (player.Swing.type == ATTACK_SLAM)
+            {
+                float slamProgress = progress * progress;
+                player.Swing.currentAngle = player.Swing.startAngle + (slamProgress * player.Swing.sweepAngle);
+                player.Swing.thrustOffset = slamProgress * 8.0f;
             }
             else
             {
-                player.Swing.currentAngle = AnimEffects::CalculateSlashRotation(progress, player.Swing.startAngle, player.Swing.sweepAngle);
+                player.Swing.currentAngle = player.Swing.startAngle + (progress * player.Swing.sweepAngle);
                 player.Swing.thrustOffset = 0.0f;
             }
 
-            // Deteksi hit terus-menerus selama jendela aktif
             PerformHitDetection(player);
         }
     }
 
-    /**
-     * Me-render sprite senjata berdasarkan status dan tipe ayunan saat ini.
-     */
     void DrawSwingAttack(Player &player)
     {
-        if (!player.Swing.active)
-            return;
-
         InventoryItem item = Inventory::GetActiveHotbarItem(player);
         if (item.definitionId == -1)
             return;
@@ -320,21 +263,134 @@ namespace Combat
         if (def.category != ITEM_WEAPON)
             return;
 
-        Vector2 visualPos = player.Swing.center;
-        if (player.Swing.type == ATTACK_THRUST)
+        Vector2 visualPos;
+        float drawAngle;
+        float thrust = 0.0f;
+        float rayAngle;
+        float offsetRight = 0.0f;
+
+        if (player.Swing.active)
         {
-            float rad = player.Swing.baseAngle * (PI / 180.0f);
-            visualPos.x += cosf(rad) * player.Swing.thrustOffset;
-            visualPos.y += sinf(rad) * player.Swing.thrustOffset;
+            visualPos = player.Swing.center;
+            drawAngle = player.Swing.currentAngle;
+            thrust = player.Swing.thrustOffset;
+            rayAngle = player.Swing.raycastAngle;
+        }
+        else
+        {
+            visualPos = {
+                player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
+                player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
+
+            static Direction lastHorizDir = RIGHT;
+            if (player.Anim.direction == RIGHT)
+                lastHorizDir = RIGHT;
+            else if (player.Anim.direction == LEFT)
+                lastHorizDir = LEFT;
+
+            if (player.Anim.direction == RIGHT) {
+                rayAngle = -9.0f; // Jam 3
+                offsetRight = 0.8f;
+            }
+            else if (player.Anim.direction == LEFT)
+                rayAngle = 189.0f; // Jam 9
+            else if (player.Anim.direction == UP)
+            {
+                if (lastHorizDir == RIGHT) {
+                    rayAngle = -60.0f; // Jam 1
+                    offsetRight = 0.8f;   
+                }
+                else
+                    rayAngle = -120.0f; // Jam 11
+            }
+            else if (player.Anim.direction == DOWN)
+            {
+                if (lastHorizDir == RIGHT) {
+                    rayAngle = 60.0f; // Jam 5
+                    offsetRight = 0.8f;
+                }
+                else
+                    rayAngle = 120.0f; // Jam 7
+            }
+            else
+            {
+                rayAngle = 0.0f;
+            }
+
+            drawAngle = rayAngle;
+            thrust = 0.0f;
         }
 
-        Rectangle dest = {visualPos.x, visualPos.y, 20, 20};
-        Vector2 origin = {0, 24};
-        DrawTileTexture(TEXTURE_ITEMS, (int)def.sheetCoord.x, (int)def.sheetCoord.y, dest, origin, player.Swing.currentAngle + 45.0f);
+        float rad = rayAngle * (PI / 180.0f);
+        visualPos.x += cosf(rad) * thrust;
+        visualPos.y += sinf(rad) * thrust;
+
+        const Frame &frame = GetFrame(def.spriteKey);
+
+        Display display;
+        display.position = visualPos;
+        display.size = 32;
+        display.offset = {0, 1 + offsetRight};
+        display.origin = {17.0f, (float)(frame.height * display.size)};
+        display.rotation = drawAngle + 90.0f;
+        display.tint = WHITE;
+
+        DrawFrame(frame, display);
+
+        if (player.Swing.active && player.Swing.type == ATTACK_SLASH && (def.spriteKey == "sword1" || def.spriteKey == "sword2"))
+        {
+            float progress = player.Swing.timer / player.Swing.duration;
+            std::string slashSpriteKey;
+            
+            if (progress >= 1.0f / 3.0f && progress < 2.0f / 3.0f)
+            {
+                slashSpriteKey = (def.spriteKey == "sword1") ? "slash1Sword1" : "slash1Sword2";
+            }
+            else if (progress >= 2.0f / 3.0f)
+            {
+                slashSpriteKey = (def.spriteKey == "sword1") ? "slash2Sword1" : "slash2Sword2";
+            }
+
+            if (!slashSpriteKey.empty())
+            {
+                const Frame &slashFrame = GetFrame(slashSpriteKey);
+                float radRay = rayAngle * (PI / 180.0f);
+                Vector2 slashPos = player.Swing.center;
+                float slashDist = player.Swing.reach * 0.65f;
+                slashPos.x += cosf(radRay) * slashDist;
+                slashPos.y += sinf(radRay) * slashDist;
+
+                if (progress >= 2.0f / 3.0f)
+                {
+                    float shiftAngleRad = (rayAngle - 90.0f) * (PI / 180.0f);
+                    float H = (def.spriteKey == "sword1") ? 26.0f : 37.0f;
+                    float backDist = (def.spriteKey == "sword1") ? 16.0f : 19.5f;
+                    slashPos.x += cosf(shiftAngleRad) * H;
+                    slashPos.y += sinf(shiftAngleRad) * H;
+
+                    // Additional shift back (opposite to attack direction)
+                    slashPos.x -= cosf(radRay) * backDist;
+                    slashPos.y -= sinf(radRay) * backDist;
+                }
+
+                Display slashDisplay;
+                slashDisplay.position = slashPos;
+                slashDisplay.size = 32;
+                slashDisplay.offset = {0, 0};
+                slashDisplay.origin = {
+                    (float)slashFrame.width * slashDisplay.size / 2.0f,
+                    (float)slashFrame.height * slashDisplay.size / 2.0f
+                };
+                slashDisplay.rotation = rayAngle + 90.0f;
+                slashDisplay.tint = WHITE;
+
+                DrawFrame(slashFrame, slashDisplay);
+            }
+        }
     }
 
     void AddDamagePopup(Vector2 pos, float damage)
     {
         Effects::AddDamage(pos, damage);
     }
-} // namespace Combat
+}

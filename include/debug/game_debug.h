@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @file debug.h
+ * @file game_debug.h
  * @brief Debug System Module
  *
  * Header ini mendeklarasikan sistem debug untuk menampilkan

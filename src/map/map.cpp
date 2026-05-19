@@ -13,7 +13,6 @@
 #include "entities.h"
 #include "mapLogic.h"
 #include "map.h"
-#include "tiles.h"
 #include "animation.h"
 #include "player.h"
 #include "enemy.h"
@@ -170,10 +169,25 @@ void LoadMap(const char *mapPath)
         TilesetInfo info;
 
         // Cek apakah texture tile utama sudah dimuat, reuse jika ada
-        if (TexturesMap[TEXTURE_TILEMAP].id != 0 && imagePath == "assets/textures/tiles.png")
+        if (textures[TILESET_MAP_1].id != 0 && imagePath == "assets/textures/tiles.png")
         {
-            info.texture = TexturesMap[TEXTURE_TILEMAP];
+            info.texture = textures[TILESET_MAP_1];
             TraceLog(LOG_INFO, "Tileson: Reusing cached texture for tiles.png");
+        }
+        else if (textures[TILESET_MAP_2].id != 0 && imagePath == "assets/textures/test.png")
+        {
+            info.texture = textures[TILESET_MAP_2];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for test.png");
+        }
+        else if (textures[TILESET_PROPS].id != 0 && imagePath == "assets/textures/props.png")
+        {
+            info.texture = textures[TILESET_PROPS];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for props.png");
+        }
+        else if (textures[TILESET_ITEMS].id != 0 && imagePath == "assets/textures/items.png")
+        {
+            info.texture = textures[TILESET_ITEMS];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for items.png");
         }
         else
         {
@@ -216,13 +230,13 @@ void UnloadMap(void)
         tilesonMap->Objects.clear();
 
         // Unload texture tileset dari GPU
-        // Jangan unload jika texture sudah ada di cache (TexturesMap)
+        // Jangan unload jika texture sudah ada di cache (textures)
         for (auto &ts : tilesonMap->tilesets)
         {
             bool isCached = false;
             for (int i = 0; i < MAX_TEXTURES; i++)
             {
-                if (TexturesMap[i].id == ts.texture.id && ts.texture.id != 0)
+                if (textures[i].id == ts.texture.id && ts.texture.id != 0)
                 {
                     isCached = true;
                     break;
@@ -337,11 +351,11 @@ void RenderMap(void)
 
                 // Hitung source rectangle pada texture tileset
                 int adjustedId = tileId - ts->firstgid;
-                int srcX = (adjustedId % ts->cols) * (TILE_SIZE + ts->spacing);
-                int srcY = (adjustedId / ts->cols) * (TILE_SIZE + ts->spacing);
+                int srcX = (adjustedId % ts->cols) * (FRAME_SIZE + ts->spacing);
+                int srcY = (adjustedId / ts->cols) * (FRAME_SIZE + ts->spacing);
 
-                Rectangle srcRec = {(float)srcX, (float)srcY, (float)TILE_SIZE, (float)TILE_SIZE};
-                Rectangle dstRec = {(float)(x * TILE_SIZE), (float)(y * TILE_SIZE), (float)TILE_SIZE, (float)TILE_SIZE};
+                Rectangle srcRec = {(float)srcX, (float)srcY, (float)FRAME_SIZE, (float)FRAME_SIZE};
+                Rectangle dstRec = {(float)(x * FRAME_SIZE), (float)(y * FRAME_SIZE), (float)FRAME_SIZE, (float)FRAME_SIZE};
 
                 DrawTexturePro(ts->texture, srcRec, dstRec, (Vector2){0, 0}, 0.0F, WHITE);
             }
@@ -368,10 +382,10 @@ TileRange GetVisibleTileRange(void)
     TileRange range;
 
     // Konversi ke tile index dan tambahkan margin biar gak ada pop-in
-    range.minX = (int)floorf(worldMin.x / TILE_SIZE) - 1;
-    range.minY = (int)floorf(worldMin.y / TILE_SIZE) - 1;
-    range.maxX = (int)ceilf(worldMax.x / TILE_SIZE) + 1;
-    range.maxY = (int)ceilf(worldMax.y / TILE_SIZE) + 1;
+    range.minX = (int)floorf(worldMin.x / FRAME_SIZE) - 1;
+    range.minY = (int)floorf(worldMin.y / FRAME_SIZE) - 1;
+    range.maxX = (int)ceilf(worldMax.x / FRAME_SIZE) + 1;
+    range.maxY = (int)ceilf(worldMax.y / FRAME_SIZE) + 1;
 
     // Clamp ke batas map
     if (range.minX < 0)

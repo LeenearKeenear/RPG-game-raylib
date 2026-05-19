@@ -41,13 +41,6 @@ ItemSpawnManager spawnManager;
  * Free functions (backward compat)
  *==============================================================================*/
 
-/** @brief Load texture item dari spritesheet */
-// TODO: pindahin ke animation atau tile.cpp untuk loadtiletexture agar terpusat
-void InitItemTextures()
-{
-    LoadTileTexture(TEXTURE_ITEMS, "assets/textures/test.png");
-}
-
 /**
  * @brief Inisialisasi seluruh item system
  *
@@ -56,7 +49,6 @@ void InitItemTextures()
 void InitItems()
 {
     itemDefs.Load("assets/data/items.json");
-    InitItemTextures();
     itemData.Init();
     spawnManager.Init(ITEM_LAYER_NAME);
     spawnManager.SpawnAll(itemData.activeItems);
@@ -105,7 +97,15 @@ void ItemDefinitionManager::Load(const std::string &path)
         ItemDefinition def;
         def.id = SafeGet<int>(data, "id", -1);
         def.name = name;
-        def.sheetCoord = ParseVector2(data.at("sheetCoord"));
+        def.spriteKey = SafeGet<std::string>(data, "spriteKey", name);
+        if (data.contains("sheetCoord"))
+        {
+            def.sheetCoord = ParseVector2(data.at("sheetCoord"));
+        }
+        else
+        {
+            def.sheetCoord = Vector2{0, 0};
+        }
         def.hitboxSize = ParseVector2(data.at("hitboxSize"));
         def.isStackable = SafeGet<bool>(data, "isStackable", false); // nilai fallback false
         def.maxStack = SafeGet<int>(data, "maxStack", 1);            // nilai fallback 1
@@ -142,7 +142,7 @@ void ItemDefinitionManager::Load(const std::string &path)
             wd.damage = SafeGet<float>(w, "damage", 10.f);                    // nilai fallback 10
             wd.reach = SafeGet<float>(w, "reach", 10.f);                      // nilai fallback 10
             wd.breadth = SafeGet<float>(w, "breadth", 10.f);                  // nilai fallback 10
-            wd.duration = SafeGet<float>(w, "duration", 3.f);                 // nilai fallback 3
+            wd.duration = SafeGet<float>(w, "duration", 0.9f);                 // nilai fallback 0.9
             wd.knockbackForce = SafeGet<float>(w, "knockbackForce", 1.f);     // nilai fallback 1
             wd.startAngleOffset = SafeGet<float>(w, "startAngleOffset", 0.f); // nilai fallback 0
             wd.sweepAngle = SafeGet<float>(w, "sweepAngle", 0.f);             // nilai fallback 0
@@ -155,6 +155,10 @@ void ItemDefinitionManager::Load(const std::string &path)
                 wd.attackType = ATTACK_SLASH;
             else if (at == "thrust")
                 wd.attackType = ATTACK_THRUST;
+            else if (at == "pierce")
+                wd.attackType = ATTACK_PIERCE;
+            else if (at == "slam")
+                wd.attackType = ATTACK_SLAM;
 
             def.data = wd;
         }
@@ -392,16 +396,20 @@ int ItemRenderManager::RenderAll(std::vector<ItemSpawn> &items, Rectangle viewRe
  */
 void ItemRenderManager::Render(ItemSpawn &item)
 {
-    const ItemDefinition &def = itemDefs.GetById(item.definitionId);
     Vector2 center = {
         item.hitbox.x + item.hitbox.width / 2,
         item.hitbox.y + item.hitbox.height / 2};
-    const float scale = 0.5f;
-    float smallSize = TILE_SIZE * scale;
+    const float scale = 1.0f;
     Vector2 renderPos = {
-        center.x - smallSize,
-        center.y - smallSize};
-    DrawSmallSprite(TEXTURE_ITEMS, def.sheetCoord, renderPos, scale);
+        center.x - 16.0f,
+        center.y - 16.0f};
+
+    const ItemDefinition &def = itemDefs.GetById(item.definitionId);
+
+    Display display;
+    display.position = renderPos;
+    display.size = (int)(FRAME_SIZE * scale);
+    DrawFrame(def.spriteKey, display);
 
     if (item.amount > 1)
     {
@@ -410,7 +418,7 @@ void ItemRenderManager::Render(ItemSpawn &item)
         int textWidth = MeasureText(amountText.c_str(), fontSize);
         Vector2 textPos = {
             center.x - textWidth / 2.0f,
-            (center.y + smallSize) - 5.0f};
+            (center.y + 16.0f) - 5.0f};
         DrawText(amountText.c_str(), (int)textPos.x, (int)textPos.y, fontSize, WHITE);
     }
 }

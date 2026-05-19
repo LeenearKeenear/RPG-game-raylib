@@ -363,18 +363,18 @@ Vector2 EnemySteering::EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir,
             int ty = (int)currentFlowTile.y + dy;
 
             Vector2 tileCenter = {
-                (float)tx * TILE_SIZE + ctx.TileCenterOffset,
-                (float)ty * TILE_SIZE + ctx.TileCenterOffset};
+                (float)tx * FRAME_SIZE + ctx.TileCenterOffset,
+                (float)ty * FRAME_SIZE + ctx.TileCenterOffset};
 
             if (!IsPositionSafe(tileCenter, ctx.HitBoxValue, ctx.HitBoxValue, ctx.OffsetValue, ctx.OffsetValue))
                 continue;
 
             if (dx != 0 && dy != 0)
             {
-                Vector2 ortho1 = {(float)(tx - dx) * TILE_SIZE + ctx.TileCenterOffset,
-                                  (float)ty * TILE_SIZE + ctx.TileCenterOffset};
-                Vector2 ortho2 = {(float)tx * TILE_SIZE + ctx.TileCenterOffset,
-                                  (float)(ty - dy) * TILE_SIZE + ctx.TileCenterOffset};
+                Vector2 ortho1 = {(float)(tx - dx) * FRAME_SIZE + ctx.TileCenterOffset,
+                                  (float)ty * FRAME_SIZE + ctx.TileCenterOffset};
+                Vector2 ortho2 = {(float)tx * FRAME_SIZE + ctx.TileCenterOffset,
+                                  (float)(ty - dy) * FRAME_SIZE + ctx.TileCenterOffset};
                 if (!IsPositionSafe(ortho1, ctx.HitBoxValue, ctx.HitBoxValue, ctx.OffsetValue, ctx.OffsetValue) ||
                     !IsPositionSafe(ortho2, ctx.HitBoxValue, ctx.HitBoxValue, ctx.OffsetValue, ctx.OffsetValue))
                     continue;
