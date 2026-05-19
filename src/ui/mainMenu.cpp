@@ -132,10 +132,11 @@ void UpdateMainMenu(GameState *state)
         {
             DeleteSaveFile("saves/manual/slot0.json");
             ClearSavedState();
+            state->enteredLoading = false;
             state->currentScreen = LOADING;
             waitingStartConfirm = false;
         }
-        if (!startNewPopup.IsActive())
+        else if (!startNewPopup.IsActive())
         {
             waitingStartConfirm = false;
         }
@@ -147,6 +148,7 @@ void UpdateMainMenu(GameState *state)
         loadPopup.Update(mousePosition, mouseClicked);
         if (loadPopup.IsConfirmClicked())
         {
+            state->enteredLoading = false;
             state->currentScreen = LOADING;
             waitingLoadConfirm = false;
         }
