@@ -222,7 +222,7 @@ void Popup::Draw(Vector2 mousePosition)
         int subWidth = MeasureText(subMessage, fontSize);
         int subX = static_cast<int>(position.x + ((width - subWidth) / 2.0F));
         int subY = textY + fontSize + 10;
-        DrawText(subMessage, subX, subY, fontSize, LIGHTGRAY);
+        DrawText(subMessage, subX, subY, fontSize, RED);
     }
 
     okButton.Draw(mousePosition);
