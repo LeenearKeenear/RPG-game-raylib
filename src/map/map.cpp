@@ -12,6 +12,7 @@
 #include "../lib/raylib/include/raymath.h"
 #include "entities.h"
 #include "mapLogic.h"
+#include "worldgenenartion.h"
 #include "map.h"
 #include "tiles.h"
 #include "animation.h"
@@ -50,6 +51,9 @@ static MapSystem::MapStack mapHistoryStack;
 
 /** Path map yang sedang aktif */
 static std::string currentMapPath = "";
+
+/** Path map prefabroom */
+static std::string preFabMapPath = "";
 
 /*==============================================================================
  * Map Loading & Unloading
@@ -189,7 +193,12 @@ void LoadMap(const char *mapPath)
                            ? tilesetList[i + 1].getFirstgid() - 1
                            : INT_MAX;
 
-        tilesonMap->tilesets.push_back(info);
+        if (tilesonMap->tilesets.empty())
+            tilesonMap->tilesets.push_back({});
+        tilesonMap->tilesets[0].push_back(info);
+
+        // assign semua layer ke group 0
+        tilesonMap->layerTilesetGroup.assign(tilesonMap->layerCount, 0);
         TraceLog(LOG_INFO, "Tileson: Loaded tileset %s (gid %d-%d)", imagePath.c_str(), info.firstgid, info.lastgid);
     }
 
@@ -217,20 +226,21 @@ void UnloadMap(void)
 
         // Unload texture tileset dari GPU
         // Jangan unload jika texture sudah ada di cache (TexturesMap)
-        for (auto &ts : tilesonMap->tilesets)
+        for (auto &group : tilesonMap->tilesets)
         {
-            bool isCached = false;
-            for (int i = 0; i < MAX_TEXTURES; i++)
+            for (auto &ts : group)
             {
-                if (TexturesMap[i].id == ts.texture.id && ts.texture.id != 0)
+                bool isCached = false;
+                for (int i = 0; i < MAX_TEXTURES; i++)
                 {
-                    isCached = true;
-                    break;
+                    if (TexturesMap[i].id == ts.texture.id && ts.texture.id != 0)
+                    {
+                        isCached = true;
+                        break;
+                    }
                 }
-            }
-            if (!isCached && ts.texture.id != 0)
-            {
-                UnloadTexture(ts.texture);
+                if (!isCached && ts.texture.id != 0)
+                    UnloadTexture(ts.texture);
             }
         }
         tilesonMap->tilesets.clear();
@@ -258,19 +268,24 @@ void InitMap(void)
     // LoadMap("assets/maps/floorC.json");
     // "assets/maps/tutorial.json"
     // Map yang aktif saat ini
-    currentMapPath = "assets/maps/tutorial.json";
-    // currentMapPath = "assets/maps/floorB_tester.json";
+    // currentMapPath = "assets/maps/tutorial.json";
+    currentMapPath = "assets/maps/floorB_tester.json";
+    // currentMapPath = "assets/maps/testing_size.json";
+    // currentMapPath = "assets/maps/World_generation/background_template_test.json";
+    // preFabMapPath = "assets/maps/World_generation/template1(udrl).json";
+    // preFabMapPath = "assets/maps/World_generation/template2(udr).json";
+    // preFabMapPath = "assets/maps/World_generation/template3(ud).json";
+    // preFabMapPath = "assets/maps/World_generation/template4(ur).json";
+    // preFabMapPath = "assets/maps/World_generation/template5(u).json";
     LoadMap(currentMapPath.c_str());
+    // ExpandCanvasLayers(2);
 
-    if (!LoadEnemiesForMap(currentMapPath))
-    {
-        SpawnEnemiesFromMap();
-    }
+    // TilesonMapData *prefab = new TilesonMapData();
+    // PreFabLoadMap(preFabMapPath.c_str(), prefab);
 
-    if (!itemData.LoadItemsForMap(currentMapPath))
-    {
-        SpawnItemWave();
-    }
+    // StampMap(prefab, 46, 46, 2); // stamp ke layer 2 dan 3
+    // UnloadPrefab(prefab);
+
     BuildMapObjectIndex();
 }
 
@@ -317,8 +332,11 @@ void RenderMap(void)
                     continue;
 
                 // Cari tileset yang sesuai berdasarkan range gid
+                int groupIdx = tilesonMap->layerTilesetGroup[l];
+                auto &tilesets = tilesonMap->tilesets[groupIdx];
+
                 TilesetInfo *ts = nullptr;
-                for (auto &t : tilesonMap->tilesets)
+                for (auto &t : tilesets)
                     if (tileId >= t.firstgid && tileId <= t.lastgid)
                     {
                         ts = &t;
@@ -390,7 +408,7 @@ Rectangle GetVisibleWorldRect(void)
 {
     Vector2 worldMin = GetScreenToWorld2D({0.0f, 0.0f}, camera);
     Vector2 worldMax = GetScreenToWorld2D({(float)GameScreenWidth, (float)GameScreenHeight}, camera);
-    return { worldMin.x, worldMin.y, worldMax.x - worldMin.x, worldMax.y - worldMin.y };
+    return {worldMin.x, worldMin.y, worldMax.x - worldMin.x, worldMax.y - worldMin.y};
 }
 
 /*==============================================================================

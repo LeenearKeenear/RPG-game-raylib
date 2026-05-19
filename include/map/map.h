@@ -70,12 +70,13 @@ struct TilesetInfo
  */
 struct TilesonMapData
 {
-    int width;                         // Lebar map dalam satuan tile
-    int height;                        // Tinggi map dalam satuan tile
-    int layerCount;                    // Jumlah tile layer
-    int **tiles;                       // Data tile untuk tiap layer
-    std::vector<TilesetInfo> tilesets; // Daftar tileset yang dipakai map
-    std::vector<MapObject> Objects;    // Daftar object dari object layer
+    int width;                                      // Lebar map dalam satuan tile
+    int height;                                     // Tinggi map dalam satuan tile
+    int layerCount;                                 // Jumlah tile layer
+    int **tiles;                                    // Data tile untuk tiap layer
+    std::vector<std::vector<TilesetInfo>> tilesets; // Daftar tileset yang dipakai map
+    std::vector<int> layerTilesetGroup;             // layer index → group index
+    std::vector<MapObject> Objects;                 // Daftar object dari object layer
 };
 
 // Pointer global ke map yang sedang aktif
