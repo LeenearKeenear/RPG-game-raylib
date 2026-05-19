@@ -23,7 +23,7 @@ static Popup saveErrorPopup("Failed to save game.", "OK", 0.7F);
 static Popup loadConfirmPopup("Load from save? Current progress will be lost.", "Load Save", "Cancel", 0.7f);
 static Popup noSavePopup("No save file found.", "OK", 0.7F);
 static Popup pauseCorruptPopup("Save file corrupted or unreadable.", "OK", 0.7f);
-static Popup returnConfirmPopup("Return to main menu? Unsaved progress will be lost.", "Continue", "Cancel", 0.7f);
+static Popup returnConfirmPopup("Return to main menu?", "Continue", "Cancel", 0.7f);
 
 /*==============================================================================
  * OptionsScreen Implementation
@@ -373,6 +373,7 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             state->currentScreen = OPTIONS;
             break;
         case 4:
+            returnConfirmPopup.SetSubMessage("Unsaved progress will be lost.");
             returnConfirmPopup.Show();
             break;
         case 5:

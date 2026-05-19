@@ -128,18 +128,24 @@ void Popup::CalculateDimensions()
     const int textPadding = 20;
     const int maxWidth = static_cast<int>(GameScreenWidth * 0.6F);
     const int fontSize = 30;
+    const int subMessageSpacing = 10;
 
     int textWidth = MeasureText(message, fontSize);
+    int subWidth = (subMessage != nullptr) ? MeasureText(subMessage, fontSize) : 0;
     int buttonWidth = MeasureText(buttonText, fontSize);
+
+    // Extra height for sub-message line
+    int subExtraHeight = (subMessage != nullptr) ? (fontSize + subMessageSpacing) : 0;
 
     if (hasCancelButton) {
         int cancelWidth = MeasureText(cancelText, fontSize);
         int buttonsTotalWidth = buttonWidth + 20 + cancelWidth;
 
-        width = std::max(textWidth, buttonsTotalWidth) + (paddingX * 2);
+        int contentWidth = std::max({textWidth, subWidth, buttonsTotalWidth});
+        width = contentWidth + (paddingX * 2);
         width = std::min(width, maxWidth);
 
-        height = fontSize + (fontSize * 2) + (paddingY * 3) + textPadding;
+        height = fontSize + (fontSize * 2) + (paddingY * 3) + textPadding + subExtraHeight;
 
         position.x = (GameScreenWidth - width) / 2.0F;
         position.y = (GameScreenHeight - height) / 2.0F;
@@ -152,10 +158,11 @@ void Popup::CalculateDimensions()
         okButton = buttonTxt(buttonText, startX, buttonY, fontSize, WHITE, hoverAmount);
         cancelButton = buttonTxt(cancelText, startX + buttonWidth + 20, buttonY, fontSize, WHITE, hoverAmount);
     } else {
-        width = std::max(textWidth, buttonWidth) + (paddingX * 2);
+        int contentWidth = std::max({textWidth, subWidth, buttonWidth});
+        width = contentWidth + (paddingX * 2);
         width = std::min(width, maxWidth);
 
-        height = fontSize + (fontSize * 2) + (paddingY * 3) + textPadding;
+        height = fontSize + (fontSize * 2) + (paddingY * 3) + textPadding + subExtraHeight;
 
         position.x = (GameScreenWidth - width) / 2.0F;
         position.y = (GameScreenHeight - height) / 2.0F;
@@ -204,11 +211,19 @@ void Popup::Draw(Vector2 mousePosition)
         WHITE
     );
 
-    int textWidth = MeasureText(message, 30);
+    int fontSize = 30;
+    int textWidth = MeasureText(message, fontSize);
     int textX = static_cast<int>(position.x + ((width - textWidth) / 2.0F));
     int textY = static_cast<int>(position.y + (hasCancelButton ? 20 : 30));
 
-    DrawText(message, textX, textY, 30, WHITE);
+    DrawText(message, textX, textY, fontSize, WHITE);
+
+    if (subMessage != nullptr) {
+        int subWidth = MeasureText(subMessage, fontSize);
+        int subX = static_cast<int>(position.x + ((width - subWidth) / 2.0F));
+        int subY = textY + fontSize + 10;
+        DrawText(subMessage, subX, subY, fontSize, LIGHTGRAY);
+    }
 
     okButton.Draw(mousePosition);
     if (hasCancelButton) {
