@@ -54,6 +54,7 @@ bool hasSavedState = false;
  */
 bool WriteSaveFile(const std::string& path)
 {
+    TraceLog(LOG_INFO, "Writing save to: %s", path.c_str());
     json root;
 
     // Version and timestamp metadata
@@ -172,10 +173,9 @@ bool WriteSaveFile(const std::string& path)
 
     std::filesystem::rename(tmpPath, path);
 
-    if (!std::filesystem::exists(path))
-        return false;
-
-    return true;
+    bool saveResult = std::filesystem::exists(path);
+    TraceLog(LOG_INFO, "Save to %s: %s", path.c_str(), saveResult ? "SUCCESS" : "FAILED");
+    return saveResult;
 }
 
 /**
@@ -183,6 +183,7 @@ bool WriteSaveFile(const std::string& path)
  */
 bool WriteAutosave(const std::string& filename)
 {
+    TraceLog(LOG_INFO, "Autosaving to saves/autosave/%s", filename.c_str());
     SaveGameState(gState);
     std::string dir = "saves/autosave";
     std::filesystem::create_directories(dir);
@@ -194,8 +195,12 @@ bool WriteAutosave(const std::string& filename)
  */
 bool ReadSaveFile(const std::string& path)
 {
+    TraceLog(LOG_INFO, "Reading save from: %s", path.c_str());
     if (!std::filesystem::exists(path))
+    {
+        TraceLog(LOG_WARNING, "Save file not found: %s", path.c_str());
         return false;
+    }
 
     try
     {
@@ -204,12 +209,18 @@ bool ReadSaveFile(const std::string& path)
 
         // Validate required fields exist
         if (!root.contains("version") || !root.contains("player") || !root.contains("map"))
+        {
+            TraceLog(LOG_WARNING, "Save file missing required fields: %s", path.c_str());
             return false;
+        }
 
         // Validate version
         int version = root.at("version").get<int>();
         if (version != 1)
+        {
+            TraceLog(LOG_WARNING, "Save file version mismatch (expected 1): %s", path.c_str());
             return false;
+        }
 
         // Read player section
         const auto& player = root.at("player");
@@ -330,18 +341,22 @@ bool ReadSaveFile(const std::string& path)
         }
 
         hasSavedState = true;
+        TraceLog(LOG_INFO, "Save file %s loaded successfully (%d enemies, %d items)", path.c_str(), (int)savedEnemyStates.size(), (int)savedItemStates.size());
         return true;
     }
     catch (const json::parse_error&)
     {
+        TraceLog(LOG_WARNING, "Save file corrupted - parse error: %s", path.c_str());
         return false;
     }
     catch (const json::out_of_range&)
     {
+        TraceLog(LOG_WARNING, "Save file corrupted - missing field: %s", path.c_str());
         return false;
     }
     catch (const json::type_error&)
     {
+        TraceLog(LOG_WARNING, "Save file corrupted - type error: %s", path.c_str());
         return false;
     }
 }
@@ -351,6 +366,7 @@ bool ReadSaveFile(const std::string& path)
  */
 bool HasSaveFile(const std::string& path)
 {
+    TraceLog(LOG_INFO, "Checking save file: %s", path.c_str());
     return std::filesystem::exists(path) && std::filesystem::file_size(path) > 0;
 }
 
@@ -359,6 +375,7 @@ bool HasSaveFile(const std::string& path)
  */
 void DeleteSaveFile(const std::string& path)
 {
+    TraceLog(LOG_INFO, "Deleting save file: %s", path.c_str());
     if (std::filesystem::exists(path))
         std::filesystem::remove(path);
 }
@@ -374,6 +391,7 @@ void DeleteSaveFile(const std::string& path)
  */
 void SaveGameState(GameState *state)
 {
+    TraceLog(LOG_INFO, "Saving game state...");
     /*==============================================================================
      * Save Player State
      *==============================================================================*/
@@ -477,15 +495,7 @@ void SaveGameState(GameState *state)
      *==============================================================================*/
     savedMapState.mapHistory = mapHistoryStack.GetAllEntries();
 
-    /*==============================================================================
-     * Write save file to disk
-     *==============================================================================*/
-    WriteSaveFile("saves/manual/slot0.json");
-
-    /*==============================================================================
-     * Mark as having saved state
-     *==============================================================================*/
-    hasSavedState = true;
+    TraceLog(LOG_INFO, "Game state saved (%d enemies, %d items)", (int)savedEnemyStates.size(), (int)savedItemStates.size());
 }
 
 /**
@@ -495,6 +505,7 @@ void SaveGameState(GameState *state)
  */
 void RestoreGameState(GameState *state)
 {
+    TraceLog(LOG_INFO, "Restoring game state...");
     /*==============================================================================
      * Restore Player State
      *==============================================================================*/
@@ -622,6 +633,7 @@ void RestoreGameState(GameState *state)
             mapHistoryStack.FromVector(savedMapState.mapHistory);
         }
     }
+    TraceLog(LOG_INFO, "Game state restored");
 }
 
 /**
