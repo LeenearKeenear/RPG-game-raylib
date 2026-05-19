@@ -56,6 +56,12 @@ struct SavedEnemyState {
     std::string enemyName;       /**< Nama tipe enemy ("Slime"/"Skeleton"/"Wolf") */
     int currentHP;              /**< HP enemy saat ini */
     bool isAlive;               /**< Status hidup/mati enemy */
+    float maxHealth;            /**< Max HP enemy */
+    int aiState;                /**< AI state (EnemyAIState enum: IDLE/PATROL/CHASE/ATTACK/RETURN) */
+    float patrolTargetX;        /**< Target patroli X */
+    float patrolTargetY;        /**< Target patroli Y */
+    float patrolTimer;          /**< Timer tunggu patroli */
+    int mapObjectID;            /**< MapObjectID untuk matching saat restore */
 };
 
 /**

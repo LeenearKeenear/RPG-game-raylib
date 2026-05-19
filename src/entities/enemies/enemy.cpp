@@ -10,6 +10,7 @@
 #include "entities.h"
 #include <cmath>
 #include <fstream>
+#include <filesystem>
 #include <stdexcept>
 
 using json = nlohmann::json;
@@ -658,11 +659,112 @@ void InitEnemy()
     enemyData.Load("assets/data/enemies.json");
 }
 
-void SaveEnemiesForMap(const std::string &mapPath) {}
+void SaveEnemiesForMap(const std::string &mapPath)
+{
+    // Build per-map save file path
+    std::string safeName = mapPath;
+    for (auto &c : safeName)
+    {
+        if (c == '/' || c == '\\') c = '_';
+    }
+    std::string dir = "saves/enemies";
+    std::string filePath = dir + "/" + safeName;
+
+    std::filesystem::create_directories(dir);
+
+    json root;
+    json enemiesJson = json::array();
+
+    auto &enemyReg = Entities::GetEnemyRegistry();
+    for (const auto &enemy : enemyReg)
+    {
+        if (!enemy->IsActive) continue;
+        json e;
+        e["position"] = {enemy->Position.x, enemy->Position.y};
+        e["enemyName"] = enemy->Name;
+        e["currentHP"] = (int)enemy->Health;
+        e["isAlive"] = enemy->IsAlive();
+        e["maxHealth"] = enemy->MaxHealth;
+        e["aiState"] = (int)enemy->AIState;
+        e["patrolTargetX"] = enemy->PatrolTarget.x;
+        e["patrolTargetY"] = enemy->PatrolTarget.y;
+        e["patrolTimer"] = enemy->PatrolTimer;
+        e["mapObjectID"] = enemy->MapObjectID;
+        enemiesJson.push_back(e);
+    }
+
+    root["enemies"] = enemiesJson;
+
+    // Atomic write
+    std::string tmpPath = filePath + ".tmp";
+    std::ofstream file(tmpPath);
+    file << root.dump(4);
+    file.close();
+    std::filesystem::rename(tmpPath, filePath);
+}
 
 bool LoadEnemiesForMap(const std::string &mapPath)
 {
-    return true;
+    // Build per-map save file path
+    std::string safeName = mapPath;
+    for (auto &c : safeName)
+    {
+        if (c == '/' || c == '\\') c = '_';
+    }
+    std::string filePath = "saves/enemies/" + safeName;
+
+    if (!std::filesystem::exists(filePath))
+        return false;
+
+    try
+    {
+        std::ifstream file(filePath);
+        json root = json::parse(file);
+
+        if (!root.contains("enemies"))
+            return false;
+
+        auto &enemyReg = Entities::GetEnemyRegistry();
+        bool anyRestored = false;
+
+        for (const auto &e : root.at("enemies"))
+        {
+            int savedMapObjectID = e.value("mapObjectID", -1);
+            bool isAlive = e.value("isAlive", true);
+
+            if (!isAlive)
+            {
+                if (savedMapObjectID >= 0)
+                    Entities::RegisterDeath(mapPath, savedMapObjectID);
+                continue;
+            }
+
+            // Find matching enemy by MapObjectID and restore state
+            for (auto &enemy : enemyReg)
+            {
+                if (enemy->MapObjectID == savedMapObjectID && enemy->Name == e.value("enemyName", ""))
+                {
+                    enemy->Position.x = e.at("position")[0].get<float>();
+                    enemy->Position.y = e.at("position")[1].get<float>();
+                    enemy->Health = e.value("currentHP", 100);
+                    enemy->MaxHealth = e.value("maxHealth", 100.0f);
+                    enemy->AIState = (EnemyAIState)e.value("aiState", 0);
+                    enemy->PatrolTarget.x = e.value("patrolTargetX", 0.0f);
+                    enemy->PatrolTarget.y = e.value("patrolTargetY", 0.0f);
+                    enemy->PatrolTimer = e.value("patrolTimer", 0.0f);
+                    enemy->IsActive = true;
+                    anyRestored = true;
+                    break;
+                }
+            }
+        }
+
+        return anyRestored;
+    }
+    catch (...)
+    {
+        return false;
+    }
 }
 
 /**

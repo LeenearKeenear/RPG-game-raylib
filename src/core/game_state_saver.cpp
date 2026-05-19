@@ -111,6 +111,12 @@ void WriteSaveFile(const std::string& path)
         e["enemyName"] = enemy.enemyName;
         e["currentHP"] = enemy.currentHP;
         e["isAlive"] = enemy.isAlive;
+        e["maxHealth"] = enemy.maxHealth;
+        e["aiState"] = enemy.aiState;
+        e["patrolTargetX"] = enemy.patrolTargetX;
+        e["patrolTargetY"] = enemy.patrolTargetY;
+        e["patrolTimer"] = enemy.patrolTimer;
+        e["mapObjectID"] = enemy.mapObjectID;
         enemiesJson.push_back(e);
     }
     root["enemies"] = enemiesJson;
@@ -236,6 +242,12 @@ bool ReadSaveFile(const std::string& path)
                 enemy.enemyName = e.value("enemyName", "");
                 enemy.currentHP = e.value("currentHP", 0);
                 enemy.isAlive = e.value("isAlive", true);
+                enemy.maxHealth = e.value("maxHealth", 100.0f);
+                enemy.aiState = e.value("aiState", 0);
+                enemy.patrolTargetX = e.value("patrolTargetX", 0.0f);
+                enemy.patrolTargetY = e.value("patrolTargetY", 0.0f);
+                enemy.patrolTimer = e.value("patrolTimer", 0.0f);
+                enemy.mapObjectID = e.value("mapObjectID", -1);
                 savedEnemyStates.push_back(enemy);
             }
         }
@@ -365,6 +377,28 @@ void SaveGameState(GameState *state)
     /*==============================================================================
      * Save Enemy States
      *==============================================================================*/
+    savedEnemyStates.clear();
+    auto &enemyReg = Entities::GetEnemyRegistry();
+    for (const auto &enemy : enemyReg)
+    {
+        if (!enemy->IsActive) continue;
+        SavedEnemyState saved;
+        saved.position = enemy->Position;
+        saved.enemyName = enemy->Name;
+        saved.currentHP = (int)enemy->Health;
+        saved.isAlive = enemy->IsAlive();
+        saved.maxHealth = enemy->MaxHealth;
+        saved.aiState = (int)enemy->AIState;
+        saved.patrolTargetX = enemy->PatrolTarget.x;
+        saved.patrolTargetY = enemy->PatrolTarget.y;
+        saved.patrolTimer = enemy->PatrolTimer;
+        saved.mapObjectID = enemy->MapObjectID;
+        savedEnemyStates.push_back(saved);
+    }
+
+    /*==============================================================================
+     * Save Item States
+     *==============================================================================*/
     savedItemStates.clear();
     for (const ItemSpawn &item : itemData.activeItems)
     {
@@ -478,23 +512,34 @@ void RestoreGameState(GameState *state)
 
     /*==============================================================================
      * Restore Enemy States
-     *==============================================================================
-     * @note Enemy restore dinonaktifkan karena sistem enemy telah diubah
-     *   menggunakan Entities namespace di codebase baru. Untuk sekarang,
-     *   enemy akan di-spawn ulang setiap kali masuk game.
-     *   TODO: Update untuk menggunakan Entities system di masa depan.
-     */
-    // if (hasSavedState && !savedEnemyStates.empty()) {
-    //     int enemyIndex = 0;
-    //     for (Enemy& enemy : activeEnemies) {
-    //         if (enemyIndex < (int)savedEnemyStates.size()) {
-    //             enemy.currentHP = savedEnemyStates[enemyIndex].currentHP;
-    //             enemy.isAlive = savedEnemyStates[enemyIndex].isAlive;
-    //             enemy.position = savedEnemyStates[enemyIndex].position;
-    //             enemyIndex++;
-    //         }
-    //     }
-    // }
+     *==============================================================================*/
+    if (hasSavedState && !savedEnemyStates.empty())
+    {
+        auto &enemyReg = Entities::GetEnemyRegistry();
+        for (auto &saved : savedEnemyStates)
+        {
+            if (!saved.isAlive)
+            {
+                Entities::RegisterDeath(GetCurrentMapPath(), saved.mapObjectID);
+                continue;
+            }
+            // Find matching enemy by MapObjectID
+            for (auto &enemy : enemyReg)
+            {
+                if (enemy->MapObjectID == saved.mapObjectID && enemy->Name == saved.enemyName)
+                {
+                    enemy->Position = saved.position;
+                    enemy->Health = saved.currentHP;
+                    enemy->MaxHealth = saved.maxHealth;
+                    enemy->AIState = (EnemyAIState)saved.aiState;
+                    enemy->PatrolTarget = {saved.patrolTargetX, saved.patrolTargetY};
+                    enemy->PatrolTimer = saved.patrolTimer;
+                    enemy->IsActive = true;
+                    break;
+                }
+            }
+        }
+    }
 
     /*==============================================================================
      * Restore Item States

@@ -110,12 +110,11 @@ void UpdateLoadingScreen(GameState *state)
             // Re-init player berdasarkan target door di map baru
             PlayerInstance.Init(gState, state->pendingDoorName.c_str());
 
-            // Bersihkan entitas map sebelumnya dan spawn entitas baru
+            // Bersihkan entitas map sebelumnya dan add player
             Entities::Clear();
             Entities::Add(&PlayerInstance);
-            SpawnEnemiesFromMap();
 
-            // Load musuh yang sudah ada atau spawn baru
+            // Load musuh dari save per-map, atau spawn baru jika tak ada
             if (!LoadEnemiesForMap(state->pendingMapPath))
             {
                 SpawnEnemiesFromMap();
