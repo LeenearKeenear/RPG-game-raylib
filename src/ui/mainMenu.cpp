@@ -150,7 +150,7 @@ void UpdateMainMenu(GameState *state)
             state->currentScreen = LOADING;
             waitingLoadConfirm = false;
         }
-        if (!loadPopup.IsActive())
+        else if (!loadPopup.IsActive())
         {
             ClearSavedState();
             waitingLoadConfirm = false;
