@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <set>
 #include "entity.h"
 #include "enemy.h"
 
@@ -44,6 +45,18 @@ namespace Entities
     bool IsAlreadyDead(const std::string &mapPath, int objectId);
 
     std::vector<Enemy *> &GetEnemyRegistry();
+
+    /**
+     * @brief Mendapatkan referensi ke set entitas yang sudah mati.
+     * @return const ref ke DeadEntities set
+     */
+    const std::set<std::string> &GetDeadEntities();
+
+    /**
+     * @brief Mengganti seluruh isi DeadEntities set.
+     * @param entities Set entitas mati baru
+     */
+    void SetDeadEntities(const std::set<std::string> &entities);
 
 }
 
