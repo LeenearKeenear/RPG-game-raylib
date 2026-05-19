@@ -36,12 +36,40 @@ static void DrawItemIcon(const InventoryItem &item, Rectangle dest)
         return;
 
     const ItemDefinition &def = itemDefs.GetById(item.definitionId);
+    const Frame &frame = GetFrame(def.spriteKey);
 
-    Display display;
-    display.position = {dest.x, dest.y};
-    display.size = (int)dest.width;
-    display.tint = WHITE;
-    DrawFrame(def.spriteKey, display);
+    Rectangle src = {
+        (float)(frame.positionX * (FRAME_SIZE + FRAME_GAP)),
+        (float)(frame.positionY * (FRAME_SIZE + FRAME_GAP)),
+        (float)(frame.width * FRAME_SIZE),
+        (float)(frame.height * FRAME_SIZE)
+    };
+
+    if (def.spriteKey == "sword2")
+    {
+        src.y += 25.0f;
+        src.height -= 25.0f;
+    }
+
+    int maxDim = (src.width > src.height) ? src.width : src.height;
+    float size = dest.width / maxDim;
+
+    float renderWidth = src.width * size;
+    float renderHeight = src.height * size;
+
+    Vector2 position = {
+        dest.x + (dest.width - renderWidth) / 2.0f,
+        dest.y + (dest.height - renderHeight) / 2.0f
+    };
+
+    Rectangle drawDest = {
+        position.x,
+        position.y,
+        renderWidth,
+        renderHeight
+    };
+
+    DrawTexturePro(textures[frame.texture], src, drawDest, {0, 0}, 0.0f, WHITE);
 }
 
 /**

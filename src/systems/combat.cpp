@@ -325,15 +325,17 @@ namespace Combat
         visualPos.x += cosf(rad) * thrust;
         visualPos.y += sinf(rad) * thrust;
 
+        const Frame &frame = GetFrame(def.spriteKey);
+
         Display display;
         display.position = visualPos;
         display.size = 32;
         display.offset = {0, 1 + offsetRight};
-        display.origin = {17, 32};
+        display.origin = {17.0f, (float)(frame.height * display.size)};
         display.rotation = drawAngle + 90.0f;
         display.tint = WHITE;
 
-        DrawFrame(def.spriteKey, display);
+        DrawFrame(frame, display);
     }
 
     void AddDamagePopup(Vector2 pos, float damage)
