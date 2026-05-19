@@ -23,6 +23,7 @@ static Popup saveErrorPopup("Failed to save game.", "OK", 0.7F);
 static Popup loadConfirmPopup("Load from save? Current progress will be lost.", "Load Save", "Cancel", 0.7f);
 static Popup noSavePopup("No save file found.", "OK", 0.7F);
 static Popup pauseCorruptPopup("Save file corrupted or unreadable.", "OK", 0.7f);
+static Popup returnConfirmPopup("Return to main menu? Unsaved progress will be lost.", "Continue", "Cancel", 0.7f);
 
 /*==============================================================================
  * OptionsScreen Implementation
@@ -372,20 +373,7 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             state->currentScreen = OPTIONS;
             break;
         case 4:
-            state->enteredLoading = false;
-            state->loadingStage = 0;
-            state->loadingProgress = 0.0F;
-            state->loadingComplete = false;
-            SaveGameState(state);
-            if (WriteSaveFile("saves/manual/slot0.json"))
-            {
-                state->currentScreen = MAIN_MENU;
-                Hide();
-            }
-            else
-            {
-                saveErrorPopup.Show();
-            }
+            returnConfirmPopup.Show();
             break;
         case 5:
             CloseWindow();
@@ -450,6 +438,19 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
         return;
     }
 
+    if (returnConfirmPopup.IsActive()) {
+        returnConfirmPopup.Update(mousePosition, mouseClicked);
+        if (returnConfirmPopup.IsConfirmClicked()) {
+            state->enteredLoading = false;
+            state->loadingStage = 0;
+            state->loadingProgress = 0.0F;
+            state->loadingComplete = false;
+            state->currentScreen = MAIN_MENU;
+            Hide();
+        }
+        return;
+    }
+
     for (std::uint8_t i = 0; i < 6; i++) {
         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
             HandleButtonClick(i, state);
@@ -498,5 +499,8 @@ void PauseMenu::Draw(Vector2 mousePosition)
     }
     if (pauseCorruptPopup.IsActive()) {
         pauseCorruptPopup.Draw(mousePosition);
+    }
+    if (returnConfirmPopup.IsActive()) {
+        returnConfirmPopup.Draw(mousePosition);
     }
 }

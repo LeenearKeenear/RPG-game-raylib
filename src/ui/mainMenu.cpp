@@ -10,8 +10,10 @@
 #include "screen.h"
 #include "../lib/raylib/include/raylib.h"
 #include <array>
+#include <filesystem>
 #include "popup.h"
 #include "game_state_saver.h"
+#include "entities.h"
 
 /*==============================================================================
  * Static Variables
@@ -133,6 +135,11 @@ void UpdateMainMenu(GameState *state)
         {
             DeleteSaveFile("saves/manual/slot0.json");
             ClearSavedState();
+            // Clean up per-map persistence from previous session so enemies/items
+            // spawn fresh instead of being loaded as dead from old save files
+            Entities::SetDeadEntities({});
+            std::filesystem::remove_all("saves/enemies");
+            std::filesystem::remove_all("saves/items");
             state->enteredLoading = false;
             state->currentScreen = LOADING;
             waitingStartConfirm = false;
