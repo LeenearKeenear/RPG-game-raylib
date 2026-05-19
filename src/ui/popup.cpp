@@ -63,8 +63,10 @@ void Popup::Show()
  */
 void Popup::Hide()
 {
-    confirmClicked = false;
     active = false;
+    // NOTE: do NOT reset confirmClicked here - Update() sets it before calling Hide(),
+    // and the main menu needs to read it via IsConfirmClicked() after the popup closes.
+    // confirmClicked is reset in Show() and the constructor.
 }
 
 /**
