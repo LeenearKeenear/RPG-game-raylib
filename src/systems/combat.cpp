@@ -336,6 +336,57 @@ namespace Combat
         display.tint = WHITE;
 
         DrawFrame(frame, display);
+
+        if (player.Swing.active && player.Swing.type == ATTACK_SLASH && (def.spriteKey == "sword1" || def.spriteKey == "sword2"))
+        {
+            float progress = player.Swing.timer / player.Swing.duration;
+            std::string slashSpriteKey;
+            
+            if (progress >= 1.0f / 3.0f && progress < 2.0f / 3.0f)
+            {
+                slashSpriteKey = (def.spriteKey == "sword1") ? "slash1Sword1" : "slash1Sword2";
+            }
+            else if (progress >= 2.0f / 3.0f)
+            {
+                slashSpriteKey = (def.spriteKey == "sword1") ? "slash2Sword1" : "slash2Sword2";
+            }
+
+            if (!slashSpriteKey.empty())
+            {
+                const Frame &slashFrame = GetFrame(slashSpriteKey);
+                float radRay = rayAngle * (PI / 180.0f);
+                Vector2 slashPos = player.Swing.center;
+                float slashDist = player.Swing.reach * 0.65f;
+                slashPos.x += cosf(radRay) * slashDist;
+                slashPos.y += sinf(radRay) * slashDist;
+
+                if (progress >= 2.0f / 3.0f)
+                {
+                    float shiftAngleRad = (rayAngle - 90.0f) * (PI / 180.0f);
+                    float H = (def.spriteKey == "sword1") ? 26.0f : 37.0f;
+                    float backDist = (def.spriteKey == "sword1") ? 16.0f : 19.5f;
+                    slashPos.x += cosf(shiftAngleRad) * H;
+                    slashPos.y += sinf(shiftAngleRad) * H;
+
+                    // Additional shift back (opposite to attack direction)
+                    slashPos.x -= cosf(radRay) * backDist;
+                    slashPos.y -= sinf(radRay) * backDist;
+                }
+
+                Display slashDisplay;
+                slashDisplay.position = slashPos;
+                slashDisplay.size = 32;
+                slashDisplay.offset = {0, 0};
+                slashDisplay.origin = {
+                    (float)slashFrame.width * slashDisplay.size / 2.0f,
+                    (float)slashFrame.height * slashDisplay.size / 2.0f
+                };
+                slashDisplay.rotation = rayAngle + 90.0f;
+                slashDisplay.tint = WHITE;
+
+                DrawFrame(slashFrame, slashDisplay);
+            }
+        }
     }
 
     void AddDamagePopup(Vector2 pos, float damage)

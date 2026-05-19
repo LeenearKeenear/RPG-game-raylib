@@ -559,7 +559,12 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
     MarkSpawnFlowFieldsDirty(bomb.tile.position);
     RebuildObstacleCache();
 
-    if (IsInExplosionRadius(bomb.tile.position, playerBounds))
+    Vector2 bombCenter = {
+        bomb.tile.position.x + FRAME_SIZE / 2.0f,
+        bomb.tile.position.y + FRAME_SIZE / 2.0f
+    };
+
+    if (IsInExplosionRadius(bombCenter, playerBounds))
         if (player)
             player->TakeDamage(BOMB_DAMAGE);
 
@@ -570,7 +575,7 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
             continue;
         if (!enemy->IsActive || enemy->Health <= 0)
             continue;
-        if (IsInExplosionRadius(bomb.tile.position, enemy->GetHitbox()))
+        if (IsInExplosionRadius(bombCenter, enemy->GetHitbox()))
             enemy->TakeDamage(BOMB_DAMAGE, {0, 0});
     }
 
@@ -579,11 +584,11 @@ void BombManager::Explode(BombData &bomb, Rectangle playerBounds, Player *player
     {
         if (!other.isAlive || other.isExploding || other.isTriggered)
             continue;
-        if (IsInExplosionRadius(bomb.tile.position, other.tile.bounds))
+        if (IsInExplosionRadius(bombCenter, other.tile.bounds))
             Explode(other, playerBounds, player);
     }
 
-    crateManager.HitByExplosion(bomb.tile.position, this);
+    crateManager.HitByExplosion(bombCenter, this);
 }
 
 /**
@@ -656,7 +661,14 @@ int BombManager::Render(Rectangle viewRect)
         rendered++;
 
         if (bomb.isExploding)
-            DrawCircleV(bomb.tile.position, BOMB_EXPLOSION_RADIUS, Fade(ORANGE, 0.4f));
+        {
+            Vector2 bombCenter = {
+                bomb.tile.position.x + FRAME_SIZE / 2.0f,
+                bomb.tile.position.y + FRAME_SIZE / 2.0f
+            };
+            float progress = (BOMB_EXPLOSION_DURATION - bomb.explosionTimer) / BOMB_EXPLOSION_DURATION;
+            DrawExplosion(bombCenter, BOMB_EXPLOSION_RADIUS, progress);
+        }
         else
         {
             Display display;

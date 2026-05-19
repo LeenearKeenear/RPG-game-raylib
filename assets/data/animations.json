@@ -2,21 +2,21 @@
     "knight": {
         "idle": {
             "right": {
-                "frames": ["knightIdleRight1", "knightIdleRight2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["knightIdleRight1", "knightIdleRight2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             },
             "left": {
-                "frames": ["knightIdleLeft1", "knightIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["knightIdleLeft1", "knightIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             }
         },
         "walk": {
             "right": {
-                "frames": [
+                "sprites": [
                     "knightWalkRight1",
                     "knightWalkRight2",
                     "knightWalkRight3",
@@ -25,12 +25,12 @@
                     "knightWalkRight6",
                     "knightWalkRight7"
                 ],
-                "frameCount": 7,
-                "frameDuration": 0.1,
+                "spriteCount": 7,
+                "spriteDuration": 0.1,
                 "loop": true
             },
             "left": {
-                "frames": [
+                "sprites": [
                     "knightWalkLeft1",
                     "knightWalkLeft2",
                     "knightWalkLeft3",
@@ -39,22 +39,22 @@
                     "knightWalkLeft6",
                     "knightWalkLeft7"
                 ],
-                "frameCount": 7,
-                "frameDuration": 0.1,
+                "spriteCount": 7,
+                "spriteDuration": 0.1,
                 "loop": true
             }
         },
         "dead": {
             "right": {
-                "frames": ["knightDeadRight"],
-                "frameCount": 1,
-                "frameDuration": 1.0,
+                "sprites": ["knightDeadRight"],
+                "spriteCount": 1,
+                "spriteDuration": 1.0,
                 "loop": false
             },
             "left": {
-                "frames": ["knightDeadLeft"],
-                "frameCount": 1,
-                "frameDuration": 1.0,
+                "sprites": ["knightDeadLeft"],
+                "spriteCount": 1,
+                "spriteDuration": 1.0,
                 "loop": false
             }
         }
@@ -62,57 +62,57 @@
     "slime": {
         "idle": {
             "right": {
-                "frames": ["slimeIdleLeft1", "slimeIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["slimeIdleLeft1", "slimeIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             },
             "left": {
-                "frames": ["slimeIdleLeft1", "slimeIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["slimeIdleLeft1", "slimeIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             }
         },
         "walk": {
             "right": {
-                "frames": ["slimeIdleLeft1", "slimeIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["slimeIdleLeft1", "slimeIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             },
             "left": {
-                "frames": ["slimeIdleLeft1", "slimeIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["slimeIdleLeft1", "slimeIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             }
         },
         "attack": {
             "right": {
-                "frames": ["slimeIdleLeft1", "slimeIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["slimeIdleLeft1", "slimeIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             },
             "left": {
-                "frames": ["slimeIdleLeft1", "slimeIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["slimeIdleLeft1", "slimeIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             }
         },
         "dead": {
             "right": {
-                "frames": ["slimeDeadLeft"],
-                "frameCount": 1,
-                "frameDuration": 1.0,
+                "sprites": ["slimeDeadLeft"],
+                "spriteCount": 1,
+                "spriteDuration": 1.0,
                 "loop": false
             },
             "left": {
-                "frames": ["slimeDeadLeft"],
-                "frameCount": 1,
-                "frameDuration": 1.0,
+                "sprites": ["slimeDeadLeft"],
+                "spriteCount": 1,
+                "spriteDuration": 1.0,
                 "loop": false
             }
         }
@@ -120,57 +120,57 @@
     "skeleton": {
         "idle": {
             "right": {
-                "frames": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             },
             "left": {
-                "frames": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             }
         },
         "walk": {
             "right": {
-                "frames": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             },
             "left": {
-                "frames": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             }
         },
         "attack": {
             "right": {
-                "frames": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             },
             "left": {
-                "frames": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["skeletonIdleLeft1", "skeletonIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             }
         },
         "dead": {
             "right": {
-                "frames": ["skeletonDeadLeft"],
-                "frameCount": 1,
-                "frameDuration": 1.0,
+                "sprites": ["skeletonDeadLeft"],
+                "spriteCount": 1,
+                "spriteDuration": 1.0,
                 "loop": false
             },
             "left": {
-                "frames": ["skeletonDeadLeft"],
-                "frameCount": 1,
-                "frameDuration": 1.0,
+                "sprites": ["skeletonDeadLeft"],
+                "spriteCount": 1,
+                "spriteDuration": 1.0,
                 "loop": false
             }
         }
@@ -178,57 +178,78 @@
     "wolf": {
         "idle": {
             "right": {
-                "frames": ["wolfIdleLeft1", "wolfIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["wolfIdleLeft1", "wolfIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             },
             "left": {
-                "frames": ["wolfIdleLeft1", "wolfIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["wolfIdleLeft1", "wolfIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             }
         },
         "walk": {
             "right": {
-                "frames": ["wolfIdleLeft1", "wolfIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["wolfIdleLeft1", "wolfIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             },
             "left": {
-                "frames": ["wolfIdleLeft1", "wolfIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["wolfIdleLeft1", "wolfIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             }
         },
         "attack": {
             "right": {
-                "frames": ["wolfIdleLeft1", "wolfIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["wolfIdleLeft1", "wolfIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             },
             "left": {
-                "frames": ["wolfIdleLeft1", "wolfIdleLeft2"],
-                "frameCount": 2,
-                "frameDuration": 0.5,
+                "sprites": ["wolfIdleLeft1", "wolfIdleLeft2"],
+                "spriteCount": 2,
+                "spriteDuration": 0.5,
                 "loop": true
             }
         },
         "dead": {
             "right": {
-                "frames": ["wolfDeadLeft"],
-                "frameCount": 1,
-                "frameDuration": 1.0,
+                "sprites": ["wolfDeadLeft"],
+                "spriteCount": 1,
+                "spriteDuration": 1.0,
                 "loop": false
             },
             "left": {
-                "frames": ["wolfDeadLeft"],
-                "frameCount": 1,
-                "frameDuration": 1.0,
+                "sprites": ["wolfDeadLeft"],
+                "spriteCount": 1,
+                "spriteDuration": 1.0,
+                "loop": false
+            }
+        }
+    },
+    "explosion": {
+        "idle": {
+            "right": {
+                "sprites": [
+                    "explosion1",
+                    "explosion2",
+                    "explosion3",
+                    "explosion4",
+                    "explosion5",
+                    "explosion6",
+                    "explosion7",
+                    "explosion8",
+                    "explosion9",
+                    "explosion10"
+                ],
+                "spriteCount": 10,
+                "spriteDuration": 0.06,
                 "loop": false
             }
         }

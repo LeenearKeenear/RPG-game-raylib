@@ -24,7 +24,8 @@ static TextureSlot ResolveTextureSlot(const std::string &str)
         {"TILESET_PROPS", TILESET_PROPS},
         {"TILESET_ITEMS", TILESET_ITEMS},
         {"SPRITESHEET_KNIGHT", SPRITESHEET_KNIGHT},
-        {"SPRITESHEET_ENEMIES", SPRITESHEET_ENEMIES}
+        {"SPRITESHEET_ENEMIES", SPRITESHEET_ENEMIES},
+        {"SPRITESHEET_EFFECTS", SPRITESHEET_EFFECTS}
     };
     auto it = mapping.find(str);
     if (it != mapping.end()) return it->second;
@@ -109,6 +110,7 @@ void InitTextures()
     LoadFrameTexture(TILESET_ITEMS, "assets/textures/items.png");
     LoadFrameTexture(SPRITESHEET_KNIGHT, "assets/textures/knight (1).png");
     LoadFrameTexture(SPRITESHEET_ENEMIES, "assets/textures/enemies.png");
+    LoadFrameTexture(SPRITESHEET_EFFECTS, "assets/textures/effects.png");
     LoadFramesFromJSON();
     LoadAnimationsFromJSON();
 }
@@ -225,14 +227,14 @@ void LoadAnimationsFromJSON()
                     Direction dir = ResolveDirection(dirKey);
                     
                     AnimationConfig config;
-                    config.speed = dirVal.at("frameDuration").get<float>();
+                    config.speed = dirVal.at("spriteDuration").get<float>();
                     config.loop = dirVal.at("loop").get<bool>();
                     
-                    if (dirVal.contains("frames"))
+                    if (dirVal.contains("sprites"))
                     {
-                        for (auto &frame : dirVal.at("frames"))
+                        for (auto &sprite : dirVal.at("sprites"))
                         {
-                            config.sprites.push_back(frame.get<std::string>());
+                            config.sprites.push_back(sprite.get<std::string>());
                         }
                     }
                     
@@ -291,7 +293,7 @@ void PlayAnimation(Animation &anim, State state, Direction direction)
     anim.currentConfig = &anim.animSet->configs[state][resolvedDir];
     
     anim.timer = 0.0f;
-    anim.currentFrameIndex = 0;
+    anim.currentSpriteIndex = 0;
 }
 
 void UpdateAnimation(Animation &anim, float dt)
@@ -302,17 +304,17 @@ void UpdateAnimation(Animation &anim, float dt)
     if (anim.timer >= anim.currentConfig->speed)
     {
         anim.timer = 0.0f;
-        anim.currentFrameIndex++;
+        anim.currentSpriteIndex++;
 
-        if (anim.currentFrameIndex >= (int)anim.currentConfig->sprites.size())
+        if (anim.currentSpriteIndex >= (int)anim.currentConfig->sprites.size())
         {
             if (anim.currentConfig->loop)
             {
-                anim.currentFrameIndex = 0;
+                anim.currentSpriteIndex = 0;
             }
             else
             {
-                anim.currentFrameIndex = (int)anim.currentConfig->sprites.size() - 1;
+                anim.currentSpriteIndex = (int)anim.currentConfig->sprites.size() - 1;
                 
                 if (anim.state == ATTACK)
                 {
@@ -328,7 +330,7 @@ void DrawAnimation(const Animation &anim, Color tint)
 {
     if (!anim.currentConfig || anim.currentConfig->sprites.empty()) return;
 
-    int index = anim.currentFrameIndex;
+    int index = anim.currentSpriteIndex;
     if (index < 0 || index >= (int)anim.currentConfig->sprites.size())
     {
         index = 0;
@@ -337,6 +339,38 @@ void DrawAnimation(const Animation &anim, Color tint)
     const std::string &frameId = anim.currentConfig->sprites[index];
     Display display = { anim.position, FRAME_SIZE, {0,0}, {0,0}, 0.0f, tint };
     DrawFrame(frameId, display);
+}
+
+void DrawExplosion(Vector2 centerPosition, float radius, float progress)
+{
+    std::string frameName;
+    auto it = loadedAnimationSets.find("explosion");
+    if (it != loadedAnimationSets.end())
+    {
+        const AnimationConfig &config = it->second.configs[IDLE][RIGHT];
+        if (!config.sprites.empty())
+        {
+            int frameIndex = (int)(progress * config.sprites.size());
+            if (frameIndex < 0) frameIndex = 0;
+            if (frameIndex >= (int)config.sprites.size()) frameIndex = (int)config.sprites.size() - 1;
+            frameName = config.sprites[frameIndex];
+        }
+    }
+    if (frameName.empty())
+    {
+        int frameIndex = (int)(progress * 10.0f);
+        if (frameIndex < 0) frameIndex = 0;
+        if (frameIndex > 9) frameIndex = 9;
+        frameName = "explosion" + std::to_string(frameIndex + 1);
+    }
+
+    Display display;
+    display.size = (int)(radius * 2.0f / 3.0f);
+    display.position.x = centerPosition.x - (3.0f * display.size) / 2.0f;
+    display.position.y = centerPosition.y - (3.0f * display.size) / 2.0f;
+    display.offset = {0, 0};
+
+    DrawFrame(frameName, display);
 }
 
 /*

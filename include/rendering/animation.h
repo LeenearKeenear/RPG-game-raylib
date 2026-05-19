@@ -12,7 +12,7 @@ Frames Management
 
 constexpr int FRAME_SIZE = 32;
 constexpr int FRAME_GAP = 4;
-constexpr int MAX_TEXTURES = 6;
+constexpr int MAX_TEXTURES = 7;
 
 extern Texture2D textures[MAX_TEXTURES];
 
@@ -23,7 +23,8 @@ enum TextureSlot
     TILESET_PROPS,
     TILESET_ITEMS,
     SPRITESHEET_KNIGHT,
-    SPRITESHEET_ENEMIES
+    SPRITESHEET_ENEMIES,
+    SPRITESHEET_EFFECTS
 };
 
 struct Frame
@@ -92,7 +93,7 @@ struct Animation
     State state;
     Direction direction;
     float timer;
-    int currentFrameIndex;
+    int currentSpriteIndex;
     bool isAttacking;
     bool isDead;
     const AnimationConfig *currentConfig;
@@ -103,6 +104,7 @@ void LoadAnimationsFromJSON();
 void PlayAnimation(Animation &anim, State state, Direction direction);
 void UpdateAnimation(Animation &anim, float dt);
 void DrawAnimation(const Animation &anim, Color tint = WHITE);
+void DrawExplosion(Vector2 centerPosition, float radius, float progress);
 
 extern std::unordered_map<std::string, AnimationSet> loadedAnimationSets;
 
