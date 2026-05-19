@@ -146,6 +146,8 @@ namespace Combat
                 else
                     attackFaceDir = LEFT;
 
+                Direction horizDir = (attackDir.x >= 0) ? RIGHT : LEFT;
+                PlayAnimation(player.Anim, IDLE, horizDir);
                 PlayAnimation(player.Anim, IDLE, attackFaceDir);
 
                 float manaCost = Inventory::GetAttackManaCost(player);
@@ -208,47 +210,6 @@ namespace Combat
             player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
         player.Swing.center = playerCenter;
 
-        ItemSlot activeSlot = InputInstance.GetActiveSlot();
-        if (activeSlot == SLOT_WEAPON_1)
-        {
-            switch (player.Anim.direction)
-            {
-            case UP:
-                player.Swing.center.x += 3;
-                break;
-            case DOWN:
-                player.Swing.center.x -= 3;
-                break;
-            case LEFT:
-                player.Swing.center.y -= 3;
-                break;
-            case RIGHT:
-                player.Swing.center.y += 3;
-                break;
-            }
-        }
-        else
-        {
-            switch (player.Anim.direction)
-            {
-            case UP:
-                player.Swing.center.y -= 20;
-                player.Swing.center.x += 1;
-                break;
-            case DOWN:
-                player.Swing.center.y += 20;
-                player.Swing.center.x -= 1;
-                break;
-            case LEFT:
-                player.Swing.center.x -= 20;
-                player.Swing.center.y -= 1;
-                break;
-            case RIGHT:
-                player.Swing.center.x += 20;
-                player.Swing.center.y += 1;
-                break;
-            }
-        }
 
         player.Swing.timer += dt;
         if (player.Swing.timer >= player.Swing.duration)
@@ -294,9 +255,6 @@ namespace Combat
 
     void DrawSwingAttack(Player &player)
     {
-        if (!player.Swing.active)
-            return;
-
         InventoryItem item = Inventory::GetActiveHotbarItem(player);
         if (item.definitionId == -1)
             return;
@@ -305,20 +263,74 @@ namespace Combat
         if (def.category != ITEM_WEAPON)
             return;
 
-        Vector2 visualPos = player.Swing.center;
-        if (player.Swing.type == ATTACK_THRUST || player.Swing.type == ATTACK_PIERCE || player.Swing.type == ATTACK_SLAM)
+        Vector2 visualPos;
+        float drawAngle;
+        float thrust = 0.0f;
+        float rayAngle;
+        float offsetRight = 0.0f;
+
+        if (player.Swing.active)
         {
-            float rad = player.Swing.baseAngle * (PI / 180.0f);
-            visualPos.x += cosf(rad) * player.Swing.thrustOffset;
-            visualPos.y += sinf(rad) * player.Swing.thrustOffset;
+            visualPos = player.Swing.center;
+            drawAngle = player.Swing.currentAngle;
+            thrust = player.Swing.thrustOffset;
+            rayAngle = player.Swing.raycastAngle;
         }
+        else
+        {
+            visualPos = {
+                player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
+                player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
+
+            static Direction lastHorizDir = RIGHT;
+            if (player.Anim.direction == RIGHT)
+                lastHorizDir = RIGHT;
+            else if (player.Anim.direction == LEFT)
+                lastHorizDir = LEFT;
+
+            if (player.Anim.direction == RIGHT) {
+                rayAngle = -9.0f; // Jam 3
+                offsetRight = 0.8f;
+            }
+            else if (player.Anim.direction == LEFT)
+                rayAngle = 189.0f; // Jam 9
+            else if (player.Anim.direction == UP)
+            {
+                if (lastHorizDir == RIGHT) {
+                    rayAngle = -60.0f; // Jam 1
+                    offsetRight = 0.8f;   
+                }
+                else
+                    rayAngle = -120.0f; // Jam 11
+            }
+            else if (player.Anim.direction == DOWN)
+            {
+                if (lastHorizDir == RIGHT) {
+                    rayAngle = 60.0f; // Jam 5
+                    offsetRight = 0.8f;
+                }
+                else
+                    rayAngle = 120.0f; // Jam 7
+            }
+            else
+            {
+                rayAngle = 0.0f;
+            }
+
+            drawAngle = rayAngle;
+            thrust = 0.0f;
+        }
+
+        float rad = rayAngle * (PI / 180.0f);
+        visualPos.x += cosf(rad) * thrust;
+        visualPos.y += sinf(rad) * thrust;
 
         Display display;
         display.position = visualPos;
-        display.size = 20;
-        display.offset = {0, 0};
-        display.origin = {0, 24};
-        display.rotation = player.Swing.currentAngle + 45.0f;
+        display.size = 32;
+        display.offset = {0, 1 + offsetRight};
+        display.origin = {17, 32};
+        display.rotation = drawAngle + 90.0f;
         display.tint = WHITE;
 
         DrawFrame(def.spriteKey, display);
