@@ -353,6 +353,7 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             Hide();
             break;
         case 1:
+            SaveGameState(state);
             if (WriteSaveFile("saves/manual/slot0.json"))
                 savePopup.Show();
             else
