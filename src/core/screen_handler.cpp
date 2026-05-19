@@ -35,6 +35,7 @@
 #include <string>
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 #include "hud.h"
 #include "propsbehavior.h"
 
@@ -151,6 +152,10 @@ GameState InitScreen()
     state.isGoingBack = false;
     state.pendingMapPath.clear();
     state.pendingDoorName.clear();
+
+    // Create save directories at startup
+    std::filesystem::create_directories("saves/manual");
+    std::filesystem::create_directories("saves/autosave");
 
     return state;
 }
