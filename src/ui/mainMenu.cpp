@@ -89,6 +89,7 @@ void UpdateMainMenu(GameState *state)
                     }
                     else
                     {
+                        state->enteredLoading = false;
                         state->currentScreen = LOADING;
                     }
                     break;
