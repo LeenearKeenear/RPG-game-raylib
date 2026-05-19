@@ -6,8 +6,8 @@
 /**
  * @brief Default constructor.
  */
-Popup::Popup() : active(false), message(nullptr), buttonText(nullptr), 
-    hoverAmount(1.0F), position({0, 0}), width(0), height(0)
+Popup::Popup() : active(false), hasCancelButton(false), message(nullptr), buttonText(nullptr),
+    cancelText(nullptr), hoverAmount(1.0F), confirmClicked(false), position({0, 0}), width(0), height(0)
 {
 }
 
@@ -18,7 +18,23 @@ Popup::Popup() : active(false), message(nullptr), buttonText(nullptr),
  * @param hoverAmount Nilai pengurangan warna saat hover (0.0 = hitam, 1.0 = normal).
  */
 Popup::Popup(const char* message, const char* buttonText, float hoverAmount) 
-    : active(false), message(message), buttonText(buttonText), hoverAmount(hoverAmount), position({0, 0}), width(0), height(0)
+    : active(false), hasCancelButton(false), message(message), buttonText(buttonText),
+      cancelText(nullptr), hoverAmount(hoverAmount), confirmClicked(false), position({0, 0}), width(0), height(0)
+{
+    CalculateDimensions();
+}
+
+/**
+ * @brief Two-button constructor.
+ * @param message Teks yang ditampilkan di popup.
+ * @param confirmText Teks pada tombol konfirmasi.
+ * @param cancelText Teks pada tombol batal.
+ * @param hoverAmount Nilai pengurangan warna saat hover (0.0 = hitam, 1.0 = normal).
+ */
+Popup::Popup(const char* message, const char* confirmText, const char* cancelText, float hoverAmount)
+    : active(false), hasCancelButton(true), message(message), buttonText(confirmText),
+      cancelText(cancelText), hoverAmount(hoverAmount), confirmClicked(false),
+      position({0, 0}), width(0), height(0)
 {
     CalculateDimensions();
 }
@@ -36,6 +52,7 @@ Popup::~Popup()
  */
 void Popup::Show()
 {
+    confirmClicked = false;
     CalculateDimensions();
     active = true;
 }
@@ -46,6 +63,7 @@ void Popup::Show()
  */
 void Popup::Hide()
 {
+    confirmClicked = false;
     active = false;
 }
 
@@ -59,6 +77,15 @@ bool Popup::IsActive() const
 }
 
 /**
+ * @brief IsConfirmClicked()
+ * @return true jika tombol konfirmasi telah diklik sejak Show() terakhir.
+ */
+bool Popup::IsConfirmClicked() const
+{
+    return confirmClicked;
+}
+
+/**
  * @brief Update()
  * Update state popup - handle klik tombol OK.
  * @param mousePosition Posisi mouse saat ini.
@@ -69,7 +96,16 @@ void Popup::Update(Vector2 mousePosition, bool mouseClicked)
     if (!active) {
         return;
     }
+
     if (okButton.isClicked(mousePosition, mouseClicked)) {
+        if (hasCancelButton) {
+            confirmClicked = true;
+        }
+        Hide();
+        return;
+    }
+
+    if (hasCancelButton && cancelButton.isClicked(mousePosition, mouseClicked)) {
         Hide();
     }
 }
@@ -89,25 +125,45 @@ void Popup::CalculateDimensions()
     int textWidth = MeasureText(message, fontSize);
     int buttonWidth = MeasureText(buttonText, fontSize);
 
-    width = textWidth + (paddingX * 2);
-    width = std::max(buttonWidth + (paddingX * 2), width);
-    width = std::min(width, maxWidth);
+    if (hasCancelButton) {
+        int cancelWidth = MeasureText(cancelText, fontSize);
+        int buttonsTotalWidth = buttonWidth + 20 + cancelWidth;
 
-    height = fontSize + (fontSize * 2) + (paddingY * 3) + textPadding;
+        width = std::max(textWidth, buttonsTotalWidth) + (paddingX * 2);
+        width = std::min(width, maxWidth);
 
-    position.x = (GameScreenWidth - width) / 2.0F;
-    position.y = (GameScreenHeight - height) / 2.0F;
+        height = fontSize + (fontSize * 2) + (paddingY * 3) + textPadding;
 
-    backgroundRect = {position.x, position.y, static_cast<float>(width), static_cast<float>(height)};
+        position.x = (GameScreenWidth - width) / 2.0F;
+        position.y = (GameScreenHeight - height) / 2.0F;
 
-    int buttonX = static_cast<int>(position.x + ((width - buttonWidth) / 2.0F));
-    int buttonY = static_cast<int>(position.y + height - paddingY - fontSize);
+        backgroundRect = {position.x, position.y, static_cast<float>(width), static_cast<float>(height)};
 
-    TraceLog(LOG_DEBUG, "Popup Debug: width=%d, height=%d", width, height);
-    TraceLog(LOG_DEBUG, "Popup Debug: position=(%.1f, %.1f)", position.x, position.y);
-    TraceLog(LOG_DEBUG, "Popup Debug: buttonX=%d, buttonY=%d, buttonWidth=%d", buttonX, buttonY, buttonWidth);
+        int startX = static_cast<int>(position.x + ((width - buttonsTotalWidth) / 2.0F));
+        int buttonY = static_cast<int>(position.y + height - paddingY - fontSize);
 
-    okButton = buttonTxt(buttonText, buttonX, buttonY, fontSize, WHITE, hoverAmount);
+        okButton = buttonTxt(buttonText, startX, buttonY, fontSize, WHITE, hoverAmount);
+        cancelButton = buttonTxt(cancelText, startX + buttonWidth + 20, buttonY, fontSize, WHITE, hoverAmount);
+    } else {
+        width = std::max(textWidth, buttonWidth) + (paddingX * 2);
+        width = std::min(width, maxWidth);
+
+        height = fontSize + (fontSize * 2) + (paddingY * 3) + textPadding;
+
+        position.x = (GameScreenWidth - width) / 2.0F;
+        position.y = (GameScreenHeight - height) / 2.0F;
+
+        backgroundRect = {position.x, position.y, static_cast<float>(width), static_cast<float>(height)};
+
+        int buttonX = static_cast<int>(position.x + ((width - buttonWidth) / 2.0F));
+        int buttonY = static_cast<int>(position.y + height - paddingY - fontSize);
+
+        TraceLog(LOG_DEBUG, "Popup Debug: width=%d, height=%d", width, height);
+        TraceLog(LOG_DEBUG, "Popup Debug: position=(%.1f, %.1f)", position.x, position.y);
+        TraceLog(LOG_DEBUG, "Popup Debug: buttonX=%d, buttonY=%d, buttonWidth=%d", buttonX, buttonY, buttonWidth);
+
+        okButton = buttonTxt(buttonText, buttonX, buttonY, fontSize, WHITE, hoverAmount);
+    }
 }
 
 /**
@@ -143,9 +199,12 @@ void Popup::Draw(Vector2 mousePosition)
 
     int textWidth = MeasureText(message, 30);
     int textX = static_cast<int>(position.x + ((width - textWidth) / 2.0F));
-    int textY = static_cast<int>(position.y + 30);
+    int textY = static_cast<int>(position.y + (hasCancelButton ? 20 : 30));
 
     DrawText(message, textX, textY, 30, WHITE);
 
     okButton.Draw(mousePosition);
+    if (hasCancelButton) {
+        cancelButton.Draw(mousePosition);
+    }
 }
