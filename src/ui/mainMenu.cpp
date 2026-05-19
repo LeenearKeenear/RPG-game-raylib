@@ -10,6 +10,8 @@
 #include "screen.h"
 #include "../lib/raylib/include/raylib.h"
 #include <array>
+#include "popup.h"
+#include "game_state_saver.h"
 
 /*==============================================================================
  * Static Variables
@@ -20,6 +22,13 @@ static std::array<buttonTxt, 4> buttons;
 
 /** Logo texture untuk main menu */
 static Texture2D logoTexture;
+
+/** Save/Load popups */
+static Popup startNewPopup("Start new game? Current save will be lost.", "Start New", "Cancel", 0.7f);
+static Popup loadPopup("Load saved game?", "Load Save", "Cancel", 0.7f);
+static Popup mainNoSavePopup("No save file found.", "OK", 0.7f);
+static bool waitingStartConfirm = false;
+static bool waitingLoadConfirm = false;
 
 /*==============================================================================
  * Public Functions
@@ -72,7 +81,27 @@ void UpdateMainMenu(GameState *state)
         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
             switch (i) {
                 case 0:  // Start Game
-                    state->currentScreen = LOADING;
+                    if (HasSaveFile("saves/manual/slot0.json"))
+                    {
+                        waitingStartConfirm = true;
+                        startNewPopup.Show();
+                    }
+                    else
+                    {
+                        state->currentScreen = LOADING;
+                    }
+                    break;
+                case 1:  // Load Game
+                    if (HasSaveFile("saves/manual/slot0.json"))
+                    {
+                        ReadSaveFile("saves/manual/slot0.json");
+                        waitingLoadConfirm = true;
+                        loadPopup.Show();
+                    }
+                    else
+                    {
+                        mainNoSavePopup.Show();
+                    }
                     break;
                 case 2:  // Options
                     state->previousScreen = MAIN_MENU;
@@ -81,11 +110,49 @@ void UpdateMainMenu(GameState *state)
                 case 3:  // Quit
                     CloseWindow();
                     break;
-                case 1:  // Load Game
                 default:
                     break;
             }
         }
+    }
+
+    // Handle Start Game confirmation
+    if (waitingStartConfirm && startNewPopup.IsActive())
+    {
+        startNewPopup.Update(mousePosition, mouseClicked);
+        if (startNewPopup.IsConfirmClicked())
+        {
+            DeleteSaveFile("saves/manual/slot0.json");
+            ClearSavedState();
+            state->currentScreen = LOADING;
+            waitingStartConfirm = false;
+        }
+        if (!startNewPopup.IsActive())
+        {
+            waitingStartConfirm = false;
+        }
+    }
+
+    // Handle Load Game confirmation
+    if (waitingLoadConfirm && loadPopup.IsActive())
+    {
+        loadPopup.Update(mousePosition, mouseClicked);
+        if (loadPopup.IsConfirmClicked())
+        {
+            state->currentScreen = LOADING;
+            waitingLoadConfirm = false;
+        }
+        if (!loadPopup.IsActive())
+        {
+            ClearSavedState();
+            waitingLoadConfirm = false;
+        }
+    }
+
+    // Handle no-save popup (auto-return)
+    if (mainNoSavePopup.IsActive())
+    {
+        mainNoSavePopup.Update(mousePosition, mouseClicked);
     }
 }
 
@@ -110,6 +177,17 @@ void RenderMainMenuToVirtualScreen(GameState *state)
     for (int i = 0; i < 4; i++)
     {
         buttons[i].Draw(virtualMouse);
+    }
+
+    // Render popups
+    if (startNewPopup.IsActive()) {
+        startNewPopup.Draw(virtualMouse);
+    }
+    if (loadPopup.IsActive()) {
+        loadPopup.Draw(virtualMouse);
+    }
+    if (mainNoSavePopup.IsActive()) {
+        mainNoSavePopup.Draw(virtualMouse);
     }
 
     EndTextureMode();
