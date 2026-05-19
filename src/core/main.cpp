@@ -158,10 +158,10 @@ int main()
 
             accumulator += frameTime;
 
-            // update semua logic game - skip when paused
+            // update semua logic game - skip when paused or screen changed
             while (accumulator >= Time::DELTA_TIME)
             {
-                if (!pauseMenu.IsActive())
+                if (!pauseMenu.IsActive() && state.currentScreen == PLAY)
                 {
                     UpdateLogicAll();
                 }
@@ -169,11 +169,12 @@ int main()
                 accumulator -= Time::DELTA_TIME;
             }
 
-            // render semua ke layar virtual
-            DrawRenderTexture(&state);
-
-            // scale layar virtual ke window asli
-            DrawRenderWindows(&state);
+            // render hanya jika masih dalam PLAY state (belum berubah oleh pause menu action)
+            if (state.currentScreen == PLAY)
+            {
+                DrawRenderTexture(&state);
+                DrawRenderWindows(&state);
+            }
         }
     }
 
