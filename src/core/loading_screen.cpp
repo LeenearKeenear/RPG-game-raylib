@@ -172,11 +172,22 @@ void UpdateLoadingScreen(GameState *state)
         state->loadingComplete = true;
         state->currentScreen = PLAY;
 
-        // Fresh game: reset map to default (InitMap) so player spawns at tutorial,
-        // NOT at whatever map is still in memory from the previous session.
-        // RestoreGameState path: the map was already loaded during the PLAY session
-        // and stays in memory - no need to reload it.
-        if (!HasSavedState())
+        // Free previous map allocation before loading the correct one
+        UnloadMap();
+
+        if (HasSavedState())
+        {
+            if (!savedMapState.mapPath.empty())
+            {
+                LoadMap(savedMapState.mapPath.c_str());
+                SetCurrentMapPath(savedMapState.mapPath.c_str());
+            }
+            else
+            {
+                InitMap();
+            }
+        }
+        else
         {
             InitMap();
         }
@@ -236,6 +247,7 @@ void UpdateLoadingScreen(GameState *state)
         if (HasSavedState() && !savedMapState.mapPath.empty())
         {
             LoadMap(savedMapState.mapPath.c_str());
+            SetCurrentMapPath(savedMapState.mapPath.c_str());
         }
         else
         {

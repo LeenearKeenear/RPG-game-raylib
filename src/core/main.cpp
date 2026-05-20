@@ -26,6 +26,35 @@ PauseMenu pauseMenu;
 OptionsScreen optionsScreen;
 
 /**
+ * @brief Custom TraceLog callback to prepend HH:mm:ss.fff timestamps
+ */
+static void TimestampLog(int msgType, const char *text, va_list args)
+{
+    double now = GetTime();
+    int hours = (int)(now / 3600) % 24;
+    int minutes = (int)(now / 60) % 60;
+    int seconds = (int)now % 60;
+    int millis = (int)((now - (int)now) * 1000);
+
+    char buf[1024] = {0};
+    vsnprintf(buf, sizeof(buf), text, args);
+
+    const char *level = "";
+    switch (msgType)
+    {
+        case LOG_TRACE: level = "TRACE"; break;
+        case LOG_DEBUG: level = "DEBUG"; break;
+        case LOG_INFO:  level = "INFO"; break;
+        case LOG_WARNING: level = "WARNING"; break;
+        case LOG_ERROR: level = "ERROR"; break;
+        case LOG_FATAL: level = "FATAL"; break;
+        default: level = "UNKNOWN"; break;
+    }
+
+    printf("%02d:%02d:%02d.%03d %s: %s\n", hours, minutes, seconds, millis, level, buf);
+}
+
+/**
  * @brief Main entry point game application
  * @return 0 saat game ditutup
  */
@@ -39,6 +68,9 @@ int main()
     GameState state = InitScreen();
     state.previousScreen = MAIN_MENU; // Default return to main menu
     gState = &state;
+
+    // Register custom TraceLog callback for timestamps
+    SetTraceLogCallback(TimestampLog);
 
     // Initialize loading state variables
     state.loadingProgress = 0.0f;
