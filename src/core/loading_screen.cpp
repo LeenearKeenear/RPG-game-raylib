@@ -87,6 +87,7 @@ void UpdateLoadingScreen(GameState *state)
         switch (state->loadingStage)
         {
         case 0:
+            TraceLog(LOG_INFO, "LOADING: [stage 1/4] %s", isBack ? "Returning to previous map" : "Unloading current map");
             state->loadingText = isBack ? "Returning to previous map..." : "Unloading current map...";
             UnloadMap();
             spawnFlowFields.clear();
@@ -95,8 +96,8 @@ void UpdateLoadingScreen(GameState *state)
             break;
 
         case 1:
+            TraceLog(LOG_INFO, "LOADING: [stage 2/4] Loading map: %s", state->pendingMapPath.c_str());
             state->loadingText = isBack ? "Reloading previous map..." : "Loading new map...";
-            TraceLog(LOG_INFO, "LOADING: Loading map: %s", state->pendingMapPath.c_str());
             LoadMap(state->pendingMapPath.c_str());
             SetCurrentMapPath(state->pendingMapPath.c_str());
             BuildMapObjectIndex();
@@ -108,6 +109,7 @@ void UpdateLoadingScreen(GameState *state)
             break;
 
         case 2:
+            TraceLog(LOG_INFO, "LOADING: [stage 3/4] Initializing player and entities");
             state->loadingText = "Initializing player and entities...";
             // Re-init player berdasarkan target door di map baru
             PlayerInstance.Init(gState, state->pendingDoorName.c_str());
@@ -133,6 +135,7 @@ void UpdateLoadingScreen(GameState *state)
             break;
 
         case 3:
+            TraceLog(LOG_INFO, "LOADING: [stage 4/4] Finalizing map switch");
             state->loadingText = "Finalizing map switch...";
             // Set camera ke spawn player
             Vector2 spawnPos = PlayerInstance.GetPosition();
@@ -167,6 +170,8 @@ void UpdateLoadingScreen(GameState *state)
      *==============================================================================*/
     if (state->assetsLoaded)
     {
+        TraceLog(LOG_INFO, "LOADING: Fast path (assets already loaded)");
+
         state->loadingStage = TOTAL_LOADING_STAGES;
         state->loadingProgress = 100.0F;
         state->loadingComplete = true;
@@ -181,6 +186,7 @@ void UpdateLoadingScreen(GameState *state)
             {
                 LoadMap(savedMapState.mapPath.c_str());
                 SetCurrentMapPath(savedMapState.mapPath.c_str());
+                BuildMapObjectIndex();
             }
             else
             {
@@ -189,6 +195,7 @@ void UpdateLoadingScreen(GameState *state)
         }
         else
         {
+            PlayerInstance.ResetForNewGame();
             InitMap();
         }
 
@@ -214,6 +221,7 @@ void UpdateLoadingScreen(GameState *state)
     switch (state->loadingStage)
     {
     case 0:
+        TraceLog(LOG_INFO, "LOADING: [stage 1/6] Loading tilemap textures");
         state->loadingText = "Loading tilemap textures...";
         LoadTileTexture(TEXTURE_TILEMAP, "assets/textures/tiles.png");
         state->loadingStage++;
@@ -221,6 +229,7 @@ void UpdateLoadingScreen(GameState *state)
         break;
 
     case 1:
+        TraceLog(LOG_INFO, "LOADING: [stage 2/6] Loading character sprites");
         state->loadingText = "Loading character sprites...";
         LoadTileTexture(TEXTURE_KNIGHT, "assets/textures/knight.png");
         state->loadingStage++;
@@ -228,6 +237,7 @@ void UpdateLoadingScreen(GameState *state)
         break;
 
     case 2:
+        TraceLog(LOG_INFO, "LOADING: [stage 3/6] Loading item icons");
         state->loadingText = "Loading item icons...";
         LoadTileTexture(TEXTURE_ITEMS, "assets/textures/test.png");
         state->loadingStage++;
@@ -235,6 +245,7 @@ void UpdateLoadingScreen(GameState *state)
         break;
 
     case 3:
+        TraceLog(LOG_INFO, "LOADING: [stage 4/6] Loading enemy textures");
         state->loadingText = "Loading enemy textures...";
         LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
         state->loadingStage++;
@@ -242,12 +253,14 @@ void UpdateLoadingScreen(GameState *state)
         break;
 
     case 4:
+        TraceLog(LOG_INFO, "LOADING: [stage 5/6] Loading map data");
         state->loadingText = "Loading map data...";
         // Load saved map if resuming, otherwise default
         if (HasSavedState() && !savedMapState.mapPath.empty())
         {
             LoadMap(savedMapState.mapPath.c_str());
             SetCurrentMapPath(savedMapState.mapPath.c_str());
+            BuildMapObjectIndex();
         }
         else
         {
@@ -258,6 +271,7 @@ void UpdateLoadingScreen(GameState *state)
         break;
 
     case 5:
+        TraceLog(LOG_INFO, "LOADING: [stage 6/6] Finalizing game assets");
         state->loadingText = "Finalizing game assets...";
         state->loadingStage++;
         state->loadingProgress = (float)state->loadingStage / TOTAL_LOADING_STAGES * 100.0F;

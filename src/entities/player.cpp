@@ -85,6 +85,30 @@ void Player::Init(GameState *state, const char *spawnObjectName)
     }
 }
 
+void Player::ResetForNewGame()
+{
+    Health = 100.0f;
+    MaxHealth = 100.0f;
+    Mana = 100.0f;
+    MaxMana = 100.0f;
+    ManaRegenTimer = 0.0f;
+
+    Hotbar[0] = {0, 1};
+    Hotbar[1] = {1, 1};
+    Hotbar[2] = {2, 8};
+    Hotbar[3] = {3, 8};
+
+    for (int i = 0; i < MaxBag; i++)
+        Bag[i] = {-1, 0};
+
+    Anim.isDead = false;
+    Anim.isAttacking = false;
+    HitFlashTimer = 0.0f;
+    KnockbackVelocity = {0, 0};
+
+    TraceLog(LOG_INFO, "PLAYER: Reset for new game");
+}
+
 /**
  * Loop update utama untuk pemain.
  * Dipanggil oleh Entities::Update() setiap frame.

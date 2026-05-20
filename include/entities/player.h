@@ -77,6 +77,7 @@ public:
      * @brief Inisialisasi status pemain dan lokasi spawn.
      */
     void Init(GameState *state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
+    void ResetForNewGame();
     void Update() override;
     void Render(void) override;
     void TakeDamage(float amount, Vector2 knockback = {0, 0}) override;
