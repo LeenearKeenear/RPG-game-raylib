@@ -1,189 +1,191 @@
-# Save/Load System
+# Sistem Save/Load
 
-## Architecture: In-Memory Bridge
+## Arsitektur: In-Memory Bridge
 
-The system uses **global C++ structs** as a bridge between the game world and disk files:
+Sistem ini menggunakan **struct global C++** sebagai jembatan antara game world dan file di disk:
 
 ```txt
-[Game World]  <-->  [Global Structs]  <-->  [Disk JSON Files]
-                     (in memory)
+[Game World]  <-->  [Global Structs]  <-->  [File JSON di Disk]
+                     (di memori)
 ```
 
-| Function | What it does |
+| Fungsi | Apa yang dilakukan |
 | --- | --- |
-| `SaveGameState()` | Reads player/enemies/items/map from game world -> writes to globals |
-| `WriteSaveFile(path)` | Takes current globals -> serializes to JSON file |
-| `ReadSaveFile(path)` | Reads JSON file -> deserializes into globals |
-| `RestoreGameState()` | Takes current globals -> writes back to game world |
-| `WriteAutosave(name)` | `SaveGameState()` + `WriteSaveFile()` in one call |
+| `SaveGameState()` | Baca player/musuh/item/map dari game world -> tulis ke global structs |
+| `WriteSaveFile(path)` | Ambil global structs saat ini -> serialisasi ke file JSON |
+| `ReadSaveFile(path)` | Baca file JSON -> deserialisasi ke global structs |
+| `RestoreGameState()` | Ambil global structs -> tulis balik ke game world |
+| `WriteAutosave(name)` | `SaveGameState()` + `WriteSaveFile()` dalam satu panggilan |
 
-## Save Files on Disk
+## File Save di Disk
 
-| File | Trigger | Contents |
+| File | Pemicu | Isi |
 | --- | --- | --- |
 | `saves/manual/slot0.json` | Pause "Save", Pause "Return to Menu" | Full state |
 | `saves/autosave/quick.json` | Map switch | Full state (via `WriteAutosave`) |
-| `saves/autosave/periodic.json` | Every 60s in PLAY state | Full state (via `WriteAutosave`) |
+| `saves/autosave/periodic.json` | Setiap 60 detik di PLAY state | Full state (via `WriteAutosave`) |
 | `saves/autosave/spawn.json` | Fresh game (player spawn) | Full state (via `WriteAutosave`) |
-| `saves/enemies/<sanitized_map_path>` | Map switch | Per-map enemy positions/HP/death status |
-| `saves/items/<sanitized_map_path>` | Map switch | Per-map item pickup state |
+| `saves/enemies/<sanitized_map_path>` | Map switch | Posisi/HP/status mati musuh per-map |
+| `saves/items/<sanitized_map_path>` | Map switch | Status pickup item per-map |
 
-## What Gets Saved
+## Apa yang Disimpan
 
-Everything in `slot0.json` (single JSON file, version=1):
+Semua ada di `slot0.json` (satu file JSON, version=1):
 
 - **Player**: position (x,y), health, maxHealth, mana, maxMana, hotbar[4] (definitionId, amount), bag[12] (definitionId, amount), animation state (state, direction, isDead), active hotbar slot
-- **Enemies**: position, enemyName, currentHP, maxHealth, isAlive, aiState, patrolTarget, patrolTimer, mapObjectID
-- **Items**: position, definitionId, isPickedUp
+- **Musuh**: position, enemyName, currentHP, maxHealth, isAlive, aiState, patrolTarget, patrolTimer, mapObjectID
+- **Item**: position, definitionId, isPickedUp
 - **Map**: mapPath, cameraTarget (x,y), cameraZoom, deadEntities list, chestsOpened list, mapHistory stack
 - **Settings**: showFPS
 
-## All Scenarios
+## Semua Skenario
 
-### 1. Fresh Game (No Save File)
+### 1. Fresh Game (Tanpa Save File)
 
 Main Menu -> **Start Game** -> LOADING -> Tutorial Map -> PLAY
 
 ```txt
-Start Game clicked
-  +-- HasSaveFile()? NO
+Start Game diklik
+  +-- HasSaveFile()? TIDAK
   +-- Screen = LOADING
-  +-- Loading stages (textures, map, enemies)
+  +-- Loading stages (texture, map, musuh)
   +-- InitAll() -> WriteAutosave("spawn.json") -> PLAY
 ```
 
-- No confirmation popup (nothing to overwrite)
-- `spawn.json` autosave created at `saves/autosave/spawn.json`
+- Tidak ada popup konfirmasi (tidak ada yang di-overwrite)
+- Autosave `spawn.json` dibuat di `saves/autosave/spawn.json`
 
-### 2. Fresh Game (With Existing Save)
+### 2. Fresh Game (Dengan Save File yang Sudah Ada)
 
-Main Menu -> **Start Game** -> "Overwrite existing save?" popup
+Main Menu -> **Start Game** -> popup "Overwrite existing save?"
 
 ```txt
-Start Game clicked
-  +-- HasSaveFile()? YES
-  +-- Show two-button popup: [Start New] [Cancel]
-  +-- Click [Start New]:
+Start Game diklik
+  +-- HasSaveFile()? YA
+  +-- Tampilkan popup dua-tombol: [Start New] [Cancel]
+  +-- Klik [Start New]:
        DeleteSaveFile -> ClearSavedState -> LOADING
-  +-- Click [Cancel]:
-       Popup hides, back to main menu
+  +-- Klik [Cancel]:
+       Popup disembunyikan, kembali ke main menu
 ```
 
-- Save file deleted when you confirm
-- Then behaves exactly like Scenario 1
+- Save file dihapus saat konfirmasi
+- Setelah itu berjalan persis seperti Skenario 1
 
-### 3. Playing: Manual Save
+### 3. Bermain: Manual Save
 
-Press grave key -> Pause Menu -> **Save Game**
+Tekan tombol grave -> Pause Menu -> **Save Game**
 
 ```txt
-Save Game clicked
-  +-- SaveGameState() -> populates globals from game world
-  +-- WriteSaveFile("saves/manual/slot0.json") -> writes to disk
-  +-- "Game Saved!" popup appears
+Save Game diklik
+  +-- SaveGameState() -> mengisi global structs dari game world
+  +-- WriteSaveFile("saves/manual/slot0.json") -> tulis ke disk
+  +-- Popup "Game Saved!" muncul
 ```
 
-- Saves everything to `saves/manual/slot0.json`
+- Menyimpan semua ke `saves/manual/slot0.json`
 
-### 4. Playing: Load Game from Pause
+### 4. Bermain: Load Game dari Pause
 
-Press grave key -> Pause Menu -> **Load Game**
+Tekan tombol grave -> Pause Menu -> **Load Game**
 
 ```txt
-Load Game clicked
+Load Game diklik
   +-- HasSaveFile()?
-       YES -> Show confirmation popup: [Load Save] [Cancel]
-       +-- Click [Load Save]:
+       YA -> Tampilkan popup konfirmasi: [Load Save] [Cancel]
+       +-- Klik [Load Save]:
             ReadSaveFile() -> screen = LOADING
             +-- Fast path: InitAll() -> RestoreGameState() -> PLAY
-       +-- Click [Cancel]:
-            Back to pause menu
-       NO  -> "No save file found" popup
+       +-- Klik [Cancel]:
+            Kembali ke pause menu
+       TIDAK -> Popup "No save file found"
 ```
 
-- **WARNING**: Current progress is replaced by the saved state
-- No auto-save before loading (current state is lost)
+- **PERINGATAN**: Progress saat ini digantikan oleh saved state
+- Tidak ada auto-save sebelum loading (state saat ini hilang)
 
-### 5. Playing: Return to Main Menu
+### 5. Bermain: Return to Main Menu
 
-Press grave key -> Pause Menu -> **Return to Main Menu**
+Tekan tombol grave -> Pause Menu -> **Return to Main Menu**
 
 ```txt
-Return to Menu clicked
-  +-- SaveGameState() + WriteSaveFile("saves/manual/slot0.json")
-  +-- Screen = MAIN_MENU
+Return to Menu diklik
+  +-- Popup konfirmasi: "Return to main menu?" + sub-message
+  +-- Klik [Confirm]:
+       SaveGameState() + WriteSaveFile("saves/manual/slot0.json")
+       Screen = MAIN_MENU
 ```
 
-- **Auto-saves to slot0.json**
-- If you then click **Load Game** from main menu, it loads this auto-saved state
-- There is no way to "return to menu without saving" currently
+- **Auto-save ke slot0.json**
+- Jika kemudian klik **Load Game** dari main menu, akan load state yang auto-saved ini
+- Tidak ada cara untuk "return to menu tanpa save" saat ini
 
 ### 6. Main Menu: Load Game
 
 Main Menu -> **Load Game**
 
 ```txt
-Load Game clicked
+Load Game diklik
   +-- HasSaveFile()?
-       NO  -> "No save file" popup, click OK, back to menu
-       YES -> ReadSaveFile() -> show confirmation popup
-              +-- Click [Load Save]:
+       TIDAK -> Popup "No save file", klik OK, kembali ke menu
+       YA -> ReadSaveFile() -> tampilkan popup konfirmasi
+              +-- Klik [Load Save]:
                    screen = LOADING
                    +-- Fast path: InitAll() -> RestoreGameState() -> PLAY
-              +-- Click [Cancel]:
-                   ClearSavedState() -> back to menu
+              +-- Klik [Cancel]:
+                   ClearSavedState() -> kembali ke menu
 ```
 
-### 7. Map Switching (Door to New Map)
+### 7. Map Switching (Pintu ke Map Baru)
 
-Enter door in game world -> LOADING -> New Map -> PLAY
+Masuk pintu di game world -> LOADING -> Map Baru -> PLAY
 
 ```txt
-Enter door in game world
-  +-- SwitchMap() saves current map's enemies + items to per-map files
-  +-- LOADING screen:
+Masuk pintu di game world
+  +-- SwitchMap() menyimpan musuh + item map saat ini ke file per-map
+  +-- Loading screen:
        Stage 0: UnloadMap
-       Stage 1: LoadMap(new map), SetCurrentMapPath
+       Stage 1: LoadMap(map baru), SetCurrentMapPath
        Stage 2: Clear entity registry
-                LoadEnemiesForMap(new map)?
-                  NO  -> SpawnEnemiesFromMap() from spawn points
-                  YES -> Enemies restored from saved state
-                LoadItemsForMap(new map)?
-                  NO  -> SpawnItemWave()
-                  YES -> Items restored from saved state
-       Stage 3: Init player at target door, WriteAutosave("quick.json")
+                LoadEnemiesForMap(map baru)?
+                  TIDAK -> SpawnEnemiesFromMap() dari spawn points
+                  YA -> Musuh direstore dari saved state
+                LoadItemsForMap(map baru)?
+                  TIDAK -> SpawnItemWave()
+                  YA -> Item direstore dari saved state
+       Stage 3: Init player di target door, WriteAutosave("quick.json")
                 -> PLAY
 ```
 
-- Dead entities that were killed on this map before are tracked in the `DeadEntities` set
-- `SpawnEnemiesFromMap()` skips spawn points where `IsAlreadyDead()` returns true
-- Per-map enemy/items files are how state persists on maps you've visited before
+- Entitas mati yang sudah dibunuh di map ini sebelumnya dilacak di set `DeadEntities`
+- `SpawnEnemiesFromMap()` melewati spawn point yang `IsAlreadyDead()` mengembalikan true
+- File musuh/item per-map adalah cara state bertahan di map yang pernah dikunjungi sebelumnya
 
-### 8. Map Switching (Return to Previous Map)
+### 8. Map Switching (Kembali ke Map Sebelumnya)
 
-Same flow as #7. `LoadEnemiesForMap()` finds the per-map file from your last visit, restoring enemies to their previous state (dead stay dead, alive restored with HP/position/AI state).
+Sama seperti #7. `LoadEnemiesForMap()` menemukan file per-map dari kunjungan terakhir, merestore musuh ke state sebelumnya (mati tetap mati, hidup direstore dengan HP/posisi/AI state).
 
-### 9. Corrupted Save File
+### 9. Save File Corrupt
 
 ```txt
-Load Game clicked
-  +-- ReadSaveFile() tries to parse JSON
-  +-- json::parse_error exception caught
-  +-- Returns false
-  +-- mainMenu: deletes corrupted file, shows "corrupted" popup
-  +-- Click OK -> back to main menu
+Load Game diklik
+  +-- ReadSaveFile() mencoba parse JSON
+  +-- Exception json::parse_error tertangkap
+  +-- Mengembalikan false
+  +-- mainMenu: hapus file corrupt, tampilkan popup "corrupted"
+  +-- Klik OK -> kembali ke main menu
 ```
 
-- File is **deleted** to prevent repeated errors
-- No repair attempt -- corrupted = deleted
+- File **dihapus** untuk mencegah error berulang
+- Tidak ada upaya perbaikan -- corrupt = dihapus
 
 ### 10. Version Mismatch
 
-Same flow as #9. `ReadSaveFile()` checks `version == 1`. If not, returns false.
+Sama seperti #9. `ReadSaveFile()` memeriksa `version == 1`. Jika tidak, mengembalikan false.
 
-### 11. 60-Second Periodic Autosave
+### 11. Periodic Autosave 60 Detik
 
-While in PLAY state, every 60 seconds:
+Saat di PLAY state, setiap 60 detik:
 
 ```txt
 autosaveTimer += frameTime
@@ -193,47 +195,56 @@ if (timer >= 60.0f) {
 }
 ```
 
-- Timer **pauses** when pause menu is active
-- Timer **resets** on manual save
+- Timer **berhenti** saat pause menu aktif
+- Timer **di-reset** saat manual save
 
-### 12. Save Error (Disk Full / Permission)
-
-```txt
-Pause "Save Game" clicked
-  +-- WriteSaveFile returns false
-  +-- "Failed to save game. Check disk space." error popup
-```
-
-### 13. Load When Save References Missing Map
+### 12. Save Error (Disk Penuh / Permission)
 
 ```txt
-RestoreGameState() checks savedMapState.mapPath
-  +-- File exists?
-       NO  -> Fallback to "assets/maps/tutorial.json" with warning log
-       YES -> Load normally
+Pause "Save Game" diklik
+  +-- WriteSaveFile mengembalikan false
+  +-- Popup error "Failed to save game. Check disk space."
 ```
 
-## Summary: What Saves When
+### 13. Load Saat Save Merujuk ke Map yang Tidak Ada
 
-| Event | What gets persisted |
+```txt
+RestoreGameState() memeriksa savedMapState.mapPath
+  +-- File ada?
+       TIDAK -> Fallback ke "assets/maps/tutorial.json" dengan warning log
+       YA -> Load secara normal
+```
+
+## Ringkasan: Apa yang Tersimpan Kapan
+
+| Event | Apa yang dipersisten |
 | --- | --- |
-| Pause **Save Game** | Everything to `slot0.json` |
-| Pause **Return to Menu** | Everything to `slot0.json` (auto) |
-| **Map switch** | Current map enemies/items to per-map files + full state to `quick.json` |
-| **60s timer** | Full state to `periodic.json` |
-| **Fresh game start** | Full state to `spawn.json` |
-| **Main menu Load Game** | Reads `slot0.json`, restores everything |
+| Pause **Save Game** | Semua ke `slot0.json` |
+| Pause **Return to Menu** | Semua ke `slot0.json` (otomatis) |
+| **Map switch** | Musuh/item map saat ini ke file per-map + full state ke `quick.json` |
+| **Timer 60 detik** | Full state ke `periodic.json` |
+| **Fresh game start** | Full state ke `spawn.json` |
+| **Main menu Load Game** | Baca `slot0.json`, restore semua |
 
-## Key Source Files
+## Known Issues / Notices
 
-| File | Role |
+> Daftar bug yang diketahui dan catatan penting tentang sistem save/load saat ini.
+
+| Issue | Status | Detail |
+| --- | --- | --- |
+| Crash saat load save dari map berbeda | Intermiten | Terjadi secara tidak konsisten saat loading save yang dibuat di map berbeda dari map saat ini. Belum bisa direproduksi secara andal. Kemungkinan terkait dengan enemy/item restore yang merujuk ke entitas yang belum di-spawn. |
+| Musuh tidak sepenuhnya stabil | Known | Sistem musuh masih setengah jadi. Perilaku AI dan per-map persistence mungkin tidak selalu konsisten. |
+
+## File Source Utama
+
+| File | Peran |
 | --- | --- |
-| `src/core/game_state_saver.cpp` | Core save/load logic, JSON I/O, autosave |
-| `include/core/game_state_saver.h` | Global state structs and function declarations |
+| `src/core/game_state_saver.cpp` | Logika save/load inti, JSON I/O, autosave |
+| `include/core/game_state_saver.h` | Struct state global dan deklarasi fungsi |
 | `src/ui/mainMenu.cpp` | Main menu save-aware Start Game + Load Game |
 | `src/ui/pauseMenu.cpp` | Pause menu Save/Load/Return to Menu |
-| `src/core/loading_screen.cpp` | Loading screen integration, map switch stages |
-| `src/map/map.cpp` | Map switching functions (SwitchMap, GoBack, InitMap) |
+| `src/core/loading_screen.cpp` | Integrasi loading screen, stage map switch |
+| `src/map/map.cpp` | Fungsi map switching (SwitchMap, GoBack, InitMap) |
 | `src/entities/enemies/enemy.cpp` | Per-map enemy persistence (SaveEnemiesForMap, LoadEnemiesForMap, SpawnEnemiesFromMap) |
 | `src/entities/entities.cpp` | Dead entity registry (RegisterDeath, IsAlreadyDead) |
 | `src/ui/popup.cpp` | Two-button confirmation popup |
