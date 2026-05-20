@@ -68,7 +68,9 @@ typedef enum
 enum AttackType
 {
     ATTACK_SLASH, // (di json nanti namanya harus ditulis slash)
-    ATTACK_THRUST // (di json nanti namanya harus ditulis thrust)
+    ATTACK_THRUST, // (di json nanti namanya harus ditulis thrust)
+    ATTACK_PIERCE, // (di json nanti namanya harus ditulis pierce)
+    ATTACK_SLAM    // (di json nanti namanya harus ditulis slam)
 };
 
 /**
@@ -118,6 +120,7 @@ struct ItemDefinition
 {
     int id;                                               // ID numerik unik, dipakai untuk lookup di runtime
     std::string name;                                     // Nama item, sekaligus key di unordered_map
+    std::string spriteKey;                                // Key visual untuk merender item (di-load dari JSON)
     ItemCategory category;                                // Kategori item (weapon, potion, armor, dll)
     Vector2 sheetCoord;                                   // Koordinat tile di spritesheet
     Vector2 hitboxSize;                                   // Ukuran hitbox item saat di-spawn di dunia
@@ -377,11 +380,6 @@ private:
 /*==============================================================================
  * Free functions (backward compat, wrapper ke class di atas)
  *==============================================================================*/
-
-/**
- * @brief Load texture item
- */
-void InitItemTextures();
 
 /**
  * @brief Inisialisasi seluruh sistem item

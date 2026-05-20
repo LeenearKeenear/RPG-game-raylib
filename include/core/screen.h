@@ -34,7 +34,7 @@ extern const int GameScreenHeight;
 /**
  * @brief Daftar state utama game
  */
-using ScreenState = enum : std::uint8_t {
+enum ScreenState : std::uint8_t {
     MAIN_MENU, // State menu utama
     LOADING,   // State loading aset
     PLAY,      // State gameplay aktif
@@ -48,7 +48,7 @@ using ScreenState = enum : std::uint8_t {
 /**
  * @brief Menyimpan data utama rendering dan state game
  */
-using GameState = struct
+struct GameState
 {
     RenderTexture2D Dungeon;    /**< Render texture virtual (1280x720) - target rendering semua game */
     float ScaleMultiplier;      /**< Rasio scale layar virtual ke window asli (dihitung tiap frame) */

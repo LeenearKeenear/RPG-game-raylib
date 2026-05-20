@@ -6,7 +6,7 @@
 #include "animation.h"
 #include "inventory.h"
 #include "mapLogic.h"
-#include "debug.h"
+#include "game_debug.h"
 #include "../lib/raylib/include/raymath.h"
 #include "propsbehavior.h"
 #include <cmath>
@@ -24,10 +24,6 @@ void Player::Init(GameState *state, const char *spawnObjectName)
     // Memuat resource global pemain hanya satu kali
     if (!isInitialized)
     {
-        LoadTileTexture(TEXTURE_KNIGHT, "assets/textures/knight.png");
-        LoadTileTexture(TEXTURE_ITEMS, "assets/textures/test.png");
-        LoadTileTexture(TEXTURE_ENEMIES, "assets/textures/enemies.png");
-
         MaxHealth = 100.0f;
         Health = MaxHealth;
 
@@ -48,7 +44,8 @@ void Player::Init(GameState *state, const char *spawnObjectName)
         TraceLog(LOG_INFO, "Player: Resource global dan statistik telah diinisialisasi");
     }
 
-    PlayAnimation(Anim, IDLE, DOWN, PlayerAnimationSet);
+    Anim.animSet = &loadedAnimationSets["knight"];
+    PlayAnimation(Anim, IDLE, RIGHT);
     CollisionRects.clear();
     CollisionPolygons.clear();
 
@@ -205,6 +202,8 @@ void Player::Update()
  */
 void Player::Render(void)
 {
+    DrawAimIndicator();
+
     // Bayangan (Drop shadow)
     DrawEllipse((int)Position.x + 16, (int)Position.y + 31, 10, 4, {0, 0, 0, 80});
 
@@ -215,9 +214,8 @@ void Player::Render(void)
         tint = RED;
     }
 
-    DrawAnimation(Anim, TEXTURE_KNIGHT, tint);
+    DrawAnimation(Anim, tint);
     Combat::DrawSwingAttack(*this);
-    DrawAimIndicator();
 }
 
 void Player::TakeDamage(float amount, Vector2 knockback)
@@ -231,7 +229,7 @@ void Player::TakeDamage(float amount, Vector2 knockback)
     {
         Swing.active = false;
         Anim.isAttacking = false;
-        PlayAnimation(Anim, IDLE, Anim.direction, PlayerAnimationSet);
+        PlayAnimation(Anim, IDLE, Anim.direction);
     }
 
     Vector2 center = {Position.x + 16, Position.y + 16};
@@ -261,9 +259,6 @@ Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
  */
 void Player::DrawAimIndicator(void)
 {
-    if (!isDebugMode)
-        return;
-
     Vector2 playerCenter = GetCenter();
     Vector2 facingDir = {0, 0};
     switch (Anim.direction)
@@ -289,9 +284,17 @@ void Player::DrawAimIndicator(void)
         playerCenter.y + aimDir.y * INTERACT_RANGE};
 
     float dot = Vector2DotProduct(facingDir, aimDir);
-    Color indicatorColor = (dot >= RayCastAngle) ? GREEN : WHITE;
+    bool isActive = (dot >= RayCastAngle);
+    float alpha = isActive ? 1.0f : 0.5f;
 
-    DrawLineEx(playerCenter, rayEnd, 2.0f, indicatorColor);
+    Color indicatorColor = Fade(WHITE, alpha);
+    Color outlineColor = Fade(BLACK, alpha);
+
+    // Gambar outline hitam (lebih tebal)
+    DrawLineEx(playerCenter, rayEnd, 3.5f, outlineColor);
+    // Gambar garis utama putih (lebih tipis di atas outline)
+    DrawLineEx(playerCenter, rayEnd, 1.5f, indicatorColor);
+
     // Raycast hanya terhadap object layer (garis biru) untuk titik merah
     std::vector<MapObject> debugObstacles;
     if (tilesonMap)
@@ -306,10 +309,10 @@ void Player::DrawAimIndicator(void)
     }
     LastHit = Ray.Cast(playerCenter, aimDir, INTERACT_RANGE, debugObstacles);
 
-    // Titik merah hanya di interseksi dengan garis biru (object layer)
-    if (LastHit.hit)
+    // Titik merah hanya di interseksi dengan garis biru (object layer) ketika mode debug aktif
+    if (isDebugMode && LastHit.hit)
     {
-        DrawCircleV(LastHit.point, 4.0f, RED);
+        DrawCircleV(LastHit.point, 4.0f, Fade(RED, alpha));
     }
 }
 

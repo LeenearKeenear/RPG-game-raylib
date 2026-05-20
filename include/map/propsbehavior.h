@@ -291,7 +291,7 @@ private:
     // Konstanta bomb
     static constexpr float BOMB_EXPLOSION_RADIUS = 80.0f;  // Radius area ledakan (pixel)
     static constexpr float BOMB_DAMAGE = 25.0f;            // Damage ledakan
-    static constexpr float BOMB_EXPLOSION_DURATION = 0.3f; // Durasi animasi ledakan (detik)
+    static constexpr float BOMB_EXPLOSION_DURATION = 0.6f; // Durasi animasi ledakan (detik)
 
     std::vector<BombData> bombs;                       // daftar bomb yang sedang dikelola
     std::unordered_set<std::string> consumedPositions; // posisi bomb yang sudah dikonsumsi agar tidak diproses ulang

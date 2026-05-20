@@ -123,7 +123,7 @@ namespace Entities
         return Registry;
     }
 
-    std::vector<Enemy *> &Entities::GetEnemyRegistry()
+    std::vector<Enemy *> &GetEnemyRegistry()
     {
         return EnemyRegistry;
     }

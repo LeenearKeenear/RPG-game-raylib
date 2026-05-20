@@ -1,9 +1,9 @@
 {
   "items": {
-    "Iron Sword": {
+    "sword1": {
       "id": 0,
       "category": "weapon",
-      "sheetCoord": { "x": 6, "y": 4 },
+      "spriteKey": "sword1",
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": false,
@@ -18,13 +18,13 @@
         "sweepAngle": 0.0,
         "centerOffset": { "x": 8.0, "y": 4.0 },
         "manaCost": 10.0,
-        "attackType": "thrust"
+        "attackType": "slash"
       }
     },
-    "Iron Axe": {
+    "sword2": {
       "id": 1,
       "category": "weapon",
-      "sheetCoord": { "x": 7, "y": 4 },
+      "spriteKey": "sword2",
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "rare",
       "isStackable": false,
@@ -42,10 +42,10 @@
         "attackType": "slash"
       }
     },
-    "Health Potion": {
+    "healthPotionSmall": {
       "id": 2,
       "category": "potion",
-      "sheetCoord": { "x": 7, "y": 8 },
+      "spriteKey": "healthPotionSmall",
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": true,
@@ -55,16 +55,89 @@
         "isMana": false
       }
     },
-    "Mana Bread": {
+    "staminaPotionSmall": {
       "id": 3,
       "category": "potion",
-      "sheetCoord": { "x": 10, "y": 8 },
+      "spriteKey": "staminaPotionSmall",
       "hitboxSize": { "x": 20, "y": 20 },
       "rarity": "common",
       "isStackable": true,
       "maxStack": 8,
       "potion": {
         "healValue": 15,
+        "isMana": true
+      }
+    },
+    "bow": {
+      "id": 4,
+      "category": "weapon",
+      "spriteKey": "bow",
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "common",
+      "isStackable": false,
+      "maxStack": 1,
+      "weapon": {
+        "damage": 10.0,
+        "reach": 120.0,
+        "breadth": 8.0,
+        "duration": 0.3,
+        "knockbackForce": 0.5,
+        "startAngleOffset": 0.0,
+        "sweepAngle": 0.0,
+        "centerOffset": { "x": 8.0, "y": 4.0 },
+        "manaCost": 0.0,
+        "attackType": "pierce"
+      }
+    },
+    "healthPotionMedium": {
+      "id": 5,
+      "category": "potion",
+      "spriteKey": "healthPotionMedium",
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "uncommon",
+      "isStackable": true,
+      "maxStack": 8,
+      "potion": {
+        "healValue": 50,
+        "isMana": false
+      }
+    },
+    "staminaPotionMedium": {
+      "id": 6,
+      "category": "potion",
+      "spriteKey": "staminaPotionMedium",
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "uncommon",
+      "isStackable": true,
+      "maxStack": 8,
+      "potion": {
+        "healValue": 40,
+        "isMana": true
+      }
+    },
+    "healthPotionLarge": {
+      "id": 7,
+      "category": "potion",
+      "spriteKey": "healthPotionLarge",
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "rare",
+      "isStackable": true,
+      "maxStack": 8,
+      "potion": {
+        "healValue": 100,
+        "isMana": false
+      }
+    },
+    "staminaPotionLarge": {
+      "id": 8,
+      "category": "potion",
+      "spriteKey": "staminaPotionLarge",
+      "hitboxSize": { "x": 20, "y": 20 },
+      "rarity": "rare",
+      "isStackable": true,
+      "maxStack": 8,
+      "potion": {
+        "healValue": 80,
         "isMana": true
       }
     }
