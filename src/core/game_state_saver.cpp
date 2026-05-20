@@ -566,12 +566,14 @@ void RestoreGameState(GameState *state)
             // Find matching enemy by MapObjectID
             for (auto &enemy : enemyReg)
             {
+                if (enemy == nullptr) continue;
                 if (enemy->MapObjectID == saved.mapObjectID && enemy->Name == saved.enemyName)
                 {
                     enemy->Position = saved.position;
                     enemy->Health = saved.currentHP;
                     enemy->MaxHealth = saved.maxHealth;
-                    enemy->AIState = (EnemyAIState)saved.aiState;
+                    // Clamp AIState to valid enum range (0-4)
+                    enemy->AIState = (EnemyAIState)(saved.aiState < 0 || saved.aiState > 4 ? 0 : saved.aiState);
                     enemy->PatrolTarget = {saved.patrolTargetX, saved.patrolTargetY};
                     enemy->PatrolTimer = saved.patrolTimer;
                     enemy->IsActive = true;
