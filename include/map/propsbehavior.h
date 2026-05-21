@@ -266,6 +266,18 @@ public:
     size_t GetCount() const { return bombs.size(); }
 
     /**
+     * @brief Dapatkan posisi bomb yang sudah meledak (consumed).
+     * @return Const reference ke unordered_set posisi yang sudah dikonsumsi
+     */
+    const std::unordered_set<std::string>& GetConsumedPositions() const { return consumedPositions; }
+
+    /**
+     * @brief Set posisi bomb yang sudah meledak (untuk restore save state).
+     * @param positions Set posisi yang sudah dikonsumsi
+     */
+    void SetConsumedPositions(const std::unordered_set<std::string>& positions) { consumedPositions = positions; }
+
+    /**
      * @brief Cek apakah target berada dalam radius ledakan
      *
      * Pakai nearest-point check, bukan center-to-center.
@@ -340,6 +352,18 @@ public:
      * @return Jumlah crate aktif di manager
      */
     size_t GetCount() const { return crates.size(); }
+
+    /**
+     * @brief Dapatkan posisi crate yang sudah dihancurkan (consumed).
+     * @return Const reference ke unordered_set posisi yang sudah dikonsumsi
+     */
+    const std::unordered_set<std::string>& GetConsumedPositions() const { return consumedPositions; }
+
+    /**
+     * @brief Set posisi crate yang sudah dihancurkan (untuk restore save state).
+     * @param positions Set posisi yang sudah dikonsumsi
+     */
+    void SetConsumedPositions(const std::unordered_set<std::string>& positions) { consumedPositions = positions; }
 
 private:
     struct CrateData

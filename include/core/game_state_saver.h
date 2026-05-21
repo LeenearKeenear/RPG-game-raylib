@@ -101,7 +101,6 @@ struct SavedMapState {
     std::string mapPath;                              /**< Path map saat ini */
     Vector2 cameraTarget;                          /**< Posisi camera target */
     float cameraZoom;                            /**< Zoom camera */
-    std::vector<unsigned char> chestOpened;                   /**< Status opened/closed tiap chest */
     std::vector<std::string> deadEntities;                    /**< Nama entitas yang sudah mati di map ini */
     std::vector<std::string> chestsOpened;                    /**< Posisi chest yang sudah dibuka (encoded string) */
     std::vector<MapSystem::MapHistoryEntry> mapHistory;       /**< Stack riwayat perpindahan map */
@@ -146,7 +145,7 @@ extern bool hasSavedState;
  * @brief Simpan seluruh state game world
  * @details Dipanggil saat player klik "Return to Menu"
  * @param state Pointer ke GameState
- * @note Simpan: player position/health/inventory/mana/dash/manaRegen/swingAttack, enemies with spawnPoint/timers/UUID, items with amount/UUID, map state with bomb/crate consumption
+ * @note Simpan: player position/health/inventory/mana/dash/manaRegen/swingAttack, enemies with spawnPoint/timers/UUID, items with amount/UUID, map state with bomb/crate/chest consumption
  */
 void SaveGameState(GameState *state);
 
@@ -154,7 +153,7 @@ void SaveGameState(GameState *state);
  * @brief Kembalikan seluruh state game world
  * @details Dipanggil saat masuk PLAY state dari LOADING
  * @param state Pointer ke GameState
- * @note Restore: player, enemies, items, map state dari data tersimpan
+ * @note Restore: player, enemies (with spawnPoint/timers/UUID), items (with amount/UUID), map state (chests/bombs/crates)
  */
 void RestoreGameState(GameState *state);
 

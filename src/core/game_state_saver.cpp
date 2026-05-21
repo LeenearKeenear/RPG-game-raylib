@@ -58,7 +58,7 @@ bool WriteSaveFile(const std::string& path)
     json root;
 
     // Version and timestamp metadata
-    root["version"] = 1;
+    root["version"] = SAVE_VERSION;
     std::time_t t = std::time(nullptr);
     char buf[64];
     std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", std::gmtime(&t));
@@ -130,6 +130,7 @@ bool WriteSaveFile(const std::string& path)
         it["position"] = {item.position.x, item.position.y};
         it["isPickedUp"] = item.isPickedUp;
         it["definitionId"] = item.definitionId;
+        it["amount"] = item.amount;
         itemsJson.push_back(it);
     }
     root["items"] = itemsJson;
@@ -139,7 +140,6 @@ bool WriteSaveFile(const std::string& path)
     mapJson["mapPath"] = savedMapState.mapPath;
     mapJson["cameraTarget"] = {savedMapState.cameraTarget.x, savedMapState.cameraTarget.y};
     mapJson["cameraZoom"] = savedMapState.cameraZoom;
-    mapJson["chestOpened"] = savedMapState.chestOpened;
 
     json deadEntitiesJson = json::array();
     for (const auto& name : savedMapState.deadEntities)
@@ -160,6 +160,9 @@ bool WriteSaveFile(const std::string& path)
         mapHistoryJson.push_back(h);
     }
     mapJson["mapHistory"] = mapHistoryJson;
+
+    mapJson["bombConsumedPositions"] = savedMapState.bombConsumedPositions;
+    mapJson["crateConsumedPositions"] = savedMapState.crateConsumedPositions;
 
     root["map"] = mapJson;
 
@@ -216,9 +219,9 @@ bool ReadSaveFile(const std::string& path)
 
         // Validate version
         int version = root.at("version").get<int>();
-        if (version != 1)
+        if (version != SAVE_VERSION)
         {
-            TraceLog(LOG_WARNING, "Save file version mismatch (expected 1): %s", path.c_str());
+            TraceLog(LOG_WARNING, "Save file version mismatch (expected %d): %s", SAVE_VERSION, path.c_str());
             return false;
         }
 
@@ -297,6 +300,7 @@ bool ReadSaveFile(const std::string& path)
                 item.position.y = it.at("position")[1].get<float>();
                 item.isPickedUp = it.value("isPickedUp", false);
                 item.definitionId = it.value("definitionId", -1);
+                item.amount = it.value("amount", 1);
                 savedItemStates.push_back(item);
             }
         }
@@ -307,13 +311,6 @@ bool ReadSaveFile(const std::string& path)
         savedMapState.cameraTarget.x = map.at("cameraTarget")[0].get<float>();
         savedMapState.cameraTarget.y = map.at("cameraTarget")[1].get<float>();
         savedMapState.cameraZoom = map.value("cameraZoom", 1.0f);
-
-        savedMapState.chestOpened.clear();
-        if (map.contains("chestOpened"))
-        {
-            for (const auto& c : map.at("chestOpened"))
-                savedMapState.chestOpened.push_back(static_cast<unsigned char>(c.get<int>()));
-        }
 
         savedMapState.deadEntities.clear();
         if (map.contains("deadEntities"))
@@ -340,6 +337,12 @@ bool ReadSaveFile(const std::string& path)
                 savedMapState.mapHistory.push_back(entry);
             }
         }
+
+        // Read bomb/crate consumed positions
+        if (map.contains("bombConsumedPositions"))
+            savedMapState.bombConsumedPositions = map.at("bombConsumedPositions");
+        if (map.contains("crateConsumedPositions"))
+            savedMapState.crateConsumedPositions = map.at("crateConsumedPositions");
 
         hasSavedState = true;
         TraceLog(LOG_INFO, "Save file %s loaded successfully (%d enemies, %d items)", path.c_str(), (int)savedEnemyStates.size(), (int)savedItemStates.size());
@@ -389,6 +392,7 @@ void DeleteSaveFile(const std::string& path)
  * @brief SaveGameState()
  * Simpan seluruh state game world saat kembali ke menu.
  * @param state Pointer ke GameState
+ * @note Serializes: player, enemies, items (with amount), map (dead entities, chestsOpened, bomb/crate consumedPositions, mapHistory)
  */
 void SaveGameState(GameState *state)
 {
@@ -452,6 +456,7 @@ void SaveGameState(GameState *state)
         savedItem.position = item.position;
         savedItem.isPickedUp = item.isPickedUp;
         savedItem.definitionId = item.definitionId;
+        savedItem.amount = item.amount;
         savedItemStates.push_back(savedItem);
     }
 
@@ -462,17 +467,6 @@ void SaveGameState(GameState *state)
     savedMapState.mapPath = (mapPath == nullptr || mapPath[0] == '\0') ? "assets/maps/tutorial.json" : std::string(mapPath);
     savedMapState.cameraTarget = camera.target;
     savedMapState.cameraZoom = camera.zoom;
-    savedMapState.chestOpened.clear();
-    if (tilesonMap != nullptr)
-    {
-        for (const MapObject &obj : tilesonMap->Objects)
-        {
-            if (obj.type == "chest")
-            {
-                savedMapState.chestOpened.push_back(0);
-            }
-        }
-    }
 
     /*==============================================================================
      * Save Dead Entities (names of entities killed in this map)
@@ -493,6 +487,12 @@ void SaveGameState(GameState *state)
     }
 
     /*==============================================================================
+     * Save Consumed Bomb/Crate Positions
+     *==============================================================================*/
+    savedMapState.bombConsumedPositions = bombManager.GetConsumedPositions();
+    savedMapState.crateConsumedPositions = crateManager.GetConsumedPositions();
+
+    /*==============================================================================
      * Save Map History (stack of visited maps)
      *==============================================================================*/
     savedMapState.mapHistory = mapHistoryStack.GetAllEntries();
@@ -504,6 +504,7 @@ void SaveGameState(GameState *state)
  * @brief RestoreGameState()
  * Kembalikan seluruh state game world saat masuk gameplay.
  * @param state Pointer ke GameState
+ * @note Restores: player, enemies (with spawnPoint/timers/UUID), items (with amount), map (dead entities, chestsOpened, bomb/crate consumedPositions, mapHistory)
  */
 void RestoreGameState(GameState *state)
 {
@@ -596,6 +597,7 @@ void RestoreGameState(GameState *state)
                 item.isPickedUp = savedItemStates[itemIndex].isPickedUp;
                 item.position = savedItemStates[itemIndex].position;
                 item.definitionId = savedItemStates[itemIndex].definitionId;
+                item.amount = savedItemStates[itemIndex].amount;
                 itemIndex++;
             }
         }
@@ -631,6 +633,10 @@ void RestoreGameState(GameState *state)
                 savedMapState.chestsOpened.begin(),
                 savedMapState.chestsOpened.end()));
         }
+
+        // Restore bomb/crate consumed positions
+        bombManager.SetConsumedPositions(savedMapState.bombConsumedPositions.get<std::unordered_set<std::string>>());
+        crateManager.SetConsumedPositions(savedMapState.crateConsumedPositions.get<std::unordered_set<std::string>>());
 
         // Restore map history
         if (!savedMapState.mapHistory.empty())
@@ -670,7 +676,6 @@ void ClearSavedState(void)
     savedPlayerState.animState = {0};
     savedEnemyStates.clear();
     savedItemStates.clear();
-    savedMapState.chestOpened.clear();
     savedMapState.deadEntities.clear();
     savedMapState.chestsOpened.clear();
     savedMapState.mapHistory.clear();
