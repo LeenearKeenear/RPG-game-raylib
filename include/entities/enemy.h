@@ -173,6 +173,10 @@ public:
     // ambil velocity enemy dari frame terakhir
     Vector2 GetVelocity() { return Velocity; }
 
+    // getter/setter untuk AttackCooldownTimer (private)
+    float GetAttackCooldownTimer() const { return AttackCooldownTimer; }
+    void SetAttackCooldownTimer(float t) { AttackCooldownTimer = t; }
+
     // cast ray debug dari pusat enemy dengan mode line atau cone
     RayHitResult CastDebugRay(Vector2 dir, float maxDist, std::vector<MapObject> &obstacles,
                               RayCastMode mode, float halfAngleDeg, int rayCount)

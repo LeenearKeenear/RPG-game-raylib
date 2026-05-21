@@ -690,6 +690,9 @@ void SaveEnemiesForMap(const std::string &mapPath)
         e["patrolTargetY"] = enemy->PatrolTarget.y;
         e["patrolTimer"] = enemy->PatrolTimer;
         e["mapObjectID"] = enemy->MapObjectID;
+        e["spawnPoint"] = {{"x", enemy->SpawnPoint.x}, {"y", enemy->SpawnPoint.y}};
+        e["healthRegenTimer"] = enemy->HealthRegenTimer;
+        e["attackCooldownTimer"] = enemy->GetAttackCooldownTimer();
         enemiesJson.push_back(e);
     }
 
@@ -752,6 +755,13 @@ bool LoadEnemiesForMap(const std::string &mapPath)
                     enemy->PatrolTarget.x = e.value("patrolTargetX", 0.0f);
                     enemy->PatrolTarget.y = e.value("patrolTargetY", 0.0f);
                     enemy->PatrolTimer = e.value("patrolTimer", 0.0f);
+                    if (e.contains("spawnPoint"))
+                    {
+                        enemy->SpawnPoint.x = e["spawnPoint"]["x"].get<float>();
+                        enemy->SpawnPoint.y = e["spawnPoint"]["y"].get<float>();
+                    }
+                    enemy->HealthRegenTimer = e.value("healthRegenTimer", 0.0f);
+                    enemy->SetAttackCooldownTimer(e.value("attackCooldownTimer", 0.0f));
                     enemy->IsActive = true;
                     anyRestored = true;
                     break;

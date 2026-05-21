@@ -101,6 +101,10 @@ bool WriteSaveFile(const std::string& path)
 
     playerJson["showFPS"] = gState->showFPS;
 
+    playerJson["dashCooldown"] = savedPlayerState.dashCooldown;
+    playerJson["manaRegenTimer"] = savedPlayerState.manaRegenTimer;
+    playerJson["swingAttack"] = savedPlayerState.swingAttack;
+
     root["player"] = playerJson;
 
     // Enemies section
@@ -118,6 +122,10 @@ bool WriteSaveFile(const std::string& path)
         e["patrolTargetY"] = enemy.patrolTargetY;
         e["patrolTimer"] = enemy.patrolTimer;
         e["mapObjectID"] = enemy.mapObjectID;
+        e["spawnPoint"] = enemy.spawnPoint;
+        e["healthRegenTimer"] = enemy.healthRegenTimer;
+        e["attackCooldownTimer"] = enemy.attackCooldownTimer;
+        e["uuid"] = enemy.uuid;
         enemiesJson.push_back(e);
     }
     root["enemies"] = enemiesJson;
@@ -267,6 +275,12 @@ bool ReadSaveFile(const std::string& path)
         if (player.contains("showFPS"))
             gState->showFPS = player.at("showFPS").get<bool>();
 
+        // Read new player fields
+        savedPlayerState.dashCooldown = player.value("dashCooldown", 0.0f);
+        savedPlayerState.manaRegenTimer = player.value("manaRegenTimer", 0.0f);
+        if (player.contains("swingAttack"))
+            savedPlayerState.swingAttack = player.at("swingAttack");
+
         // Read enemies section
         savedEnemyStates.clear();
         if (root.contains("enemies"))
@@ -285,6 +299,10 @@ bool ReadSaveFile(const std::string& path)
                 enemy.patrolTargetY = e.value("patrolTargetY", 0.0f);
                 enemy.patrolTimer = e.value("patrolTimer", 0.0f);
                 enemy.mapObjectID = e.value("mapObjectID", -1);
+                enemy.spawnPoint = e.value("spawnPoint", nlohmann::json({{"x", 0}, {"y", 0}}));
+                enemy.healthRegenTimer = e.value("healthRegenTimer", 0.0f);
+                enemy.attackCooldownTimer = e.value("attackCooldownTimer", 0.0f);
+                enemy.uuid = e.value("uuid", "");
                 savedEnemyStates.push_back(enemy);
             }
         }
@@ -424,6 +442,22 @@ void SaveGameState(GameState *state)
     savedPlayerState.animState.isDead = PlayerInstance.Anim.isDead;
     savedPlayerState.animState.activeSlot = InputInstance.GetActiveSlot();
 
+    // Save new player fields: dash cooldown, mana regen timer, swing attack state
+    savedPlayerState.dashCooldown = PlayerInstance.DashCooldown;
+    savedPlayerState.manaRegenTimer = PlayerInstance.ManaRegenTimer;
+    savedPlayerState.swingAttack = {
+        {"active", PlayerInstance.Swing.active},
+        {"timer", PlayerInstance.Swing.timer},
+        {"duration", PlayerInstance.Swing.duration},
+        {"currentAngle", PlayerInstance.Swing.currentAngle},
+        {"center", {PlayerInstance.Swing.center.x, PlayerInstance.Swing.center.y}},
+        {"type", (int)PlayerInstance.Swing.type},
+        {"reach", PlayerInstance.Swing.reach},
+        {"breadth", PlayerInstance.Swing.breadth},
+        {"damage", PlayerInstance.Swing.damage},
+        {"knockbackForce", PlayerInstance.Swing.knockbackForce}
+    };
+
     /*==============================================================================
      * Save Enemy States
      *==============================================================================*/
@@ -443,6 +477,9 @@ void SaveGameState(GameState *state)
         saved.patrolTargetY = enemy->PatrolTarget.y;
         saved.patrolTimer = enemy->PatrolTimer;
         saved.mapObjectID = enemy->MapObjectID;
+        saved.spawnPoint = {{"x", enemy->SpawnPoint.x}, {"y", enemy->SpawnPoint.y}};
+        saved.healthRegenTimer = enemy->HealthRegenTimer;
+        saved.attackCooldownTimer = enemy->GetAttackCooldownTimer();
         savedEnemyStates.push_back(saved);
     }
 
@@ -549,6 +586,29 @@ void RestoreGameState(GameState *state)
 
         // Restore active slot
         InputInstance.SetActiveSlot(static_cast<ItemSlot>(savedPlayerState.animState.activeSlot));
+
+        // Restore player combat/regen fields
+        PlayerInstance.DashCooldown = savedPlayerState.dashCooldown;
+        PlayerInstance.ManaRegenTimer = savedPlayerState.manaRegenTimer;
+
+        // Restore swing attack state
+        if (!savedPlayerState.swingAttack.is_null())
+        {
+            PlayerInstance.Swing.active = savedPlayerState.swingAttack.value("active", false);
+            PlayerInstance.Swing.timer = savedPlayerState.swingAttack.value("timer", 0.0f);
+            PlayerInstance.Swing.duration = savedPlayerState.swingAttack.value("duration", 0.9f);
+            PlayerInstance.Swing.currentAngle = savedPlayerState.swingAttack.value("currentAngle", 0.0f);
+            PlayerInstance.Swing.type = (AttackType)savedPlayerState.swingAttack.value("type", (int)ATTACK_SLASH);
+            PlayerInstance.Swing.reach = savedPlayerState.swingAttack.value("reach", 32.0f);
+            PlayerInstance.Swing.breadth = savedPlayerState.swingAttack.value("breadth", 48.0f);
+            PlayerInstance.Swing.damage = savedPlayerState.swingAttack.value("damage", 25.0f);
+            PlayerInstance.Swing.knockbackForce = savedPlayerState.swingAttack.value("knockbackForce", 1.0f);
+            if (savedPlayerState.swingAttack.contains("center"))
+            {
+                PlayerInstance.Swing.center.x = savedPlayerState.swingAttack["center"][0].get<float>();
+                PlayerInstance.Swing.center.y = savedPlayerState.swingAttack["center"][1].get<float>();
+            }
+        }
     }
 
     /*==============================================================================
@@ -577,6 +637,14 @@ void RestoreGameState(GameState *state)
                     enemy->AIState = (EnemyAIState)(saved.aiState < 0 || saved.aiState > 4 ? 0 : saved.aiState);
                     enemy->PatrolTarget = {saved.patrolTargetX, saved.patrolTargetY};
                     enemy->PatrolTimer = saved.patrolTimer;
+                    // Restore SpawnPoint from saved JSON
+                    if (!saved.spawnPoint.is_null())
+                    {
+                        enemy->SpawnPoint.x = saved.spawnPoint["x"].get<float>();
+                        enemy->SpawnPoint.y = saved.spawnPoint["y"].get<float>();
+                    }
+                    enemy->HealthRegenTimer = saved.healthRegenTimer;
+                    enemy->SetAttackCooldownTimer(saved.attackCooldownTimer);
                     enemy->IsActive = true;
                     break;
                 }
@@ -674,6 +742,9 @@ void ClearSavedState(void)
     for (int i = 0; i < 12; i++)
         savedPlayerState.bag[i] = {-1, 0};
     savedPlayerState.animState = {0};
+    savedPlayerState.dashCooldown = 0.0f;
+    savedPlayerState.manaRegenTimer = 0.0f;
+    savedPlayerState.swingAttack = nullptr;
     savedEnemyStates.clear();
     savedItemStates.clear();
     savedMapState.deadEntities.clear();
