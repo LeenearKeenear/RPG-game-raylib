@@ -281,7 +281,7 @@ void InitMap(void)
         SpawnEnemiesFromMap();
     }
 
-    if (!itemData.LoadItemsForMap(currentMapPath))
+    if (!LoadItemsForMapDir(currentMapPath))
     {
         SpawnItemWave();
     }
@@ -424,7 +424,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     if (!currentMapPath.empty())
     {
         SaveEnemiesForMap(currentMapPath);
-        itemData.SaveItemsForMap(currentMapPath);
+        SaveItemsForMapDir(currentMapPath);
         mapHistoryStack.Push(currentMapPath, "");
     }
 
@@ -460,7 +460,7 @@ void GoBack(void)
 
     // Simpan state map sekarang
     SaveEnemiesForMap(currentMapPath);
-    itemData.SaveItemsForMap(currentMapPath);
+    SaveItemsForMapDir(currentMapPath);
 
     // Ambil history teratas dan pop dari stack
     MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();

@@ -124,8 +124,8 @@ void UpdateLoadingScreen(GameState *state)
                 SpawnEnemiesFromMap();
             }
 
-            // Load items
-            if (!itemData.LoadItemsForMap(state->pendingMapPath))
+            // Load items from filesystem persistence
+            if (!LoadItemsForMapDir(state->pendingMapPath))
             {
                 SpawnItemWave();
             }

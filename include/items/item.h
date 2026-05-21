@@ -262,6 +262,7 @@ public:
 
 private:
     // Penyimpanan state item berdasarkan path map
+    // @deprecated Use SaveItemsForMapDir / LoadItemsForMapDir free functions instead
     std::map<std::string, std::vector<ItemSpawn>> savedMapItems;
     std::unordered_map<std::string, ItemDefinition> definitions_;
 };
@@ -404,3 +405,29 @@ extern ItemDataManager itemData;
 extern ItemRenderManager itemRender;
 extern ItemSpawnManager spawnManager;
 extern ItemDefinitionManager itemDefs;
+
+/*==============================================================================
+ * Per-Map File Persistence (replaces in-memory ItemDataManager::savedMapItems)
+ *==============================================================================*/
+
+/**
+ * @brief Save all active items for a map to the saves/items/ filesystem directory.
+ *
+ * Serializes `itemData.activeItems` to a JSON file at `saves/items/<sanitized_path>`.
+ * Uses atomic write via .tmp file + rename to prevent corruption.
+ * Follows the same pattern as SaveEnemiesForMap() in enemy.cpp.
+ *
+ * @param mapPath Raw map file path used to derive the save file name (e.g., "assets/maps/tutorial.json")
+ */
+void SaveItemsForMapDir(const std::string &mapPath);
+
+/**
+ * @brief Load items for a map from the saves/items/ filesystem directory.
+ *
+ * Reads `saves/items/<sanitized_path>`, deserializes each item's fields,
+ * reconstructs hitboxes from definitions, and populates `itemData.activeItems`.
+ *
+ * @param mapPath Raw map file path used to derive the save file name
+ * @return true if items were loaded, false if no save data exists or parse failed
+ */
+bool LoadItemsForMapDir(const std::string &mapPath);
