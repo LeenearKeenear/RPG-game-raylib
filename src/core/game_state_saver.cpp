@@ -139,6 +139,7 @@ bool WriteSaveFile(const std::string& path)
         it["isPickedUp"] = item.isPickedUp;
         it["definitionId"] = item.definitionId;
         it["amount"] = item.amount;
+        it["uuid"] = item.uuid;
         itemsJson.push_back(it);
     }
     root["items"] = itemsJson;
@@ -319,6 +320,7 @@ bool ReadSaveFile(const std::string& path)
                 item.isPickedUp = it.value("isPickedUp", false);
                 item.definitionId = it.value("definitionId", -1);
                 item.amount = it.value("amount", 1);
+                item.uuid = it.value("uuid", "");
                 savedItemStates.push_back(item);
             }
         }
@@ -480,6 +482,7 @@ void SaveGameState(GameState *state)
         saved.spawnPoint = {{"x", enemy->SpawnPoint.x}, {"y", enemy->SpawnPoint.y}};
         saved.healthRegenTimer = enemy->HealthRegenTimer;
         saved.attackCooldownTimer = enemy->GetAttackCooldownTimer();
+        saved.uuid = enemy->GetUUID();
         savedEnemyStates.push_back(saved);
     }
 
@@ -494,6 +497,7 @@ void SaveGameState(GameState *state)
         savedItem.isPickedUp = item.isPickedUp;
         savedItem.definitionId = item.definitionId;
         savedItem.amount = item.amount;
+        savedItem.uuid = item.uuid;
         savedItemStates.push_back(savedItem);
     }
 
@@ -624,20 +628,19 @@ void RestoreGameState(GameState *state)
                 Entities::RegisterDeath(GetCurrentMapPath(), saved.mapObjectID);
                 continue;
             }
-            // Find matching enemy by MapObjectID
+            // First pass: match by UUID
+            bool matched = false;
             for (auto &enemy : enemyReg)
             {
-                if (enemy == nullptr) continue;
-                if (enemy->MapObjectID == saved.mapObjectID && enemy->Name == saved.enemyName)
+                if (enemy == nullptr || matched) continue;
+                if (!saved.uuid.empty() && enemy->GetUUID() == saved.uuid)
                 {
                     enemy->Position = saved.position;
                     enemy->Health = saved.currentHP;
                     enemy->MaxHealth = saved.maxHealth;
-                    // Clamp AIState to valid enum range (0-4)
                     enemy->AIState = (EnemyAIState)(saved.aiState < 0 || saved.aiState > 4 ? 0 : saved.aiState);
                     enemy->PatrolTarget = {saved.patrolTargetX, saved.patrolTargetY};
                     enemy->PatrolTimer = saved.patrolTimer;
-                    // Restore SpawnPoint from saved JSON
                     if (!saved.spawnPoint.is_null())
                     {
                         enemy->SpawnPoint.x = saved.spawnPoint["x"].get<float>();
@@ -646,7 +649,33 @@ void RestoreGameState(GameState *state)
                     enemy->HealthRegenTimer = saved.healthRegenTimer;
                     enemy->SetAttackCooldownTimer(saved.attackCooldownTimer);
                     enemy->IsActive = true;
-                    break;
+                    matched = true;
+                }
+            }
+            // Second pass: fallback to MapObjectID+Name matching (for legacy saves or dev migration)
+            if (!matched)
+            {
+                for (auto &enemy : enemyReg)
+                {
+                    if (enemy == nullptr) continue;
+                    if (enemy->MapObjectID == saved.mapObjectID && enemy->Name == saved.enemyName)
+                    {
+                        enemy->Position = saved.position;
+                        enemy->Health = saved.currentHP;
+                        enemy->MaxHealth = saved.maxHealth;
+                        enemy->AIState = (EnemyAIState)(saved.aiState < 0 || saved.aiState > 4 ? 0 : saved.aiState);
+                        enemy->PatrolTarget = {saved.patrolTargetX, saved.patrolTargetY};
+                        enemy->PatrolTimer = saved.patrolTimer;
+                        if (!saved.spawnPoint.is_null())
+                        {
+                            enemy->SpawnPoint.x = saved.spawnPoint["x"].get<float>();
+                            enemy->SpawnPoint.y = saved.spawnPoint["y"].get<float>();
+                        }
+                        enemy->HealthRegenTimer = saved.healthRegenTimer;
+                        enemy->SetAttackCooldownTimer(saved.attackCooldownTimer);
+                        enemy->IsActive = true;
+                        break;
+                    }
                 }
             }
         }
@@ -657,15 +686,34 @@ void RestoreGameState(GameState *state)
      *==============================================================================*/
     if (hasSavedState && !savedItemStates.empty())
     {
+        // First pass: match by UUID
+        for (const auto &saved : savedItemStates)
+        {
+            for (ItemSpawn &item : itemData.activeItems)
+            {
+                if (item.uuid == saved.uuid && !saved.uuid.empty())
+                {
+                    item.isPickedUp = saved.isPickedUp;
+                    item.position = saved.position;
+                    item.definitionId = saved.definitionId;
+                    item.amount = saved.amount;
+                    break;
+                }
+            }
+        }
+        // Second pass: fallback to index-based matching for items that were not matched by UUID
         int itemIndex = 0;
         for (ItemSpawn &item : itemData.activeItems)
         {
             if (itemIndex < (int)savedItemStates.size())
             {
-                item.isPickedUp = savedItemStates[itemIndex].isPickedUp;
-                item.position = savedItemStates[itemIndex].position;
-                item.definitionId = savedItemStates[itemIndex].definitionId;
-                item.amount = savedItemStates[itemIndex].amount;
+                if (item.uuid.empty() || savedItemStates[itemIndex].uuid.empty() || item.uuid != savedItemStates[itemIndex].uuid)
+                {
+                    item.isPickedUp = savedItemStates[itemIndex].isPickedUp;
+                    item.position = savedItemStates[itemIndex].position;
+                    item.definitionId = savedItemStates[itemIndex].definitionId;
+                    item.amount = savedItemStates[itemIndex].amount;
+                }
                 itemIndex++;
             }
         }

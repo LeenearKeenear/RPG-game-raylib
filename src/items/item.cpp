@@ -23,6 +23,7 @@
 #include "datadriven.h"
 #include "../lib/json/include/nlohmann/json.hpp"
 #include "../lib/raylib/include/raymath.h"
+#include "core/utils.h"
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -257,6 +258,8 @@ ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
     item.isPickedUp = false;
     item.isAdded = false;
     item.spawnTime = (float)GetTime();
+
+    item.uuid = GenerateUUID();
 
     TraceLog(LOG_INFO, "ITEM: Spawned '%s' at (%.1f, %.1f)",
              def.name.c_str(), pos.x, pos.y);

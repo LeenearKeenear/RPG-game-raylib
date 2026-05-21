@@ -8,6 +8,7 @@
 #include "../lib/json/include/nlohmann/json.hpp"
 #include "game_debug.h"
 #include "entities.h"
+#include "core/utils.h"
 #include <cmath>
 #include <fstream>
 #include <filesystem>
@@ -693,6 +694,7 @@ void SaveEnemiesForMap(const std::string &mapPath)
         e["spawnPoint"] = {{"x", enemy->SpawnPoint.x}, {"y", enemy->SpawnPoint.y}};
         e["healthRegenTimer"] = enemy->HealthRegenTimer;
         e["attackCooldownTimer"] = enemy->GetAttackCooldownTimer();
+        e["uuid"] = enemy->GetUUID();
         enemiesJson.push_back(e);
     }
 
@@ -762,6 +764,9 @@ bool LoadEnemiesForMap(const std::string &mapPath)
                     }
                     enemy->HealthRegenTimer = e.value("healthRegenTimer", 0.0f);
                     enemy->SetAttackCooldownTimer(e.value("attackCooldownTimer", 0.0f));
+                    std::string uuid = e.value("uuid", "");
+                    if (!uuid.empty())
+                        enemy->SetUUID(uuid);
                     enemy->IsActive = true;
                     anyRestored = true;
                     break;
@@ -878,6 +883,7 @@ void SpawnAtPoint(const MapObject *obj, EnemyRank rank)
 
         Enemy *enemy = new Enemy();
         enemy->Init(spawnPos, picked.c_str(), obj->id, def);
+        enemy->SetUUID(GenerateUUID());
         enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
         Entities::AddDynamic(enemy);
     }
@@ -932,6 +938,7 @@ void SpawnInRect(const MapObject *obj, const std::string &enemyName, float ratio
 
         Enemy *enemy = new Enemy();
         enemy->Init(spawnPos, enemyName.c_str(), obj->id, def);
+        enemy->SetUUID(GenerateUUID());
         enemy->SpawnRect = obj->bounds;
         enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
         Entities::AddDynamic(enemy);
@@ -966,6 +973,7 @@ void SpawnBoss(const MapObject *obj)
 
     Enemy *enemy = new Enemy();
     enemy->Init(spawnPos, picked.c_str(), obj->id, def);
+    enemy->SetUUID(GenerateUUID());
     enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
     Entities::AddDynamic(enemy);
 }
