@@ -1,5 +1,7 @@
 # Sistem Save/Load
 
+> **Save Format v2** (sejak Task 5 + UUID). File save sebelumnya dengan `version=1` langsung ditolak oleh `ReadSaveFile()` -- version field bertindak sebagai schema guard, memastikan file dengan format lawan tidak pernah masuk ke proses deserialisasi.
+
 ## Arsitektur: In-Memory Bridge
 
 Sistem ini menggunakan **struct global C++** sebagai jembatan antara game world dan file di disk:
@@ -30,13 +32,75 @@ Sistem ini menggunakan **struct global C++** sebagai jembatan antara game world 
 
 ## Apa yang Disimpan
 
-Semua ada di `slot0.json` (satu file JSON, version=1):
+Semua ada di `slot0.json` (satu file JSON, version=2):
 
-- **Player**: position (x,y), health, maxHealth, mana, maxMana, hotbar[4] (definitionId, amount), bag[12] (definitionId, amount), animation state (state, direction, isDead), active hotbar slot
-- **Musuh**: position, enemyName, currentHP, maxHealth, isAlive, aiState, patrolTarget, patrolTimer, mapObjectID
-- **Item**: position, definitionId, isPickedUp
-- **Map**: mapPath, cameraTarget (x,y), cameraZoom, deadEntities list, chestsOpened list, mapHistory stack
+- **Player**: position (x,y), health, maxHealth, mana, maxMana, hotbar[4] (definitionId, amount), bag[12] (definitionId, amount), animation state (state, direction, isDead), active hotbar slot, dashCooldown, manaRegenTimer, swingAttack (serialized sebagai JSON object: active, timer, duration, currentAngle, center, type, reach, breadth, damage, knockbackForce)
+- **Musuh**: position, enemyName, currentHP, maxHealth, isAlive, aiState, patrolTarget, patrolTimer, mapObjectID, spawnPoint (sebagai {x, y}), healthRegenTimer, attackCooldownTimer, uuid
+- **Item**: position, definitionId, isPickedUp, amount, uuid
+- **Map**: mapPath, cameraTarget (x,y), cameraZoom, deadEntities list, chestsOpened list, bombConsumedPositions, crateConsumedPositions, mapHistory stack
 - **Settings**: showFPS
+
+## Entity Identity (UUID)
+
+Setiap entitas yang bisa dipersist (musuh, item, bomb, crate) mendapat identifier unik saat spawn. UUID adalah string 32 karakter hex yang dihasilkan oleh `GenerateUUID()` menggunakan `std::random_device` dan `std::mt19937` untuk entropy -- pendekatan yang sama digunakan di berbagai tempat yang membutuhkan stream random deterministik.
+
+| Entitas | Di-set di | Disimpan di |
+| --- | --- | --- |
+| **Musuh (Enemy)** | `SpawnAtPoint`, `SpawnInRect`, `SpawnBoss` via `SetUUID(GenerateUUID())` | SaveGameState -> WriteSaveFile -> `enemies[].uuid` |
+| **Item** | `ItemDataManager::CreateItem()` via `item.uuid = GenerateUUID()` | SaveGameState -> WriteSaveFile -> `items[].uuid` |
+| **Bomb** | `BombManager::SpawnBombs()` via `data.tile.uuid = GenerateUUID()` | Per-map file (indirect via TileObject) |
+| **Crate** | `CrateManager::SpawnCrates()` via `data.tile.uuid = GenerateUUID()` | Per-map file (indirect via TileObject) |
+
+### Matching Saat Restore
+
+Saat `RestoreGameState()` menjalankan restore entitas, ia menggunakan multi-pass matching:
+
+1. **Pass 1 (UUID)**: Cocokkan UUID dari save dengan UUID entitas yang sudah di-spawn. Jika cocok, restore state langsung. Ini memberikan deterministik lookup -- setiap entitas punya identitas tetap yang tidak bergantung pada urutan spawn.
+2. **Pass 2 (Fallback)**: Jika UUID tidak cocok atau kosong (misalnya save lawan / dev migration), gunakan `MapObjectID` + `enemyName` untuk musuh, atau urutan index untuk item.
+
+Pendekatan dua-pass ini memastikan bahwa entitas tetap match ke state yang benar meskipun urutan spawn berubah akibat perubahan spawn logic. Item juga menggunakan pola fallback yang sama: UUID dicocokkan dulu, baru index-based matching sebagai cadangan.
+
+### UUID di Per-Map Files
+
+File per-map (`saves/enemies/<path>.json`, `saves/items/<path>.json`) juga menyertakan UUID. Saat `LoadEnemiesForMap()` merestore musuh, UUID di-set kembali via `SetUUID()`. Ini memastikan kontinuitas identitas entitas melintasi map switch dan full save/load cycles.
+
+## Per-Map Item Persistence
+
+Item map sekarang disimpan per-map ke file sistem filesystem, mengikuti pola yang sama seperti `SaveEnemiesForMap` / `LoadEnemiesForMap`:
+
+| Lokasi | Format | Pemicu |
+| --- | --- | --- |
+| `saves/items/<sanitized_map_path>.json` | JSON array, setiap item: definitionId, positionX/Y, isPickedUp, amount, uuid | Map switch (via `SaveItemsForMapDir` / `LoadItemsForMapDir`) |
+
+### Detail Implementasi
+
+- **Save** (`SaveItemsForMapDir` di `item.cpp`): Serialisasi `itemData.activeItems` ke JSON array. Atomic write via `.tmp` + rename untuk mencegah korupsi jika proses crash di tengah write -- pola yang sama digunakan di semua penulisan file sistem.
+- **Load** (`LoadItemsForMapDir` di `item.cpp`): Baca file per-map, parse JSON array, rekonstruksi setiap `ItemSpawn` termasuk hitbox dari `ItemDefinition`. Fallback ke 16x16 jika definisi tidak ditemukan.
+- **Cleanup**: `mainMenu.cpp` menghapus `saves/items/` saat fresh game start via `std::filesystem::remove_all("saves/items")`.
+
+Pendekatan filesystem terpisah ini (vs satu file besar) berarti state item per-map bisa dibaca dan ditulis secara independen tanpa perlu memuat ulang seluruh save. Ini mengikuti arsitektur yang sama seperti file musuh per-map.
+
+## Restore Ordering Fix
+
+### Masalah
+
+Sebelum perbaikan, `InitAll()` di `loading_screen.cpp` memanggil `SpawnEnemiesFromMap()` yang mengecek `IsAlreadyDead()` untuk setiap musuh, tetapi static set `DeadEntities` kosong karena `RestoreGameState()` (yang memanggil `Entities::SetDeadEntities()` dari `savedMapState.deadEntities`) belum dijalankan. Akibatnya, musuh yang sudah mati akan respawn setelah Load Game.
+
+### Perbaikan
+
+1. **`RestoreDeadEntities()` diekstrak** dari `RestoreGameState()` menjadi fungsi mandiri yang dideklarasikan di `game_state_saver.h`. Fungsinya membaca `savedMapState.deadEntities` dan memanggil `Entities::SetDeadEntities()`.
+2. **`RestoreDeadEntities()` dipanggil SEBELUM `InitAll()`** di kedua jalur loading_screen.cpp (First Load default case + Fast Path assetsLoaded). DeadEntities menggunakan `std::set` untuk lookup O(log n), memastikan membership checks deterministik tanpa bergantung pada urutan insertion.
+3. **`Entities::PruneDeadEntities()` safety net**: Setelah semua spawn dan restore selesai, fungsi ini mengiterasi `EnemyRegistry`, mengecek `IsAlreadyDead(currentMap, MapObjectID)`, dan menonaktifkan survivor yang seharusnya mati.
+
+### Urutan Final
+
+```txt
+ReadSaveFile() -> RestoreDeadEntities() -> InitAll() (spawn enemies,
+cek DeadEntities) -> RestoreGameState() (restore HP/posisi/timer)
+-> PruneDeadEntities() (safety net)
+```
+
+Urutan ini menjamin bahwa DeadEntities sudah terisi sebelum spawn logic berjalan, sementara PruneDeadEntities bertindak sebagai jaring pengaman untuk menangani kasus tepi.
 
 ## Semua Skenario
 
@@ -142,7 +206,7 @@ Masuk pintu di game world -> LOADING -> Map Baru -> PLAY
 
 ```txt
 Masuk pintu di game world
-  +-- SwitchMap() menyimpan musuh + item map saat ini ke file per-map
+  +-- SwitchMap() menyimpan musuh ke `saves/enemies/` dan item ke `saves/items/`
   +-- Loading screen:
        Stage 0: UnloadMap
        Stage 1: LoadMap(map baru), SetCurrentMapPath
@@ -181,7 +245,7 @@ Load Game diklik
 
 ### 10. Version Mismatch
 
-Sama seperti #9. `ReadSaveFile()` memeriksa `version == 1`. Jika tidak, mengembalikan false.
+Sama seperti #9. `ReadSaveFile()` memeriksa `version == SAVE_VERSION` (saat ini 2). Jika tidak cocok (misalnya file v1 dari versi lama), mengembalikan false. Version field adalah integer yang bertindak sebagai schema guard -- versi yang tidak cocok langsung ditolak sebelum deserialisasi apapun dimulai.
 
 ### 11. Periodic Autosave 60 Detik
 
@@ -221,7 +285,7 @@ RestoreGameState() memeriksa savedMapState.mapPath
 | --- | --- |
 | Pause **Save Game** | Semua ke `slot0.json` |
 | Pause **Return to Menu** | Semua ke `slot0.json` (otomatis) |
-| **Map switch** | Musuh/item map saat ini ke file per-map + full state ke `quick.json` |
+| **Map switch** | Musuh ke `saves/enemies/<path>.json`, item ke `saves/items/<path>.json`, + full state ke `quick.json` |
 | **Timer 60 detik** | Full state ke `periodic.json` |
 | **Fresh game start** | Full state ke `spawn.json` |
 | **Main menu Load Game** | Baca `slot0.json`, restore semua |
@@ -233,18 +297,22 @@ RestoreGameState() memeriksa savedMapState.mapPath
 | Issue | Status | Detail |
 | --- | --- | --- |
 | Crash saat load save dari map berbeda | Intermiten | Terjadi secara tidak konsisten saat loading save yang dibuat di map berbeda dari map saat ini. Belum bisa direproduksi secara andal. Kemungkinan terkait dengan enemy/item restore yang merujuk ke entitas yang belum di-spawn. |
-| Musuh tidak sepenuhnya stabil | Known | Sistem musuh masih setengah jadi. Perilaku AI dan per-map persistence mungkin tidak selalu konsisten. |
+| Dead enemies respawn setelah Load Game | Resolved | Disebabkan DeadEntities kosong saat spawn -- diperbaiki dengan `RestoreDeadEntities()` sebelum `InitAll()` dan `PruneDeadEntities()` safety net. Lihat [Restore Ordering Fix](#restore-ordering-fix). |
+| UUID matching untuk entitas | Resolved | Semua entitas yang dapat dipersist sekarang memiliki UUID. Multi-pass matching (UUID -> fallback) menangani kompatibilitas save lawan. Lihat [Entity Identity (UUID)](#entity-identity-uuid). |
 
 ## File Source Utama
 
 | File | Peran |
 | --- | --- |
-| `src/core/game_state_saver.cpp` | Logika save/load inti, JSON I/O, autosave |
-| `include/core/game_state_saver.h` | Struct state global dan deklarasi fungsi |
-| `src/ui/mainMenu.cpp` | Main menu save-aware Start Game + Load Game |
+| `src/core/game_state_saver.cpp` | Logika save/load inti, JSON I/O, autosave, RestoreDeadEntities |
+| `include/core/game_state_saver.h` | Struct state global, deklarasi fungsi, konstanta SAVE_VERSION |
+| `include/core/utils.h` | GenerateUUID() -- utility untuk UUID 32-hex-char |
+| `src/items/item.cpp` | Per-map item persistence (SaveItemsForMapDir, LoadItemsForMapDir) |
+| `src/ui/mainMenu.cpp` | Main menu save-aware Start Game + Load Game, cleanup saves/items/ |
 | `src/ui/pauseMenu.cpp` | Pause menu Save/Load/Return to Menu |
-| `src/core/loading_screen.cpp` | Integrasi loading screen, stage map switch |
-| `src/map/map.cpp` | Fungsi map switching (SwitchMap, GoBack, InitMap) |
+| `src/core/loading_screen.cpp` | Integrasi loading screen, stage map switch, panggil RestoreDeadEntities sebelum InitAll |
+| `src/map/map.cpp` | Fungsi map switching (SwitchMap, GoBack, InitMap) -- panggil SaveItemsForMapDir |
 | `src/entities/enemies/enemy.cpp` | Per-map enemy persistence (SaveEnemiesForMap, LoadEnemiesForMap, SpawnEnemiesFromMap) |
-| `src/entities/entities.cpp` | Dead entity registry (RegisterDeath, IsAlreadyDead) |
+| `src/entities/entities.cpp` | Dead entity registry (RegisterDeath, IsAlreadyDead, PruneDeadEntities) |
+| `include/map/propsbehavior.h` | BombManager/CrateManager -- GetConsumedPositions / SetConsumedPositions accessors |
 | `src/ui/popup.cpp` | Two-button confirmation popup |

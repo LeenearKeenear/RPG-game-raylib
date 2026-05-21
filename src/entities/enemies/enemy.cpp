@@ -660,6 +660,14 @@ void InitEnemy()
     enemyData.Load("assets/data/enemies.json");
 }
 
+/**
+ * @brief Save all active enemy states for a map to the saves/enemies/ filesystem directory.
+ * @details Serializes each live enemy's position, name, HP, AI state, patrol data, spawn point,
+ *          health regen timer, attack cooldown timer, and UUID to a JSON file. Uses atomic
+ *          write via .tmp + rename to prevent corruption. Skips inactive enemies.
+ *          Save file path derived by sanitizing mapPath (replacing / and \\ with _).
+ * @param mapPath Raw map file path used to derive save file name (e.g., "assets/maps/tutorial.json")
+ */
 void SaveEnemiesForMap(const std::string &mapPath)
 {
     // Build per-map save file path
@@ -708,6 +716,15 @@ void SaveEnemiesForMap(const std::string &mapPath)
     std::filesystem::rename(tmpPath, filePath);
 }
 
+/**
+ * @brief Load enemy states for a map from the saves/enemies/ filesystem directory.
+ * @details Reads the per-map save file, deserializes each enemy's state, and restores
+ *          position, HP, AI state, patrol data, spawn point, timers, and UUID to the
+ *          matching Enemy instance (matched by MapObjectID + Name). Dead enemies are
+ *          registered via Entities::RegisterDeath to prevent respawn.
+ * @param mapPath Raw map file path used to derive save file name
+ * @return true if at least one enemy was restored, false if no save file or parse failed
+ */
 bool LoadEnemiesForMap(const std::string &mapPath)
 {
     // Build per-map save file path
