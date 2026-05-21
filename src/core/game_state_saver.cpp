@@ -734,14 +734,6 @@ void RestoreGameState(GameState *state)
             savedMapState.mapPath = "assets/maps/tutorial.json";
         }
 
-        // Restore dead entities
-        if (!savedMapState.deadEntities.empty())
-        {
-            Entities::SetDeadEntities(std::set<std::string>(
-                savedMapState.deadEntities.begin(),
-                savedMapState.deadEntities.end()));
-        }
-
         // Restore consumed chest positions
         if (!savedMapState.chestsOpened.empty())
         {
@@ -761,6 +753,20 @@ void RestoreGameState(GameState *state)
         }
     }
     TraceLog(LOG_INFO, "Game state restored");
+}
+
+/** @brief Restore the DeadEntities set from savedMapState.
+ *         Must be called BEFORE InitAll() to prevent dead enemies from respawning. */
+void RestoreDeadEntities(void)
+{
+    if (!hasSavedState) return;
+    if (!savedMapState.deadEntities.empty())
+    {
+        Entities::SetDeadEntities(std::set<std::string>(
+            savedMapState.deadEntities.begin(),
+            savedMapState.deadEntities.end()));
+        TraceLog(LOG_INFO, "Restored %zu dead entities before entity spawn", savedMapState.deadEntities.size());
+    }
 }
 
 /**

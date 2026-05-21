@@ -58,6 +58,14 @@ namespace Entities
      */
     void SetDeadEntities(const std::set<std::string> &entities);
 
+    /**
+     * @brief Safety net: deactivate any EnemyRegistry entries that are registered as dead.
+     * @details Iterates the enemy registry and sets IsActive=false, Health=0 for any enemy
+     *          whose (currentMap, MapObjectID) pair exists in the DeadEntities set.
+     *          Call AFTER SpawnEnemiesFromMap + RestoreGameState as a safety pass.
+     */
+    void PruneDeadEntities(void);
+
 }
 
 // master render untuk object tile kek chest, trap dll

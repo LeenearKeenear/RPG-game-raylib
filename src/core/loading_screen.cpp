@@ -199,6 +199,9 @@ void UpdateLoadingScreen(GameState *state)
             InitMap();
         }
 
+        // Restore dead entities BEFORE InitAll to prevent dead enemies respawning
+        if (HasSavedState())
+            RestoreDeadEntities();
         // Init first, then restore saved state - order matters!
         // InitAll() sets position to spawn, then RestoreGameState overwrites it
         InitAll();
@@ -211,6 +214,8 @@ void UpdateLoadingScreen(GameState *state)
         {
             WriteAutosave("spawn.json");
         }
+        // Safety net: deactivate any dead entities that survived spawn
+        Entities::PruneDeadEntities();
         InitMainMenu(state);
         return;
     }
@@ -256,6 +261,9 @@ void UpdateLoadingScreen(GameState *state)
         state->loadingText = "Loading complete!";
         state->currentScreen = PLAY;
 
+        // Restore dead entities BEFORE InitAll to prevent dead enemies respawning
+        if (HasSavedState())
+            RestoreDeadEntities();
         // Initialize everything first, then restore saved state
         InitAll();
         if (HasSavedState())
@@ -266,6 +274,8 @@ void UpdateLoadingScreen(GameState *state)
         {
             WriteAutosave("spawn.json");
         }
+        // Safety net: deactivate any dead entities that survived spawn
+        Entities::PruneDeadEntities();
         InitMainMenu(state);
         break;
     }

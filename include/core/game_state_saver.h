@@ -158,6 +158,15 @@ void SaveGameState(GameState *state);
 void RestoreGameState(GameState *state);
 
 /**
+ * @brief Restore DeadEntities set from saved map state
+ * @details Must be called BEFORE InitAll() / SpawnEnemiesFromMap() to prevent
+ *          dead enemies from respawning. Reads from savedMapState.deadEntities
+ *          and populates the static DeadEntities set via Entities::SetDeadEntities().
+ *          Safe to call even if no save state exists.
+ */
+void RestoreDeadEntities(void);
+
+/**
  * @brief Cek apakah ada state tersimpan
  * @return true jika ada state yang bisa direstore
  * @note Dipakai untuk判断 apakah ini new game atau resume
