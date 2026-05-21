@@ -5,10 +5,10 @@
  * @brief Modul Preservasi State Game
  *
  * Handle save dan restore seluruh state game world:
- * - Player (posisi, health, inventory, mana)
- * - Enemy (posisi, HP, alive/dead status)
- * - Item (posisi, collected/remaining status)
- * - Map state (opened chests, triggered events)
+ * - Player (posisi, health, inventory, mana, dash, mana regen, swing attack)
+ * - Enemy (posisi, HP, alive/dead status, spawn point, regen/cooldown timers, UUID)
+ * - Item (posisi, collected/remaining status, stackable amount, UUID)
+ * - Map state (opened chests, bomb/crate consumed positions, triggered events)
  */
 
 #include "screen.h"
@@ -20,6 +20,13 @@
 #include "mapstack.h"
 #include <vector>
 #include <string>
+#include <nlohmann/json.hpp>
+
+/*==============================================================================
+ * Constants
+ *==============================================================================*/
+
+static constexpr int SAVE_VERSION = 2;      /**< Current save file format version */
 
 /*==============================================================================
  * Saved State Structures
@@ -46,6 +53,10 @@ struct SavedPlayerState {
         bool isDead;            /**< Apakah player mati */
         int activeSlot;         /**< Active hotbar slot (ItemSlot enum) */
     } animState;
+
+    float dashCooldown;                  /**< Remaining dash cooldown timer */
+    float manaRegenTimer;                /**< Timer delay before mana regen begins */
+    nlohmann::json swingAttack;          /**< Serialized SwingAttack state: active, timer, duration, currentAngle, center, type, reach, breadth, damage, knockbackForce */
 };
 
 /**
@@ -62,6 +73,10 @@ struct SavedEnemyState {
     float patrolTargetY;        /**< Target patroli Y */
     float patrolTimer;          /**< Timer tunggu patroli */
     int mapObjectID;            /**< MapObjectID untuk matching saat restore */
+    nlohmann::json spawnPoint;           /**< Spawn position serialized as {x, y} */
+    float healthRegenTimer;              /**< Countdown before health regen activates, reset on damage */
+    float attackCooldownTimer;           /**< Remaining cooldown time between attacks */
+    std::string uuid;                    /**< UUID for cross-save enemy matching */
 };
 
 /**
@@ -75,10 +90,12 @@ struct SavedItemState {
     Vector2 position;   /**< Posisi item di world */
     bool isPickedUp;    /**< Status collected/remaining */
     int definitionId;   /**< ID referensi ke ItemDefinition */
+    int amount = 1;     /**< Jumlah item untuk stackable items */
+    std::string uuid;   /**< UUID untuk matching item saat save/load */
 };
 
 /**
- * @brief Struktur data untuk menyimpan state map (chest, dll)
+ * @brief Struktur data untuk menyimpan state map (chest, bomb, crate, dll)
  */
 struct SavedMapState {
     std::string mapPath;                              /**< Path map saat ini */
@@ -88,6 +105,8 @@ struct SavedMapState {
     std::vector<std::string> deadEntities;                    /**< Nama entitas yang sudah mati di map ini */
     std::vector<std::string> chestsOpened;                    /**< Posisi chest yang sudah dibuka (encoded string) */
     std::vector<MapSystem::MapHistoryEntry> mapHistory;       /**< Stack riwayat perpindahan map */
+    nlohmann::json bombConsumedPositions;       /**< Consumed bomb positions as JSON array of strings (matching std::unordered_set<std::string>) */
+    nlohmann::json crateConsumedPositions;      /**< Consumed crate positions as JSON array of strings (matching std::unordered_set<std::string>) */
 };
 
 /*==============================================================================
@@ -127,7 +146,7 @@ extern bool hasSavedState;
  * @brief Simpan seluruh state game world
  * @details Dipanggil saat player klik "Return to Menu"
  * @param state Pointer ke GameState
- * @note Simpan: player position/health/inventory, enemies, items, map state
+ * @note Simpan: player position/health/inventory/mana/dash/manaRegen/swingAttack, enemies with spawnPoint/timers/UUID, items with amount/UUID, map state with bomb/crate consumption
  */
 void SaveGameState(GameState *state);
 
@@ -176,7 +195,7 @@ bool WriteAutosave(const std::string& filename);
 /**
  * @brief Read saved state from JSON file
  * @details Reads and deserializes a JSON save file into the global saved state structs.
- *          Validates version == 1.
+ *          Validates version == SAVE_VERSION (currently 2).
  * @param path Path to the save file
  * @return true if successful, false if file not found, parse error, or version mismatch
  */
