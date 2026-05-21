@@ -519,6 +519,7 @@ void Debug::DrawWorldOverlay(void)
     DrawCollisionOverlay(OBJECT_LAYER_NAME, SKYBLUE, SKYBLUE, LIGHTGRAY);
     DrawCollisionOverlay(TRAP_LAYER_NAME, BEIGE, BEIGE, LIGHTGRAY);
     DrawCollisionOverlay(ITEM_LAYER_NAME, PINK, PINK, LIGHTGRAY);
+    DrawCollisionOverlay(EXIT_LAYER_NAME, BLACK, BLACK, LIGHTGRAY);
     DrawAttackOverlay();
     if (showFlowFieldOverlayPlayer)
     {

@@ -1,6 +1,6 @@
 #pragma once
 #include "map.h"
-#include "tiles.h"
+#include "animation.h"
 #include <vector>
 #include <string>
 
@@ -11,7 +11,8 @@
 constexpr int WG_GRID_SIZE = 4;
 constexpr int WG_CELL_TILES = 41;
 constexpr int WG_CANVAS_TILES = 164;
-constexpr int WG_TILE_SIZE = TILE_SIZE;
+constexpr int WG_PREFAB_LAYER_START = 2;
+constexpr int WG_TILE_SIZE = FRAME_SIZE;
 
 constexpr const char *SLOT_WORLDGEN_LAYER_NAME = "slot_worldgen";
 
@@ -70,9 +71,17 @@ struct WorldCell
  * Functions
  *==============================================================================*/
 
-std::vector<MapObject *> GetWorldGenSlots();
+std::vector<MapObject> GetWorldGenSlots();
+std::vector<std::vector<int>> ReshapeTo2D(const std::vector<int> &flatData, int width, int height);
+std::vector<int> FlattenTo1D(const std::vector<std::vector<int>> &grid);
+std::vector<std::vector<int>> Rotate90CW(const std::vector<std::vector<int>> &grid);
+std::vector<std::vector<int>> RotateGrid(const std::vector<std::vector<int>> &grid, int degrees);
+
 void PreFabLoadMap(const char *mapPath, TilesonMapData *target);
-void UnloadPrefab(TilesonMapData* prefab);
+void UnloadPrefab(TilesonMapData *prefab);
 void ExpandCanvasLayers(int extraLayers);
-void StampPrefabToSlot(TilesonMapData *prefab, MapObject *slot);
 void StampMap(TilesonMapData *source, int offsetX, int offsetY, int targetLayerOffset);
+void StampPrefabToSlot(TilesonMapData *prefab, MapObject *slot);
+TilesonMapData *RotateTileLayers(TilesonMapData *source, int degrees);
+void RotateObjectLayer(TilesonMapData *source, TilesonMapData *result, int degrees, int tileSize, bool obstacleOnly);
+TilesonMapData *RotatePrefab(TilesonMapData *source, int tileDegrees, int objectDegrees);

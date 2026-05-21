@@ -1,16 +1,87 @@
 #include "worldgenenartion.h"
 #include "mapLogic.h"
+#include <vector>
 
 extern TilesonMapData *tilesonMap;
 
-std::vector<MapObject *> GetWorldGenSlots()
+std::vector<MapObject> GetWorldGenSlots()
 {
-    const auto &lyrs = TilesonGetObjectsByLayerName(SLOT_WORLDGEN_LAYER_NAME);
-    return std::vector<MapObject *>(lyrs.begin(), lyrs.end());
+    const auto &slots = TilesonGetObjectsByType(SLOT_WORLDGEN_LAYER_NAME);
+    TraceLog(LOG_INFO, "WorldGen: slots found = %d", (int)slots.size());
+    std::vector<MapObject> result;
+    for (auto *ptr : slots)
+        result.push_back(*ptr);
+    return result;
+}
+
+std::vector<std::vector<int>> ReshapeTo2D(const std::vector<int> &flatData, int width, int height)
+{
+    std::vector<std::vector<int>> grid(height, std::vector<int>(width));
+    for (int i = 0; i < (int)flatData.size(); i++)
+    {
+        grid[i / width][i % width] = flatData[i];
+    }
+    return grid;
+}
+
+std::vector<int> FlattenTo1D(const std::vector<std::vector<int>> &grid)
+{
+    std::vector<int> flat;
+    for (const auto &row : grid)
+    {
+        for (int val : row)
+        {
+            flat.push_back(val);
+        }
+    }
+    return flat;
+}
+
+std::vector<std::vector<int>> Rotate90CW(const std::vector<std::vector<int>> &grid)
+{
+    int rows = grid.size();
+    int cols = grid[0].size();
+    std::vector<std::vector<int>> result(cols, std::vector<int>(rows));
+    for (int r = 0; r < rows; r++)
+    {
+        for (int c = 0; c < cols; c++)
+        {
+            result[c][rows - 1 - r] = grid[r][c];
+        }
+    }
+    return result;
+}
+
+std::vector<std::vector<int>> RotateGrid(const std::vector<std::vector<int>> &grid, int degrees)
+{
+    // degrees: 0, 90, 180, 270
+    int times = (degrees / 90) % 4;
+    std::vector<std::vector<int>> result = grid;
+    for (int i = 0; i < times; i++)
+    {
+        result = Rotate90CW(result);
+    }
+    return result;
+}
+
+Vector2 RotatePoint(Vector2 point, Vector2 center, int degrees)
+{
+    float x = point.x - center.x;
+    float y = point.y - center.y;
+
+    for (int i = 0; i < (degrees / 90) % 4; i++)
+    {
+        float temp = x;
+        x = -y;
+        y = temp;
+    }
+
+    return {x + center.x, y + center.y};
 }
 
 void PreFabLoadMap(const char *mapPath, TilesonMapData *target)
 {
+    TraceLog(LOG_INFO, "PreFabLoadMap: loading %s", mapPath);
     tson::Tileson t;
     auto parsed = t.parse(mapPath);
 
@@ -95,10 +166,25 @@ void PreFabLoadMap(const char *mapPath, TilesonMapData *target)
         TilesetInfo info;
 
         // Cek apakah texture tile utama sudah dimuat, reuse jika ada
-        if (TexturesMap[TEXTURE_TILEMAP].id != 0 && imagePath == "assets/textures/tiles.png")
+        if (textures[TILESET_MAP_1].id != 0 && imagePath == "assets/textures/tiles.png")
         {
-            info.texture = TexturesMap[TEXTURE_TILEMAP];
+            info.texture = textures[TILESET_MAP_1];
             TraceLog(LOG_INFO, "Tileson: Reusing cached texture for tiles.png");
+        }
+        else if (textures[TILESET_MAP_2].id != 0 && imagePath == "assets/textures/test.png")
+        {
+            info.texture = textures[TILESET_MAP_2];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for test.png");
+        }
+        else if (textures[TILESET_PROPS].id != 0 && imagePath == "assets/textures/props.png")
+        {
+            info.texture = textures[TILESET_PROPS];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for props.png");
+        }
+        else if (textures[TILESET_ITEMS].id != 0 && imagePath == "assets/textures/items.png")
+        {
+            info.texture = textures[TILESET_ITEMS];
+            TraceLog(LOG_INFO, "Tileson: Reusing cached texture for items.png");
         }
         else
         {
@@ -117,23 +203,49 @@ void PreFabLoadMap(const char *mapPath, TilesonMapData *target)
         if (target->tilesets.empty())
             target->tilesets.push_back({});
         target->tilesets[0].push_back(info);
-        tilesonMap->layerTilesetGroup.assign(tilesonMap->layerCount, 0);
+        target->layerTilesetGroup.assign(target->layerCount, 0);
         TraceLog(LOG_INFO, "Tileson: Loaded tileset %s (gid %d-%d)", imagePath.c_str(), info.firstgid, info.lastgid);
     }
 
-    TraceLog(LOG_INFO, "Tileson: Map loaded - %dx%d tiles", tilesonMap->width, tilesonMap->height);
+    TraceLog(LOG_INFO, "PreFabLoadMap: done %s", mapPath);
 }
 
-void UnloadPrefab(TilesonMapData* prefab)
+void UnloadPrefab(TilesonMapData *prefab)
 {
-    if (!prefab) return;
-    for (int i = 0; i < prefab->layerCount; i++)
-        delete[] prefab->tiles[i];
-    delete[] prefab->tiles;
+    if (!prefab)
+        return;
+
+    if (prefab->tiles)
+    {
+        for (int i = 0; i < prefab->layerCount; i++)
+        {
+            delete[] prefab->tiles[i];
+        }
+        delete[] prefab->tiles;
+    }
     delete prefab;
 }
 
-void StampMap(TilesonMapData* source, int offsetX, int offsetY, int targetLayerOffset)
+void ExpandCanvasLayers(int extraLayers)
+{
+    int newLayerCount = tilesonMap->layerCount + extraLayers;
+
+    int **newTiles = new int *[newLayerCount];
+
+    for (int i = 0; i < tilesonMap->layerCount; i++)
+        newTiles[i] = tilesonMap->tiles[i];
+
+    for (int i = tilesonMap->layerCount; i < newLayerCount; i++)
+        newTiles[i] = new int[tilesonMap->width * tilesonMap->height]();
+
+    delete[] tilesonMap->tiles;
+    tilesonMap->tiles = newTiles;
+    tilesonMap->layerCount = newLayerCount;
+
+    tilesonMap->layerTilesetGroup.resize(newLayerCount, 0);
+}
+
+void StampMap(TilesonMapData *source, int offsetX, int offsetY, int targetLayerOffset)
 {
     // append tileset group dari prefab
     int newGroupIdx = (int)tilesonMap->tilesets.size();
@@ -143,7 +255,8 @@ void StampMap(TilesonMapData* source, int offsetX, int offsetY, int targetLayerO
     for (int l = 0; l < source->layerCount; l++)
     {
         int dstLayer = targetLayerOffset + l;
-        if (dstLayer >= tilesonMap->layerCount) break;
+        if (dstLayer >= tilesonMap->layerCount)
+            break;
 
         // assign layer ke group baru
         tilesonMap->layerTilesetGroup[dstLayer] = newGroupIdx;
@@ -153,11 +266,13 @@ void StampMap(TilesonMapData* source, int offsetX, int offsetY, int targetLayerO
             for (int x = 0; x < source->width; x++)
             {
                 int srcTile = source->tiles[l][y * source->width + x];
-                if (srcTile == 0) continue;
+                if (srcTile == 0)
+                    continue;
 
                 int cx = offsetX + x;
                 int cy = offsetY + y;
-                if (cx >= tilesonMap->width || cy >= tilesonMap->height) continue;
+                if (cx >= tilesonMap->width || cy >= tilesonMap->height)
+                    continue;
 
                 tilesonMap->tiles[dstLayer][cy * tilesonMap->width + cx] = srcTile;
             }
@@ -165,12 +280,12 @@ void StampMap(TilesonMapData* source, int offsetX, int offsetY, int targetLayerO
     }
 
     // stamp objects
-    for (auto& obj : source->Objects)
+    for (auto &obj : source->Objects)
     {
         MapObject stamped = obj;
         stamped.bounds.x += offsetX * WG_TILE_SIZE;
         stamped.bounds.y += offsetY * WG_TILE_SIZE;
-        for (auto& p : stamped.polygonPoints)
+        for (auto &p : stamped.polygonPoints)
         {
             p.x += offsetX * WG_TILE_SIZE;
             p.y += offsetY * WG_TILE_SIZE;
@@ -179,38 +294,112 @@ void StampMap(TilesonMapData* source, int offsetX, int offsetY, int targetLayerO
     }
 }
 
-// void StampPrefabToSlot(TilesonMapData *prefab, MapObject *slot)
-// {
-//     // slot bounds dalam pixel, convert ke tile
-//     int slotTileX = (int)(slot->bounds.x / WG_TILE_SIZE);
-//     int slotTileY = (int)(slot->bounds.y / WG_TILE_SIZE);
-//     int slotTileW = (int)(slot->bounds.width / WG_TILE_SIZE);
-//     int slotTileH = (int)(slot->bounds.height / WG_TILE_SIZE);
-
-//     // center prefab di dalam slot
-//     int offsetX = slotTileX + (slotTileW - prefab->width) / 2;
-//     int offsetY = slotTileY + (slotTileH - prefab->height) / 2;
-
-//     StampMap(prefab, offsetX, offsetY);
-// }
-
-void ExpandCanvasLayers(int extraLayers)
+void StampPrefabToSlot(TilesonMapData *prefab, MapObject *slot)
 {
-    int newLayerCount = tilesonMap->layerCount + extraLayers;
+    int slotTileX = (int)(slot->bounds.x / WG_TILE_SIZE);
+    int slotTileY = (int)(slot->bounds.y / WG_TILE_SIZE);
+    int slotTileW = (int)(slot->bounds.width / WG_TILE_SIZE);
+    int slotTileH = (int)(slot->bounds.height / WG_TILE_SIZE);
 
-    // alokasi array baru
-    int **newTiles = new int *[newLayerCount];
+    int offsetX = slotTileX + (slotTileW - prefab->width) / 2;
+    int offsetY = slotTileY + (slotTileH - prefab->height) / 2;
 
-    // copy pointer layer lama
-    for (int i = 0; i < tilesonMap->layerCount; i++)
-        newTiles[i] = tilesonMap->tiles[i];
+    if (tilesonMap->layerCount < WG_PREFAB_LAYER_START + prefab->layerCount)
+        ExpandCanvasLayers((WG_PREFAB_LAYER_START + prefab->layerCount) - tilesonMap->layerCount);
 
-    // alokasi layer baru, zero-init
-    for (int i = tilesonMap->layerCount; i < newLayerCount; i++)
-        newTiles[i] = new int[tilesonMap->width * tilesonMap->height]();
+    StampMap(prefab, offsetX, offsetY, 2);
+}
 
-    // replace
-    delete[] tilesonMap->tiles;
-    tilesonMap->tiles = newTiles;
-    tilesonMap->layerCount = newLayerCount;
+TilesonMapData *RotateTileLayers(TilesonMapData *source, int degrees)
+{
+    TilesonMapData *result = new TilesonMapData();
+    result->width = source->width;
+    result->height = source->height;
+    result->layerCount = source->layerCount;
+    result->tilesets = source->tilesets;
+    result->layerTilesetGroup = source->layerTilesetGroup;
+
+    result->tiles = new int *[result->layerCount];
+    for (int i = 0; i < result->layerCount; i++)
+    {
+        result->tiles[i] = new int[result->width * result->height]();
+
+        std::vector<int> flat(source->tiles[i], source->tiles[i] + source->width * source->height);
+        auto grid2D = ReshapeTo2D(flat, source->width, source->height);
+        auto rotated = RotateGrid(grid2D, degrees);
+        auto flatResult = FlattenTo1D(rotated);
+
+        for (int j = 0; j < (int)flatResult.size(); j++)
+            result->tiles[i][j] = flatResult[j];
+    }
+
+    return result;
+}
+
+void RotateObjectLayer(TilesonMapData *source, TilesonMapData *result, int degrees, int tileSize, bool obstacleOnly)
+{
+    Vector2 center = {(source->width * tileSize) / 2.0f, (source->height * tileSize) / 2.0f};
+
+    for (auto &obj : source->Objects)
+    {
+        bool isObstacle = obj.layerName == COLLISION_LAYER_NAME;
+        bool isExit = obj.layerName == EXIT_LAYER_NAME;
+        if (obstacleOnly && !isObstacle && !isExit)
+            continue;
+        if (!obstacleOnly && (isObstacle || isExit))
+            continue;
+
+        MapObject rotated = obj;
+
+        Vector2 topLeft = RotatePoint({obj.bounds.x, obj.bounds.y}, center, degrees);
+        Vector2 topRight = RotatePoint({obj.bounds.x + obj.bounds.width, obj.bounds.y}, center, degrees);
+        Vector2 bottomLeft = RotatePoint({obj.bounds.x, obj.bounds.y + obj.bounds.height}, center, degrees);
+        Vector2 bottomRight = RotatePoint({obj.bounds.x + obj.bounds.width, obj.bounds.y + obj.bounds.height}, center, degrees);
+
+        float minX = std::min({topLeft.x, topRight.x, bottomLeft.x, bottomRight.x});
+        float minY = std::min({topLeft.y, topRight.y, bottomLeft.y, bottomRight.y});
+        float maxX = std::max({topLeft.x, topRight.x, bottomLeft.x, bottomRight.x});
+        float maxY = std::max({topLeft.y, topRight.y, bottomLeft.y, bottomRight.y});
+
+        rotated.bounds = {minX, minY, maxX - minX, maxY - minY};
+
+        if (obj.hasPolygon)
+        {
+            rotated.polygonPoints.clear();
+            for (auto &point : obj.polygonPoints)
+            {
+                rotated.polygonPoints.push_back(RotatePoint(point, center, degrees));
+            }
+        }
+
+        if (isExit)
+        {
+            static const std::map<std::string, std::string> exitRemap90CW = {
+                {"exit_north", "exit_east"},
+                {"exit_east", "exit_south"},
+                {"exit_south", "exit_west"},
+                {"exit_west", "exit_north"}};
+
+            int times = (degrees / 90) % 4;
+            std::string remappedName = rotated.name;
+            for (int i = 0; i < times; i++)
+            {
+                auto it = exitRemap90CW.find(remappedName);
+                if (it != exitRemap90CW.end())
+                    remappedName = it->second;
+            }
+            rotated.name = remappedName;
+            rotated.type = remappedName;
+        }
+
+        result->Objects.push_back(rotated);
+    }
+}
+
+TilesonMapData *RotatePrefab(TilesonMapData *source, int tileDegrees, int objectDegrees)
+{
+    TilesonMapData *result = RotateTileLayers(source, tileDegrees);
+    RotateObjectLayer(source, result, tileDegrees, FRAME_SIZE, true);
+    RotateObjectLayer(source, result, objectDegrees, FRAME_SIZE, false);
+    return result;
 }

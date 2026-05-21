@@ -158,7 +158,7 @@ public:
     const float AttackManaCost = 10.0f;
 
     // movement
-    float Speed = 8.0f;           ///< Kecepatan gerak dasar 3.7
+    float Speed = 20.0f;           ///< Kecepatan gerak dasar 3.7
     float DashSpeed = 0.0f;       // current dash speed tambahan
     float DashMaxSpeed = 4.0f;    // max dash speed
     float DashDecel = 0.06f;      // lerp factor deselerasi

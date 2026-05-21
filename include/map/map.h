@@ -66,17 +66,31 @@ struct TilesetInfo
  *==============================================================================*/
 
 /**
+ * @brief Precomputed index untuk O(1) lookup MapObject
+ *
+ * Dibangun sekali via BuildMapObjectIndex() setelah LoadMap().
+ * Semua pointer nunjuk langsung ke element di tilesonMap->Objects — tidak ada copy.
+ */
+struct MapObjectIndex
+{
+    std::unordered_map<std::string, MapObject *> byName;
+    std::unordered_map<std::string, std::vector<MapObject *>> byType;
+    std::unordered_map<std::string, std::vector<MapObject *>> byLayer;
+};
+
+/**
  * @brief Menyimpan seluruh data map hasil parse Tiled
  */
 struct TilesonMapData
 {
-    int width;                                      // Lebar map dalam satuan tile
-    int height;                                     // Tinggi map dalam satuan tile
-    int layerCount;                                 // Jumlah tile layer
-    int **tiles;                                    // Data tile untuk tiap layer
+    int width = 0;                                  // Lebar map dalam satuan tile
+    int height = 0;                                 // Tinggi map dalam satuan tile
+    int layerCount = 0;                             // Jumlah tile layer
+    int **tiles = nullptr;                          // Data tile untuk tiap layer
     std::vector<std::vector<TilesetInfo>> tilesets; // Daftar tileset yang dipakai map
     std::vector<int> layerTilesetGroup;             // layer index → group index
     std::vector<MapObject> Objects;                 // Daftar object dari object layer
+    MapObjectIndex objectIndex;                     // Index object Tiled yang dipakai untuk lookup cepat
 };
 
 // Pointer global ke map yang sedang aktif
@@ -123,6 +137,7 @@ constexpr const char *COLLISION_LAYER_NAME = "obstacle"; // Nama layer collision
 constexpr const char *OBJECT_LAYER_NAME = "object";      // Nama layer object placement
 constexpr const char *TRAP_LAYER_NAME = "trap";          // nama layer trap placement
 constexpr const char *ITEM_LAYER_NAME = "item";          // nama layer item placment
+constexpr const char *EXIT_LAYER_NAME = "exit";          // nama layer exit placement
 // Nama objek spesifik untuk spawn musuh
 constexpr const char *ENEMY_SPAWN_NORMAL_PIN_OBJECT_NAME = "enemy_spawn_normal_pinpoint";
 constexpr const char *ENEMY_SPAWN_NORMAL_REC_OBJECT_NAME = "enemy_spawn_normal_rect";

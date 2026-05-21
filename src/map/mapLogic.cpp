@@ -29,7 +29,23 @@ TiledHelper TiledHelperFunction;
  * Dibangun ulang lewat BuildMapObjectIndex() setelah map selesai dimuat.
  * Seluruh pointer mengarah langsung ke data object aktif di tilesonMap->Objects.
  */
-static MapObjectIndex g_mapIndex;
+
+void BuildMapObjectIndexTarget(TilesonMapData *target)
+{
+    target->objectIndex.byName.clear();
+    target->objectIndex.byType.clear();
+    target->objectIndex.byLayer.clear();
+
+    for (auto &obj : target->Objects)
+    {
+        if (!obj.name.empty())
+            target->objectIndex.byName[obj.name] = &obj;
+        if (!obj.type.empty())
+            target->objectIndex.byType[obj.type].push_back(&obj);
+        if (!obj.layerName.empty())
+            target->objectIndex.byLayer[obj.layerName].push_back(&obj);
+    }
+}
 
 /**
  * @brief Bangun ulang index dari seluruh object pada map aktif
@@ -38,32 +54,33 @@ static MapObjectIndex g_mapIndex;
  */
 void BuildMapObjectIndex()
 {
-    g_mapIndex.byName.clear();
-    g_mapIndex.byType.clear();
-    g_mapIndex.byLayer.clear();
-
-    for (auto &obj : tilesonMap->Objects)
-    {
-        // Index berdasarkan nama object
-        if (!obj.name.empty())
-            g_mapIndex.byName[obj.name] = &obj;
-
-        // Index berdasarkan type object
-        if (!obj.type.empty())
-            g_mapIndex.byType[obj.type].push_back(&obj);
-
-        // Index berdasarkan layer object
-        if (!obj.layerName.empty())
-            g_mapIndex.byLayer[obj.layerName].push_back(&obj);
-    }
-
-    for (auto &[type, objs] : g_mapIndex.byType)
-        TraceLog(LOG_INFO, "byType: '%s' -> %d objects", type.c_str(), (int)objs.size());
+    BuildMapObjectIndexTarget(tilesonMap);
 }
 
 /*==============================================================================
  * Low-level Query Functions
  *==============================================================================*/
+
+// Versi baru dengan target
+MapObject *TilesonGetObjectByName(TilesonMapData *target, const std::string &name)
+{
+    auto it = target->objectIndex.byName.find(name);
+    return (it != target->objectIndex.byName.end()) ? it->second : nullptr;
+}
+
+const std::vector<MapObject *> &TilesonGetObjectsByType(TilesonMapData *target, const std::string &type)
+{
+    static const std::vector<MapObject *> empty;
+    auto it = target->objectIndex.byType.find(type);
+    return (it != target->objectIndex.byType.end()) ? it->second : empty;
+}
+
+const std::vector<MapObject *> &TilesonGetObjectsByLayerName(TilesonMapData *target, const std::string &layerName)
+{
+    static const std::vector<MapObject *> empty;
+    auto it = target->objectIndex.byLayer.find(layerName);
+    return (it != target->objectIndex.byLayer.end()) ? it->second : empty;
+}
 
 /**
  * @brief Cari satu object berdasarkan nama
@@ -72,8 +89,7 @@ void BuildMapObjectIndex()
  */
 MapObject *TilesonGetObjectByName(const std::string &name)
 {
-    auto it = g_mapIndex.byName.find(name);
-    return (it != g_mapIndex.byName.end()) ? it->second : nullptr;
+    return TilesonGetObjectByName(tilesonMap, name);
 }
 
 /**
@@ -83,9 +99,7 @@ MapObject *TilesonGetObjectByName(const std::string &name)
  */
 const std::vector<MapObject *> &TilesonGetObjectsByType(const std::string &type)
 {
-    static const std::vector<MapObject *> empty;
-    auto it = g_mapIndex.byType.find(type);
-    return (it != g_mapIndex.byType.end()) ? it->second : empty;
+    return TilesonGetObjectsByType(tilesonMap, type);
 }
 
 /**
@@ -95,9 +109,7 @@ const std::vector<MapObject *> &TilesonGetObjectsByType(const std::string &type)
  */
 const std::vector<MapObject *> &TilesonGetObjectsByLayerName(const std::string &layerName)
 {
-    static const std::vector<MapObject *> empty;
-    auto it = g_mapIndex.byLayer.find(layerName);
-    return (it != g_mapIndex.byLayer.end()) ? it->second : empty;
+    return TilesonGetObjectsByLayerName(tilesonMap, layerName);
 }
 
 /*==============================================================================
@@ -123,38 +135,6 @@ bool TiledHelper::TryGetObjectPositionByName(const std::string &objectName, Vect
 }
 
 /**
- * @brief Ambil posisi object pertama dengan type tertentu
- *
- * @param objectType Type object di Tiled
- * @param outPosition [OUT] Posisi object pertama yang ditemukan
- * @return true jika object ditemukan
- */
-bool TiledHelper::TryGetObjectPositionByType(const std::string &objectType, Vector2 &outPosition)
-{
-    const auto &objs = TilesonGetObjectsByType(objectType);
-    if (objs.empty())
-        return false;
-    outPosition = {objs[0]->bounds.x, objs[0]->bounds.y};
-    return true;
-}
-
-/**
- * @brief Ambil bounds object pertama dengan type tertentu
- *
- * @param objectType Type object di Tiled
- * @param outBounds [OUT] Bounds object pertama yang ditemukan
- * @return true jika object ditemukan
- */
-bool TiledHelper::TryGetObjectBoundsByType(const std::string &objectType, Rectangle &outBounds)
-{
-    const auto &objs = TilesonGetObjectsByType(objectType);
-    if (objs.empty())
-        return false;
-    outBounds = objs[0]->bounds;
-    return true;
-}
-
-/**
  * @brief Ambil seluruh collision data dari satu layer
  *
  * Object polygon dimasukkan ke polygons, sisanya ke rects.
@@ -166,30 +146,6 @@ bool TiledHelper::TryGetObjectBoundsByType(const std::string &objectType, Rectan
 bool TiledHelper::TryGetCollisionByLayerName(const std::string &layerName, CollisionResult &outCollision)
 {
     const auto &objs = TilesonGetObjectsByLayerName(layerName);
-    if (objs.empty())
-        return false;
-    for (auto *obj : objs)
-    {
-        if (obj->hasPolygon)
-            outCollision.polygons.push_back(obj->polygonPoints);
-        else
-            outCollision.rects.push_back(obj->bounds);
-    }
-    return true;
-}
-
-/**
- * @brief Ambil seluruh collision data dari object dengan type tertentu
- *
- * Object polygon dimasukkan ke polygons, sisanya ke rects.
- *
- * @param objectType Type object di Tiled
- * @param outCollision [OUT] Hasil collision yang ditemukan
- * @return true jika ada object dengan type tersebut
- */
-bool TiledHelper::TryGetCollisionByType(const std::string &objectType, CollisionResult &outCollision)
-{
-    const auto &objs = TilesonGetObjectsByType(objectType);
     if (objs.empty())
         return false;
     for (auto *obj : objs)

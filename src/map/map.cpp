@@ -283,22 +283,82 @@ void InitMap(void)
     // "assets/maps/tutorial.json"
     // Map yang aktif saat ini
     // currentMapPath = "assets/maps/tutorial.json";
-    currentMapPath = "assets/maps/floorB_tester.json";
+    // currentMapPath = "assets/maps/floorB_tester.json";
     // currentMapPath = "assets/maps/testing_size.json";
-    // currentMapPath = "assets/maps/World_generation/background_template_test.json";
+
     // preFabMapPath = "assets/maps/World_generation/template1(udrl).json";
     // preFabMapPath = "assets/maps/World_generation/template2(udr).json";
     // preFabMapPath = "assets/maps/World_generation/template3(ud).json";
     // preFabMapPath = "assets/maps/World_generation/template4(ur).json";
     // preFabMapPath = "assets/maps/World_generation/template5(u).json";
+    currentMapPath = "assets/maps/World_generation/background_template_test.json";
     LoadMap(currentMapPath.c_str());
-    // ExpandCanvasLayers(2);
+    BuildMapObjectIndex();
 
-    // TilesonMapData *prefab = new TilesonMapData();
-    // PreFabLoadMap(preFabMapPath.c_str(), prefab);
+    TilesonMapData *prefabA = new TilesonMapData();
+    PreFabLoadMap("assets/maps/World_generation/template1(udrl).json", prefabA);
+    BuildMapObjectIndexTarget(prefabA);
 
-    // StampMap(prefab, 46, 46, 2); // stamp ke layer 2 dan 3
-    // UnloadPrefab(prefab);
+    TilesonMapData *prefabB = new TilesonMapData();
+    PreFabLoadMap("assets/maps/World_generation/template2(udr).json", prefabB);
+    BuildMapObjectIndexTarget(prefabB);
+
+    TilesonMapData *prefabC = new TilesonMapData();
+    PreFabLoadMap("assets/maps/World_generation/template3(ud).json", prefabC);
+    BuildMapObjectIndexTarget(prefabC);
+
+    TilesonMapData *prefabD = new TilesonMapData();
+    PreFabLoadMap("assets/maps/World_generation/template4(ur).json", prefabD);
+    BuildMapObjectIndexTarget(prefabD);
+
+    TilesonMapData *prefabE = new TilesonMapData();
+    PreFabLoadMap("assets/maps/World_generation/template5(u).json", prefabE);
+    BuildMapObjectIndexTarget(prefabE);
+
+    TilesonMapData *prefabx = new TilesonMapData();
+    PreFabLoadMap("assets/maps/World_generation/template10(udrl).json", prefabx);
+    BuildMapObjectIndexTarget(prefabx);
+
+    TilesonMapData *prefabC90 = RotatePrefab(prefabC, 90, 90);
+    TilesonMapData *prefabD90 = RotatePrefab(prefabD, 90, 90);
+    TilesonMapData *prefabD180 = RotatePrefab(prefabD, 180, 180);
+    TilesonMapData *prefabD900 = RotatePrefab(prefabD, 90, 270);
+    TilesonMapData *prefabx900 = RotatePrefab(prefabx, 90, 0);
+    TilesonMapData *prefabx1800 = RotatePrefab(prefabx, 180, 0);
+    TilesonMapData *prefabx18090 = RotatePrefab(prefabx, 180, 90);
+
+    std::vector<MapObject> slots = GetWorldGenSlots();
+
+    for (auto &slot : slots)
+    {
+        if (slot.name == "slot_6")
+            StampPrefabToSlot(prefabx, &slot);
+        if (slot.name == "slot_7")
+            StampPrefabToSlot(prefabx900, &slot);
+        if (slot.name == "slot_10")
+            StampPrefabToSlot(prefabx18090, &slot);
+        if (slot.name == "slot_11")
+            StampPrefabToSlot(prefabx1800, &slot);
+        if (slot.name == "slot_12")
+            StampPrefabToSlot(prefabD90, &slot);
+        if (slot.name == "slot_13")
+            StampPrefabToSlot(prefabD900, &slot);
+        if (slot.name == "slot_14")
+            StampPrefabToSlot(prefabD180, &slot);
+        if (slot.name == "slot_15")
+            StampPrefabToSlot(prefabE, &slot);
+        if (slot.name == "slot_16")
+            StampPrefabToSlot(prefabE, &slot);
+    }
+
+    UnloadPrefab(prefabA);
+    UnloadPrefab(prefabB);
+    UnloadPrefab(prefabC);
+    UnloadPrefab(prefabD);
+    UnloadPrefab(prefabE);
+    UnloadPrefab(prefabC90);
+    UnloadPrefab(prefabD90);
+    UnloadPrefab(prefabD180);
 
     BuildMapObjectIndex();
 }

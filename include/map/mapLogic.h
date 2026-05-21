@@ -14,33 +14,21 @@
 
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/tileson/tileson.hpp"
+#include "map.h"
 #include <vector>
 #include <string>
 #include <optional>
 
-struct MapObject;
 
 /*==============================================================================
  * MapObjectIndex
  *==============================================================================*/
 
 /**
- * @brief Precomputed index untuk O(1) lookup MapObject
- *
- * Dibangun sekali via BuildMapObjectIndex() setelah LoadMap().
- * Semua pointer nunjuk langsung ke element di tilesonMap->Objects — tidak ada copy.
- */
-struct MapObjectIndex
-{
-    std::unordered_map<std::string, MapObject *> byName;
-    std::unordered_map<std::string, std::vector<MapObject *>> byType;
-    std::unordered_map<std::string, std::vector<MapObject *>> byLayer;
-};
-
-/**
  * @brief Build/rebuild index dari tilesonMap->Objects
  * @note Wajib dipanggil setelah LoadMap() selesai
  */
+void BuildMapObjectIndexTarget(TilesonMapData *target);
 void BuildMapObjectIndex();
 
 /*==============================================================================
@@ -79,9 +67,8 @@ MapObject *TilesonGetObjectByName(const std::string &name);
  * Gunakan global instance TiledHelperFunction untuk akses dari luar.
  *
  * Tanggung jawab:
- * - Lookup posisi object by name / type
- * - Lookup bounds object by type
- * - Ekstrak collision data by layer / type
+ * - Lookup posisi object by name
+ * - Ekstrak collision data by layer
  */
 class TiledHelper
 {
@@ -97,26 +84,6 @@ public:
      * @return true kalo object ditemukan
      */
     static bool TryGetObjectPositionByName(const std::string &objectName, Vector2 &outPosition);
-
-    /**
-     * @brief Coba dapetin posisi object berdasarkan typenya
-     * @param objectType Type object di Tiled
-     * @param outPosition [OUT] Posisi object pertama yang ditemukan
-     * @return true kalo object ditemukan
-     */
-    static bool TryGetObjectPositionByType(const std::string &objectType, Vector2 &outPosition);
-
-    // =============================================
-    // Bounds Helpers
-    // =============================================
-
-    /**
-     * @brief Coba dapetin bounds object berdasarkan typenya
-     * @param objectType Type object di Tiled
-     * @param outBounds [OUT] Rectangle bounds object pertama yang ditemukan
-     * @return true kalo object ditemukan
-     */
-    static bool TryGetObjectBoundsByType(const std::string &objectType, Rectangle &outBounds);
 
     // =============================================
     // Collision Helpers
@@ -138,14 +105,6 @@ public:
      * @return true kalo layer ditemukan dan ada data collision
      */
     static bool TryGetCollisionByLayerName(const std::string &layerName, CollisionResult &outCollision);
-
-    /**
-     * @brief Coba dapetin collision data berdasarkan type object
-     * @param objectType Type object di Tiled
-     * @param outCollision [OUT] CollisionResult berisi rects dan polygons
-     * @return true kalo object dengan type tersebut ditemukan
-     */
-    static bool TryGetCollisionByType(const std::string &objectType, CollisionResult &outCollision);
 
     /**
      * @brief Dapetin semua object berdasarkan typenya
