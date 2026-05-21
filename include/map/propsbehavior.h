@@ -49,6 +49,7 @@ struct TileObject
     Rectangle bounds;  // Bounding box asli dari MapObject Tiled
     ObjectState state; // State saat ini
     std::string name;  // Nama object dari Tiled untuk identifikasi
+    std::string uuid;  ///< Unique identifier for persistent entity matching across save/load cycles. Generated at spawn time, persisted in save files, used for restore matching.
 };
 
 /*==============================================================================

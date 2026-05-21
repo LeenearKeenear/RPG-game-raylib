@@ -1,5 +1,6 @@
 #pragma once
 #include "../lib/raylib/include/raylib.h"
+#include <string>
 
 /**
  * @brief Kelas dasar untuk semua objek interaktif di dalam game.
@@ -63,4 +64,19 @@ public:
         if (Health < 0) Health = 0;
         if (Health > MaxHealth) Health = MaxHealth;
     }
+
+    /**
+     * @brief Get the unique persistent identifier for this entity.
+     * @return const std::string& UUID value
+     */
+    virtual const std::string& GetUUID() const { return uuid; }
+
+    /**
+     * @brief Set the unique persistent identifier for this entity.
+     * @param id UUID string to set
+     */
+    virtual void SetUUID(const std::string &id) { uuid = id; }
+
+private:
+    std::string uuid; ///< Unique identifier for persistent entity matching across save/load cycles. Generated at spawn time, persisted in save files, used for restore matching.
 };
