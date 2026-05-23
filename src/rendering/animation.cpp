@@ -341,7 +341,7 @@ void DrawAnimation(const Animation &anim, Color tint)
     DrawFrame(frameId, display);
 }
 
-void DrawExplosion(Vector2 centerPosition, float radius, float progress)
+void Explosion(Vector2 centerPosition, float radius, float progress)
 {
     std::string frameName;
     auto it = loadedAnimationSets.find("explosion");
