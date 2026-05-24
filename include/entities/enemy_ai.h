@@ -17,7 +17,7 @@ class Enemy;
 constexpr int FLOW_FIELD_TILE_SIZE = FRAME_SIZE;                         // ukuran tile flow field, mengikuti FRAME_SIZE map
 constexpr float FLOW_FIELD_CENTER_OFFSET = FLOW_FIELD_TILE_SIZE * 0.5f; // offset dari pojok tile ke pusat tile
 constexpr float FLOW_FIELD_REBUILD_COOLDOWN = 0.3f;                     // jeda minimum antar rebuild flow field
-constexpr int FLOW_FIELD_PLAYER_RADIUS = 15;                            // radius area aktif flow field player dalam tile
+constexpr int FLOW_FIELD_PLAYER_RADIUS = 10;                            // radius area aktif flow field player dalam tile
 constexpr int FLOW_FIELD_RETURN_RADIUS = 18;                            // radius area aktif flow field return dalam tile
 constexpr int STEERING_GRID_RADIUS = 2;                                 // radius grid evaluasi steering di sekitar enemy
 
@@ -97,6 +97,7 @@ private:
     int gridWidth_ = 0;                   // lebar grid dalam tile
     int gridHeight_ = 0;                  // tinggi grid dalam tile
     bool isReady_ = false;                // status kesiapan flow field setelah build
+    bool hasAllocatedGrid_ = false;       // true setelah grid dialokasikan pertama kali
 
     // throttle & dirty tracking
     Vector2 lastGoalTile_ = {-1, -1}; // tile terakhir saat build dilakukan

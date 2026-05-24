@@ -118,6 +118,19 @@ public:
 extern TiledHelper TiledHelperFunction;
 
 /*==============================================================================
+ * Collision Cache
+ *==============================================================================*/
+
+/**
+ * @brief Cache collision layer untuk dipakai IsPositionSafe() & FlowField::Build()
+ *
+ * Dibangun sekali lewat RebuildCollisionCache() tiap kali object index berubah,
+ * menghindari rebuild vector 4800× per flow field rebuild.
+ */
+extern TiledHelper::CollisionResult gCollisionCache;
+void RebuildCollisionCache();
+
+/*==============================================================================
  * RayCast
  *==============================================================================*/
 

@@ -23,6 +23,9 @@
 
 TiledHelper TiledHelperFunction;
 
+/* Collision cache — dibangun ulang tiap object index berubah */
+TiledHelper::CollisionResult gCollisionCache;
+
 /**
  * @brief Index object Tiled yang dipakai untuk lookup cepat
  *
@@ -55,6 +58,24 @@ void BuildMapObjectIndexTarget(TilesonMapData *target)
 void BuildMapObjectIndex()
 {
     BuildMapObjectIndexTarget(tilesonMap);
+    RebuildCollisionCache();
+}
+
+/**
+ * @brief Bangun ulang cache collision agar IsPositionSafe() gak rebuild vector tiap call
+ *
+ * Collision data di-cache dari COLLISION_LAYER_NAME.
+ * Wajib dipanggil setelah setiap perubahan object index.
+ */
+void RebuildCollisionCache()
+{
+    gCollisionCache.rects.clear();
+    gCollisionCache.polygons.clear();
+
+    if (!tilesonMap)
+        return;
+
+    TiledHelperFunction.TryGetCollisionByLayerName(COLLISION_LAYER_NAME, gCollisionCache);
 }
 
 /*==============================================================================
@@ -508,15 +529,12 @@ bool IsPositionSafe(Vector2 pos, float width, float height, float offsetX, float
     if (!IsWithinWorldBounds(hitbox, worldWidth, worldHeight))
         return false;
 
-    // 3. Cek Collision (Obstacle Layer)
-    TiledHelper::CollisionResult col;
-    if (TiledHelperFunction.TryGetCollisionByLayerName(COLLISION_LAYER_NAME, col))
-    {
-        if (CheckCollisionAgainstRects(hitbox, col.rects))
-            return false;
-        if (CheckCollisionAgainstPolygons(hitbox, col.polygons))
-            return false;
-    }
+    // 3. Cek Collision via cache (Obstacle Layer)
+    // Pakai gCollisionCache biar gak rebuild vector tiap call
+    if (CheckCollisionAgainstRects(hitbox, gCollisionCache.rects))
+        return false;
+    if (CheckCollisionAgainstPolygons(hitbox, gCollisionCache.polygons))
+        return false;
 
     // 4. Cek Dynamic Obstacles (object runtime seperti bomb)
     if (CheckCollisionAgainstRects(hitbox, DynamicObstacles))

@@ -72,11 +72,14 @@ void FlowField::Update(Vector2 playerWorld, int mapWidth, int mapHeight)
  */
 void FlowField::Build(Vector2 goalWorld, int mapWidth, int mapHeight, int radius)
 {
-    gridWidth_ = mapWidth;
-    gridHeight_ = mapHeight;
-
-    // reset grid
-    grid_.assign(gridHeight_, std::vector<Cell>(gridWidth_));
+    // Alokasi grid cuma sekali — hindari 164 heap allocations tiap rebuild
+    if (!hasAllocatedGrid_ || gridWidth_ != mapWidth || gridHeight_ != mapHeight)
+    {
+        gridWidth_ = mapWidth;
+        gridHeight_ = mapHeight;
+        grid_.assign(gridHeight_, std::vector<Cell>(gridWidth_));
+        hasAllocatedGrid_ = true;
+    }
 
     int goalX = Clamp((int)(goalWorld.x / FLOW_FIELD_TILE_SIZE), 0, gridWidth_ - 1);
     int goalY = Clamp((int)(goalWorld.y / FLOW_FIELD_TILE_SIZE), 0, gridHeight_ - 1);
@@ -86,6 +89,11 @@ void FlowField::Build(Vector2 goalWorld, int mapWidth, int mapHeight, int radius
     int startY = std::max(0, goalY - radius);
     int endX = std::min(gridWidth_ - 1, goalX + radius);
     int endY = std::min(gridHeight_ - 1, goalY + radius);
+
+    // reset cuma area aktif — lebih murah daripada re-assign seluruh 164x164 grid
+    for (int y = startY; y <= endY; y++)
+        for (int x = startX; x <= endX; x++)
+            grid_[y][x] = Cell{};
 
     // mark walkable hanya dalam area aktif
     for (int y = startY; y <= endY; y++)

@@ -10,14 +10,14 @@
 #include <unordered_map>
 
 // Spawn constants
-constexpr int SPAWN_PINPOINT_NORMAL_MIN = 9;
-constexpr int SPAWN_PINPOINT_NORMAL_MAX = 13;
-constexpr int SPAWN_PINPOINT_ELITE_MIN = 3;
-constexpr int SPAWN_PINPOINT_ELITE_MAX = 7;
-constexpr int SPAWN_RECT_NORMAL_MIN = 20;
-constexpr int SPAWN_RECT_NORMAL_MAX = 25;
-constexpr int SPAWN_RECT_ELITE_MIN = 10;
-constexpr int SPAWN_RECT_ELITE_MAX = 15;
+constexpr int SPAWN_PINPOINT_NORMAL_MIN = 9;  // 9
+constexpr int SPAWN_PINPOINT_NORMAL_MAX = 13; // 13
+constexpr int SPAWN_PINPOINT_ELITE_MIN = 3;   // 3
+constexpr int SPAWN_PINPOINT_ELITE_MAX = 7;   // 7
+constexpr int SPAWN_RECT_NORMAL_MIN = 20;     // 20
+constexpr int SPAWN_RECT_NORMAL_MAX = 25;     // 25
+constexpr int SPAWN_RECT_ELITE_MIN = 10;      // 10
+constexpr int SPAWN_RECT_ELITE_MAX = 15;      // 15
 constexpr int SPAWN_RETRY_LIMIT = 200;
 
 /*==============================================================================
@@ -222,14 +222,14 @@ private:
     FlowField *ReturnFlowField = nullptr;
 
     // buat handle logic ai path finding
-    Vector2 Velocity = {0, 0};                   // arah gerak frame sebelumnya (dinormalisasi)
-    RayCast Ray;                                 ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
+    Vector2 Velocity = {0, 0};                    // arah gerak frame sebelumnya (dinormalisasi)
+    RayCast Ray;                                  ///< Digunakan untuk pemeriksaan LoS dan deteksi obstacle
     float TileCenterOffset = FRAME_SIZE * 0.5f;   // offset untuk ai pathfinding
-    float HitBoxValue = 24.0f;                   // hitbox untuk ai pathfinding
-    float OffSetValue = 0.0f;                    // offset untuk ai path finding
+    float HitBoxValue = 24.0f;                    // hitbox untuk ai pathfinding
+    float OffSetValue = 0.0f;                     // offset untuk ai path finding
     float rayLength = FRAME_SIZE * 2.0f;          // panjang raycast untuk ai path finding
     float rayDetectionLength = FRAME_SIZE * 2.1f; // radius deteksi langsung ke player
-    float ReturnScanTimer = 0.f;                 // timer pencarian ulang return flow field
+    float ReturnScanTimer = 0.f;                  // timer pencarian ulang return flow field
 
     float AttackCooldownTimer;         ///< Sisa waktu cooldown serangan (runtime)
     const float AttackCooldown = 1.0f; ///< Durasi cooldown antar serangan

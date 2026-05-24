@@ -12,9 +12,14 @@ constexpr int WG_GRID_SIZE = 4;
 constexpr int WG_CELL_TILES = 41;
 constexpr int WG_CANVAS_TILES = 164;
 constexpr int WG_PREFAB_LAYER_START = 2;
+constexpr int WG_CORRIDOR_LAYER_START = 4;
 constexpr int WG_TILE_SIZE = FRAME_SIZE;
 
 constexpr const char *SLOT_WORLDGEN_LAYER_NAME = "slot_worldgen";
+constexpr const char *EXIT_NORTH_TYPE_OBJECT_NAME = "exit_north";
+constexpr const char *EXIT_EAST_TYPE_OBJECT_NAME = "exit_east";
+constexpr const char *EXIT_SOUTH_TYPE_OBJECT_NAME = "exit_south";
+constexpr const char *EXIT_WEST_TYPE_OBJECT_NAME = "exit_west";
 
 /*==============================================================================
  * Enums
@@ -54,18 +59,27 @@ struct RoomTemplate
     int exitMask;
 };
 
-struct CorridorTemplate
-{
-    int direction;
-    int length;
-};
-
 struct WorldCell
 {
     CellType type;
     int exitMask;
     RoomTemplate *roomTemplate;
 };
+
+struct WeightedPool
+{
+    std::vector<TilesonMapData*> prefabs;
+    bool loaded = false;
+};
+
+struct CorridorPool
+{
+    WeightedPool vertical;
+    WeightedPool horizontal;
+    bool loaded = false;
+};
+
+extern CorridorPool corridorPool;
 
 /*==============================================================================
  * Functions
@@ -85,3 +99,9 @@ void StampPrefabToSlot(TilesonMapData *prefab, MapObject *slot);
 TilesonMapData *RotateTileLayers(TilesonMapData *source, int degrees);
 void RotateObjectLayer(TilesonMapData *source, TilesonMapData *result, int degrees, int tileSize, bool obstacleOnly);
 TilesonMapData *RotatePrefab(TilesonMapData *source, int tileDegrees, int objectDegrees);
+void StampCorridor(const MapObject &exitObj, int slotCol, int slotRow);
+
+void LoadCorridorPool(const char *basePath);
+void UnloadCorridorPool();
+
+extern uint64_t worldSeed;

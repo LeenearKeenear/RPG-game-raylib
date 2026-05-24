@@ -319,6 +319,10 @@ void InitMap(void)
     PreFabLoadMap("assets/maps/World_generation/template10(udrl).json", prefabx);
     BuildMapObjectIndexTarget(prefabx);
 
+    TilesonMapData *prefaby = new TilesonMapData();
+    PreFabLoadMap("assets/maps/World_generation/template11(udrl).json", prefaby);
+    BuildMapObjectIndexTarget(prefaby);
+
     TilesonMapData *prefabC90 = RotatePrefab(prefabC, 90, 90);
     TilesonMapData *prefabD90 = RotatePrefab(prefabD, 90, 90);
     TilesonMapData *prefabD180 = RotatePrefab(prefabD, 180, 180);
@@ -332,23 +336,23 @@ void InitMap(void)
     for (auto &slot : slots)
     {
         if (slot.name == "slot_6")
-            StampPrefabToSlot(prefabx, &slot);
+            StampPrefabToSlot(prefabA, &slot);
         if (slot.name == "slot_7")
-            StampPrefabToSlot(prefabx900, &slot);
+            StampPrefabToSlot(prefaby, &slot);
         if (slot.name == "slot_10")
-            StampPrefabToSlot(prefabx18090, &slot);
+            StampPrefabToSlot(prefabD, &slot);
         if (slot.name == "slot_11")
-            StampPrefabToSlot(prefabx1800, &slot);
+            StampPrefabToSlot(prefaby, &slot);
         if (slot.name == "slot_12")
-            StampPrefabToSlot(prefabD90, &slot);
+            StampPrefabToSlot(prefabC90, &slot);
         if (slot.name == "slot_13")
-            StampPrefabToSlot(prefabD900, &slot);
+            StampPrefabToSlot(prefabx18090, &slot);
         if (slot.name == "slot_14")
-            StampPrefabToSlot(prefabD180, &slot);
+            StampPrefabToSlot(prefabx900, &slot);
         if (slot.name == "slot_15")
-            StampPrefabToSlot(prefabE, &slot);
+            StampPrefabToSlot(prefaby, &slot);
         if (slot.name == "slot_16")
-            StampPrefabToSlot(prefabE, &slot);
+            StampPrefabToSlot(prefaby, &slot);
     }
 
     UnloadPrefab(prefabA);
@@ -356,9 +360,31 @@ void InitMap(void)
     UnloadPrefab(prefabC);
     UnloadPrefab(prefabD);
     UnloadPrefab(prefabE);
+    UnloadPrefab(prefaby);
     UnloadPrefab(prefabC90);
     UnloadPrefab(prefabD90);
     UnloadPrefab(prefabD180);
+
+    BuildMapObjectIndex();
+
+    LoadCorridorPool("assets/maps/World_generation/corridor");
+
+    std::vector<MapObject> exitObjects;
+    for (const char *exitType : {EXIT_NORTH_TYPE_OBJECT_NAME, EXIT_SOUTH_TYPE_OBJECT_NAME,
+                                 EXIT_EAST_TYPE_OBJECT_NAME, EXIT_WEST_TYPE_OBJECT_NAME})
+        for (auto *obj : TilesonGetObjectsByType(exitType))
+            exitObjects.push_back(*obj);
+
+    for (auto &exitObj : exitObjects)
+    {
+        int tileX = (int)(exitObj.bounds.x / WG_TILE_SIZE);
+        int tileY = (int)(exitObj.bounds.y / WG_TILE_SIZE);
+        int col = tileX / WG_CELL_TILES;
+        int row = tileY / WG_CELL_TILES;
+        StampCorridor(exitObj, col, row);
+    }
+
+    UnloadCorridorPool();
 
     BuildMapObjectIndex();
 }

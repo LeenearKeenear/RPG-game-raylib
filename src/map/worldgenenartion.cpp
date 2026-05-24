@@ -1,8 +1,42 @@
 #include "worldgenenartion.h"
 #include "mapLogic.h"
+#include <filesystem>
+#include <random>
 #include <vector>
 
 extern TilesonMapData *tilesonMap;
+static std::mt19937 wgRng(std::random_device{}());
+uint64_t worldSeed = 12345231311; // placeholder, nanti diganti random_device
+
+uint64_t SplitMix64(uint64_t x)
+{
+    x += 0x9e3779b97f4a7c15;
+    x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+    x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+    return x ^ (x >> 31);
+}
+
+int PickCorridorIndex(int tileX, int tileY, int exitTypeHash, int poolSize)
+{
+    static const uint64_t EXIT_SALT[4] = {
+        0x9e3779b97f4a7c15,
+        0xbf58476d1ce4e5b9,
+        0x94d049bb133111eb,
+        0x1234567890abcdef
+    };
+
+    uint64_t posHash = SplitMix64((uint64_t)tileX * WG_CANVAS_TILES + (uint64_t)tileY);
+    uint64_t combined = worldSeed + posHash + EXIT_SALT[exitTypeHash - 1];
+    return (int)(SplitMix64(combined) % (uint64_t)poolSize);
+}
+
+TilesonMapData *GetRandomCorridor(WeightedPool &pool, int tileX, int tileY, int exitTypeHash)
+{
+    if (pool.prefabs.empty())
+        return nullptr;
+    int idx = PickCorridorIndex(tileX, tileY, exitTypeHash, (int)pool.prefabs.size());
+    return pool.prefabs[idx];
+}
 
 std::vector<MapObject> GetWorldGenSlots()
 {
@@ -247,9 +281,22 @@ void ExpandCanvasLayers(int extraLayers)
 
 void StampMap(TilesonMapData *source, int offsetX, int offsetY, int targetLayerOffset)
 {
+    // cek apakah tileset sudah ada
+    int newGroupIdx = -1;
+    for (int i = 0; i < (int)tilesonMap->tilesets.size(); i++)
+    {
+        if (tilesonMap->tilesets[i][0].texture.id == source->tilesets[0][0].texture.id)
+        {
+            newGroupIdx = i;
+            break;
+        }
+    }
     // append tileset group dari prefab
-    int newGroupIdx = (int)tilesonMap->tilesets.size();
-    tilesonMap->tilesets.push_back(source->tilesets[0]);
+    if (newGroupIdx == -1)
+    {
+        newGroupIdx = (int)tilesonMap->tilesets.size();
+        tilesonMap->tilesets.push_back(source->tilesets[0]);
+    }
 
     // stamp tile, GID gak perlu di-shift
     for (int l = 0; l < source->layerCount; l++)
@@ -402,4 +449,118 @@ TilesonMapData *RotatePrefab(TilesonMapData *source, int tileDegrees, int object
     RotateObjectLayer(source, result, tileDegrees, FRAME_SIZE, true);
     RotateObjectLayer(source, result, objectDegrees, FRAME_SIZE, false);
     return result;
+}
+
+CorridorPool corridorPool;
+
+void LoadCorridorPool(const char *basePath)
+{
+    if (corridorPool.loaded)
+        return;
+
+    namespace fs = std::filesystem;
+
+    // Scan corridor_v
+    std::string vPath = std::string(basePath) + "/corridor_v";
+    int vCount = 0;
+    for (auto &entry : fs::directory_iterator(vPath))
+    {
+        if (entry.path().extension() != ".json")
+            continue;
+        TilesonMapData *data = new TilesonMapData();
+        PreFabLoadMap(entry.path().string().c_str(), data);
+        corridorPool.vertical.prefabs.push_back(data);
+        vCount++;
+    }
+    // Generate 180° rotated variants
+    for (int i = 0; i < vCount; i++)
+    {
+        TilesonMapData *rot = RotatePrefab(corridorPool.vertical.prefabs[i], 180, 180);
+        corridorPool.vertical.prefabs.push_back(rot);
+    }
+
+    // Scan corridor_h
+    std::string hPath = std::string(basePath) + "/corridor_h";
+    int hCount = 0;
+    for (auto &entry : fs::directory_iterator(hPath))
+    {
+        if (entry.path().extension() != ".json")
+            continue;
+        TilesonMapData *data = new TilesonMapData();
+        PreFabLoadMap(entry.path().string().c_str(), data);
+        corridorPool.horizontal.prefabs.push_back(data);
+        hCount++;
+    }
+    // Generate 180° rotated variants
+    for (int i = 0; i < hCount; i++)
+    {
+        TilesonMapData *rot = RotatePrefab(corridorPool.horizontal.prefabs[i], 180, 180);
+        corridorPool.horizontal.prefabs.push_back(rot);
+    }
+
+    corridorPool.loaded = true;
+}
+
+void UnloadCorridorPool()
+{
+    for (auto *p : corridorPool.vertical.prefabs)
+        UnloadPrefab(p);
+    for (auto *p : corridorPool.horizontal.prefabs)
+        UnloadPrefab(p);
+    corridorPool.vertical.prefabs.clear();
+    corridorPool.horizontal.prefabs.clear();
+    corridorPool.loaded = false;
+}
+
+void StampCorridor(const MapObject &exitObj, int slotCol, int slotRow)
+{
+    int exitTileX = (int)(exitObj.bounds.x / WG_TILE_SIZE);
+    int exitTileY = (int)(exitObj.bounds.y / WG_TILE_SIZE);
+
+    int exitTypeHash = 0;
+    if (exitObj.type == "exit_north")
+        exitTypeHash = 1;
+    else if (exitObj.type == "exit_south")
+        exitTypeHash = 2;
+    else if (exitObj.type == "exit_east")
+        exitTypeHash = 3;
+    else if (exitObj.type == "exit_west")
+        exitTypeHash = 4;
+
+    TilesonMapData *vertical = GetRandomCorridor(corridorPool.vertical, exitTileX, exitTileY, exitTypeHash);
+    TilesonMapData *horizontal = GetRandomCorridor(corridorPool.horizontal, exitTileX, exitTileY, exitTypeHash);
+    if (!vertical || !horizontal)
+        return;
+
+    if (tilesonMap->layerCount < WG_CORRIDOR_LAYER_START + 2)
+        ExpandCanvasLayers((WG_CORRIDOR_LAYER_START + 2) - tilesonMap->layerCount);
+
+    if (exitObj.type == "exit_north")
+    {
+        int border = slotRow * WG_CELL_TILES;
+        TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), exitTileY - border);
+        for (int i = 1; i <= exitTileY - border; i++)
+            StampMap(vertical, exitTileX - 3, exitTileY - i, WG_CORRIDOR_LAYER_START);
+    }
+    else if (exitObj.type == "exit_south")
+    {
+        int border = slotRow * WG_CELL_TILES + WG_CELL_TILES - 1;
+        TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), border - exitTileY);
+        for (int i = 1; i <= border - exitTileY; i++)
+            StampMap(vertical, exitTileX - 3, exitTileY + i, WG_CORRIDOR_LAYER_START);
+    }
+    else if (exitObj.type == "exit_east")
+    {
+        int border = slotCol * WG_CELL_TILES + WG_CELL_TILES - 1;
+        TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), border - exitTileX);
+        for (int i = 1; i <= border - exitTileX; i++)
+            StampMap(horizontal, exitTileX + i, exitTileY - 3, WG_CORRIDOR_LAYER_START);
+    }
+    else if (exitObj.type == "exit_west")
+    {
+        int border = slotCol * WG_CELL_TILES;
+        TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), exitTileX - border);
+        for (int i = 1; i <= exitTileX - border; i++)
+            StampMap(horizontal, exitTileX - i, exitTileY - 3, WG_CORRIDOR_LAYER_START);
+    }
 }
