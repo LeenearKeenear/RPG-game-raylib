@@ -149,7 +149,7 @@ public:
     int GetMaxInventory() const { return MaxInventory; }
 
     // combat stat
-    SwingAttack Swing = {0};     ///< Data status serangan saat ini
+    Attack attack = {};          ///< Data status serangan saat ini
     float Mana = 100.0f;         ///< Poin mana saat ini
     float MaxMana = 100.0f;      ///< Poin mana maksimum
     float ManaRegenTimer = 0.0f; ///< Timer untuk jeda pemulihan mana

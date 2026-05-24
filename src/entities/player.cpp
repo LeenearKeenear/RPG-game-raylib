@@ -203,7 +203,7 @@ void Player::TakeDamage(float amount, Vector2 knockback)
 
     if (Anim.isAttacking)
     {
-        Swing.active = false;
+        attack.active = false;
         Anim.isAttacking = false;
         PlayAnimation(Anim, IDLE, Anim.direction);
     }

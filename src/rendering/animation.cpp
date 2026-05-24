@@ -414,10 +414,19 @@ bool Blink(float timer, float frequency)
 
 float Slash(float raycastAngle, float progress)
 {
-    if (progress < 1.0f / 3.0f)
+    if (progress < 1.0f / 4.0f)
         return raycastAngle + 90.0f;
-    else if (progress < 2.0f / 3.0f)
+    else if (progress < 2.0f / 4.0f)
         return raycastAngle - 30.0f;
     else
         return raycastAngle - 90.0f;
+
+    // if (progress < 1.0f / 4.0f)
+    //     return raycastAngle + 90.0f;
+    // else if (progress < 2.0f / 4.0f)
+    //     return raycastAngle + 60.0f;
+    // else if (progress < 3.0f / 4.0f)
+    //     return raycastAngle - 40.0f;
+    // else
+    //     return raycastAngle - 90.0f;
 }

@@ -178,8 +178,8 @@ void Debug::DrawAttackOverlay(void)
 
     // Logika yang sama dengan Combat::PerformHitDetection
     Rectangle attackHitbox;
-    float reach = PlayerInstance.Swing.reach;
-    float breadth = PlayerInstance.Swing.breadth;
+    float reach = PlayerInstance.attack.weapon ? PlayerInstance.attack.weapon->reach : 0.0f;
+    float breadth = PlayerInstance.attack.weapon ? PlayerInstance.attack.weapon->breadth : 0.0f;
 
     switch (PlayerInstance.Anim.direction)
     {

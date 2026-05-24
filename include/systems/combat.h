@@ -31,28 +31,19 @@ constexpr float SWORD1_SLASH_BACK_DIST = 16.0f;
 constexpr float SWORD2_SLASH_BACK_DIST = 19.5f;
 
 class Player;
+class Entity;
 
-struct SwingAttack
+struct Attack
 {
     bool active = false;
     float timer = 0.0f;
-    float duration = 0.9f;
-    float startAngle = 0.0f;
-    float currentAngle = 0.0f;
-    float sweepAngle = 180.0f;
     Vector2 center = {0, 0};
-    int iconX = 6;
-    int iconY = 4;
-    std::vector<void *> damagedEntities;
-    bool pressRegistered = false;
-    AttackType type = ATTACK_SLASH;
-    float reach = 32.0f;
-    float breadth = 48.0f;
-    float thrustOffset = 0.0f;
-    float baseAngle = 0.0f;
+    std::vector<Entity *> damagedEntities;
+    bool pressHeld = false;
     float raycastAngle = 0.0f;
-    float damage = 25.0f;
-    float knockbackForce = 1.0f;
+    float currentAngle = 0.0f;
+    float thrustOffset = 0.0f;
+    const WeaponData* weapon = nullptr;
 };
 
 namespace Combat

@@ -17,13 +17,16 @@ namespace Combat
 {
     void PerformHitDetection(Player &player)
     {
+        if (!player.attack.active || !player.attack.weapon)
+            return;
+
         Vector2 playerCenter = {
             player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
             player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
 
         Rectangle attackHitbox;
-        float reach = player.Swing.reach;
-        float breadth = player.Swing.breadth;
+        float reach = player.attack.weapon->reach;
+        float breadth = player.attack.weapon->breadth;
 
         switch (player.Anim.direction)
         {
@@ -55,9 +58,9 @@ namespace Combat
                 continue;
 
             bool alreadyHit = false;
-            for (void *ptr : player.Swing.damagedEntities)
+            for (Entity *ptr : player.attack.damagedEntities)
             {
-                if (ptr == (void *)entity)
+                if (ptr == entity)
                 {
                     alreadyHit = true;
                     break;
@@ -71,13 +74,13 @@ namespace Combat
                 Vector2 entityCenter = {entity->Position.x + FRAME_SIZE / 2, entity->Position.y + FRAME_SIZE / 2};
                 Vector2 knockDir = Vector2Normalize(Vector2Subtract(entityCenter, playerCenter));
 
-                float damage = player.Swing.damage;
-                Vector2 knockback = Vector2Scale(knockDir, player.Swing.knockbackForce);
+                float damage = player.attack.weapon->damage;
+                Vector2 knockback = Vector2Scale(knockDir, player.attack.weapon->knockbackForce);
                 entity->TakeDamage(damage, knockback);
 
                 Effects::AddDamage(entityCenter, damage);
 
-                player.Swing.damagedEntities.push_back((void *)entity);
+                player.attack.damagedEntities.push_back(entity);
                 TraceLog(LOG_INFO, "COMBAT: Pemain mengenai musuh! Damage: %.1f", damage);
             }
         }
@@ -95,11 +98,11 @@ namespace Combat
 
         if (InputInstance.IsLeftClickPressed())
         {
-            player.Swing.pressRegistered = true;
+            player.attack.pressHeld = true;
         }
         if (!InputInstance.IsLeftClickDown())
         {
-            player.Swing.pressRegistered = false;
+            player.attack.pressHeld = false;
         }
 
         if (player.Health <= 0)
@@ -124,7 +127,7 @@ namespace Combat
             }
         }
 
-        if (player.Swing.pressRegistered && !player.Anim.isAttacking)
+        if (player.attack.pressHeld && !player.Anim.isAttacking)
         {
             PlayerAction action = InputInstance.ResolveAction();
             if (action == ACTION_ATTACK)
@@ -158,18 +161,18 @@ namespace Combat
                     if (activeItem.definitionId == -1 || itemDefs.GetById(activeItem.definitionId).category != ITEM_WEAPON)
                     {
                         Effects::AddLog("Tidak ada senjata!");
-                        player.Swing.pressRegistered = false;
+                        player.attack.pressHeld = false;
                         return;
                     }
 
                     player.Mana -= manaCost;
                     player.ManaRegenTimer = player.ManaRegenDelay;
 
-                    player.Swing.active = true;
-                    player.Swing.timer = 0;
-                    player.Swing.damagedEntities.clear();
-                    player.Swing.center = playerCenter;
-                    player.Swing.raycastAngle = angle;
+                    player.attack.active = true;
+                    player.attack.timer = 0;
+                    player.attack.damagedEntities.clear();
+                    player.attack.center = playerCenter;
+                    player.attack.raycastAngle = angle;
 
                     Inventory::SetupAttackStats(player, attackFaceDir);
 
@@ -179,7 +182,7 @@ namespace Combat
                 else
                 {
                     Effects::AddLog("Stamina tidak cukup!");
-                    player.Swing.pressRegistered = false;
+                    player.attack.pressHeld = false;
                     TraceLog(LOG_WARNING, "PLAYER: Serangan gagal! Mana habis.");
                 }
             }
@@ -202,51 +205,61 @@ namespace Combat
 
     void UpdateSwingAttack(Player &player, float dt)
     {
-        if (!player.Swing.active)
+        if (!player.attack.active || !player.attack.weapon)
             return;
 
         Vector2 playerCenter = {
             player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
             player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
-        player.Swing.center = playerCenter;
+        player.attack.center = playerCenter;
 
 
-        player.Swing.timer += dt;
-        if (player.Swing.timer >= player.Swing.duration)
+        player.attack.timer += dt;
+        if (player.attack.timer >= player.attack.weapon->duration)
         {
-            player.Swing.active = false;
-            player.Swing.timer = 0;
+            player.attack.active = false;
+            player.attack.timer = 0;
             player.Anim.isAttacking = false;
         }
         else
         {
-            float progress = player.Swing.timer / player.Swing.duration;
+            float progress = player.attack.timer / player.attack.weapon->duration;
 
-            if (player.Swing.type == ATTACK_SLASH)
+            float baseAngle = 0.0f;
+            switch (player.Anim.direction)
             {
-                player.Swing.currentAngle = Slash(player.Swing.raycastAngle, progress);
-                player.Swing.thrustOffset = 0.0f;
+            case RIGHT: baseAngle = 0.0f; break;
+            case DOWN:  baseAngle = 90.0f; break;
+            case LEFT:  baseAngle = 180.0f; break;
+            case UP:    baseAngle = -90.0f; break;
             }
-            else if (player.Swing.type == ATTACK_THRUST)
+            float startAngle = baseAngle + player.attack.weapon->startAngleOffset;
+
+            if (player.attack.weapon->attackType == ATTACK_SLASH)
             {
-                player.Swing.thrustOffset = progress * 16.0f;
-                player.Swing.currentAngle = player.Swing.startAngle;
+                player.attack.currentAngle = Slash(player.attack.raycastAngle, progress);
+                player.attack.thrustOffset = 0.0f;
             }
-            else if (player.Swing.type == ATTACK_PIERCE)
+            else if (player.attack.weapon->attackType == ATTACK_THRUST)
             {
-                player.Swing.thrustOffset = progress * 24.0f;
-                player.Swing.currentAngle = player.Swing.startAngle;
+                player.attack.thrustOffset = progress * 16.0f;
+                player.attack.currentAngle = startAngle;
             }
-            else if (player.Swing.type == ATTACK_SLAM)
+            else if (player.attack.weapon->attackType == ATTACK_PIERCE)
+            {
+                player.attack.thrustOffset = progress * 24.0f;
+                player.attack.currentAngle = startAngle;
+            }
+            else if (player.attack.weapon->attackType == ATTACK_SLAM)
             {
                 float slamProgress = progress * progress;
-                player.Swing.currentAngle = player.Swing.startAngle + (slamProgress * player.Swing.sweepAngle);
-                player.Swing.thrustOffset = slamProgress * 8.0f;
+                player.attack.currentAngle = startAngle + (slamProgress * player.attack.weapon->sweepAngle);
+                player.attack.thrustOffset = slamProgress * 8.0f;
             }
             else
             {
-                player.Swing.currentAngle = player.Swing.startAngle + (progress * player.Swing.sweepAngle);
-                player.Swing.thrustOffset = 0.0f;
+                player.attack.currentAngle = startAngle + (progress * player.attack.weapon->sweepAngle);
+                player.attack.thrustOffset = 0.0f;
             }
 
             PerformHitDetection(player);
@@ -269,12 +282,12 @@ namespace Combat
         float rayAngle;
         float offsetRight = 0.0f;
 
-        if (player.Swing.active)
+        if (player.attack.active)
         {
-            visualPos = player.Swing.center;
-            drawAngle = player.Swing.currentAngle;
-            thrust = player.Swing.thrustOffset;
-            rayAngle = player.Swing.raycastAngle;
+            visualPos = player.attack.center;
+            drawAngle = player.attack.currentAngle;
+            thrust = player.attack.thrustOffset;
+            rayAngle = player.attack.raycastAngle;
         }
         else
         {
@@ -337,26 +350,26 @@ namespace Combat
 
         DrawFrame(frame, display);
 
-        if (player.Swing.active && player.Swing.type == ATTACK_SLASH && (def.spriteKey == "sword1" || def.spriteKey == "sword2"))
+        if (player.attack.active && player.attack.weapon && player.attack.weapon->attackType == ATTACK_SLASH && (def.spriteKey == "sword1" || def.spriteKey == "sword2"))
         {
-            float progress = player.Swing.timer / player.Swing.duration;
+            float progress = player.attack.timer / player.attack.weapon->duration;
             std::string slashSpriteKey;
             
             if (progress >= 1.0f / 3.0f && progress < 2.0f / 3.0f)
             {
-                slashSpriteKey = (def.spriteKey == "sword1") ? "slash1Sword1" : "slash1Sword2";
+                slashSpriteKey = (def.spriteKey == "sword1") ? "slashLightGraySmall1" : "slashSilverBlueMedium1";
             }
             else if (progress >= 2.0f / 3.0f)
             {
-                slashSpriteKey = (def.spriteKey == "sword1") ? "slash2Sword1" : "slash2Sword2";
+                slashSpriteKey = (def.spriteKey == "sword1") ? "slashLightGraySmall2" : "slashSilverBlueMedium2";
             }
 
             if (!slashSpriteKey.empty())
             {
                 const Frame &slashFrame = GetFrame(slashSpriteKey);
                 float radRay = rayAngle * (PI / 180.0f);
-                Vector2 slashPos = player.Swing.center;
-                float slashDist = player.Swing.reach * 0.65f;
+                Vector2 slashPos = player.attack.center;
+                float slashDist = player.attack.weapon->reach * 0.65f;
                 slashPos.x += cosf(radRay) * slashDist;
                 slashPos.y += sinf(radRay) * slashDist;
 
