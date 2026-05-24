@@ -68,7 +68,7 @@ namespace Combat
 
             if (CheckCollisionRecs(attackHitbox, entity->GetHitbox()))
             {
-                Vector2 entityCenter = {entity->Position.x + 16, entity->Position.y + 16};
+                Vector2 entityCenter = {entity->Position.x + FRAME_SIZE / 2, entity->Position.y + FRAME_SIZE / 2};
                 Vector2 knockDir = Vector2Normalize(Vector2Subtract(entityCenter, playerCenter));
 
                 float damage = player.Swing.damage;

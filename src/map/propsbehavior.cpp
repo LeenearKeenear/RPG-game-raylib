@@ -667,7 +667,7 @@ int BombManager::Render(Rectangle viewRect)
                 bomb.tile.position.y + FRAME_SIZE / 2.0f
             };
             float progress = (BOMB_EXPLOSION_DURATION - bomb.explosionTimer) / BOMB_EXPLOSION_DURATION;
-            DrawExplosion(bombCenter, BOMB_EXPLOSION_RADIUS, progress);
+            Explosion(bombCenter, BOMB_EXPLOSION_RADIUS, progress);
         }
         else
         {
