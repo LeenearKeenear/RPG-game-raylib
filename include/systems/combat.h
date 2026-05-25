@@ -33,21 +33,20 @@ constexpr float SWORD2_SLASH_BACK_DIST = 19.5f;
 class Player;
 class Entity;
 
-struct Attack
-{
-    bool active = false;
-    float timer = 0.0f;
-    Vector2 center = {0, 0};
-    std::vector<Entity *> damagedEntities;
-    bool pressHeld = false;
-    float raycastAngle = 0.0f;
-    float currentAngle = 0.0f;
-    float thrustOffset = 0.0f;
-    const WeaponData* weapon = nullptr;
-};
-
 namespace Combat
 {
+    struct Attack
+    {
+        bool active = false;
+        float timer = 0.0f;
+        float duration = 0.0f;
+        float raycastAngle = 0.0f;
+        Vector2 center = {0, 0};
+        std::vector<Entity *> damagedEntities;
+        bool pressHeld = false;
+        const WeaponData* weapon = nullptr;
+    };
+
     void HandleCombat(Player &player);
     void HandleRevive(Player &player);
     void UpdateSwingAttack(Player &player, float dt);

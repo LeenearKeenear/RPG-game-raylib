@@ -10,8 +10,8 @@
       "maxStack": 1,
       "weapon": {
         "damage": 15.0,
-        "reach": 40.0,
-        "breadth": 16.0,
+        "reach": 36.0,
+        "breadth": 48.0,
         "duration": 0.25,
         "knockbackForce": 0.6,
         "startAngleOffset": 0.0,
@@ -32,7 +32,7 @@
       "weapon": {
         "damage": 25.0,
         "reach": 48.0,
-        "breadth": 56.0,
+        "breadth": 60.0,
         "duration": 0.5,
         "knockbackForce": 1.8,
         "startAngleOffset": 55.0,
