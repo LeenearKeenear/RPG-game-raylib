@@ -15,15 +15,17 @@
 
 namespace Time
 {
-    inline constexpr float DELTA_TIME = 1.0f / 60.0f; // timestep tetap untuk update game, setara 60 FPS
-    inline constexpr float MAX_FRAME = 0.25f;         // batas maksimum durasi frame agar update tidak meloncat terlalu jauh
+    /** @brief Timestep tetap untuk update game, setara 60 FPS */
+    inline constexpr float DELTA_TIME = 1.0f / 60.0f;
+    /** @brief Batas maksimum durasi frame agar update tidak meloncat terlalu jauh */
+    inline constexpr float MAX_FRAME = 0.25f;
 }
 
 /*==============================================================================
  * Virtual Screen Constants
  *==============================================================================*/
 
-// Ukuran layar virtual yang dipakai seluruh proses rendering
+/** @brief Ukuran layar virtual yang dipakai seluruh proses rendering */
 extern const int GameScreenWidth;
 extern const int GameScreenHeight;
 
@@ -34,7 +36,8 @@ extern const int GameScreenHeight;
 /**
  * @brief Daftar state utama game
  */
-enum ScreenState : std::uint8_t {
+enum ScreenState : std::uint8_t
+{
     MAIN_MENU, // State menu utama
     LOADING,   // State loading aset
     PLAY,      // State gameplay aktif
@@ -112,7 +115,7 @@ struct GameState
     std::string pendingDoorName;
 };
 
-// Pointer global ke GameState aktif
+/** @brief Pointer global ke GameState aktif */
 extern GameState *gState;
 
 /*==============================================================================
@@ -147,6 +150,7 @@ void DrawRenderTexture(GameState *state);
  * @param state Pointer ke GameState aktif
  */
 void DrawUIOverlay(GameState *state);
+/** @brief Draw player HUD */
 void DrawPlayerHUD();
 
 /**
@@ -212,5 +216,5 @@ Rectangle GetMonitorResolution(void);
  */
 bool IsFullscreen(void);
 
-// sementara aja
-constexpr int ENEMY_SPAWN_COUNT = 10; // jumlah enemy per spawn point
+/** @brief Jumlah enemy per spawn point (sementara) */
+constexpr int ENEMY_SPAWN_COUNT = 10;

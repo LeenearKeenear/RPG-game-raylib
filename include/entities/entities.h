@@ -10,11 +10,16 @@
  */
 namespace Entities
 {
+    /** @brief Daftar semua enemy aktif */
     extern std::vector<Enemy *> EnemyRegistry;
-    void Init();                    ///< Inisialisasi sistem entitas
-    void Update();                  ///< Update semua entitas yang aktif
-    int Render(Rectangle viewRect); ///< Render semua entitas yang aktif
-    void Shutdown();                ///< Bersihkan semua entitas
+    /** @brief Inisialisasi sistem entitas */
+    void Init();
+    /** @brief Update semua entitas yang aktif */
+    void Update();
+    /** @brief Render semua entitas yang aktif */
+    int Render(Rectangle viewRect);
+    /** @brief Bersihkan semua entitas */
+    void Shutdown();
 
     /**
      * @brief Menambahkan entitas statis/persisten ke dalam registri.
@@ -26,7 +31,7 @@ namespace Entities
      */
     void AddDynamic(Entity *entity);
 
-    void Clear(); ///< Hapus semua entitas dari registri
+    void Clear(); // Hapus semua entitas dari registri
 
     /**
      * @brief Mendapatkan daftar semua entitas yang terdaftar saat ini.
@@ -43,12 +48,13 @@ namespace Entities
      */
     bool IsAlreadyDead(const std::string &mapPath, int objectId);
 
+    /** @brief Ambil reference ke enemy registry */
     std::vector<Enemy *> &GetEnemyRegistry();
 
 }
 
-// master render untuk object tile kek chest, trap dll
+/** @brief Render tile props (chest, trap, dll) */
 void RenderTileProps(Rectangle viewRect);
 
-// master clear untuk object tile kek chest, trap dll
+/** @brief Clear tile props (chest, trap, dll) */
 void ClearTileProps(void);

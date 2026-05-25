@@ -46,6 +46,7 @@ public:
      */
     void DrawWorldOverlay(void);
 
+    /** @brief Render overlay steering behavior untuk enemy */
     static void DrawSteeringOverlay(Enemy &enemy);
 
 private:
@@ -76,10 +77,7 @@ private:
      */
     Rectangle GetPanelBounds(int index, float panelWidth, float panelHeight) const;
 
-    /**
-     * @brief Bangun daftar panel yang sedang aktif
-     * @return Vector panel yang aktif untuk dirender
-     */
+    /** @brief Bangun daftar panel yang aktif */
     std::vector<DebugPanelEntry> BuildActivePanels(void) const;
 
     /**
@@ -91,12 +89,13 @@ private:
      */
     void DrawCollisionOverlay(const std::string &layerName, Color rectColor, Color polygonColor, Color pointColor);
 
-    /**
-     * @brief Gambar overlay raycast debug
-     */
+    /** @brief Render overlay raycast debug */
     void DrawRaycastOverlay(void);
+    /** @brief Render overlay attack debug */
     void DrawAttackOverlay(void);
+    /** @brief Render overlay enemy spawn debug */
     void DrawEnemySpawnOverlay(void);
+    /** @brief Render overlay flow field debug */
     void DrawFlowFieldOverlay(const FlowField &field);
 
     /**
@@ -148,10 +147,12 @@ private:
  * Global Debug Instance
  *==============================================================================*/
 
-// Global instance debug
+/** @brief Global instance debug */
 extern Debug DebugInstance;
 
-// Flag status debug mode
+/** @brief Flag status debug mode */
 extern bool isDebugMode;
+/** @brief Flag toggle overlay flow field enemy */
 extern bool showFlowFieldOverlay;
+/** @brief Flag toggle overlay flow field player */
 extern bool showFlowFieldOverlayPlayer;

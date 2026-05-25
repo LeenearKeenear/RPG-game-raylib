@@ -24,11 +24,9 @@
  * MapObjectIndex
  *==============================================================================*/
 
-/**
- * @brief Build/rebuild index dari tilesonMap->Objects
- * @note Wajib dipanggil setelah LoadMap() selesai
- */
+/** @brief Bangun index object untuk target map */
 void BuildMapObjectIndexTarget(TilesonMapData *target);
+/** @brief Bangun index object untuk map aktif */
 void BuildMapObjectIndex();
 
 /*==============================================================================
@@ -114,20 +112,16 @@ public:
     static std::vector<MapObject *> GetObjectsByType(const std::string &objectType);
 };
 
-/** Global instance TiledHelper — accessible via extern dari file lain */
+/** @brief Instance global TiledHelper */
 extern TiledHelper TiledHelperFunction;
 
 /*==============================================================================
  * Collision Cache
  *==============================================================================*/
 
-/**
- * @brief Cache collision layer untuk dipakai IsPositionSafe() & FlowField::Build()
- *
- * Dibangun sekali lewat RebuildCollisionCache() tiap kali object index berubah,
- * menghindari rebuild vector 4800× per flow field rebuild.
- */
+/** @brief Cache collision global */
 extern TiledHelper::CollisionResult gCollisionCache;
+/** @brief Rebuild collision cache */
 void RebuildCollisionCache();
 
 /*==============================================================================
@@ -280,14 +274,5 @@ bool IsPositionSafe(Vector2 pos, float width, float height, float offsetX, float
  * Dynamic Obstacles
  *==============================================================================*/
 
-/**
- * @brief Daftar obstacle dinamis yang aktif di runtime
- *
- * Dipakai untuk object yang spawn/despawn saat game berjalan (contoh: bomb).
- * Dicek oleh IsPositionSafe() dan CanMove() — semua entity otomatis kena collision-nya.
- *
- * Cara pakai:
- * - Saat object spawn: push bounds ke DynamicObstacles
- * - Saat object mati/despawn: hapus bounds dari DynamicObstacles
- */
+/** @brief Daftar obstacle dinamis */
 extern std::vector<Rectangle> DynamicObstacles;

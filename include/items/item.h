@@ -64,10 +64,10 @@ typedef enum
  * Behavior Structs per Category
  *==============================================================================*/
 
-// Pindah dari combat.h — dipakai sebagai bagian dari WeaponData
+/** @brief Tipe serangan */
 enum AttackType
 {
-    ATTACK_SLASH, // (di json nanti namanya harus ditulis slash)
+    ATTACK_SLASH,  // (di json nanti namanya harus ditulis slash)
     ATTACK_THRUST, // (di json nanti namanya harus ditulis thrust)
     ATTACK_PIERCE, // (di json nanti namanya harus ditulis pierce)
     ATTACK_SLAM    // (di json nanti namanya harus ditulis slam)
@@ -200,14 +200,12 @@ public:
      */
     const ItemDefinition &GetById(int id) const;
 
-    /**
-     * @brief Mengambil semua definisi item.
-     * @return Referensi ke map keseluruhan definisi item
-     */
+    /** @brief Ambil semua definisi item */
     const std::unordered_map<std::string, ItemDefinition> &GetAll() const;
 
 private:
     std::unordered_map<std::string, ItemDefinition> definitions_; // Key = nama item
+    std::unordered_map<int, const ItemDefinition *> byId_;        // Key = ID numerik, untuk O(1) lookup
 };
 
 /*==============================================================================
@@ -292,10 +290,7 @@ public:
      */
     int RenderAll(std::vector<ItemSpawn> &items, Rectangle viewRect);
 
-    /**
-     * @brief Render satu item
-     * @param item Item yang akan dirender
-     */
+    /** @brief Render satu item */
     void Render(ItemSpawn &item);
 
 private:
@@ -340,12 +335,7 @@ private:
      */
     void CategorizeAreas();
 
-    /**
-     * @brief Klasifikasikan ukuran area spawn
-     * @param width Lebar area
-     * @param height Tinggi area
-     * @return Kategori ukuran spawn area
-     */
+    /** @brief Klasifikasikan ukuran area spawn */
     SpawnAreaSize ClassifySize(float width, float height);
 
     /**
@@ -353,18 +343,10 @@ private:
      */
     void DetermineActiveAreas();
 
-    /**
-     * @brief Ambil posisi random di dalam area spawn
-     * @param area Area spawn target
-     * @return Posisi random di dalam area
-     */
+    /** @brief Ambil posisi random di dalam area spawn */
     Vector2 GetRandomPosInArea(const SpawnArea &area, Vector2 hitboxSize);
 
-    /**
-     * @brief Buat seed random dari nama area
-     * @param name Nama area spawn
-     * @return Seed hasil hash nama
-     */
+    /** @brief Buat seed random dari nama area */
     unsigned int SeedFromName(const std::string &name);
 
     int SPAWN_SIZE_SMALL_MIN = 1;  // jumlah minimum spawn untuk area kecil
@@ -396,10 +378,14 @@ void SpawnItemWave();
  */
 void SpawnRandomItem();
 
+/** @brief Ambil daftar item spawn aktif */
 std::vector<ItemSpawn> &GetActiveItems();
 
-// Instance global manager item
+/** @brief Instance global ItemDataManager */
 extern ItemDataManager itemData;
+/** @brief Instance global ItemRenderManager */
 extern ItemRenderManager itemRender;
+/** @brief Instance global ItemSpawnManager */
 extern ItemSpawnManager spawnManager;
+/** @brief Instance global ItemDefinitionManager */
 extern ItemDefinitionManager itemDefs;

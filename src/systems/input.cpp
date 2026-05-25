@@ -2,6 +2,7 @@
 #include "player.h"
 #include "item.h"
 
+/** @brief Instance global input */
 PlayerInput InputInstance;
 
 PlayerInput::PlayerInput()

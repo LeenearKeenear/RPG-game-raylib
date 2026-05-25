@@ -13,9 +13,12 @@ Frames Management
 ====================
 */
 
+/** @brief Array global texture */
 Texture2D textures[MAX_TEXTURES];
+/** @brief Cache frame dari JSON */
 static std::unordered_map<std::string, Frame> loadedFrames;
 
+/** @brief Map string ke TextureSlot */
 static TextureSlot ResolveTextureSlot(const std::string &str)
 {
     static const std::unordered_map<std::string, TextureSlot> mapping = {

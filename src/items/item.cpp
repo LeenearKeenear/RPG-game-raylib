@@ -32,9 +32,13 @@ using json = nlohmann::json;
 using namespace DataDriven;
 
 // instance global keempat class
+/** @brief Instance global definisi item */
 ItemDefinitionManager itemDefs;
+/** @brief Instance global data item */
 ItemDataManager itemData;
+/** @brief Instance global render item */
 ItemRenderManager itemRender;
+/** @brief Instance global spawn manager */
 ItemSpawnManager spawnManager;
 
 /*==============================================================================
@@ -183,6 +187,10 @@ void ItemDefinitionManager::Load(const std::string &path)
 
         definitions_[name] = std::move(def);
     }
+
+    // Populasi index ID numerik untuk O(1) lookup
+    for (auto &[name, def] : definitions_)
+        byId_[def.id] = &def;
 }
 
 /**
@@ -190,13 +198,12 @@ void ItemDefinitionManager::Load(const std::string &path)
  * @param id ID item yang dicari
  * @return Referensi ke ItemDefinition yang cocok
  * @throws std::runtime_error Jika ID tidak ditemukan
- * @note Linear search — acceptable untuk pool item kecil
  */
 const ItemDefinition &ItemDefinitionManager::GetById(int id) const
 {
-    for (auto &[_, def] : definitions_)
-        if (def.id == id)
-            return def;
+    auto it = byId_.find(id);
+    if (it != byId_.end())
+        return *it->second;
     throw std::runtime_error("ItemDefinition not found for id: " + std::to_string(id));
 }
 
@@ -427,7 +434,7 @@ void ItemRenderManager::Render(ItemSpawn &item)
  * ItemSpawnManager
  *==============================================================================*/
 
-// Rarity chance dalam persen — total harus 100
+/** @brief Bobot drop berdasarkan rarity */
 static const std::map<ItemRarity, int> RARITY_WEIGHTS = {
     {RARITY_COMMON, 80},
     {RARITY_UNCOMMON, 60},

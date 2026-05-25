@@ -28,13 +28,15 @@
  * Global Variables
  *==============================================================================*/
 
-/** Global instance debug yang dipakai lintas file */
+/** @brief Instance global debug */
 Debug DebugInstance;
 
-/** Flag untuk menentukan apakah debug mode sedang aktif */
+/** @brief Flag debug mode */
 bool isDebugMode = false;
-bool showFlowFieldOverlay = false;       // flag untuk menampilkan overlay flow field return enemy
-bool showFlowFieldOverlayPlayer = false; // flag untuk menampilkan overlay flow field player
+/** @brief Tampilkan overlay flow field enemy */
+bool showFlowFieldOverlay = false;
+/** @brief Tampilkan overlay flow field player */
+bool showFlowFieldOverlayPlayer = false;
 
 /*==============================================================================
  * Private Helper Methods

@@ -41,6 +41,7 @@
  * External Variables & Macros
  *==============================================================================*/
 
+/** @brief Instance global game state */
 GameState *gState;
 
 extern PauseMenu pauseMenu;
@@ -51,7 +52,9 @@ extern PauseMenu pauseMenu;
  * Constants
  *==============================================================================*/
 
+/** @brief Skala monitor untuk UI */
 const float ScaleMultiplierMonitor = 0.7F;
+/** @brief Skala minimum monitor */
 const float ScaleMinMultiplierMonitor = 0.4F;
 
 extern const int GameScreenWidth = 1280;
@@ -163,11 +166,16 @@ GameState InitScreen()
  */
 void UpdateGame(GameState *state)
 {
-    state->WindowScreenWidth = GetScreenWidth();
-    state->WindowScreenHeight = GetScreenHeight();
-    state->ScaleMultiplier = MIN(
-        (float)state->WindowScreenWidth / GameScreenWidth,
-        (float)state->WindowScreenHeight / GameScreenHeight);
+    int w = GetScreenWidth();
+    int h = GetScreenHeight();
+    if (w != state->WindowScreenWidth || h != state->WindowScreenHeight)
+    {
+        state->WindowScreenWidth = w;
+        state->WindowScreenHeight = h;
+        state->ScaleMultiplier = MIN(
+            (float)w / GameScreenWidth,
+            (float)h / GameScreenHeight);
+    }
 }
 
 /**
@@ -383,6 +391,7 @@ void GameShutDown(GameState *state)
  * Window & Video Settings Functions
  *==============================================================================*/
 
+/** @brief Toggle fullscreen mode */
 void ToggleFullscreenMode(void)
 {
     if (IsWindowFullscreen())
@@ -395,11 +404,13 @@ void ToggleFullscreenMode(void)
     }
 }
 
+/** @brief Set resolusi window */
 void SetResolution(int width, int height)
 {
     SetWindowSize(width, height);
 }
 
+/** @brief Get resolusi window saat ini */
 Rectangle GetCurrentResolution(void)
 {
     Rectangle res = {0};
@@ -408,6 +419,7 @@ Rectangle GetCurrentResolution(void)
     return res;
 }
 
+/** @brief Get resolusi monitor utama */
 Rectangle GetMonitorResolution(void)
 {
     Rectangle res = {0};
@@ -416,6 +428,7 @@ Rectangle GetMonitorResolution(void)
     return res;
 }
 
+/** @brief Cek apakah fullscreen */
 bool IsFullscreen(void)
 {
     return IsWindowFullscreen();

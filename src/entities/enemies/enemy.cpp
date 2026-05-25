@@ -15,6 +15,7 @@
 using json = nlohmann::json;
 using namespace DataDriven;
 
+/** @brief Instance global definisi enemy */
 EnemyDataManager enemyData;
 
 /*==============================================================================
@@ -130,11 +131,13 @@ std::vector<std::string> EnemyDataManager::GetAllNames() const
  * Enemy — Lifecycle
  *==============================================================================*/
 
+/** @brief Default constructor */
 Enemy::Enemy()
 {
     IsActive = true;
 }
 
+/** @brief Default destructor */
 Enemy::~Enemy() {}
 
 /**
@@ -314,23 +317,7 @@ bool Enemy::CheckPlayerLoS()
 
     Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
 
-    std::vector<MapObject> obstacles;
-    for (auto &obj : tilesonMap->Objects)
-    {
-        if (obj.layerName == COLLISION_LAYER_NAME)
-            obstacles.push_back(obj);
-    }
-
-    // Dynamic obstacles (misal: chest, benda interaktif) ikut dipertimbangkan
-    for (const auto &rect : DynamicObstacles)
-    {
-        MapObject dynObj;
-        dynObj.bounds = rect;
-        dynObj.hasPolygon = false;
-        obstacles.push_back(dynObj);
-    }
-
-    RayHitResult hit = Ray.Cast(enemyCenter, dir, DetectionRange, obstacles);
+    RayHitResult hit = Ray.Cast(enemyCenter, dir, DetectionRange, cachedObstacleList);
     return !hit.hit;
 }
 
@@ -566,8 +553,7 @@ void Enemy::PerformAttack()
     // cek ada obstacle nggak antara enemy dan player
     Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, enemyCenter));
     float dist = Vector2Distance(enemyCenter, playerCenter);
-    auto obstacles = cachedObstacleList;
-    RayHitResult hit = Ray.Cast(enemyCenter, dir, dist, obstacles);
+    RayHitResult hit = Ray.Cast(enemyCenter, dir, dist, cachedObstacleList);
 
     if (hit.hit)
         return; // ada obstacle, batal serang
@@ -658,8 +644,10 @@ void InitEnemy()
     enemyData.Load("assets/data/enemies.json");
 }
 
+/** @brief Simpan state enemy per map */
 void SaveEnemiesForMap(const std::string &mapPath) {}
 
+/** @brief Muat state enemy per map */
 bool LoadEnemiesForMap(const std::string &mapPath)
 {
     return true;

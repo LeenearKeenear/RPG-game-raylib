@@ -30,19 +30,19 @@
  * Global Variables
  *==============================================================================*/
 
-/** Pointer ke data map yang sedang aktif */
+/** @brief Pointer ke data map aktif */
 TilesonMapData *tilesonMap = nullptr;
 
-/** Hasil parse map dari Tileson */
+/** @brief Hasil parse map */
 static std::unique_ptr<tson::Map> parsedMap = nullptr;
 
-/** Camera global untuk rendering world */
+/** @brief Camera rendering */
 Camera2D camera = {0};
 
-/** Jumlah tile yang dirender pada frame terakhir */
+/** @brief Debug: tile render count */
 int lastTilesRendered = 0;
 
-/** Range tile yang visible pada frame terakhir */
+/** @brief Debug: visible range */
 TileRange currentVisibleRange = {0, 0, 0, 0};
 
 /** Stack riwayat perpindahan map */
@@ -293,82 +293,28 @@ void InitMap(void)
     // preFabMapPath = "assets/maps/World_generation/template5(u).json";
     currentMapPath = "assets/maps/World_generation/background_template_test.json";
     LoadMap(currentMapPath.c_str());
-    BuildMapObjectIndex();
+    BuildMapObjectIndex(); // 1. setelah load background
 
-    TilesonMapData *prefabA = new TilesonMapData();
-    PreFabLoadMap("assets/maps/World_generation/template1(udrl).json", prefabA);
-    BuildMapObjectIndexTarget(prefabA);
+    WorldGenPools pools;
+    pools.LoadRoomPool("assets/maps/World_generation");
+    pools.LoadCorridorPool("assets/maps/World_generation/corridor");
 
-    TilesonMapData *prefabB = new TilesonMapData();
-    PreFabLoadMap("assets/maps/World_generation/template2(udr).json", prefabB);
-    BuildMapObjectIndexTarget(prefabB);
+    // Load prefab → BuildMapObjectIndex tiap prefab
+    for (auto* prefab : pools.GetRoomPool().u.prefabs)
+        BuildMapObjectIndexTarget(prefab);
+    for (auto* prefab : pools.GetRoomPool().udrl.prefabs)
+        BuildMapObjectIndexTarget(prefab);
 
-    TilesonMapData *prefabC = new TilesonMapData();
-    PreFabLoadMap("assets/maps/World_generation/template3(ud).json", prefabC);
-    BuildMapObjectIndexTarget(prefabC);
+    WorldGenLayout layout;
+    layout.Generate();
 
-    TilesonMapData *prefabD = new TilesonMapData();
-    PreFabLoadMap("assets/maps/World_generation/template4(ur).json", prefabD);
-    BuildMapObjectIndexTarget(prefabD);
+    WorldGenCanvas canvas(tilesonMap, &pools);
+    auto slots = canvas.GetSlots();
+    canvas.StampLayout(layout.GetGrid(), slots, pools.GetRoomPool());
 
-    TilesonMapData *prefabE = new TilesonMapData();
-    PreFabLoadMap("assets/maps/World_generation/template5(u).json", prefabE);
-    BuildMapObjectIndexTarget(prefabE);
+    BuildMapObjectIndex(); // 2. setelah stamp room
 
-    TilesonMapData *prefabx = new TilesonMapData();
-    PreFabLoadMap("assets/maps/World_generation/template10(udrl).json", prefabx);
-    BuildMapObjectIndexTarget(prefabx);
-
-    TilesonMapData *prefaby = new TilesonMapData();
-    PreFabLoadMap("assets/maps/World_generation/template11(udrl).json", prefaby);
-    BuildMapObjectIndexTarget(prefaby);
-
-    TilesonMapData *prefabC90 = RotatePrefab(prefabC, 90, 90);
-    TilesonMapData *prefabD90 = RotatePrefab(prefabD, 90, 90);
-    TilesonMapData *prefabD180 = RotatePrefab(prefabD, 180, 180);
-    TilesonMapData *prefabD900 = RotatePrefab(prefabD, 90, 270);
-    TilesonMapData *prefabx900 = RotatePrefab(prefabx, 90, 0);
-    TilesonMapData *prefabx1800 = RotatePrefab(prefabx, 180, 0);
-    TilesonMapData *prefabx18090 = RotatePrefab(prefabx, 180, 90);
-
-    std::vector<MapObject> slots = GetWorldGenSlots();
-
-    for (auto &slot : slots)
-    {
-        if (slot.name == "slot_6")
-            StampPrefabToSlot(prefabA, &slot);
-        if (slot.name == "slot_7")
-            StampPrefabToSlot(prefaby, &slot);
-        if (slot.name == "slot_10")
-            StampPrefabToSlot(prefabD, &slot);
-        if (slot.name == "slot_11")
-            StampPrefabToSlot(prefaby, &slot);
-        if (slot.name == "slot_12")
-            StampPrefabToSlot(prefabC90, &slot);
-        if (slot.name == "slot_13")
-            StampPrefabToSlot(prefabx18090, &slot);
-        if (slot.name == "slot_14")
-            StampPrefabToSlot(prefabx900, &slot);
-        if (slot.name == "slot_15")
-            StampPrefabToSlot(prefaby, &slot);
-        if (slot.name == "slot_16")
-            StampPrefabToSlot(prefaby, &slot);
-    }
-
-    UnloadPrefab(prefabA);
-    UnloadPrefab(prefabB);
-    UnloadPrefab(prefabC);
-    UnloadPrefab(prefabD);
-    UnloadPrefab(prefabE);
-    UnloadPrefab(prefaby);
-    UnloadPrefab(prefabC90);
-    UnloadPrefab(prefabD90);
-    UnloadPrefab(prefabD180);
-
-    BuildMapObjectIndex();
-
-    LoadCorridorPool("assets/maps/World_generation/corridor");
-
+    // Stamp corridors
     std::vector<MapObject> exitObjects;
     for (const char *exitType : {EXIT_NORTH_TYPE_OBJECT_NAME, EXIT_SOUTH_TYPE_OBJECT_NAME,
                                  EXIT_EAST_TYPE_OBJECT_NAME, EXIT_WEST_TYPE_OBJECT_NAME})
@@ -381,12 +327,13 @@ void InitMap(void)
         int tileY = (int)(exitObj.bounds.y / WG_TILE_SIZE);
         int col = tileX / WG_CELL_TILES;
         int row = tileY / WG_CELL_TILES;
-        StampCorridor(exitObj, col, row);
+        canvas.StampCorridor(exitObj, col, row);
     }
 
-    UnloadCorridorPool();
+    pools.UnloadCorridorPool();
+    pools.UnloadRoomPool();
 
-    BuildMapObjectIndex();
+    BuildMapObjectIndex(); // 3. setelah semua stamp selesai
 }
 
 /*==============================================================================
@@ -435,13 +382,11 @@ void RenderMap(void)
                 int groupIdx = tilesonMap->layerTilesetGroup[l];
                 auto &tilesets = tilesonMap->tilesets[groupIdx];
 
-                TilesetInfo *ts = nullptr;
-                for (auto &t : tilesets)
-                    if (tileId >= t.firstgid && tileId <= t.lastgid)
-                    {
-                        ts = &t;
-                        break;
-                    }
+                auto it = std::lower_bound(tilesets.begin(), tilesets.end(), tileId,
+                    [](const TilesetInfo &t, int id) { return t.lastgid < id; });
+                if (it == tilesets.end() || tileId < it->firstgid)
+                    continue;
+                TilesetInfo *ts = &(*it);
 
                 static bool logged = false;
                 if (!logged)

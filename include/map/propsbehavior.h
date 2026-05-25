@@ -95,10 +95,7 @@ public:
     /** @brief Spawn semua chest dari object layer Tiled */
     void SpawnChests(const std::vector<MapObject *> &chestObjects);
 
-    /**
-     * @brief Trigger interaksi player dengan chest terdekat
-     * @param hitPos Posisi interaksi player
-     */
+    /** @brief Trigger interaksi player dengan chest terdekat */
     void Interact(Vector2 hitPos);
 
     /** @brief Render semua chest (placeholder sprite) */
@@ -107,28 +104,17 @@ public:
     /** @brief Bersihkan semua data chest */
     void Clear();
 
-    /**
-     * @brief Ambil jumlah chest yang sedang dikelola.
-     * @return Jumlah chest aktif di manager
-     */
+    /** @brief Ambil jumlah chest yang sedang dikelola */
     size_t GetCount() const { return chests.size(); }
 
 private:
-    std::vector<TileObject> chests;                    // daftar chest yang sedang dikelola
-    std::unordered_set<std::string> consumedPositions; // posisi chest yang sudah dikonsumsi agar tidak diproses ulang
+    std::vector<TileObject> chests;                    // Daftar chest yang sedang dikelola
+    std::unordered_set<std::string> consumedPositions; // Posisi chest yang sudah dikonsumsi agar tidak diproses ulang
 
-    /**
-     * @brief Cari chest terdekat dari titik hit
-     * @param hitPos Posisi hit
-     * @param threshold Toleransi jarak ke tepi bounds
-     * @return Pointer ke chest terdekat, nullptr jika tidak ada
-     */
+    /** @brief Cari chest terdekat dari titik hit */
     TileObject *FindChest(Vector2 hitPos, float threshold = 32.0f);
 
-    /**
-     * @brief Spawn loot item secara random di sekitar chest
-     * @param chest Chest yang baru dibuka
-     */
+    /** @brief Spawn loot item secara random di sekitar chest */
     void TriggerLoot(TileObject &chest);
 };
 
@@ -136,7 +122,8 @@ private:
  * SpikeManager
  *==============================================================================*/
 
-using SpikeCallback = std::function<void(TileObject &)>; // callback untuk event spike yang menerima TileObject
+/** @brief Callback untuk event spike */
+using SpikeCallback = std::function<void(TileObject &)>;
 
 /**
  * @brief Manager untuk semua trap spike di map
@@ -164,10 +151,7 @@ public:
     /** @brief Bersihkan semua data spike */
     void Clear();
 
-    /**
-     * @brief Ambil jumlah spike yang sedang dikelola.
-     * @return Jumlah spike aktif di manager
-     */
+    /** @brief Ambil jumlah spike yang sedang dikelola */
     size_t GetCount() const { return spikes.size(); }
 
 private:
@@ -198,19 +182,12 @@ private:
     float globalPlayerDamageCooldown = 0.0f; // Cooldown damage ke player (shared semua spike)
     float globalEnemyDamageCooldown = 0.0f;  // Cooldown damage ke enemy (shared semua spike)
 
-    std::vector<SpikeData> spikes; // daftar spike yang sedang dikelola
+    std::vector<SpikeData> spikes; // Daftar spike yang sedang dikelola
 
-    /**
-     * @brief Generate seed dari nama object untuk randomisasi timer
-     * @param name Nama object spike dari Tiled
-     * @return Seed hasil hash nama
-     */
+    /** @brief Generate seed dari nama object untuk randomisasi timer */
     unsigned int SeedFromName(const std::string &name);
 
-    /**
-     * @brief Setup callback onActivate, onDeactivate, onDamagePlayer
-     * @param spike SpikeData target
-     */
+    /** @brief Setup callback onActivate, onDeactivate, onDamagePlayer */
     void SetupCallbacks(SpikeData &spike);
 };
 
@@ -252,21 +229,10 @@ public:
     /** @brief Bersihkan semua data bomb */
     void Clear();
 
-    /**
-     * @brief Ambil jumlah bomb yang sedang dikelola.
-     * @return Jumlah bomb aktif di manager
-     */
+    /** @brief Ambil jumlah bomb yang sedang dikelola */
     size_t GetCount() const { return bombs.size(); }
 
-    /**
-     * @brief Cek apakah target berada dalam radius ledakan
-     *
-     * Pakai nearest-point check, bukan center-to-center.
-     *
-     * @param bombPos Posisi center bomb
-     * @param target Bounding box target
-     * @return true jika jarak nearest point <= BOMB_EXPLOSION_RADIUS
-     */
+    /** @brief Cek apakah target dalam radius ledakan (nearest-point check) */
     bool IsInExplosionRadius(Vector2 bombPos, Rectangle target);
 
 private:
@@ -287,16 +253,11 @@ private:
     static constexpr float BOMB_DAMAGE = 25.0f;            // Damage ledakan
     static constexpr float BOMB_EXPLOSION_DURATION = 0.6f; // Durasi animasi ledakan (detik)
 
-    std::vector<BombData> bombs;                       // daftar bomb yang sedang dikelola
-    std::unordered_set<std::string> consumedPositions; // posisi bomb yang sudah dikonsumsi agar tidak diproses ulang
-    Player *playerRef = nullptr;                       // referensi player terakhir untuk kebutuhan update/interaction bomb
+    std::vector<BombData> bombs;                       // Daftar bomb yang sedang dikelola
+    std::unordered_set<std::string> consumedPositions; // Posisi bomb yang sudah dikonsumsi agar tidak diproses ulang
+    Player *playerRef = nullptr;                       // Referensi player terakhir untuk update/interaction bomb
 
-    /**
-     * @brief Cari bomb terdekat dari titik hit
-     * @param hitPos Posisi hit
-     * @param threshold Toleransi jarak ke tepi bounds
-     * @return Pointer ke TileObject bomb terdekat, nullptr jika tidak ada
-     */
+    /** @brief Cari bomb terdekat dari titik hit */
     TileObject *FindBomb(Vector2 hitPos, float threshold = 32.0f);
 
     /**
@@ -321,12 +282,18 @@ private:
 class CrateManager
 {
 public:
-    void SpawnCrates(const std::vector<MapObject *> &crateObjects); // spawn semua crate dari object layer Tiled
-    void HitByAttack(Rectangle attackHitbox);                       // hancurkan crate yang terkena hitbox serangan player
-    void Update();                                                  // hapus crate yang sudah tidak aktif dari daftar runtime
-    void HitByExplosion(Vector2 bombPos, BombManager *bomber);      // hancurkan crate yang terkena radius ledakan bomb
-    int Render(Rectangle viewRect);                                 // render crate yang terlihat dalam view
-    void Clear();                                                   // bersihkan semua data crate
+    /** @brief Spawn semua crate dari object layer Tiled */
+    void SpawnCrates(const std::vector<MapObject *> &crateObjects);
+    /** @brief Hancurkan crate yang terkena hitbox serangan player */
+    void HitByAttack(Rectangle attackHitbox);
+    /** @brief Hapus crate yang sudah tidak aktif dari daftar runtime */
+    void Update();
+    /** @brief Hancurkan crate yang terkena radius ledakan bomb */
+    void HitByExplosion(Vector2 bombPos, BombManager *bomber);
+    /** @brief Render crate yang terlihat dalam view */
+    int Render(Rectangle viewRect);
+    /** @brief Bersihkan semua data crate */
+    void Clear();
 
     /**
      * @brief Ambil jumlah crate yang sedang dikelola.
@@ -335,27 +302,35 @@ public:
     size_t GetCount() const { return crates.size(); }
 
 private:
+    /** @brief Data internal satu crate */
     struct CrateData
     {
-        TileObject tile; // data object crate di map
-        bool isAlive;    // false jika crate sudah dihancurkan
+        TileObject tile; // Data object crate di map
+        bool isAlive;    // False jika crate sudah dihancurkan
     };
 
     static constexpr float CRATE_LOOT_CHANCE = 0.10f; // 10% chance drop loot
 
-    std::vector<CrateData> crates;                     // daftar crate yang sedang dikelola
-    std::unordered_set<std::string> consumedPositions; // posisi crate yang sudah dihancurkan agar tidak spawn ulang
+    std::vector<CrateData> crates;                     // Daftar crate yang sedang dikelola
+    std::unordered_set<std::string> consumedPositions; // Posisi crate yang sudah dihancurkan agar tidak spawn ulang
 
-    TileObject *FindCrate(Vector2 hitPos, float threshold = 32.0f); // cari crate terdekat dari titik hit
-    void Destroy(CrateData &crate);                                 // hancurkan crate, hapus obstacle, dan trigger loot
-    void TriggerLoot(TileObject &crate);                            // roll peluang drop loot dari crate
+    /** @brief Cari crate terdekat dari titik hit */
+    TileObject *FindCrate(Vector2 hitPos, float threshold = 32.0f);
+    /** @brief Hancurkan crate, hapus obstacle, dan trigger loot */
+    void Destroy(CrateData &crate);
+    /** @brief Roll peluang drop loot dari crate */
+    void TriggerLoot(TileObject &crate);
 };
 
 /*==============================================================================
  * Global Manager Instances
  *==============================================================================*/
 
-extern ChestManager chestManager; // instance global manager chest
-extern SpikeManager spikeManager; // instance global manager spike
-extern BombManager bombManager;   // instance global manager bomb
-extern CrateManager crateManager; // instance global manager crate
+/** @brief Instance global manager chest */
+extern ChestManager chestManager;
+/** @brief Instance global manager spike */
+extern SpikeManager spikeManager;
+/** @brief Instance global manager bomb */
+extern BombManager bombManager;
+/** @brief Instance global manager crate */
+extern CrateManager crateManager;

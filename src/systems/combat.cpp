@@ -15,6 +15,7 @@
 
 namespace Combat
 {
+    /** @brief Deteksi hit serangan */
     void PerformHitDetection(Player &player)
     {
         Vector2 playerCenter = {

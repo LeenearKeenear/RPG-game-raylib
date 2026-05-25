@@ -14,10 +14,15 @@
  * Globals
  *==============================================================================*/
 
+/** @brief Instance global flow field chase */
 FlowField globalFlowField;
+/** @brief Map flow field return per spawn ID */
 std::unordered_map<int, SpawnFlowFieldEntry> spawnFlowFields;
+/** @brief Antrian rebuild spawn flow field */
 std::queue<int> spawnFlowFieldRebuildQueue;
+/** @brief Cache obstacle untuk raycast */
 std::vector<MapObject> cachedObstacleList;
+/** @brief Spatial hash untuk separation */
 static SpatialHash g_spatialHash;
 
 /*==============================================================================
@@ -477,8 +482,7 @@ Vector2 EnemySteering::Compute(SteeringMode mode, const SteeringContext &ctx, Ra
     if (Vector2LengthSqr(SteeringDir) < 0.001f)
         SteeringDir = flowDir;
 
-    auto obstacles = cachedObstacleList;
-    ray.Cast(ctx.Position, rayDir, ctx.rayLength, obstacles);
+    ray.Cast(ctx.Position, rayDir, ctx.rayLength, cachedObstacleList);
 
     SteeringCooldown -= Time::DELTA_TIME;
 

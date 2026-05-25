@@ -18,6 +18,7 @@ namespace Entities
      */
     static std::vector<Entity *> DynamicRegistry;
 
+    /** @brief Registri global enemy */
     std::vector<Enemy *> EnemyRegistry;
 
     /**
@@ -51,6 +52,7 @@ namespace Entities
     int Render(Rectangle viewRect)
     {
         std::vector<Entity *> visible;
+        visible.reserve(Registry.size());
         for (auto entity : Registry)
         {
             if (entity && entity->IsActive && CheckCollisionRecs(entity->GetHitbox(), viewRect))
@@ -123,6 +125,7 @@ namespace Entities
         return Registry;
     }
 
+    /** @brief Getter EnemyRegistry */
     std::vector<Enemy *> &GetEnemyRegistry()
     {
         return EnemyRegistry;

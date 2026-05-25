@@ -11,6 +11,7 @@
 #include "propsbehavior.h"
 #include <cmath>
 
+/** @brief Instance global player */
 Player PlayerInstance;
 
 /**
@@ -194,6 +195,7 @@ void Player::Render(void)
     Combat::DrawSwingAttack(*this);
 }
 
+/** @brief Apply damage ke player */
 void Player::TakeDamage(float amount, Vector2 knockback)
 {
     Entity::TakeDamage(amount, knockback);
@@ -218,11 +220,13 @@ void Player::TakeDamage(float amount, Vector2 knockback)
  * Private Helper Methods
  *==============================================================================*/
 
+/** @brief Cek apakah player bisa pindah ke posisi */
 bool Player::CanMove(Vector2 newPosition)
 {
     return Movement::CanMove(*this, newPosition);
 }
 
+/** @brief Hitbox player di posisi tertentu */
 Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
 {
     return {position.x + HitboxOffsetX, position.y + HitboxOffsetY, HitboxWidth, HitboxHeight};
@@ -296,14 +300,7 @@ void Player::DrawAimIndicator(void)
  * Action Handlers
  *==============================================================================*/
 
-/**
- * Resolve apa yang terjadi saat input aksi (misal: Left Click)
- * dilakukan berdasarkan context:
- * - Inventori terbuka → equip/unequip item
- * - Slot senjata (1/2) → attack
- * - Slot potion (3/4) → minum potion
- * Definisi: src/player.cpp (file ini)
- */
+/** @brief Handle action player */
 void Player::HandleAction(void)
 {
     if (InputInstance.IsInventoryOpen())

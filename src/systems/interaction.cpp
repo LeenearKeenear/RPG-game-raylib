@@ -15,8 +15,8 @@ namespace Interaction
     void HandleInteractions(Player &player)
     {
         UpdateRaycast(player);
-        CheckDoors(player);    ///< Interaksi berbasis kedekatan (proximity)
-        CheckProps(player);    ///< Interaksi berbasis raycast
+        CheckDoors(player);    // Interaksi berbasis kedekatan (proximity)
+        CheckProps(player);    // Interaksi berbasis raycast
     }
 
     /**
