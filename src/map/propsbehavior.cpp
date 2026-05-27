@@ -204,13 +204,13 @@ void ChestManager::TriggerLoot(TileObject &chest)
     int jumlahLoot = GetRandomValue(1, 3);
 
     std::mt19937 rng(static_cast<unsigned int>(time(nullptr)));
+    int lootSpread = 60;
     for (int i = 0; i < jumlahLoot; i++)
     {
-        // Kasih sedikit offset random (misal sejauh -20 sampai 20 pixel)
-        // Biar itemnya mencar di sekitar chest
+        // Kasih sedikit offset random biar itemnya mencar di sekitar chest
         Vector2 spawnPos = {
-            chest.position.x + (float)GetRandomValue(-60, 60),
-            chest.position.y + (float)GetRandomValue(-60, 60)};
+            chest.position.x + (float)GetRandomValue(-lootSpread, lootSpread),
+            chest.position.y + (float)GetRandomValue(-lootSpread, lootSpread)};
 
         itemData.SpawnItemAtLocation(spawnPos, &rng, ITEM_ANY);
     }
@@ -795,9 +795,10 @@ void CrateManager::TriggerLoot(TileObject &crate)
         return;
 
     std::mt19937 rng(static_cast<unsigned int>(time(nullptr)));
+    int lootSpread = 60;
     Vector2 spawnPos = {
-        crate.position.x + (float)GetRandomValue(-60, 60),
-        crate.position.y + (float)GetRandomValue(-60, 60)};
+        crate.position.x + (float)GetRandomValue(-lootSpread, lootSpread),
+        crate.position.y + (float)GetRandomValue(-lootSpread, lootSpread)};
 
     itemData.SpawnItemAtLocation(spawnPos, &rng, ITEM_POTION);
 }

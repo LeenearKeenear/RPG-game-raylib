@@ -615,7 +615,7 @@ void RebuildSpatialHash(std::vector<Enemy *> &enemies)
     g_spatialHash.Clear();
     for (int i = 0; i < (int)enemies.size(); i++)
     {
-        if (!enemies[i]->IsActive && !enemies[i]->IsAlive())
+        if (!enemies[i]->IsActive || !enemies[i]->IsAlive())
             continue;
         g_spatialHash.Insert(i, enemies[i]->Position);
     }

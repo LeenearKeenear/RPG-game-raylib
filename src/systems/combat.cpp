@@ -83,7 +83,7 @@ namespace Combat
             }
         }
 
-        HitPropsByAttack(attackHitbox, PlayerInstance.GetHitbox(), &player);
+        HitPropsByAttack(attackHitbox, player.GetHitbox(), &player);
     }
 
     void HandleCombat(Player &player)

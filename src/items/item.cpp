@@ -242,9 +242,10 @@ ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
 {
     const ItemDefinition &def = itemDefs.GetById(definitionId);
 
-    // cari posisi aman, maksimal 5 attempt
+    // cari posisi aman, maksimal `spawnPosRetryLimit` attempt
+    int spawnPosRetryLimit = 5;
     Vector2 safePos = pos;
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < spawnPosRetryLimit; i++)
     {
         if (IsPositionSafe(safePos, def.hitboxSize.x, def.hitboxSize.y, 0, 0))
             break;
@@ -343,12 +344,13 @@ void ItemRenderManager::Update(std::vector<ItemSpawn> &items, Vector2 playerCent
                                Rectangle playerHitbox, float magnetRadius, float itemSpeed)
 {
 
+    float spawnImmunityDuration = 1.0f;
     float currentTime = (float)GetTime();
     for (auto &item : items)
     {
         if (item.isPickedUp)
             continue;
-        if (currentTime - item.spawnTime < 1.0f)
+        if (currentTime - item.spawnTime < spawnImmunityDuration)
             continue;
         if (!Inventory::HasInventorySpace(PlayerInstance))
             continue;
@@ -505,8 +507,10 @@ void ItemSpawnManager::CategorizeAreas()
         if (area.isPolygon)
         {
             area.sizeClass = SPAWN_SIZE_SMALL;
-            area.minSpawn = 2;
-            area.maxSpawn = 3;
+            int polygonMinSpawn = 2;
+            int polygonMaxSpawn = 3;
+            area.minSpawn = polygonMinSpawn;
+            area.maxSpawn = polygonMaxSpawn;
             continue;
         }
         area.sizeClass = ClassifySize(area.bounds.width, area.bounds.height);
@@ -581,9 +585,9 @@ void ItemSpawnManager::DetermineActiveAreas()
  */
 Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area, Vector2 hitboxSize)
 {
-    int MaxAttempts = 100;
+    int maxAttempts = 100;
 
-    for (int i = 0; i < MaxAttempts; i++)
+    for (int i = 0; i < maxAttempts; i++)
     {
         Vector2 pos = {
             (float)GetRandomValue((int)area.bounds.x, (int)(area.bounds.x + area.bounds.width)),

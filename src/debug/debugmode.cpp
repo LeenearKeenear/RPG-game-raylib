@@ -400,10 +400,10 @@ void Debug::DrawZoomPanel(Rectangle bounds)
     const float ZOOM_INCREMENT = 0.25f;
 
     // Handle zoom dengan scroll mouse
-    float MouseWheel = GetMouseWheelMove();
-    if (MouseWheel != 0)
+    float mouseWheel = GetMouseWheelMove();
+    if (mouseWheel != 0)
     {
-        camera.zoom += MouseWheel * ZOOM_INCREMENT;
+        camera.zoom += mouseWheel * ZOOM_INCREMENT;
         if (camera.zoom > MAX_ZOOM)
             camera.zoom = MAX_ZOOM;
         if (camera.zoom < MIN_ZOOM)

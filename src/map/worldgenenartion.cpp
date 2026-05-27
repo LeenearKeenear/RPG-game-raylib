@@ -383,7 +383,7 @@ namespace
  *==============================================================================*/
 
 WorldGenPools::WorldGenPools(uint64_t seed)
-    : worldSeed(seed), wgRng(std::random_device{}())
+    : worldSeed(seed)
 {
 }
 
@@ -498,34 +498,27 @@ void WorldGenPools::UnloadCorridorPool()
     corridorPool.loaded = false;
 }
 
-/**
- * @brief Load semua room template dari subfolder template_*
- *
- * Memuat room dari folder: template_u, template_ud, template_ur, template_udr, template_udrl.
- */
-void WorldGenPools::LoadRoomPool(const char *basePath)
+void WorldGenPools::LoadRoomPoolForType(const char *basePath, const char *roomType, RoomPool &targetPool)
 {
-    if (roomPool.loaded)
-        return;
-
     namespace fs = std::filesystem;
 
-    // Mapping folder → pool berdasarkan konfigurasi exit
     struct
     {
         const char *folder;
         WeightedPool &pool;
     } configs[] = {
-        {"template_u", roomPool.u},
-        {"template_ud", roomPool.ud},
-        {"template_ur", roomPool.ur},
-        {"template_udr", roomPool.udr},
-        {"template_udrl", roomPool.udrl},
+        {"template_u",    targetPool.u},
+        {"template_ud",   targetPool.ud},
+        {"template_ur",   targetPool.ur},
+        {"template_udr",  targetPool.udr},
+        {"template_udrl", targetPool.udrl},
     };
 
     for (auto &[folder, pool] : configs)
     {
-        std::string path = std::string(basePath) + "/" + folder;
+        std::string path = std::string(basePath) + "/rooms/" + roomType + "/" + folder;
+        if (!fs::exists(path))
+            continue;
         for (auto &entry : fs::directory_iterator(path))
         {
             if (entry.path().extension() != ".json")
@@ -536,32 +529,122 @@ void WorldGenPools::LoadRoomPool(const char *basePath)
         }
     }
 
-    roomPool.loaded = true;
+    // Fallback: beberapa type (start/finish/trader/boss) file-nya flat langsung di /rooms/{type}/
+    // tanpa subfolder template_u. Muat file-file itu ke pool u (1-exit).
+    std::string flatPath = std::string(basePath) + "/rooms/" + roomType;
+    if (fs::exists(flatPath))
+    {
+        for (auto &entry : fs::directory_iterator(flatPath))
+        {
+            if (entry.path().extension() != ".json")
+                continue;
+            if (entry.is_directory())
+                continue;
+            // Skip kalo ternyata file ini udah di-load dari subfolder (cek duplikat nama)
+            TilesonMapData *data = new TilesonMapData();
+            PreFabLoadMap(entry.path().string().c_str(), data);
+            targetPool.u.prefabs.push_back(data);
+        }
+    }
+}
+
+void WorldGenPools::LoadRoomPool(const char *basePath)
+{
+    if (enemyPool.loaded)
+        return;
+
+    LoadRoomPoolForType(basePath, "enemy",    enemyPool);
+    LoadRoomPoolForType(basePath, "treasure", treasurePool);
+    LoadRoomPoolForType(basePath, "elite",    elitePool);
+    LoadRoomPoolForType(basePath, "trader",   traderPool);
+    LoadRoomPoolForType(basePath, "start",    startPool);
+    LoadRoomPoolForType(basePath, "finish",   finishPool);
+    LoadRoomPoolForType(basePath, "boss",     bossPool);
+
+    enemyPool.loaded = true;
+    treasurePool.loaded = true;
+    elitePool.loaded = true;
+    traderPool.loaded = true;
+    startPool.loaded = true;
+    finishPool.loaded = true;
+    bossPool.loaded = true;
+}
+
+static void UnloadSingleRoomPool(RoomPool &pool)
+{
+    for (auto *p : pool.u.prefabs)
+        UnloadPrefab(p);
+    for (auto *p : pool.ud.prefabs)
+        UnloadPrefab(p);
+    for (auto *p : pool.ur.prefabs)
+        UnloadPrefab(p);
+    for (auto *p : pool.udr.prefabs)
+        UnloadPrefab(p);
+    for (auto *p : pool.udrl.prefabs)
+        UnloadPrefab(p);
+    pool.u.prefabs.clear();
+    pool.ud.prefabs.clear();
+    pool.ur.prefabs.clear();
+    pool.udr.prefabs.clear();
+    pool.udrl.prefabs.clear();
+    pool.loaded = false;
 }
 
 void WorldGenPools::UnloadRoomPool()
 {
-    for (auto *p : roomPool.u.prefabs)
-        UnloadPrefab(p);
-    for (auto *p : roomPool.ud.prefabs)
-        UnloadPrefab(p);
-    for (auto *p : roomPool.ur.prefabs)
-        UnloadPrefab(p);
-    for (auto *p : roomPool.udr.prefabs)
-        UnloadPrefab(p);
-    for (auto *p : roomPool.udrl.prefabs)
-        UnloadPrefab(p);
-    roomPool.u.prefabs.clear();
-    roomPool.ud.prefabs.clear();
-    roomPool.ur.prefabs.clear();
-    roomPool.udr.prefabs.clear();
-    roomPool.udrl.prefabs.clear();
-    roomPool.loaded = false;
+    UnloadSingleRoomPool(enemyPool);
+    UnloadSingleRoomPool(treasurePool);
+    UnloadSingleRoomPool(elitePool);
+    UnloadSingleRoomPool(traderPool);
+    UnloadSingleRoomPool(startPool);
+    UnloadSingleRoomPool(finishPool);
+    UnloadSingleRoomPool(bossPool);
 }
 
 bool WorldGenPools::IsRoomLoaded() const
 {
-    return roomPool.loaded;
+    return enemyPool.loaded;
+}
+
+RoomPool &WorldGenPools::GetPoolForType(CellType type)
+{
+    switch (type)
+    {
+        case CELL_ENEMY:       return enemyPool;
+        case CELL_TREASURE:    return treasurePool;
+        case CELL_ENEMY_ELITE: return elitePool;
+        case CELL_TRADER:      return traderPool;
+        case CELL_START:       return startPool;
+        case CELL_FINISH:      return finishPool;
+        case CELL_BOSS:        return bossPool;
+        default:               return enemyPool;
+    }
+}
+
+std::vector<TilesonMapData *> WorldGenPools::GetAllRoomPrefabs()
+{
+    std::vector<TilesonMapData *> all;
+    auto collect = [&](RoomPool &pool)
+    {
+        for (auto *p : pool.u.prefabs)
+            all.push_back(p);
+        for (auto *p : pool.ud.prefabs)
+            all.push_back(p);
+        for (auto *p : pool.ur.prefabs)
+            all.push_back(p);
+        for (auto *p : pool.udr.prefabs)
+            all.push_back(p);
+        for (auto *p : pool.udrl.prefabs)
+            all.push_back(p);
+    };
+    collect(enemyPool);
+    collect(treasurePool);
+    collect(elitePool);
+    collect(traderPool);
+    collect(startPool);
+    collect(finishPool);
+    collect(bossPool);
+    return all;
 }
 
 bool WorldGenPools::IsCorridorLoaded() const
@@ -572,11 +655,6 @@ bool WorldGenPools::IsCorridorLoaded() const
 CorridorPool &WorldGenPools::GetCorridorPool()
 {
     return corridorPool;
-}
-
-RoomPool &WorldGenPools::GetRoomPool()
-{
-    return roomPool;
 }
 
 /*==============================================================================
@@ -625,8 +703,8 @@ WorldGenPrefab WorldGenPrefab::Rotate(int tileDegrees, int objectDegrees)
  * WorldGenCanvas
  *==============================================================================*/
 
-WorldGenCanvas::WorldGenCanvas(TilesonMapData *map, WorldGenPools *pools)
-    : tilesonMap(map), pools(pools)
+WorldGenCanvas::WorldGenCanvas(TilesonMapData *map, WorldGenPools *pools, uint64_t seed)
+    : tilesonMap(map), pools(pools), wgRng(seed)
 {
 }
 
@@ -755,7 +833,7 @@ void WorldGenCanvas::StampToSlot(TilesonMapData *prefab, MapObject *slot)
     if (tilesonMap->layerCount < WG_PREFAB_LAYER_START + prefab->layerCount)
         ExpandLayers((WG_PREFAB_LAYER_START + prefab->layerCount) - tilesonMap->layerCount);
 
-    Stamp(prefab, offsetX, offsetY, 2);
+    Stamp(prefab, offsetX, offsetY, WG_PREFAB_LAYER_START);
 }
 
 /**
@@ -788,8 +866,8 @@ void WorldGenCanvas::StampCorridor(const MapObject &exitObj, int slotCol, int sl
         return;
 
     // Expand layer kalo perlu
-    if (tilesonMap->layerCount < WG_CORRIDOR_LAYER_START + 2)
-        ExpandLayers((WG_CORRIDOR_LAYER_START + 2) - tilesonMap->layerCount);
+    if (tilesonMap->layerCount < WG_CORRIDOR_LAYER_START + CORRIDOR_LAYER_COUNT)
+        ExpandLayers((WG_CORRIDOR_LAYER_START + CORRIDOR_LAYER_COUNT) - tilesonMap->layerCount);
 
     // Stamp corridor sesuai arah exit
     if (exitObj.type == "exit_north")
@@ -797,34 +875,33 @@ void WorldGenCanvas::StampCorridor(const MapObject &exitObj, int slotCol, int sl
         int border = slotRow * WG_CELL_TILES;
         // TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), exitTileY - border);
         for (int i = 1; i <= exitTileY - border; i++)
-            Stamp(vertical, exitTileX - 3, exitTileY - i, WG_CORRIDOR_LAYER_START);
+            Stamp(vertical, exitTileX - CORRIDOR_CENTER_OFFSET, exitTileY - i, WG_CORRIDOR_LAYER_START);
     }
     else if (exitObj.type == "exit_south")
     {
         int border = slotRow * WG_CELL_TILES + WG_CELL_TILES - 1;
         // TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), border - exitTileY);
         for (int i = 1; i <= border - exitTileY; i++)
-            Stamp(vertical, exitTileX - 3, exitTileY + i, WG_CORRIDOR_LAYER_START);
+            Stamp(vertical, exitTileX - CORRIDOR_CENTER_OFFSET, exitTileY + i, WG_CORRIDOR_LAYER_START);
     }
     else if (exitObj.type == "exit_east")
     {
         int border = slotCol * WG_CELL_TILES + WG_CELL_TILES - 1;
         // TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), border - exitTileX);
         for (int i = 1; i <= border - exitTileX; i++)
-            Stamp(horizontal, exitTileX + i, exitTileY - 3, WG_CORRIDOR_LAYER_START);
+            Stamp(horizontal, exitTileX + i, exitTileY - CORRIDOR_CENTER_OFFSET, WG_CORRIDOR_LAYER_START);
     }
     else if (exitObj.type == "exit_west")
     {
         int border = slotCol * WG_CELL_TILES;
         // TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), exitTileX - border);
         for (int i = 1; i <= exitTileX - border; i++)
-            Stamp(horizontal, exitTileX - i, exitTileY - 3, WG_CORRIDOR_LAYER_START);
+            Stamp(horizontal, exitTileX - i, exitTileY - CORRIDOR_CENTER_OFFSET, WG_CORRIDOR_LAYER_START);
     }
 }
 
 void WorldGenCanvas::StampLayout(const std::vector<std::vector<WorldCell>> &grid,
-                                 const std::vector<MapObject> &slots,
-                                 RoomPool &roomPool)
+                                 const std::vector<MapObject> &slots)
 {
     for (int r = 0; r < WG_GRID_SIZE; r++)
     {
@@ -840,19 +917,12 @@ void WorldGenCanvas::StampLayout(const std::vector<std::vector<WorldCell>> &grid
 
             MapObject slot = slots[slotIndex];
 
-            TilesonMapData *prefab = nullptr;
-            if (cell.type == CELL_START)
-                prefab = roomPool.u.prefabs[0];
-            else if (cell.type == CELL_FINISH)
-                prefab = roomPool.u.prefabs[1];
-            else
-                prefab = roomPool.udrl.prefabs[0];
-
-            if (prefab)
-                StampToSlot(prefab, &slot);
+            WorldGenPrefab result = ResolveRotation(cell.type, cell.exitMask, wgRng);
+            if (result.GetData())
+            {
+                StampToSlot(result.GetData(), &slot);
+                result.Unload();
+            }
         }
     }
 }
-
-
-

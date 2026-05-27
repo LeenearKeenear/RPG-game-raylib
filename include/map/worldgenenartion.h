@@ -27,6 +27,23 @@ constexpr int WG_PREFAB_LAYER_START = 2;   // Layer awal untuk nge-stamp prefab 
 constexpr int WG_CORRIDOR_LAYER_START = 4; // Layer awal untuk nge-stamp corridor
 constexpr int WG_TILE_SIZE = FRAME_SIZE;   // Ukuran tile dalam pixel
 
+// Prim's Algorithm — tuning jumlah cell dan stop chance
+constexpr int WG_PRIM_START_CELLS = 1;  // Jumlah cell awal saat seed Prim
+constexpr int WG_PRIM_MIN_CELLS = 6;    // Minimum cell sebelum boleh random stop
+constexpr int WG_PRIM_MAX_CELLS = 12;   // Maksimum cell (batas atas loop Prim)
+constexpr int WG_PRIM_STOP_CHANCE = 20; // Persentase chance random stop setelah MIN_CELLS
+
+constexpr int NUM_DIRS = 4;         // Jumlah arah mata angin
+constexpr int DEPTH_UNVISITED = -1; // Sentinel: cell belum dikunjungi di ComputeDepth
+constexpr int INVALID_INDEX = -1;   // Sentinel: index / koordinat tidak valid
+constexpr int PERCENT_MAX = 100;    // Nilai maksimum persentase untuk RNG
+
+constexpr int CORRIDOR_CENTER_OFFSET = 3; // Offset tile untuk center corridor saat stamp
+constexpr int CORRIDOR_LAYER_COUNT = 2;   // Jumlah layer corridor (vertical + horizontal)
+constexpr int START_PREFAB_INDEX = 0;     // Index prefab START di pool template_u
+constexpr int FINISH_PREFAB_INDEX = 1;    // Index prefab FINISH di pool template_u
+constexpr int DEFAULT_PREFAB_INDEX = 0;   // Index prefab default di pool template_udrl
+
 constexpr const char *SLOT_WORLDGEN_LAYER_NAME = "slot_worldgen";
 constexpr const char *EXIT_NORTH_TYPE_OBJECT_NAME = "exit_north";
 constexpr const char *EXIT_EAST_TYPE_OBJECT_NAME = "exit_east";
@@ -197,9 +214,9 @@ class WorldGenPools
 public:
     /**
      * @brief Inisialisasi pool dengan seed tertentu
-     * @param seed Seed untuk deterministic RNG (default: placeholder)
+     * @param seed Seed untuk deterministic corridor selection
      */
-    WorldGenPools(uint64_t seed = 12345231311);
+    WorldGenPools(uint64_t seed);
 
     /**
      * @brief Load semua room template dari folder
@@ -238,13 +255,29 @@ public:
     /** @return Reference ke internal CorridorPool */
     CorridorPool &GetCorridorPool();
 
-    RoomPool &GetRoomPool();
+    /**
+     * @brief Ambil RoomPool untuk CellType tertentu
+     * @param type Tipe cell yang pool-nya diminta
+     * @return Reference ke RoomPool yang sesuai dengan type
+     */
+    RoomPool &GetPoolForType(CellType type);
+
+    /**
+     * @brief Kumpulkan semua prefab dari seluruh type pool
+     * @return Vector berisi pointer ke semua prefab room
+     */
+    std::vector<TilesonMapData *> GetAllRoomPrefabs();
 
 private:
-    uint64_t worldSeed;        // Seed global untuk deterministic generation
-    std::mt19937 wgRng;        // RNG engine (cadangan untuk random pool)
-    RoomPool roomPool;         // Pool room templates
-    CorridorPool corridorPool; // Pool corridor prefabs
+    uint64_t worldSeed;            // Seed global untuk deterministic generation
+    RoomPool enemyPool;            // Pool room tipe enemy
+    RoomPool treasurePool;         // Pool room tipe treasure
+    RoomPool elitePool;            // Pool room tipe elite
+    RoomPool traderPool;           // Pool room tipe trader
+    RoomPool startPool;            // Pool room tipe start
+    RoomPool finishPool;           // Pool room tipe finish
+    RoomPool bossPool;             // Pool room tipe boss
+    CorridorPool corridorPool;     // Pool corridor prefabs
 
     /**
      * @brief SplitMix64 hash function untuk deterministic selection
@@ -262,6 +295,8 @@ private:
      * @return Index terpilih dalam range [0, poolSize)
      */
     int PickCorridorIndex(int tileX, int tileY, int exitTypeHash, int poolSize);
+
+    void LoadRoomPoolForType(const char *basePath, const char *roomType, RoomPool &targetPool);
 };
 
 /*==============================================================================
@@ -279,6 +314,15 @@ class WorldGenPrefab
 public:
     /** @brief Constructor — data = nullptr */
     WorldGenPrefab();
+
+    /**
+     * @brief Constructor — wrap existing TilesonMapData* (non-owning)
+     * @param existingData Pointer ke data yang sudah di-load (milik pool)
+     *
+     * Untuk bungkus prefab dari pool sementara, biarkan Rotate() yang bikin owned copy.
+     * Jangan panggil Unload() pada wrapper ini — data tetap milik pool.
+     */
+    WorldGenPrefab(TilesonMapData *existingData);
 
     /**
      * @brief Load prefab dari file JSON Tiled
@@ -320,8 +364,9 @@ public:
     /**
      * @param map Pointer ke main map canvas (biasanya tilesonMap global)
      * @param pools Pointer ke instance WorldGenPools
+     * @param seed Seed untuk deterministic RNG (harus sama dengan WorldGenLayout)
      */
-    WorldGenCanvas(TilesonMapData *map, WorldGenPools *pools);
+    WorldGenCanvas(TilesonMapData *map, WorldGenPools *pools, uint64_t seed);
 
     /**
      * @brief Ambil semua slot worldgen dari layer "slot_worldgen"
@@ -360,18 +405,21 @@ public:
     void StampCorridor(const MapObject &exitObj, int slotCol, int slotRow);
 
     void StampLayout(const std::vector<std::vector<WorldCell>> &grid,
-                     const std::vector<MapObject> &slots,
-                     RoomPool &roomPool);
+                     const std::vector<MapObject> &slots);
 
 private:
     TilesonMapData *tilesonMap; // Main map canvas — reference ke global
     WorldGenPools *pools;       // Reference ke pools untuk akses corridor
+    std::mt19937_64 wgRng;     // RNG deterministic dari worldSeed
+    static int RotateExitMask(int mask, int degrees);
+    WeightedPool *SelectPool(CellType type, int exitMask, RoomPool &roomPool, int &outBaseMask);
+    WorldGenPrefab ResolveRotation(CellType type, int exitMask, std::mt19937_64 &rng);
 };
 
 class WorldGenLayout
 {
 public:
-    WorldGenLayout(uint64_t seed = 1234523131121131);
+    WorldGenLayout(uint64_t seed);
 
     void Generate();
 
@@ -386,4 +434,18 @@ private:
     void RunPrims();
     void AssignCellTypes();
     void DebugPrintGrid() const;
+    bool IsLeaf(int r, int c) const;
+    bool IsAdjacentToType(int r, int c, CellType type) const;
+    int CountActiveCells() const;
+    std::vector<std::vector<int>> ComputeDepth() const;
 };
+
+/*==============================================================================
+ * Seed Functions
+ *==============================================================================*/
+
+/** @brief Generate seed random untuk satu run game */
+uint64_t GenerateRunSeed(void);
+
+/** @brief Dapatkan seed run yang sedang aktif */
+uint64_t GetCurrentRunSeed(void);

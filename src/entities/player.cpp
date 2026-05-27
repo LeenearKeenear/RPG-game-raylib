@@ -11,6 +11,8 @@
 #include "propsbehavior.h"
 #include <cmath>
 
+constexpr int EMPTY_ITEM_ID = -1;
+
 /** @brief Instance global player */
 Player PlayerInstance;
 
@@ -39,7 +41,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
         Hotbar[3] = {3, 8}; // Mana Bread
 
         for (int i = 0; i < PlayerInstance.MaxBag; i++)
-            Bag[i] = {-1, 0};
+            Bag[i] = {EMPTY_ITEM_ID, 0};
 
         isInitialized = true;
         TraceLog(LOG_INFO, "Player: Resource global dan statistik telah diinisialisasi");
@@ -69,7 +71,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
     }
     else
     {
-        Position = {((float)tilesonMap->width * 32) / 2.0f, ((float)tilesonMap->height * 32) / 2.0f};
+        Position = {((float)tilesonMap->width * FRAME_SIZE) / 2.0f, ((float)tilesonMap->height * FRAME_SIZE) / 2.0f};
     }
 
     Anim.position = Position;
@@ -117,14 +119,16 @@ void Player::Update()
         HitFlashTimer -= Time::DELTA_TIME;
 
     // 4. Fisika & Pergerakan (termasuk Knockback)
+    float fpsNorm = 60.0f;
+    float knockbackFriction = 0.85f;
     if (Vector2Length(KnockbackVelocity) > 0.1f)
     {
-        Vector2 nextPos = Vector2Add(Position, Vector2Scale(KnockbackVelocity, Time::DELTA_TIME * 60.0f));
+        Vector2 nextPos = Vector2Add(Position, Vector2Scale(KnockbackVelocity, Time::DELTA_TIME * fpsNorm));
         if (Movement::CanMove(*this, nextPos))
         {
             Position = nextPos;
         }
-        KnockbackVelocity = Vector2Scale(KnockbackVelocity, 0.85f); // Redaman gesekan
+        KnockbackVelocity = Vector2Scale(KnockbackVelocity, knockbackFriction);
     }
     else
     {
@@ -182,7 +186,8 @@ void Player::Render(void)
     DrawAimIndicator();
 
     // Bayangan (Drop shadow)
-    DrawEllipse((int)Position.x + 16, (int)Position.y + 31, 10, 4, {0, 0, 0, 80});
+    int shadowRx = 10, shadowRy = 4;
+    DrawEllipse((int)Position.x + FRAME_SIZE / 2, (int)Position.y + FRAME_SIZE - 1, shadowRx, shadowRy, {0, 0, 0, 80});
 
     // Terapkan warna kilatan (merah saat terkena hit)
     Color tint = WHITE;
@@ -200,8 +205,10 @@ void Player::TakeDamage(float amount, Vector2 knockback)
 {
     Entity::TakeDamage(amount, knockback);
 
-    HitFlashTimer = 0.15f;
-    KnockbackVelocity = Vector2Scale(knockback, 6.0f);
+    float hitFlashDuration = 0.15f;
+    float knockbackStrength = 6.0f;
+    HitFlashTimer = hitFlashDuration;
+    KnockbackVelocity = Vector2Scale(knockback, knockbackStrength);
 
     if (Anim.isAttacking)
     {
@@ -210,7 +217,7 @@ void Player::TakeDamage(float amount, Vector2 knockback)
         PlayAnimation(Anim, IDLE, Anim.direction);
     }
 
-    Vector2 center = {Position.x + 16, Position.y + 16};
+    Vector2 center = {Position.x + FRAME_SIZE / 2, Position.y + FRAME_SIZE / 2};
     Combat::AddDamagePopup(center, amount);
 
     TraceLog(LOG_INFO, "PLAYER: Menerima %.1f damage. Sisa HP: %.1f", amount, Health);
@@ -271,9 +278,11 @@ void Player::DrawAimIndicator(void)
     Color outlineColor = Fade(BLACK, alpha);
 
     // Gambar outline hitam (lebih tebal)
-    DrawLineEx(playerCenter, rayEnd, 3.5f, outlineColor);
+    float outlineThickness = 3.5f;
+    float indicatorThickness = 1.5f;
+    DrawLineEx(playerCenter, rayEnd, outlineThickness, outlineColor);
     // Gambar garis utama putih (lebih tipis di atas outline)
-    DrawLineEx(playerCenter, rayEnd, 1.5f, indicatorColor);
+    DrawLineEx(playerCenter, rayEnd, indicatorThickness, indicatorColor);
 
     // Raycast hanya terhadap object layer (garis biru) untuk titik merah
     std::vector<MapObject> debugObstacles;
@@ -292,7 +301,8 @@ void Player::DrawAimIndicator(void)
     // Titik merah hanya di interseksi dengan garis biru (object layer) ketika mode debug aktif
     if (isDebugMode && LastHit.hit)
     {
-        DrawCircleV(LastHit.point, 4.0f, Fade(RED, alpha));
+        float debugCircleRadius = 4.0f;
+        DrawCircleV(LastHit.point, debugCircleRadius, Fade(RED, alpha));
     }
 }
 
@@ -317,7 +327,7 @@ void Player::HandleAction(void)
             break;
 
         InventoryItem &slot = Hotbar[slotIdx];
-        if (slot.definitionId == -1)
+        if (slot.definitionId == EMPTY_ITEM_ID)
             break;
 
         bool dropAll = InputInstance.IsDropItemAll();
@@ -368,14 +378,14 @@ void Player::HandleAction(void)
         if (dropAll)
         {
             dropped.amount = slot.amount;
-            slot = {-1, 0};
+            slot = {EMPTY_ITEM_ID, 0};
         }
         else
         {
             dropped.amount = 1;
             slot.amount -= 1;
             if (slot.amount <= 0)
-                slot = {-1, 0};
+                slot = {EMPTY_ITEM_ID, 0};
         }
 
         itemData.activeItems.push_back(dropped);

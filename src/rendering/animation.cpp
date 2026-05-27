@@ -398,7 +398,7 @@ float TextFloat(float currentOffset, float speed, float dt)
 
 void DamageFloat(Vector2& pos, Vector2& vel, float gravity, float friction, float dt)
 {
-    pos = Vector2Add(pos, Vector2Scale(vel, dt * 60.0f));
+    pos = Vector2Add(pos, Vector2Scale(vel, dt));
     vel.y += gravity;
     vel.x *= friction;
 }

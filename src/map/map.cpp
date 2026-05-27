@@ -291,26 +291,29 @@ void InitMap(void)
     // preFabMapPath = "assets/maps/World_generation/template3(ud).json";
     // preFabMapPath = "assets/maps/World_generation/template4(ur).json";
     // preFabMapPath = "assets/maps/World_generation/template5(u).json";
-    currentMapPath = "assets/maps/World_generation/background_template_test.json";
+    currentMapPath = "assets/maps/World_generation/background_map.json";
     LoadMap(currentMapPath.c_str());
     BuildMapObjectIndex(); // 1. setelah load background
 
-    WorldGenPools pools;
+    int testingSeed = 123456789;
+    uint64_t runSeed = GenerateRunSeed();
+    // WorldGenPools pools(TestingSeed);
+    WorldGenPools pools(runSeed);
     pools.LoadRoomPool("assets/maps/World_generation");
     pools.LoadCorridorPool("assets/maps/World_generation/corridor");
 
     // Load prefab → BuildMapObjectIndex tiap prefab
-    for (auto* prefab : pools.GetRoomPool().u.prefabs)
-        BuildMapObjectIndexTarget(prefab);
-    for (auto* prefab : pools.GetRoomPool().udrl.prefabs)
-        BuildMapObjectIndexTarget(prefab);
+    // BuildMapObjectIndex semua pool
+    for (auto *p : pools.GetAllRoomPrefabs())
+        BuildMapObjectIndexTarget(p);
 
-    WorldGenLayout layout;
+    // WorldGenLayout layout(TestingSeed);
+    WorldGenLayout layout(runSeed);
     layout.Generate();
 
-    WorldGenCanvas canvas(tilesonMap, &pools);
+    WorldGenCanvas canvas(tilesonMap, &pools, runSeed);
     auto slots = canvas.GetSlots();
-    canvas.StampLayout(layout.GetGrid(), slots, pools.GetRoomPool());
+    canvas.StampLayout(layout.GetGrid(), slots);
 
     BuildMapObjectIndex(); // 2. setelah stamp room
 
@@ -383,7 +386,8 @@ void RenderMap(void)
                 auto &tilesets = tilesonMap->tilesets[groupIdx];
 
                 auto it = std::lower_bound(tilesets.begin(), tilesets.end(), tileId,
-                    [](const TilesetInfo &t, int id) { return t.lastgid < id; });
+                                           [](const TilesetInfo &t, int id)
+                                           { return t.lastgid < id; });
                 if (it == tilesets.end() || tileId < it->firstgid)
                     continue;
                 TilesetInfo *ts = &(*it);
