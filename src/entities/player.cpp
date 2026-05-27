@@ -143,7 +143,7 @@ void Player::Update()
         Movement::HandleMovement(*this);
     }
 
-    Combat::HandleCombat(*this);
+    Combat::Update(*this);
     if (Anim.isDead)
         return;
 

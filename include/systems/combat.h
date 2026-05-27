@@ -4,32 +4,6 @@
 #include "item.h"
 #include <vector>
 
-constexpr float ANGLE_UP_MIN = -135.0f;
-constexpr float ANGLE_UP_MAX = -45.0f;
-constexpr float ANGLE_RIGHT_MIN = -45.0f;
-constexpr float ANGLE_RIGHT_MAX = 45.0f;
-constexpr float ANGLE_DOWN_MIN = 45.0f;
-constexpr float ANGLE_DOWN_MAX = 135.0f;
-constexpr float THRUST_MAX_OFFSET = 16.0f;
-constexpr float PIERCE_MAX_OFFSET = 24.0f;
-constexpr float SLAM_MAX_OFFSET = 8.0f;
-constexpr float WEAPON_ANGLE_RIGHT = -9.0f;
-constexpr float WEAPON_ANGLE_LEFT = 189.0f;
-constexpr float WEAPON_ANGLE_UP_RIGHT = -60.0f;
-constexpr float WEAPON_ANGLE_UP_LEFT = -120.0f;
-constexpr float WEAPON_ANGLE_DOWN_RIGHT = 60.0f;
-constexpr float WEAPON_ANGLE_DOWN_LEFT = 120.0f;
-constexpr float WEAPON_OFFSET_RIGHT_FACTOR = 0.8f;
-constexpr float WEAPON_RENDER_ORIGIN_X = 17.0f;
-constexpr float WEAPON_ROTATION_OFFSET = 90.0f;
-constexpr float SLASH_PHASE_1_START = 1.0f / 3.0f;
-constexpr float SLASH_PHASE_2_START = 2.0f / 3.0f;
-constexpr float SLASH_DISTANCE_MULTIPLIER = 0.65f;
-constexpr float SWORD1_SLASH_OFFSET_H = 26.0f;
-constexpr float SWORD2_SLASH_OFFSET_H = 37.0f;
-constexpr float SWORD1_SLASH_BACK_DIST = 16.0f;
-constexpr float SWORD2_SLASH_BACK_DIST = 19.5f;
-
 class Player;
 class Entity;
 
@@ -47,9 +21,14 @@ namespace Combat
         const WeaponData* weapon = nullptr;
     };
 
-    void HandleCombat(Player &player);
-    void HandleRevive(Player &player);
-    void UpdateSwingAttack(Player &player, float dt);
-    void DrawSwingAttack(Player &player);
-    void AddDamagePopup(Vector2 pos, float damage);
+    void Update(Player &player);
+    void HandleDead(Player &player);
+    void HandleStamina(Player &player);
+    void HandleAttack(Player &player);
+
+    // void HandleCombat(Player &player);
+    // void HandleRevive(Player &player);
+    // void UpdateSwingAttack(Player &player, float dt);
+    // void DrawSwingAttack(Player &player);
+    // void AddDamagePopup(Vector2 pos, float damage);
 }
