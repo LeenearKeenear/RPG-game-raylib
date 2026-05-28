@@ -11,9 +11,9 @@
       "weapon": {
         "damage": 15.0,
         "reach": 36.0,
-        "breadth": 48.0,
+        "breadth": 54.0,
         "duration": 0.3,
-        "knockbackForce": 0.6,
+        "knockbackForce": 0.8,
         "startAngleOffset": 0.0,
         "sweepAngle": 0.0,
         "centerOffset": { "x": 8.0, "y": 4.0 },
@@ -32,9 +32,9 @@
       "weapon": {
         "damage": 25.0,
         "reach": 48.0,
-        "breadth": 60.0,
+        "breadth": 70.0,
         "duration": 0.4,
-        "knockbackForce": 1.8,
+        "knockbackForce": 1.5,
         "startAngleOffset": 55.0,
         "sweepAngle": -95.0,
         "centerOffset": { "x": 20.0, "y": 20.0 },

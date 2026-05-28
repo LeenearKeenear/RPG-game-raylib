@@ -176,7 +176,10 @@ void Player::Update()
  */
 void Player::Render(void)
 {
-    DrawAimIndicator();
+    if (!Anim.isDead)
+    {
+        DrawAimIndicator();
+    }
 
     // Bayangan (Drop shadow)
     DrawEllipse((int)Position.x + 16, (int)Position.y + 31, 10, 4, {0, 0, 0, 80});
@@ -189,7 +192,11 @@ void Player::Render(void)
     }
 
     DrawAnimation(Anim, tint);
-    Combat::DrawSwingAttack(*this);
+
+    if (!Anim.isDead)
+    {
+        Combat::DrawSwingAttack(*this);
+    }
 }
 
 void Player::TakeDamage(float amount, Vector2 knockback)
