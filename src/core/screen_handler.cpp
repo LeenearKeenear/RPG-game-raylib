@@ -17,6 +17,8 @@
 #include "screen.h"
 #include "map.h"
 #include "player.h"
+#include "item.h"
+#include "inventory.h"
 #include "animation.h"
 #include "enemy.h"
 #include "enemy_ai.h"
@@ -245,11 +247,27 @@ void UpdateLogicAll()
             {
                 TraceLog(LOG_INFO, "PICKUP: added to inventory");
                 item.isAdded = true;
+                
+                const ItemDefinition &def = itemDefs.GetById(item.definitionId);
+                std::string logMsg = def.name;
+                if (item.amount > 1)
+                {
+                    logMsg += " x" + std::to_string(item.amount);
+                }
+                Effects::AddLog(logMsg.c_str());
             }
             else
             {
                 TraceLog(LOG_INFO, "PICKUP: inventory full");
                 item.isPickedUp = false; // balik ke world
+                
+                static float lastInventoryFullTime = 0.0f;
+                float currentTime = (float)GetTime();
+                if (currentTime - lastInventoryFullTime > 2.0f)
+                {
+                    Effects::AddLog("Inventori Penuh");
+                    lastInventoryFullTime = currentTime;
+                }
             }
         }
     }

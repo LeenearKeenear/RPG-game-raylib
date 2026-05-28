@@ -26,8 +26,10 @@ namespace Movement
  */
 namespace Combat
 {
-    void HandleCombat(Player &player);
+    void Update(Player &player);
     void HandleRevive(Player &player);
+    void UpdateSwingAttack(Player &player, float dt);
+    void DrawSwingAttack(Player &player);
 }
 
 /**
@@ -149,7 +151,7 @@ public:
     int GetMaxInventory() const { return MaxInventory; }
 
     // combat stat
-    SwingAttack Swing = {0};     ///< Data status serangan saat ini
+    Combat::Attack attack = {};  ///< Data status serangan saat ini
     float Mana = 100.0f;         ///< Poin mana saat ini
     float MaxMana = 100.0f;      ///< Poin mana maksimum
     float ManaRegenTimer = 0.0f; ///< Timer untuk jeda pemulihan mana
@@ -169,10 +171,12 @@ public:
     float DashManaCost = 7.0f;
     bool IsDashing = false;
     bool IsMoving = false;
+    bool canInteract = false;
 
     // Feedback visual/fisika
     float HitFlashTimer = 0.0f;         ///< Durasi efek kilatan saat terkena hit
     Vector2 KnockbackVelocity = {0, 0}; ///< Gaya dorong balik (knockback) yang sedang diterapkan
+    Direction LastHorizDir = RIGHT;     ///< Arah horizontal terakhir pemain (LEFT atau RIGHT)
 
 private:
     const char *Name = "Player Name";
