@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
+#include "mapLogic.h"
+#include "propsbehavior.h"
 
 namespace Combat
 {
@@ -118,6 +120,12 @@ namespace Combat
 
                     player.Anim.isAttacking = true;
                     TraceLog(LOG_INFO, "PLAYER: Serangan diarahkan ke (%.2f, %.2f)", attackDir.x, attackDir.y);
+
+                    if (player.attack.weapon->attackType == ATTACK_PIERCE)
+                    {
+                        Arrow* arrow = new Arrow(playerCenter, attackDir, 300.0f, player.attack.weapon->damage, player.attack.weapon->reach, angle, &player);
+                        Entities::AddDynamic(arrow);
+                    }
                 }
                 else
                 {
@@ -168,7 +176,7 @@ namespace Combat
             return {startAngle, progress * THRUST_DISTANCE};
 
         case ATTACK_PIERCE:
-            return {startAngle, progress * PIERCE_DISTANCE};
+            return {startAngle, progress * -8.0f};
 
         case ATTACK_SLAM:
         {
@@ -390,7 +398,8 @@ namespace Combat
         }
         else
         {
-            PerformHitDetection(player);
+            if (player.attack.weapon->attackType != ATTACK_PIERCE)
+                PerformHitDetection(player);
         }
     }
 
@@ -438,7 +447,16 @@ namespace Combat
         visualPos.x += cosf(rad) * thrust;
         visualPos.y += sinf(rad) * thrust;
 
-        const Frame &frame = GetFrame(def.spriteKey);
+        std::string spriteKey = def.spriteKey;
+        if (spriteKey == "bow")
+        {
+            if (player.attack.active)
+                spriteKey = "bow";
+            else
+                spriteKey = "bowDraw";
+        }
+
+        const Frame &frame = GetFrame(spriteKey);
 
         Display display;
         display.position = visualPos;
@@ -457,4 +475,102 @@ namespace Combat
             DrawSlashTrail(player, def.spriteKey, player.attack.raycastAngle);
         }
     }
+}
+
+// Arrow Implementation
+Arrow::Arrow(Vector2 pos, Vector2 dir, float speed, float damage, float reach, float rotation, Entity* owner, std::string spriteKey)
+{
+    StartPos = pos;
+    Reach = reach;
+    Position = pos;
+    Velocity = Vector2Scale(Vector2Normalize(dir), speed);
+    Damage = damage;
+    Rotation = rotation;
+    Owner = owner;
+    SpriteKey = spriteKey;
+    
+    LifeTime = 0.0f;
+    MaxLifeTime = 2.0f; // Arrows disappear after 2 seconds
+    HasHit = false;
+    IsActive = true;
+    Health = 1.0f; // Arrow health
+}
+
+void Arrow::Update()
+{
+    if (!IsActive) return;
+
+    float dt = Time::DELTA_TIME;
+    LifeTime += dt;
+    if (LifeTime >= MaxLifeTime)
+    {
+        IsActive = false;
+        return;
+    }
+
+    Position = Vector2Add(Position, Vector2Scale(Velocity, dt));
+
+    if (Vector2Distance(StartPos, Position) >= Reach)
+    {
+        IsActive = false;
+        return;
+    }
+
+    // Check collision with map (walls)
+    Rectangle hitbox = GetHitbox();
+    if (CheckCollisionAgainstRects(hitbox, PlayerInstance.CollisionRects) || 
+        CheckCollisionAgainstPolygons(hitbox, PlayerInstance.CollisionPolygons))
+    {
+        IsActive = false;
+        return;
+    }
+    
+    // Check collision with props
+    if (CheckCollisionAgainstRects(hitbox, DynamicObstacles))
+    {
+        HitPropsByAttack(hitbox, PlayerInstance.GetHitbox(), &PlayerInstance);
+        IsActive = false;
+        return;
+    }
+
+    // Check collision with entities
+    for (auto* entity : Entities::GetRegistry())
+    {
+        if (entity == this || entity == Owner || !entity->IsActive || entity->Health <= 0)
+            continue;
+
+        if (CheckCollisionRecs(hitbox, entity->GetHitbox()))
+        {
+            Vector2 knockback = Vector2Scale(Vector2Normalize(Velocity), 1.5f);
+            entity->TakeDamage(Damage, knockback);
+            
+            // Show damage number at entity center
+            Vector2 center = entity->GetCenter();
+            Effects::AddDamage(center, Damage);
+            
+            IsActive = false;
+            break;
+        }
+    }
+}
+
+void Arrow::Render()
+{
+    if (!IsActive) return;
+
+    Display display;
+    display.position = Position;
+    display.size = 32;
+    display.offset = {0, 0};
+    display.origin = {16.0f, 16.0f};
+    display.rotation = Rotation + 90.0f;
+    display.tint = WHITE;
+
+    DrawFrame(SpriteKey, display);
+}
+
+Rectangle Arrow::GetHitbox() const
+{
+    // A smaller hitbox for the arrow, centered
+    return { Position.x - 4, Position.y - 4, 8, 8 };
 }

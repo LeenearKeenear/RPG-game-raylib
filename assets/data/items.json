@@ -78,14 +78,14 @@
       "maxStack": 1,
       "weapon": {
         "damage": 10.0,
-        "reach": 120.0,
+        "reach": 200.0,
         "breadth": 8.0,
         "duration": 0.3,
         "knockbackForce": 0.5,
         "startAngleOffset": 0.0,
         "sweepAngle": 0.0,
         "centerOffset": { "x": 8.0, "y": 4.0 },
-        "manaCost": 0.0,
+        "manaCost": 5.0,
         "attackType": "pierce"
       }
     },

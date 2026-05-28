@@ -3,6 +3,29 @@
 #include "effects.h"
 #include "item.h"
 #include <vector>
+#include <string>
+#include "entity.h"
+
+class Arrow : public Entity
+{
+public:
+    Vector2 Velocity;
+    Vector2 StartPos;
+    float Reach;
+    float Rotation;
+    float LifeTime;
+    float MaxLifeTime;
+    float Damage;
+    Entity* Owner;
+    bool HasHit;
+    std::string SpriteKey;
+
+    Arrow(Vector2 pos, Vector2 dir, float speed, float damage, float reach, float rotation, Entity* owner, std::string spriteKey = "arrow");
+    
+    void Update() override;
+    void Render() override;
+    Rectangle GetHitbox() const override;
+};
 
 class Player;
 class Entity;
