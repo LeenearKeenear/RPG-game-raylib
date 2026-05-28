@@ -138,11 +138,8 @@ void Player::Update()
         pendingGoBack = true;
     }
 
-    // Memblokir pergerakan selama animasi serangan
-    if (!Anim.isAttacking)
-    {
-        Movement::HandleMovement(*this);
-    }
+    // Pergerakan bisa dilakukan bersamaan dengan animasi serangan
+    Movement::HandleMovement(*this);
 
     Combat::Update(*this);
     if (Anim.isDead)
