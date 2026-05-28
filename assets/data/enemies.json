@@ -1,0 +1,70 @@
+{
+  "enemies": {
+    "slime": {
+      "id": 0,
+      "rank": "normal",
+      "stats": {
+        "maxHealth": 100.0,
+        "speed": 1.0,
+        "chaseSpeed": 1.8,
+        "damage": 5.0,
+        "baseDetectionRange": 120.0,
+        "chaseDetectionRange": 240.0,
+        "attackRange": 32.0,
+        "healthRegenRate": 10.0,
+        "healthRegenDelay": 2.0,
+        "patrolRadius": 128.0,
+        "turnBaseTriggerChance": 0.0,
+        "canTriggerTurnBased": false
+      },
+      "hitbox": {
+        "size": { "x": 16.0, "y": 12.0 },
+        "offset": { "x": 8.0, "y": 14.0 }
+      }
+    },
+    "skeleton": {
+      "id": 1,
+      "rank": "normal",
+      "stats": {
+        "maxHealth": 100.0,
+        "speed": 1.3,
+        "chaseSpeed": 1.9,
+        "damage": 10.0,
+        "baseDetectionRange": 120.0,
+        "chaseDetectionRange": 240.0,
+        "attackRange": 32.0,
+        "healthRegenRate": 10.0,
+        "healthRegenDelay": 2.0,
+        "patrolRadius": 128.0,
+        "turnBaseTriggerChance": 0.0,
+        "canTriggerTurnBased": false
+      },
+      "hitbox": {
+        "size": { "x": 20.0, "y": 16.0 },
+        "offset": { "x": 6.0, "y": 12.0 }
+      }
+    },
+    "wolf": {
+      "id": 2,
+      "rank": "normal",
+      "stats": {
+        "maxHealth": 150.0,
+        "speed": 1.7,
+        "chaseSpeed": 2.0,
+        "damage": 20.0,
+        "baseDetectionRange": 120.0,
+        "chaseDetectionRange": 240.0,
+        "attackRange": 32.0,
+        "healthRegenRate": 10.0,
+        "healthRegenDelay": 2.0,
+        "patrolRadius": 128.0,
+        "turnBaseTriggerChance": 0.0,
+        "canTriggerTurnBased": false
+      },
+      "hitbox": {
+        "size": { "x": 24.0, "y": 16.0 },
+        "offset": { "x": 4.0, "y": 12.0 }
+      }
+    }
+  }
+}
