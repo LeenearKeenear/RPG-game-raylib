@@ -171,6 +171,7 @@ public:
     float DashManaCost = 7.0f;
     bool IsDashing = false;
     bool IsMoving = false;
+    bool canInteract = false;
 
     // Feedback visual/fisika
     float HitFlashTimer = 0.0f;         ///< Durasi efek kilatan saat terkena hit

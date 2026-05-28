@@ -196,6 +196,17 @@ void Player::Render(void)
     if (!Anim.isDead)
     {
         Combat::DrawSwingAttack(*this);
+        
+        if (canInteract)
+        {
+            int fontSize = 10;
+            const char* text = "[E] Interact";
+            int textW = MeasureText(text, fontSize);
+            int x = (int)Position.x + 16 - textW / 2;
+            int y = (int)Position.y - 12;
+            DrawText(text, x + 1, y + 1, fontSize, ColorAlpha(BLACK, 0.7f));
+            DrawText(text, x, y, fontSize, YELLOW);
+        }
     }
 }
 

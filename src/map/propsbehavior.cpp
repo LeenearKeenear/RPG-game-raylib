@@ -16,6 +16,7 @@
 #include "enemy.h"
 #include "enemy_ai.h"
 #include "entities.h"
+#include "game_debug.h"
 
 /*==============================================================================
  * Utility Functions
@@ -671,6 +672,15 @@ int BombManager::Render(Rectangle viewRect)
         }
         else
         {
+            if (isDebugMode)
+            {
+                Vector2 bombCenter = {
+                    bomb.tile.position.x + FRAME_SIZE / 2.0f,
+                    bomb.tile.position.y + FRAME_SIZE / 2.0f
+                };
+                DrawCircleV(bombCenter, BOMB_EXPLOSION_RADIUS, Fade(RED, 0.15f));
+                DrawCircleLinesV(bombCenter, BOMB_EXPLOSION_RADIUS, Fade(RED, 0.5f));
+            }
             Display display;
             display.position = bomb.tile.position;
             DrawFrame("bomb", display);
