@@ -46,6 +46,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
 
     Anim.animSet = &loadedAnimationSets["knight"];
     PlayAnimation(Anim, IDLE, RIGHT);
+    LastHorizDir = RIGHT;
     CollisionRects.clear();
     CollisionPolygons.clear();
 

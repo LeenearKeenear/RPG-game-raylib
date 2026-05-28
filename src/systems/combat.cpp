@@ -89,6 +89,7 @@ namespace Combat
                     attackFaceDir = LEFT;
 
                 Direction horizDir = (attackDir.x >= 0) ? RIGHT : LEFT;
+                player.LastHorizDir = horizDir;
                 PlayAnimation(player.Anim, IDLE, horizDir);
                 PlayAnimation(player.Anim, IDLE, attackFaceDir);
 
@@ -423,13 +424,12 @@ namespace Combat
         {
             visualPos = player.GetCenter();
 
-            static Direction lastHorizDir = RIGHT;
             if (player.Anim.direction == RIGHT)
-                lastHorizDir = RIGHT;
+                player.LastHorizDir = RIGHT;
             else if (player.Anim.direction == LEFT)
-                lastHorizDir = LEFT;
+                player.LastHorizDir = LEFT;
 
-            CalcIdleWeaponPose(player.Anim.direction, lastHorizDir, rayAngle, offsetRight);
+            CalcIdleWeaponPose(player.Anim.direction, player.LastHorizDir, rayAngle, offsetRight);
             drawAngle = rayAngle;
             thrust = 0.0f;
         }

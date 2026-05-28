@@ -175,6 +175,7 @@ public:
     // Feedback visual/fisika
     float HitFlashTimer = 0.0f;         ///< Durasi efek kilatan saat terkena hit
     Vector2 KnockbackVelocity = {0, 0}; ///< Gaya dorong balik (knockback) yang sedang diterapkan
+    Direction LastHorizDir = RIGHT;     ///< Arah horizontal terakhir pemain (LEFT atau RIGHT)
 
 private:
     const char *Name = "Player Name";
