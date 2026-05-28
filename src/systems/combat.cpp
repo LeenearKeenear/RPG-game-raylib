@@ -128,395 +128,333 @@ namespace Combat
         }
     }
 
-    // void PerformHitDetection(Player &player)
-    // {
-    //     if (!player.attack.active || !player.attack.weapon)
-    //         return;
+    constexpr float THRUST_DISTANCE = 16.0f;
+    constexpr float PIERCE_DISTANCE = 24.0f;
+    constexpr float SLAM_THRUST = 8.0f;
 
-    //     Vector2 playerCenter = {
-    //         player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
-    //         player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
+    struct SwingVisual
+    {
+        float angle;
+        float thrust;
+    };
 
-    //     Rectangle attackHitbox;
-    //     float reach = player.attack.weapon->reach;
-    //     float breadth = player.attack.weapon->breadth;
+    float GetBaseAngle(Direction dir)
+    {
+        switch (dir)
+        {
+        case RIGHT:
+            return 0.0f;
+        case DOWN:
+            return 90.0f;
+        case LEFT:
+            return 180.0f;
+        case UP:
+            return -90.0f;
+        }
+        return 0.0f;
+    }
 
-    //     switch (player.Anim.direction)
-    //     {
-    //     case RIGHT:
-    //         attackHitbox = {playerCenter.x + player.GetHitboxWidth() / 2,
-    //                         playerCenter.y - breadth / 2, reach, breadth};
-    //         break;
-    //     case LEFT:
-    //         attackHitbox = {playerCenter.x - player.GetHitboxWidth() / 2 - reach,
-    //                         playerCenter.y - breadth / 2, reach, breadth};
-    //         break;
-    //     case DOWN:
-    //         attackHitbox = {playerCenter.x - breadth / 2,
-    //                         playerCenter.y + player.GetHitboxHeight() / 2, breadth, reach};
-    //         break;
-    //     case UP:
-    //         attackHitbox = {playerCenter.x - breadth / 2,
-    //                         playerCenter.y - player.GetHitboxHeight() / 2 - reach, breadth,
-    //                         reach};
-    //         break;
-    //     }
+    SwingVisual CalcSwingVisual(const Attack &atk, Direction dir, float progress)
+    {
+        float startAngle = GetBaseAngle(dir) + atk.weapon->startAngleOffset;
 
-    //     for (auto entity : Entities::GetRegistry())
-    //     {
-    //         Entity *playerAsEntity = &player;
-    //         if (entity == playerAsEntity)
-    //             continue;
-    //         if (!entity->IsActive || entity->Health <= 0)
-    //             continue;
+        switch (atk.weapon->attackType)
+        {
+        case ATTACK_SLASH:
+            return {Slash(atk.raycastAngle, progress), 0.0f};
 
-    //         bool alreadyHit = false;
-    //         for (Entity *ptr : player.attack.damagedEntities)
-    //         {
-    //             if (ptr == entity)
-    //             {
-    //                 alreadyHit = true;
-    //                 break;
-    //             }
-    //         }
-    //         if (alreadyHit)
-    //             continue;
+        case ATTACK_THRUST:
+            return {startAngle, progress * THRUST_DISTANCE};
 
-    //         if (CheckCollisionRecs(attackHitbox, entity->GetHitbox()))
-    //         {
-    //             Vector2 entityCenter = {entity->Position.x + FRAME_SIZE / 2, entity->Position.y + FRAME_SIZE / 2};
-    //             Vector2 knockDir = Vector2Normalize(Vector2Subtract(entityCenter, playerCenter));
+        case ATTACK_PIERCE:
+            return {startAngle, progress * PIERCE_DISTANCE};
 
-    //             float damage = player.attack.weapon->damage;
-    //             Vector2 knockback = Vector2Scale(knockDir, player.attack.weapon->knockbackForce);
-    //             entity->TakeDamage(damage, knockback);
+        case ATTACK_SLAM:
+        {
+            float slamProgress = progress * progress;
+            return {
+                startAngle + (slamProgress * atk.weapon->sweepAngle),
+                slamProgress * SLAM_THRUST};
+        }
 
-    //             Effects::AddDamage(entityCenter, damage);
+        default:
+            return {
+                startAngle + (progress * atk.weapon->sweepAngle),
+                0.0f};
+        }
+    }
 
-    //             player.attack.damagedEntities.push_back(entity);
-    //             TraceLog(LOG_INFO, "COMBAT: Pemain mengenai musuh! Damage: %.1f", damage);
-    //         }
-    //     }
+    bool CheckRadialCollision(Vector2 origin, float attackAngle, float reach, float breadth, float attackerRadius, Rectangle targetHitbox)
+    {
+        Vector2 targetCenter = {
+            targetHitbox.x + targetHitbox.width / 2.0f,
+            targetHitbox.y + targetHitbox.height / 2.0f
+        };
+        float targetRadius = (targetHitbox.width + targetHitbox.height) / 4.0f;
 
-    //     HitPropsByAttack(attackHitbox, PlayerInstance.GetHitbox(), &player);
-    // }
+        float dist = Vector2Distance(origin, targetCenter);
+        float angleToTarget = atan2f(targetCenter.y - origin.y, targetCenter.x - origin.x) * (180.0f / PI);
+        
+        float diff = fmodf(angleToTarget - attackAngle + 540.0f, 360.0f) - 180.0f;
+        float angleDiff = fabsf(diff);
+        
+        float forwardDist = dist * cosf(angleDiff * (PI / 180.0f));
+        float lateralDist = dist * sinf(angleDiff * (PI / 180.0f));
 
-    // void HandleCombat(Player &player)
-    // {
-    //     if (player.Anim.isDead)
-    //         return;
+        if (forwardDist >= -targetRadius && 
+            forwardDist <= reach + attackerRadius + targetRadius && 
+            lateralDist <= (breadth / 2.0f) + targetRadius)
+        {
+            return true;
+        }
+        return false;
+    }
 
-    //     if (InputInstance.IsInventoryOpen())
-    //         return;
+    Rectangle GetAttackAABB(Vector2 center, float angle, float reach, float breadth, float attackerRadius)
+    {
+        float rad = angle * (PI / 180.0f);
+        Vector2 forward = { cosf(rad), sinf(rad) };
+        Vector2 right = { -sinf(rad), cosf(rad) };
+        
+        Vector2 edgeCenter = { 
+            center.x + forward.x * attackerRadius, 
+            center.y + forward.y * attackerRadius 
+        };
+        
+        Vector2 p1 = { edgeCenter.x + right.x * (breadth / 2.0f), edgeCenter.y + right.y * (breadth / 2.0f) };
+        Vector2 p2 = { edgeCenter.x - right.x * (breadth / 2.0f), edgeCenter.y - right.y * (breadth / 2.0f) };
+        Vector2 p3 = { p1.x + forward.x * reach, p1.y + forward.y * reach };
+        Vector2 p4 = { p2.x + forward.x * reach, p2.y + forward.y * reach };
+        
+        float minX = std::min({p1.x, p2.x, p3.x, p4.x});
+        float maxX = std::max({p1.x, p2.x, p3.x, p4.x});
+        float minY = std::min({p1.y, p2.y, p3.y, p4.y});
+        float maxY = std::max({p1.y, p2.y, p3.y, p4.y});
+        
+        return { minX, minY, maxX - minX, maxY - minY };
+    }
 
-    //     if (InputInstance.IsLeftClickPressed())
-    //     {
-    //         player.attack.pressHeld = true;
-    //     }
-    //     if (!InputInstance.IsLeftClickDown())
-    //     {
-    //         player.attack.pressHeld = false;
-    //     }
+    void ApplyHitToEntity(Player &player, Entity *target, Vector2 playerCenter)
+    {
+        Vector2 entityCenter = {target->Position.x + FRAME_SIZE / 2, target->Position.y + FRAME_SIZE / 2};
+        Vector2 knockDir = Vector2Normalize(Vector2Subtract(entityCenter, playerCenter));
 
-    //     if (player.Health <= 0)
-    //     {
-    //         player.Health = 0;
-    //         PlayAnimation(player.Anim, DEAD, player.Anim.direction);
-    //         player.Anim.isDead = true;
-    //         return;
-    //     }
+        float damage = player.attack.weapon->damage;
+        Vector2 knockback = Vector2Scale(knockDir, player.attack.weapon->knockbackForce);
+        target->TakeDamage(damage, knockback);
 
-    //     if (player.ManaRegenTimer > 0)
-    //     {
-    //         player.ManaRegenTimer -= Time::DELTA_TIME;
-    //     }
-    //     else
-    //     {
-    //         if (player.Mana < player.MaxMana)
-    //         {
-    //             player.Mana += player.ManaRegenRate * Time::DELTA_TIME;
-    //             if (player.Mana > player.MaxMana)
-    //                 player.Mana = player.MaxMana;
-    //         }
-    //     }
+        Effects::AddDamage(entityCenter, damage);
 
-    //     if (player.attack.pressHeld && !player.Anim.isAttacking)
-    //     {
-    //         PlayerAction action = InputInstance.ResolveAction();
-    //         if (action == ACTION_ATTACK)
-    //         {
-    //             Vector2 mouseWorld = GetScreenToWorld2D(GetVirtualMousePosition(player.State), camera);
-    //             Vector2 playerCenter = {
-    //                 player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
-    //                 player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
-    //             Vector2 attackDir = Vector2Normalize(Vector2Subtract(mouseWorld, playerCenter));
+        player.attack.damagedEntities.push_back(target);
+        TraceLog(LOG_INFO, "COMBAT: Pemain mengenai musuh! Damage: %.1f", damage);
+    }
 
-    //             float angle = atan2(attackDir.y, attackDir.x) * (180.0f / PI);
-    //             Direction attackFaceDir;
-    //             if (angle >= -135.0f && angle < -45.0f)
-    //                 attackFaceDir = UP;
-    //             else if (angle >= -45.0f && angle < 45.0f)
-    //                 attackFaceDir = RIGHT;
-    //             else if (angle >= 45.0f && angle < 135.0f)
-    //                 attackFaceDir = DOWN;
-    //             else
-    //                 attackFaceDir = LEFT;
+    void CalcIdleWeaponPose(Direction dir, Direction lastHorizDir, float &outAngle, float &outOffsetRight)
+    {
+        outAngle = 0.0f;
+        outOffsetRight = 0.0f;
 
-    //             Direction horizDir = (attackDir.x >= 0) ? RIGHT : LEFT;
-    //             PlayAnimation(player.Anim, IDLE, horizDir);
-    //             PlayAnimation(player.Anim, IDLE, attackFaceDir);
+        bool isRight = (lastHorizDir == RIGHT);
 
-    //             float manaCost = Inventory::GetAttackManaCost(player);
+        switch (dir)
+        {
+        case RIGHT:
+            outAngle = -9.0f;
+            outOffsetRight = 0.8f;
+            break;
+        case LEFT:
+            outAngle = 189.0f;
+            break;
+        case UP:
+            outAngle = isRight ? -60.0f : -120.0f;
+            outOffsetRight = isRight ? 0.8f : 0.0f;
+            break;
+        case DOWN:
+            outAngle = isRight ? 60.0f : 120.0f;
+            outOffsetRight = isRight ? 0.8f : 0.0f;
+            break;
+        }
+    }
 
-    //             if (player.Mana >= manaCost)
-    //             {
-    //                 InventoryItem activeItem = Inventory::GetActiveHotbarItem(player);
-    //                 if (activeItem.definitionId == -1 || itemDefs.GetById(activeItem.definitionId).category != ITEM_WEAPON)
-    //                 {
-    //                     Effects::AddLog("Tidak ada senjata!");
-    //                     player.attack.pressHeld = false;
-    //                     return;
-    //                 }
+    void DrawSlashTrail(const Player &player, const std::string &spriteKey, float rayAngle)
+    {
+        float progress = player.attack.timer / player.attack.weapon->duration;
+        std::string slashSpriteKey;
 
-    //                 player.Mana -= manaCost;
-    //                 player.ManaRegenTimer = player.ManaRegenDelay;
+        if (progress >= 1.0f / 3.0f && progress < 2.0f / 3.0f)
+        {
+            slashSpriteKey = (spriteKey == "sword1") ? "slashLightGraySmall1" : "slashSilverBlueMedium1";
+        }
+        else if (progress >= 2.0f / 3.0f)
+        {
+            slashSpriteKey = (spriteKey == "sword1") ? "slashLightGraySmall2" : "slashSilverBlueMedium2";
+        }
 
-    //                 player.attack.active = true;
-    //                 player.attack.timer = 0;
-    //                 player.attack.damagedEntities.clear();
-    //                 player.attack.center = playerCenter;
-    //                 player.attack.raycastAngle = angle;
+        if (slashSpriteKey.empty())
+            return;
 
-    //                 Inventory::SetupAttackStats(player, attackFaceDir);
+        const Frame &slashFrame = GetFrame(slashSpriteKey);
+        float radRay = rayAngle * (PI / 180.0f);
 
-    //                 player.Anim.isAttacking = true;
-    //                 TraceLog(LOG_INFO, "PLAYER: Serangan diarahkan ke (%.2f, %.2f)", attackDir.x, attackDir.y);
-    //             }
-    //             else
-    //             {
-    //                 Effects::AddLog("Stamina tidak cukup!");
-    //                 player.attack.pressHeld = false;
-    //                 TraceLog(LOG_WARNING, "PLAYER: Serangan gagal! Mana habis.");
-    //             }
-    //         }
-    //     }
-    // }
+        Vector2 slashPos = player.attack.center;
+        float slashDist = player.attack.weapon->reach * 0.65f;
+        slashPos.x += cosf(radRay) * slashDist;
+        slashPos.y += sinf(radRay) * slashDist;
 
-    // void HandleRevive(Player &player)
-    // {
-    //     if (player.Anim.isDead)
-    //     {
-    //         player.Anim.isDead = false;
-    //         player.Anim.isAttacking = false;
-    //         PlayAnimation(player.Anim, IDLE, player.Anim.direction);
-    //         player.Health = player.MaxHealth;
-    //         player.Mana = player.MaxMana;
-    //         player.KnockbackVelocity = {0, 0};
-    //         TraceLog(LOG_INFO, "PLAYER: Dihidupkan kembali!");
-    //     }
-    // }
+        if (progress >= 2.0f / 3.0f)
+        {
+            float shiftAngleRad = (rayAngle - 90.0f) * (PI / 180.0f);
+            float H = (spriteKey == "sword1") ? 26.0f : 37.0f;
+            float backDist = (spriteKey == "sword1") ? 16.0f : 19.5f;
+            slashPos.x += cosf(shiftAngleRad) * H;
+            slashPos.y += sinf(shiftAngleRad) * H;
 
-    // void UpdateSwingAttack(Player &player, float dt)
-    // {
-    //     if (!player.attack.active || !player.attack.weapon)
-    //         return;
+            slashPos.x -= cosf(radRay) * backDist;
+            slashPos.y -= sinf(radRay) * backDist;
+        }
 
-    //     Vector2 playerCenter = {
-    //         player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
-    //         player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
-    //     player.attack.center = playerCenter;
+        Display slashDisplay;
+        slashDisplay.position = slashPos;
+        slashDisplay.size = 32;
+        slashDisplay.offset = {0, 0};
+        slashDisplay.origin = {
+            (float)slashFrame.width * slashDisplay.size / 2.0f,
+            (float)slashFrame.height * slashDisplay.size / 2.0f};
+        slashDisplay.rotation = rayAngle + 90.0f;
+        slashDisplay.tint = WHITE;
 
+        DrawFrame(slashFrame, slashDisplay);
+    }
 
-    //     player.attack.timer += dt;
-    //     if (player.attack.timer >= player.attack.weapon->duration)
-    //     {
-    //         player.attack.active = false;
-    //         player.attack.timer = 0;
-    //         player.Anim.isAttacking = false;
-    //     }
-    //     else
-    //     {
-    //         float progress = player.attack.timer / player.attack.weapon->duration;
+    void HandleRevive(Player &player)
+    {
+        if (player.Anim.isDead)
+        {
+            player.Anim.isDead = false;
+            player.Anim.isAttacking = false;
+            PlayAnimation(player.Anim, IDLE, player.Anim.direction);
+            player.Health = player.MaxHealth;
+            player.Mana = player.MaxMana;
+            player.KnockbackVelocity = {0, 0};
+            TraceLog(LOG_INFO, "PLAYER: Dihidupkan kembali!");
+        }
+    }
 
-    //         float baseAngle = 0.0f;
-    //         switch (player.Anim.direction)
-    //         {
-    //         case RIGHT: baseAngle = 0.0f; break;
-    //         case DOWN:  baseAngle = 90.0f; break;
-    //         case LEFT:  baseAngle = 180.0f; break;
-    //         case UP:    baseAngle = -90.0f; break;
-    //         }
-    //         float startAngle = baseAngle + player.attack.weapon->startAngleOffset;
+    void PerformHitDetection(Player &player)
+    {
+        if (!player.attack.active || !player.attack.weapon)
+            return;
 
-    //         if (player.attack.weapon->attackType == ATTACK_SLASH)
-    //         {
-    //             player.attack.currentAngle = Slash(player.attack.raycastAngle, progress);
-    //             player.attack.thrustOffset = 0.0f;
-    //         }
-    //         else if (player.attack.weapon->attackType == ATTACK_THRUST)
-    //         {
-    //             player.attack.thrustOffset = progress * 16.0f;
-    //             player.attack.currentAngle = startAngle;
-    //         }
-    //         else if (player.attack.weapon->attackType == ATTACK_PIERCE)
-    //         {
-    //             player.attack.thrustOffset = progress * 24.0f;
-    //             player.attack.currentAngle = startAngle;
-    //         }
-    //         else if (player.attack.weapon->attackType == ATTACK_SLAM)
-    //         {
-    //             float slamProgress = progress * progress;
-    //             player.attack.currentAngle = startAngle + (slamProgress * player.attack.weapon->sweepAngle);
-    //             player.attack.thrustOffset = slamProgress * 8.0f;
-    //         }
-    //         else
-    //         {
-    //             player.attack.currentAngle = startAngle + (progress * player.attack.weapon->sweepAngle);
-    //             player.attack.thrustOffset = 0.0f;
-    //         }
+        Vector2 playerCenter = player.GetCenter();
+        float reach = player.attack.weapon->reach;
+        float breadth = player.attack.weapon->breadth;
+        float attackAngle = player.attack.raycastAngle;
+        float attackerRadius = player.GetHitboxWidth() / 2.0f;
 
-    //         PerformHitDetection(player);
-    //     }
-    // }
+        for (auto *entity : Entities::GetRegistry())
+        {
+            Entity *playerAsEntity = &player;
+            if (entity == playerAsEntity)
+                continue;
+            if (!entity->IsActive || entity->Health <= 0)
+                continue;
 
-    // void DrawSwingAttack(Player &player)
-    // {
-    //     InventoryItem item = Inventory::GetActiveHotbarItem(player);
-    //     if (item.definitionId == -1)
-    //         return;
+            auto &dmg = player.attack.damagedEntities;
+            if (std::find(dmg.begin(), dmg.end(), entity) != dmg.end())
+                continue;
 
-    //     const ItemDefinition &def = itemDefs.GetById(item.definitionId);
-    //     if (def.category != ITEM_WEAPON)
-    //         return;
+            if (CheckRadialCollision(playerCenter, attackAngle, reach, breadth, attackerRadius, entity->GetHitbox()))
+            {
+                ApplyHitToEntity(player, entity, playerCenter);
+            }
+        }
 
-    //     Vector2 visualPos;
-    //     float drawAngle;
-    //     float thrust = 0.0f;
-    //     float rayAngle;
-    //     float offsetRight = 0.0f;
+        Rectangle attackAABB = GetAttackAABB(playerCenter, attackAngle, reach, breadth, attackerRadius);
+        HitPropsByAttack(attackAABB, PlayerInstance.GetHitbox(), &player);
+    }
 
-    //     if (player.attack.active)
-    //     {
-    //         visualPos = player.attack.center;
-    //         drawAngle = player.attack.currentAngle;
-    //         thrust = player.attack.thrustOffset;
-    //         rayAngle = player.attack.raycastAngle;
-    //     }
-    //     else
-    //     {
-    //         visualPos = {
-    //             player.Position.x + player.GetHitboxOffsetX() + player.GetHitboxWidth() / 2,
-    //             player.Position.y + player.GetHitboxOffsetY() + player.GetHitboxHeight() / 2};
+    void UpdateSwingAttack(Player &player, float dt)
+    {
+        if (!player.attack.active || !player.attack.weapon)
+            return;
 
-    //         static Direction lastHorizDir = RIGHT;
-    //         if (player.Anim.direction == RIGHT)
-    //             lastHorizDir = RIGHT;
-    //         else if (player.Anim.direction == LEFT)
-    //             lastHorizDir = LEFT;
+        player.attack.center = player.GetCenter();
 
-    //         if (player.Anim.direction == RIGHT) {
-    //             rayAngle = -9.0f; // Jam 3
-    //             offsetRight = 0.8f;
-    //         }
-    //         else if (player.Anim.direction == LEFT)
-    //             rayAngle = 189.0f; // Jam 9
-    //         else if (player.Anim.direction == UP)
-    //         {
-    //             if (lastHorizDir == RIGHT) {
-    //                 rayAngle = -60.0f; // Jam 1
-    //                 offsetRight = 0.8f;   
-    //             }
-    //             else
-    //                 rayAngle = -120.0f; // Jam 11
-    //         }
-    //         else if (player.Anim.direction == DOWN)
-    //         {
-    //             if (lastHorizDir == RIGHT) {
-    //                 rayAngle = 60.0f; // Jam 5
-    //                 offsetRight = 0.8f;
-    //             }
-    //             else
-    //                 rayAngle = 120.0f; // Jam 7
-    //         }
-    //         else
-    //         {
-    //             rayAngle = 0.0f;
-    //         }
+        player.attack.timer += dt;
+        if (player.attack.timer >= player.attack.weapon->duration)
+        {
+            player.attack.active = false;
+            player.attack.timer = 0;
+            player.Anim.isAttacking = false;
+        }
+        else
+        {
+            PerformHitDetection(player);
+        }
+    }
 
-    //         drawAngle = rayAngle;
-    //         thrust = 0.0f;
-    //     }
+    void DrawSwingAttack(Player &player)
+    {
+        InventoryItem item = Inventory::GetActiveHotbarItem(player);
+        if (item.definitionId == -1)
+            return;
 
-    //     float rad = rayAngle * (PI / 180.0f);
-    //     visualPos.x += cosf(rad) * thrust;
-    //     visualPos.y += sinf(rad) * thrust;
+        const ItemDefinition &def = itemDefs.GetById(item.definitionId);
+        if (def.category != ITEM_WEAPON)
+            return;
 
-    //     const Frame &frame = GetFrame(def.spriteKey);
+        Vector2 visualPos;
+        float drawAngle;
+        float thrust = 0.0f;
+        float rayAngle;
+        float offsetRight = 0.0f;
 
-    //     Display display;
-    //     display.position = visualPos;
-    //     display.size = 32;
-    //     display.offset = {0, 1 + offsetRight};
-    //     display.origin = {17.0f, (float)(frame.height * display.size)};
-    //     display.rotation = drawAngle + 90.0f;
-    //     display.tint = WHITE;
+        if (player.attack.active)
+        {
+            float progress = player.attack.timer / player.attack.weapon->duration;
+            SwingVisual visual = CalcSwingVisual(player.attack, player.Anim.direction, progress);
 
-    //     DrawFrame(frame, display);
+            visualPos = player.attack.center;
+            drawAngle = visual.angle;
+            thrust = visual.thrust;
+            rayAngle = player.attack.raycastAngle;
+        }
+        else
+        {
+            visualPos = player.GetCenter();
 
-    //     if (player.attack.active && player.attack.weapon && player.attack.weapon->attackType == ATTACK_SLASH && (def.spriteKey == "sword1" || def.spriteKey == "sword2"))
-    //     {
-    //         float progress = player.attack.timer / player.attack.weapon->duration;
-    //         std::string slashSpriteKey;
-            
-    //         if (progress >= 1.0f / 3.0f && progress < 2.0f / 3.0f)
-    //         {
-    //             slashSpriteKey = (def.spriteKey == "sword1") ? "slashLightGraySmall1" : "slashSilverBlueMedium1";
-    //         }
-    //         else if (progress >= 2.0f / 3.0f)
-    //         {
-    //             slashSpriteKey = (def.spriteKey == "sword1") ? "slashLightGraySmall2" : "slashSilverBlueMedium2";
-    //         }
+            static Direction lastHorizDir = RIGHT;
+            if (player.Anim.direction == RIGHT)
+                lastHorizDir = RIGHT;
+            else if (player.Anim.direction == LEFT)
+                lastHorizDir = LEFT;
 
-    //         if (!slashSpriteKey.empty())
-    //         {
-    //             const Frame &slashFrame = GetFrame(slashSpriteKey);
-    //             float radRay = rayAngle * (PI / 180.0f);
-    //             Vector2 slashPos = player.attack.center;
-    //             float slashDist = player.attack.weapon->reach * 0.65f;
-    //             slashPos.x += cosf(radRay) * slashDist;
-    //             slashPos.y += sinf(radRay) * slashDist;
+            CalcIdleWeaponPose(player.Anim.direction, lastHorizDir, rayAngle, offsetRight);
+            drawAngle = rayAngle;
+            thrust = 0.0f;
+        }
 
-    //             if (progress >= 2.0f / 3.0f)
-    //             {
-    //                 float shiftAngleRad = (rayAngle - 90.0f) * (PI / 180.0f);
-    //                 float H = (def.spriteKey == "sword1") ? 26.0f : 37.0f;
-    //                 float backDist = (def.spriteKey == "sword1") ? 16.0f : 19.5f;
-    //                 slashPos.x += cosf(shiftAngleRad) * H;
-    //                 slashPos.y += sinf(shiftAngleRad) * H;
+        float rad = rayAngle * (PI / 180.0f);
+        visualPos.x += cosf(rad) * thrust;
+        visualPos.y += sinf(rad) * thrust;
 
-    //                 // Additional shift back (opposite to attack direction)
-    //                 slashPos.x -= cosf(radRay) * backDist;
-    //                 slashPos.y -= sinf(radRay) * backDist;
-    //             }
+        const Frame &frame = GetFrame(def.spriteKey);
 
-    //             Display slashDisplay;
-    //             slashDisplay.position = slashPos;
-    //             slashDisplay.size = 32;
-    //             slashDisplay.offset = {0, 0};
-    //             slashDisplay.origin = {
-    //                 (float)slashFrame.width * slashDisplay.size / 2.0f,
-    //                 (float)slashFrame.height * slashDisplay.size / 2.0f
-    //             };
-    //             slashDisplay.rotation = rayAngle + 90.0f;
-    //             slashDisplay.tint = WHITE;
+        Display display;
+        display.position = visualPos;
+        display.size = 32;
+        display.offset = {0, 1 + offsetRight};
+        display.origin = {17.0f, (float)(frame.height * display.size)};
+        display.rotation = drawAngle + 90.0f;
+        display.tint = WHITE;
 
-    //             DrawFrame(slashFrame, slashDisplay);
-    //         }
-    //     }
-    // }
+        DrawFrame(frame, display);
 
-    // void AddDamagePopup(Vector2 pos, float damage)
-    // {
-    //     Effects::AddDamage(pos, damage);
-    // }
+        if (player.attack.active && player.attack.weapon &&
+            player.attack.weapon->attackType == ATTACK_SLASH &&
+            (def.spriteKey == "sword1" || def.spriteKey == "sword2"))
+        {
+            DrawSlashTrail(player, def.spriteKey, player.attack.raycastAngle);
+        }
+    }
 }

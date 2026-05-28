@@ -28,6 +28,8 @@ namespace Combat
 {
     void Update(Player &player);
     void HandleRevive(Player &player);
+    void UpdateSwingAttack(Player &player, float dt);
+    void DrawSwingAttack(Player &player);
 }
 
 /**

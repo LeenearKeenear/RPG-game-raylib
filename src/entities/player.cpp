@@ -209,7 +209,7 @@ void Player::TakeDamage(float amount, Vector2 knockback)
     }
 
     Vector2 center = {Position.x + 16, Position.y + 16};
-    Combat::AddDamagePopup(center, amount);
+    Effects::AddDamage(center, amount);
 
     TraceLog(LOG_INFO, "PLAYER: Menerima %.1f damage. Sisa HP: %.1f", amount, Health);
 }

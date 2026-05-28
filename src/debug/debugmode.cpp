@@ -169,44 +169,54 @@ void Debug::DrawRaycastOverlay(void)
 void Debug::DrawAttackOverlay(void)
 {
     // Hanya gambar jika player sedang menyerang
-    if (!PlayerInstance.Anim.isAttacking)
+    if (!PlayerInstance.attack.active || !PlayerInstance.attack.weapon)
         return;
 
-    Vector2 playerCenter = {
-        PlayerInstance.GetPosition().x + PlayerInstance.GetHitboxOffsetX() + PlayerInstance.GetHitboxWidth() / 2,
-        PlayerInstance.GetPosition().y + PlayerInstance.GetHitboxOffsetY() + PlayerInstance.GetHitboxHeight() / 2};
+    Vector2 playerCenter = PlayerInstance.GetCenter();
+    float reach = PlayerInstance.attack.weapon->reach;
+    float breadth = PlayerInstance.attack.weapon->breadth;
+    float angle = PlayerInstance.attack.raycastAngle;
+    float attackerRadius = PlayerInstance.GetHitboxWidth() / 2.0f;
 
-    // Logika yang sama dengan Combat::PerformHitDetection
-    Rectangle attackHitbox;
-    float reach = PlayerInstance.attack.weapon ? PlayerInstance.attack.weapon->reach : 0.0f;
-    float breadth = PlayerInstance.attack.weapon ? PlayerInstance.attack.weapon->breadth : 0.0f;
+    float rad = angle * (PI / 180.0f);
+    Vector2 forward = { cosf(rad), sinf(rad) };
+    Vector2 right = { -sinf(rad), cosf(rad) };
+    
+    Vector2 edgeCenter = { 
+        playerCenter.x + forward.x * attackerRadius, 
+        playerCenter.y + forward.y * attackerRadius 
+    };
+    
+    Vector2 p1 = { edgeCenter.x + right.x * (breadth / 2.0f), edgeCenter.y + right.y * (breadth / 2.0f) };
+    Vector2 p2 = { edgeCenter.x - right.x * (breadth / 2.0f), edgeCenter.y - right.y * (breadth / 2.0f) };
+    Vector2 p3 = { p1.x + forward.x * reach, p1.y + forward.y * reach };
+    Vector2 p4 = { p2.x + forward.x * reach, p2.y + forward.y * reach };
 
-    switch (PlayerInstance.Anim.direction)
-    {
-    case RIGHT:
-        attackHitbox = {playerCenter.x + PlayerInstance.GetHitboxWidth() / 2, playerCenter.y - breadth / 2, reach, breadth};
-        break;
-    case LEFT:
-        attackHitbox = {playerCenter.x - PlayerInstance.GetHitboxWidth() / 2 - reach, playerCenter.y - breadth / 2, reach, breadth};
-        break;
-    case DOWN:
-        attackHitbox = {playerCenter.x - breadth / 2, playerCenter.y + PlayerInstance.GetHitboxHeight() / 2, breadth, reach};
-        break;
-    case UP:
-        attackHitbox = {playerCenter.x - breadth / 2, playerCenter.y - PlayerInstance.GetHitboxHeight() / 2 - reach, breadth, reach};
-        break;
-    }
+    // Fill rotated rectangle
+    Color fillColor = Fade(RED, 0.3f);
+    DrawTriangle(p1, p2, p3, fillColor);
+    DrawTriangle(p2, p4, p3, fillColor);
 
-    // Gambar hitbox serangan
-    DrawRectangleLinesEx(attackHitbox, 2.0f, RED);
-    DrawRectangleRec(attackHitbox, Fade(RED, 0.3f));
+    // Draw rotated rectangle outline
+    DrawLineEx(p1, p3, 2.0f, RED);
+    DrawLineEx(p3, p4, 2.0f, RED);
+    DrawLineEx(p4, p2, 2.0f, RED);
+    DrawLineEx(p2, p1, 2.0f, RED);
+
+    // Draw AABB outline for visual reference (used for prop/object detection)
+    float minX = std::min({p1.x, p2.x, p3.x, p4.x});
+    float maxX = std::max({p1.x, p2.x, p3.x, p4.x});
+    float minY = std::min({p1.y, p2.y, p3.y, p4.y});
+    float maxY = std::max({p1.y, p2.y, p3.y, p4.y});
+    Rectangle aabb = { minX, minY, maxX - minX, maxY - minY };
+    DrawRectangleLinesEx(aabb, 1.0f, Fade(ORANGE, 0.5f));
 
     // Gambar titik hit jika ray mengenai object
     if (PlayerInstance.LastHit.hit)
         DrawCircleV(PlayerInstance.LastHit.point, 4.0f, VIOLET);
 
     // Label
-    DrawText("Attack Area (2:1 Rect)", (int)attackHitbox.x, (int)attackHitbox.y - 14, 14, RED);
+    DrawText("Attack Area (Rotated OBB)", (int)minX, (int)minY - 14, 14, RED);
 }
 
 /**

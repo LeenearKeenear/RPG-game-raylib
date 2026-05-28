@@ -33,7 +33,7 @@
         "damage": 25.0,
         "reach": 48.0,
         "breadth": 60.0,
-        "duration": 0.5,
+        "duration": 0.35,
         "knockbackForce": 1.8,
         "startAngleOffset": 55.0,
         "sweepAngle": -95.0,
