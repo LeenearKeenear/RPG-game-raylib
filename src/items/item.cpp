@@ -96,7 +96,7 @@ void ItemDefinitionManager::Load(const std::string &path)
     {
         ItemDefinition def;
         def.id = SafeGet<int>(data, "id", -1);
-        def.name = name;
+        def.name = SafeGet<std::string>(data, "name", name);
         def.spriteKey = SafeGet<std::string>(data, "spriteKey", name);
         if (data.contains("sheetCoord"))
         {
@@ -343,15 +343,12 @@ void ItemRenderManager::Update(std::vector<ItemSpawn> &items, Vector2 playerCent
             continue;
         if (currentTime - item.spawnTime < 1.0f)
             continue;
-        if (!Inventory::HasInventorySpace(PlayerInstance))
-            continue;
-
         Vector2 itemCenter = {
             item.hitbox.x + item.hitbox.width / 2,
             item.hitbox.y + item.hitbox.height / 2};
 
         float dist = Vector2Distance(playerCenter, itemCenter);
-        if (dist <= magnetRadius)
+        if (dist <= magnetRadius && Inventory::HasInventorySpace(PlayerInstance))
         {
             Vector2 dir = Vector2Normalize(Vector2Subtract(playerCenter, itemCenter));
             item.position.x += dir.x * itemSpeed * Time::DELTA_TIME;

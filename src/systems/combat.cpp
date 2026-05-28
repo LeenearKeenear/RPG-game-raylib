@@ -129,7 +129,7 @@ namespace Combat
                 }
                 else
                 {
-                    Effects::AddLog("Stamina tidak cukup!");
+                    Effects::AddLog("Stamina Tidak Cukup");
                     player.attack.pressHeld = false;
                     TraceLog(LOG_WARNING, "PLAYER: Serangan gagal! Mana habis.");
                 }
