@@ -601,11 +601,6 @@ void WorldGenPools::UnloadRoomPool()
     UnloadSingleRoomPool(bossPool);
 }
 
-bool WorldGenPools::IsRoomLoaded() const
-{
-    return enemyPool.loaded;
-}
-
 RoomPool &WorldGenPools::GetPoolForType(CellType type)
 {
     switch (type)
@@ -645,11 +640,6 @@ std::vector<TilesonMapData *> WorldGenPools::GetAllRoomPrefabs()
     collect(finishPool);
     collect(bossPool);
     return all;
-}
-
-bool WorldGenPools::IsCorridorLoaded() const
-{
-    return corridorPool.loaded;
 }
 
 CorridorPool &WorldGenPools::GetCorridorPool()

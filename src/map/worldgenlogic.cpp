@@ -373,6 +373,427 @@ void WorldGenLayout::AssignCellTypes()
     TraceLog(LOG_INFO, "Total active: %d, Leaves found: %d", total, (int)leaves.size());
 }
 
+void WorldGenLayout::PruneSingleExitCells()
+{
+    for (int r = 0; r < WG_GRID_SIZE; r++)
+    {
+        for (int c = 0; c < WG_GRID_SIZE; c++)
+        {
+            CellType type = grid[r][c].type;
+            if (type != CELL_START && type != CELL_FINISH && type != CELL_BOSS)
+                continue;
+            if (type == CELL_EMPTY)
+                continue;
+
+            int &mask = grid[r][c].exitMask;
+
+            // Kumpulin arah neighbour aktif dan neighbour non-EMPTY yang valid
+            std::vector<int> activeDirs;
+            std::vector<int> validDirs;
+            for (int d = 0; d < NUM_DIRS; d++)
+            {
+                int nr = r + DIR_DR[d];
+                int nc = c + DIR_DC[d];
+                if (nr < 0 || nr >= WG_GRID_SIZE || nc < 0 || nc >= WG_GRID_SIZE)
+                    continue;
+                if (grid[nr][nc].type == CELL_EMPTY)
+                    continue;
+                validDirs.push_back(d);
+                if (mask & DIR_EXIT_MASK[d])
+                    activeDirs.push_back(d);
+            }
+
+            // Handle 0 exit — cari neighbour non-EMPTY dan tambah edge bidirectional
+            if (activeDirs.empty() && !validDirs.empty())
+            {
+                std::uniform_int_distribution<int> dist(0, (int)validDirs.size() - 1);
+                int newDir = validDirs[dist(wgRng)];
+                mask |= DIR_EXIT_MASK[newDir];
+                int nr = r + DIR_DR[newDir];
+                int nc = c + DIR_DC[newDir];
+                grid[nr][nc].exitMask |= DIR_OPPOSITE_MASK[newDir];
+                activeDirs.push_back(newDir);
+            }
+
+            if (activeDirs.size() <= 1)
+                continue;
+
+            // Simpan daftar asli sebelum constraint filter (buat removal nanti)
+            std::vector<int> origActiveDirs = activeDirs;
+
+            // Constraint START: harus milih exit yang path-nya nyampe FINISH
+            if (type == CELL_START)
+            {
+                // Cari posisi FINISH
+                int finishR = INVALID_INDEX, finishC = INVALID_INDEX;
+                for (int tr = 0; tr < WG_GRID_SIZE; tr++)
+                    for (int tc = 0; tc < WG_GRID_SIZE; tc++)
+                        if (grid[tr][tc].type == CELL_FINISH)
+                        {
+                            finishR = tr;
+                            finishC = tc;
+                        }
+
+                if (finishR != INVALID_INDEX)
+                {
+                    std::vector<int> goodDirs;
+                    for (int d : origActiveDirs)
+                    {
+                        int origMask = mask;
+                        for (int d2 : origActiveDirs)
+                            if (d2 != d)
+                                mask &= ~DIR_EXIT_MASK[d2];
+
+                        auto testDepth = ComputeDepth();
+                        if (testDepth[finishR][finishC] >= 0)
+                            goodDirs.push_back(d);
+
+                        mask = origMask;
+                    }
+
+                    if (!goodDirs.empty())
+                        activeDirs = goodDirs;
+                }
+            }
+
+            // Pilih 1 random untuk dipertahankan
+            std::uniform_int_distribution<int> dist(0, (int)activeDirs.size() - 1);
+            int keepDir = activeDirs[dist(wgRng)];
+
+            // Hapus semua direction dari origActiveDirs kecuali keepDir
+            for (int d : origActiveDirs)
+            {
+                if (d == keepDir)
+                    continue;
+
+                mask &= ~DIR_EXIT_MASK[d];
+
+                int nr = r + DIR_DR[d];
+                int nc = c + DIR_DC[d];
+                if (nr >= 0 && nr < WG_GRID_SIZE && nc >= 0 && nc < WG_GRID_SIZE)
+                    grid[nr][nc].exitMask &= ~DIR_OPPOSITE_MASK[d];
+            }
+        }
+    }
+}
+
+void WorldGenLayout::RemoveDisconnectedCells()
+{
+    // BFS dari START buat cari semua cell yang reachable
+    bool visited[WG_GRID_SIZE][WG_GRID_SIZE] = {};
+    std::queue<std::pair<int, int>> q;
+
+    for (int r = 0; r < WG_GRID_SIZE; r++)
+        for (int c = 0; c < WG_GRID_SIZE; c++)
+            if (grid[r][c].type == CELL_START)
+            {
+                q.push({r, c});
+                visited[r][c] = true;
+            }
+
+    if (q.empty())
+        return;
+
+    while (!q.empty())
+    {
+        auto [r, c] = q.front();
+        q.pop();
+
+        for (int d = 0; d < NUM_DIRS; d++)
+        {
+            if (!(grid[r][c].exitMask & DIR_EXIT_MASK[d]))
+                continue;
+            int nr = r + DIR_DR[d];
+            int nc = c + DIR_DC[d];
+            if (nr < 0 || nr >= WG_GRID_SIZE || nc < 0 || nc >= WG_GRID_SIZE)
+                continue;
+            if (visited[nr][nc])
+                continue;
+            if (grid[nr][nc].type == CELL_EMPTY)
+                continue;
+            visited[nr][nc] = true;
+            q.push({nr, nc});
+        }
+    }
+
+    // Hapus cell yang gak reachable & bersihin exitMask tetangganya
+    for (int r = 0; r < WG_GRID_SIZE; r++)
+    {
+        for (int c = 0; c < WG_GRID_SIZE; c++)
+        {
+            if (grid[r][c].type == CELL_EMPTY)
+                continue;
+            if (visited[r][c])
+                continue;
+
+            int mask = grid[r][c].exitMask;
+            for (int d = 0; d < NUM_DIRS; d++)
+            {
+                if (mask & DIR_EXIT_MASK[d])
+                {
+                    int nr = r + DIR_DR[d];
+                    int nc = c + DIR_DC[d];
+                    if (nr >= 0 && nr < WG_GRID_SIZE && nc >= 0 && nc < WG_GRID_SIZE)
+                        grid[nr][nc].exitMask &= ~DIR_OPPOSITE_MASK[d];
+                }
+            }
+
+            grid[r][c].type = CELL_EMPTY;
+            grid[r][c].exitMask = 0;
+            grid[r][c].roomTemplate = nullptr;
+        }
+    }
+}
+
+void WorldGenLayout::ConstrainExitsByPool()
+{
+    for (int r = 0; r < WG_GRID_SIZE; r++)
+    {
+        for (int c = 0; c < WG_GRID_SIZE; c++)
+        {
+            CellType type = grid[r][c].type;
+            if (type == CELL_EMPTY)
+                continue;
+            // ENEMY + SPECIAL: semua pool tersedia (u, ud, ur, udr, udrl)
+            if (type == CELL_ENEMY || type == CELL_SPECIAL)
+                continue;
+
+            int &mask = grid[r][c].exitMask;
+            int exitCount = 0;
+            if (mask & EXIT_NORTH)
+                exitCount++;
+            if (mask & EXIT_SOUTH)
+                exitCount++;
+            if (mask & EXIT_EAST)
+                exitCount++;
+            if (mask & EXIT_WEST)
+                exitCount++;
+
+            if (exitCount <= 1)
+                continue; // 'u' pool works for semua type
+
+            bool needsPrune = false;
+
+            // START/FINISH/BOSS/TRADER: cuma 'u' pool
+            if (type == CELL_START || type == CELL_FINISH || type == CELL_BOSS || type == CELL_TRADER)
+                needsPrune = true;
+
+            // TREASURE/ELITE: 'u' dan 'ur' pool
+            if (type == CELL_TREASURE || type == CELL_ENEMY_ELITE)
+            {
+                if (exitCount == 2)
+                {
+                    bool straight = ((mask & EXIT_NORTH) && (mask & EXIT_SOUTH)) ||
+                                    ((mask & EXIT_EAST) && (mask & EXIT_WEST));
+                    if (straight)
+                        needsPrune = true;
+                }
+                else
+                    needsPrune = true; // 3+ exit gak bisa match 'ur'
+            }
+
+            if (!needsPrune)
+                continue;
+
+            // Kumpulin direction valid yang masih nyambung ke neighbour non-EMPTY
+            std::vector<int> validDirs;
+            for (int d = 0; d < NUM_DIRS; d++)
+            {
+                if (!(mask & DIR_EXIT_MASK[d]))
+                    continue;
+                int nr = r + DIR_DR[d];
+                int nc = c + DIR_DC[d];
+                if (nr < 0 || nr >= WG_GRID_SIZE || nc < 0 || nc >= WG_GRID_SIZE)
+                    continue;
+                if (grid[nr][nc].type == CELL_EMPTY)
+                    continue;
+                validDirs.push_back(d);
+            }
+
+            if (validDirs.empty())
+            {
+                mask = 0;
+                continue;
+            }
+
+            std::uniform_int_distribution<int> dist(0, (int)validDirs.size() - 1);
+            int keepDir = validDirs[dist(wgRng)];
+
+            // Hapus semua direction kecuali keepDir
+            for (int d = 0; d < NUM_DIRS; d++)
+            {
+                if (d == keepDir)
+                    continue;
+                if (!(mask & DIR_EXIT_MASK[d]))
+                    continue;
+                mask &= ~DIR_EXIT_MASK[d];
+                int nr = r + DIR_DR[d];
+                int nc = c + DIR_DC[d];
+                if (nr >= 0 && nr < WG_GRID_SIZE && nc >= 0 && nc < WG_GRID_SIZE)
+                    grid[nr][nc].exitMask &= ~DIR_OPPOSITE_MASK[d];
+            }
+        }
+    }
+}
+
+void WorldGenLayout::PruneOneDenseExit()
+{
+    int prefabExitCandidate = 3;
+
+    // Kumpulin cell dense (exitCount >= 3), bukan START/FINISH/BOSS/EMPTY
+    std::vector<std::pair<int, int>> candidates;
+    for (int r = 0; r < WG_GRID_SIZE; r++)
+    {
+        for (int c = 0; c < WG_GRID_SIZE; c++)
+        {
+            CellType type = grid[r][c].type;
+            if (type == CELL_EMPTY)
+                continue;
+            if (type == CELL_START || type == CELL_FINISH || type == CELL_BOSS)
+                continue;
+
+            int exitCount = __builtin_popcount(grid[r][c].exitMask);
+            if (exitCount == prefabExitCandidate)
+                candidates.push_back({r, c});
+        }
+    }
+
+    if (candidates.empty())
+        return;
+
+    std::uniform_int_distribution<int> cellDist(0, (int)candidates.size() - 1);
+    auto [r, c] = candidates[cellDist(wgRng)];
+
+    int &mask = grid[r][c].exitMask;
+
+    // Kumpulin direction aktif
+    std::vector<int> dirs;
+    for (int d = 0; d < NUM_DIRS; d++)
+        if (mask & DIR_EXIT_MASK[d])
+            dirs.push_back(d);
+
+    // Filter: jangan prune direction yang neighbour-nya cuma 1 exit (leaf)
+    std::vector<int> safeDirs;
+    for (int d : dirs)
+    {
+        int nr = r + DIR_DR[d];
+        int nc = c + DIR_DC[d];
+        if (nr < 0 || nr >= WG_GRID_SIZE || nc < 0 || nc >= WG_GRID_SIZE)
+            continue;
+        int nCount = __builtin_popcount(grid[nr][nc].exitMask);
+        if (nCount > 1)
+            safeDirs.push_back(d);
+    }
+
+    if (safeDirs.empty())
+        return;
+
+    // Acak urutan direction biar gak bias
+    std::shuffle(safeDirs.begin(), safeDirs.end(), wgRng);
+
+    // Verification: prune → cek apa FINISH masih reachable → restore kalau putus
+    for (int removeDir : safeDirs)
+    {
+        int nr = r + DIR_DR[removeDir];
+        int nc = c + DIR_DC[removeDir];
+        int origMask = mask;
+        int origNeighborMask = grid[nr][nc].exitMask;
+
+        mask &= ~DIR_EXIT_MASK[removeDir];
+        grid[nr][nc].exitMask &= ~DIR_OPPOSITE_MASK[removeDir];
+
+        // Cek apakah FINISH masih reachable dari START setelah prune
+        auto depth = ComputeDepth();
+        bool finishReachable = false;
+        for (int dr = 0; dr < WG_GRID_SIZE && !finishReachable; dr++)
+            for (int dc = 0; dc < WG_GRID_SIZE && !finishReachable; dc++)
+                if (grid[dr][dc].type == CELL_FINISH && depth[dr][dc] != DEPTH_UNVISITED)
+                    finishReachable = true;
+
+        if (finishReachable)
+            return; // Prune berhasil, keluar
+
+        // Restore — prune ini putusin FINISH, coba direction lain
+        mask = origMask;
+        grid[nr][nc].exitMask = origNeighborMask;
+    }
+}
+
+void WorldGenLayout::EnsureTreasureExists()
+{
+    // Cek apakah treasure masih ada
+    for (int r = 0; r < WG_GRID_SIZE; r++)
+        for (int c = 0; c < WG_GRID_SIZE; c++)
+            if (grid[r][c].type == CELL_TREASURE)
+                return;
+
+    auto isBadNeighbor = [&](int r, int c) -> bool
+    {
+        return IsAdjacentToType(r, c, CELL_FINISH) ||
+               IsAdjacentToType(r, c, CELL_BOSS) ||
+               IsAdjacentToType(r, c, CELL_START);
+    };
+
+    // Cari ENEMY yang bentukannya cocok & gak adjacent ke FINISH/BOSS/START
+    std::vector<std::pair<int, int>> candidates;
+    for (int r = 0; r < WG_GRID_SIZE; r++)
+    {
+        for (int c = 0; c < WG_GRID_SIZE; c++)
+        {
+            if (grid[r][c].type != CELL_ENEMY)
+                continue;
+            if (isBadNeighbor(r, c))
+                continue;
+
+            int mask = grid[r][c].exitMask;
+            int exitCount = 0;
+            if (mask & EXIT_NORTH)
+                exitCount++;
+            if (mask & EXIT_SOUTH)
+                exitCount++;
+            if (mask & EXIT_EAST)
+                exitCount++;
+            if (mask & EXIT_WEST)
+                exitCount++;
+
+            if (exitCount == 1)
+                candidates.push_back({r, c});
+            else if (exitCount == 2)
+            {
+                bool straight = ((mask & EXIT_NORTH) && (mask & EXIT_SOUTH)) ||
+                                ((mask & EXIT_EAST) && (mask & EXIT_WEST));
+                if (!straight)
+                    candidates.push_back({r, c});
+            }
+        }
+    }
+
+    if (candidates.empty())
+    {
+        // Fallback 1: ENEMY yang gak adjacent (abaikan bentuk)
+        for (int r = 0; r < WG_GRID_SIZE; r++)
+            for (int c = 0; c < WG_GRID_SIZE; c++)
+                if (grid[r][c].type == CELL_ENEMY && !isBadNeighbor(r, c))
+                    candidates.push_back({r, c});
+    }
+
+    if (candidates.empty())
+    {
+        // Fallback 2: ENEMY mana pun (adjacent boleh)
+        for (int r = 0; r < WG_GRID_SIZE; r++)
+            for (int c = 0; c < WG_GRID_SIZE; c++)
+                if (grid[r][c].type == CELL_ENEMY)
+                    candidates.push_back({r, c});
+    }
+
+    if (candidates.empty())
+        return;
+
+    std::uniform_int_distribution<int> dist(0, (int)candidates.size() - 1);
+    auto [r, c] = candidates[dist(wgRng)];
+    grid[r][c].type = CELL_TREASURE;
+}
+
 void WorldGenLayout::DebugPrintGrid() const
 {
     for (int r = 0; r < WG_GRID_SIZE; r++)
@@ -521,8 +942,30 @@ WeightedPool *WorldGenCanvas::SelectPool(CellType type, int exitMask, RoomPool &
 
 void WorldGenLayout::Generate()
 {
-    InitGrid();
-    RunPrims();
-    AssignCellTypes();
-    DebugPrintGrid();
+    for (int attempt = 0; attempt < WG_PRIM_RETRY_MAX; attempt++)
+    {
+        InitGrid();
+        RunPrims();
+        AssignCellTypes();
+        PruneSingleExitCells();
+        TraceLog(LOG_INFO, "=== WORLDGEN: before filter ===");
+        DebugPrintGrid();
+        ConstrainExitsByPool();
+        for (int i = 0; i < WG_VARIETY_ITERATIONS; i++)
+            PruneOneDenseExit();
+        RemoveDisconnectedCells();
+        PruneSingleExitCells();
+        EnsureTreasureExists();
+
+        int count = CountActiveCells();
+        TraceLog(LOG_INFO, "=== WORLDGEN: after filter (count=%d) ===", count);
+        DebugPrintGrid();
+
+        if (count >= WG_PRIM_MIN_CELLS)
+            return;
+
+        TraceLog(LOG_INFO, "=== WORLDGEN: retry %d/%d (cells=%d < %d) ===",
+                 attempt + 1, WG_PRIM_RETRY_MAX, count, WG_PRIM_MIN_CELLS);
+        wgRng.seed(wgRng());
+    }
 }

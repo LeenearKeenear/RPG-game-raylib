@@ -29,9 +29,11 @@ constexpr int WG_TILE_SIZE = FRAME_SIZE;   // Ukuran tile dalam pixel
 
 // Prim's Algorithm — tuning jumlah cell dan stop chance
 constexpr int WG_PRIM_START_CELLS = 1;  // Jumlah cell awal saat seed Prim
-constexpr int WG_PRIM_MIN_CELLS = 6;    // Minimum cell sebelum boleh random stop
+constexpr int WG_PRIM_MIN_CELLS = 10;    // Minimum cell sebelum boleh random stop
 constexpr int WG_PRIM_MAX_CELLS = 12;   // Maksimum cell (batas atas loop Prim)
 constexpr int WG_PRIM_STOP_CHANCE = 20; // Persentase chance random stop setelah MIN_CELLS
+constexpr int WG_PRIM_RETRY_MAX = 10;   // Maksimum percobaan generate layout
+constexpr int WG_VARIETY_ITERATIONS = 2; // Iterasi variety pruning per generate
 
 constexpr int NUM_DIRS = 4;         // Jumlah arah mata angin
 constexpr int DEPTH_UNVISITED = -1; // Sentinel: cell belum dikunjungi di ComputeDepth
@@ -40,9 +42,6 @@ constexpr int PERCENT_MAX = 100;    // Nilai maksimum persentase untuk RNG
 
 constexpr int CORRIDOR_CENTER_OFFSET = 3; // Offset tile untuk center corridor saat stamp
 constexpr int CORRIDOR_LAYER_COUNT = 2;   // Jumlah layer corridor (vertical + horizontal)
-constexpr int START_PREFAB_INDEX = 0;     // Index prefab START di pool template_u
-constexpr int FINISH_PREFAB_INDEX = 1;    // Index prefab FINISH di pool template_u
-constexpr int DEFAULT_PREFAB_INDEX = 0;   // Index prefab default di pool template_udrl
 
 constexpr const char *SLOT_WORLDGEN_LAYER_NAME = "slot_worldgen";
 constexpr const char *EXIT_NORTH_TYPE_OBJECT_NAME = "exit_north";
@@ -227,9 +226,6 @@ public:
     /** @brief Unload semua room template dan kosongkan pool */
     void UnloadRoomPool();
 
-    /** @return true jika room pool sudah di-load */
-    bool IsRoomLoaded() const;
-
     /**
      * @brief Load semua corridor prefab dari folder
      * @param basePath Base path ke folder corridor prefabs
@@ -238,9 +234,6 @@ public:
 
     /** @brief Unload semua corridor prefab dan kosongkan pool */
     void UnloadCorridorPool();
-
-    /** @return true jika corridor pool sudah di-load */
-    bool IsCorridorLoaded() const;
 
     /**
      * @brief Ambil corridor prefab secara deterministic dari pool
@@ -426,13 +419,17 @@ public:
     const std::vector<std::vector<WorldCell>> &GetGrid() const;
 
 private:
-    uint64_t worldSeed;
     std::mt19937 wgRng;
     std::vector<std::vector<WorldCell>> grid; // 4x4
 
     void InitGrid();
     void RunPrims();
     void AssignCellTypes();
+    void PruneSingleExitCells();
+    void RemoveDisconnectedCells();
+    void ConstrainExitsByPool();
+    void EnsureTreasureExists();
+    void PruneOneDenseExit();
     void DebugPrintGrid() const;
     bool IsLeaf(int r, int c) const;
     bool IsAdjacentToType(int r, int c, CellType type) const;
