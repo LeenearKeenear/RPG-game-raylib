@@ -118,7 +118,7 @@ void UpdateAnimation(Animation &anim, float dt);
 /** @brief Draw animasi di posisi entity */
 void DrawAnimation(const Animation &anim, Color tint = WHITE);
 /** @brief Draw efek ledakan sementara */
-void DrawExplosion(Vector2 centerPosition, float radius, float progress);
+void Explosion(Vector2 centerPosition, float radius, float progress);
 
 /** @brief Cache global animation set per entity type */
 extern std::unordered_map<std::string, AnimationSet> loadedAnimationSets;

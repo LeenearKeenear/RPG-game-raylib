@@ -49,6 +49,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
 
     Anim.animSet = &loadedAnimationSets["knight"];
     PlayAnimation(Anim, IDLE, RIGHT);
+    LastHorizDir = RIGHT;
     CollisionRects.clear();
     CollisionPolygons.clear();
 
@@ -142,13 +143,10 @@ void Player::Update()
         pendingGoBack = true;
     }
 
-    // Memblokir pergerakan selama animasi serangan
-    if (!Anim.isAttacking)
-    {
-        Movement::HandleMovement(*this);
-    }
+    // Pergerakan bisa dilakukan bersamaan dengan animasi serangan
+    Movement::HandleMovement(*this);
 
-    Combat::HandleCombat(*this);
+    Combat::Update(*this);
     if (Anim.isDead)
         return;
 
@@ -183,7 +181,10 @@ void Player::Update()
  */
 void Player::Render(void)
 {
-    DrawAimIndicator();
+    if (!Anim.isDead)
+    {
+        DrawAimIndicator();
+    }
 
     // Bayangan (Drop shadow)
     int shadowRx = 10, shadowRy = 4;
@@ -212,13 +213,13 @@ void Player::TakeDamage(float amount, Vector2 knockback)
 
     if (Anim.isAttacking)
     {
-        Swing.active = false;
+        attack.active = false;
         Anim.isAttacking = false;
         PlayAnimation(Anim, IDLE, Anim.direction);
     }
 
     Vector2 center = {Position.x + FRAME_SIZE / 2, Position.y + FRAME_SIZE / 2};
-    Combat::AddDamagePopup(center, amount);
+    Effects::AddDamage(center, amount);
 
     TraceLog(LOG_INFO, "PLAYER: Menerima %.1f damage. Sisa HP: %.1f", amount, Health);
 }

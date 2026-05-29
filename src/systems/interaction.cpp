@@ -14,6 +14,7 @@ namespace Interaction
      */
     void HandleInteractions(Player &player)
     {
+        player.canInteract = false;
         UpdateRaycast(player);
         CheckDoors(player);    // Interaksi berbasis kedekatan (proximity)
         CheckProps(player);    // Interaksi berbasis raycast
@@ -74,6 +75,9 @@ namespace Interaction
         {
             if (!CheckCollisionRecs(playerHitbox, door->bounds))
                 continue;
+            
+            player.canInteract = true;
+            
             if (!InputInstance.IsInteract())
                 continue;
 
@@ -99,8 +103,6 @@ namespace Interaction
     {
         if (!player.LastHit.hit)
             return;
-        if (!InputInstance.IsInteract())
-            return;
 
         // Cek apakah aim berada dalam area pandang player (garis raycast hijau)
         Vector2 playerCenter = player.GetCenter();
@@ -121,6 +123,14 @@ namespace Interaction
             return; // Di luar area pandang, tidak bisa interaksi
 
         const std::string &type = player.LastHit.object->type;
+        if (type != CHEST_TYPE_OBJECT_NAME)
+            return; // Hanya objek tipe CHEST_TYPE_OBJECT_NAME yang bisa diinteraksi via raycast
+            
+        player.canInteract = true;
+
+        if (!InputInstance.IsInteract())
+            return;
+
         TraceLog(LOG_INFO, "Berinteraksi dengan: '%s' (tipe: %s)", player.LastHit.object->name.c_str(), type.c_str());
 
         // Percabangan logika berdasarkan tipe objek

@@ -27,25 +27,25 @@ namespace Movement
         if (InputInstance.IsMoveUp())
         {
             player.Velocity.y -= 1;
-            nextDir = UP;
+            if (!player.Anim.isAttacking) nextDir = UP;
             moving = true;
         }
         if (InputInstance.IsMoveDown())
         {
             player.Velocity.y += 1;
-            nextDir = DOWN;
+            if (!player.Anim.isAttacking) nextDir = DOWN;
             moving = true;
         }
         if (InputInstance.IsMoveLeft())
         {
             player.Velocity.x -= 1;
-            nextDir = LEFT;
+            if (!player.Anim.isAttacking) nextDir = LEFT;
             moving = true;
         }
         if (InputInstance.IsMoveRight())
         {
             player.Velocity.x += 1;
-            nextDir = RIGHT;
+            if (!player.Anim.isAttacking) nextDir = RIGHT;
             moving = true;
         }
         player.IsMoving = moving;
