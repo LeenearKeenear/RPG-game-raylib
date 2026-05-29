@@ -88,24 +88,12 @@ enum CellType
  *==============================================================================*/
 
 /**
- * @brief Template room dari file JSON Tiled
- */
-struct RoomTemplate
-{
-    const char *jsonPath; // Path ke file JSON room
-    int width;            // Lebar room dalam tile
-    int height;           // Tinggi room dalam tile
-    int exitMask;         // Bitmask ExitDirection dari room ini
-};
-
-/**
  * @brief Satu cell dalam grid world generation
  */
 struct WorldCell
 {
     CellType type;              // Tipe cell
     int exitMask;               // Bitmask exit yang aktif
-    RoomTemplate *roomTemplate; // Template room yang di-assign ke cell ini
 };
 
 /**

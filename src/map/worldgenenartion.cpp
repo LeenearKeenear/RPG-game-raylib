@@ -415,6 +415,9 @@ int WorldGenPools::PickCorridorIndex(int tileX, int tileY, int exitTypeHash, int
         0x94d049bb133111eb,
         0x1234567890abcdef};
 
+    if (exitTypeHash < 1 || exitTypeHash > 4)
+        exitTypeHash = 1;
+
     uint64_t posHash = SplitMix64((uint64_t)tileX * WG_CANVAS_TILES + (uint64_t)tileY);
     uint64_t combined = worldSeed + posHash + EXIT_SALT[exitTypeHash - 1];
     return (int)(SplitMix64(combined) % (uint64_t)poolSize);
@@ -707,7 +710,14 @@ std::vector<MapObject> WorldGenCanvas::GetSlots()
         result.push_back(*ptr);
 
     std::sort(result.begin(), result.end(), [](const MapObject &a, const MapObject &b)
-              { return std::stoi(a.name.substr(5)) < std::stoi(b.name.substr(5)); });
+    {
+        int idxA = 0, idxB = 0;
+        if (a.name.rfind("slot_", 0) == 0)
+            idxA = std::stoi(a.name.substr(5));
+        if (b.name.rfind("slot_", 0) == 0)
+            idxB = std::stoi(b.name.substr(5));
+        return idxA < idxB;
+    });
 
     return result;
 }
@@ -848,11 +858,14 @@ void WorldGenCanvas::StampCorridor(const MapObject &exitObj, int slotCol, int sl
     else if (exitObj.type == "exit_west")
         exitTypeHash = 4;
 
-    // Ambil corridor prefab dari pool
+    // Ambil corridor prefab dari pool — cuma 1 yang dipake sesuai arah exit
     CorridorPool &cp = pools->GetCorridorPool();
-    TilesonMapData *vertical = pools->GetRandomCorridor(cp.vertical, exitTileX, exitTileY, exitTypeHash);
-    TilesonMapData *horizontal = pools->GetRandomCorridor(cp.horizontal, exitTileX, exitTileY, exitTypeHash);
-    if (!vertical || !horizontal)
+    bool isHorizontal = (exitObj.type == "exit_east" || exitObj.type == "exit_west");
+    TilesonMapData *corridor = pools->GetRandomCorridor(
+        isHorizontal ? cp.horizontal : cp.vertical,
+        exitTileX, exitTileY, exitTypeHash
+    );
+    if (!corridor)
         return;
 
     // Expand layer kalo perlu
@@ -863,30 +876,26 @@ void WorldGenCanvas::StampCorridor(const MapObject &exitObj, int slotCol, int sl
     if (exitObj.type == "exit_north")
     {
         int border = slotRow * WG_CELL_TILES;
-        // TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), exitTileY - border);
         for (int i = 1; i <= exitTileY - border; i++)
-            Stamp(vertical, exitTileX - CORRIDOR_CENTER_OFFSET, exitTileY - i, WG_CORRIDOR_LAYER_START);
+            Stamp(corridor, exitTileX - CORRIDOR_CENTER_OFFSET, exitTileY - i, WG_CORRIDOR_LAYER_START);
     }
     else if (exitObj.type == "exit_south")
     {
         int border = slotRow * WG_CELL_TILES + WG_CELL_TILES - 1;
-        // TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), border - exitTileY);
         for (int i = 1; i <= border - exitTileY; i++)
-            Stamp(vertical, exitTileX - CORRIDOR_CENTER_OFFSET, exitTileY + i, WG_CORRIDOR_LAYER_START);
+            Stamp(corridor, exitTileX - CORRIDOR_CENTER_OFFSET, exitTileY + i, WG_CORRIDOR_LAYER_START);
     }
     else if (exitObj.type == "exit_east")
     {
         int border = slotCol * WG_CELL_TILES + WG_CELL_TILES - 1;
-        // TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), border - exitTileX);
         for (int i = 1; i <= border - exitTileX; i++)
-            Stamp(horizontal, exitTileX + i, exitTileY - CORRIDOR_CENTER_OFFSET, WG_CORRIDOR_LAYER_START);
+            Stamp(corridor, exitTileX + i, exitTileY - CORRIDOR_CENTER_OFFSET, WG_CORRIDOR_LAYER_START);
     }
     else if (exitObj.type == "exit_west")
     {
         int border = slotCol * WG_CELL_TILES;
-        // TraceLog(LOG_INFO, "StampCorridor: exit=%s stampCount=%d", exitObj.type.c_str(), exitTileX - border);
         for (int i = 1; i <= exitTileX - border; i++)
-            Stamp(horizontal, exitTileX - i, exitTileY - CORRIDOR_CENTER_OFFSET, WG_CORRIDOR_LAYER_START);
+            Stamp(corridor, exitTileX - i, exitTileY - CORRIDOR_CENTER_OFFSET, WG_CORRIDOR_LAYER_START);
     }
 }
 

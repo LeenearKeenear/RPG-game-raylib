@@ -23,7 +23,7 @@ uint64_t GetCurrentRunSeed(void)
 
 void WorldGenLayout::InitGrid()
 {
-    grid.assign(WG_GRID_SIZE, std::vector<WorldCell>(WG_GRID_SIZE, {CELL_EMPTY, EXIT_NONE, nullptr}));
+    grid.assign(WG_GRID_SIZE, std::vector<WorldCell>(WG_GRID_SIZE, {CELL_EMPTY, EXIT_NONE}));
 }
 
 WorldGenLayout::WorldGenLayout(uint64_t seed)
@@ -540,7 +540,6 @@ void WorldGenLayout::RemoveDisconnectedCells()
 
             grid[r][c].type = CELL_EMPTY;
             grid[r][c].exitMask = 0;
-            grid[r][c].roomTemplate = nullptr;
         }
     }
 }
