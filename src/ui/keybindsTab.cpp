@@ -6,8 +6,10 @@
  */
 
 #include "keybindsTab.h"
+#include "fonts.h"
 #include "../lib/raylib/include/raylib.h"
 #include <array>
+#include <algorithm>
 
 struct KeybindEntry {
     const char* key;
@@ -46,28 +48,98 @@ static const std::array<KeybindEntry, 5> debugKeybinds = {{
  */
 void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY) {
     (void)mousePosition;
-    int contentStartY = startY + 100;
-    const int fontSize = 20;
-    int col1X = startX + 40;
-    int col2X = startX + 450;
 
-    for (int i = 0; i < 9; i++) {
-        int rowY = contentStartY + (i * 28);
-        DrawText(mainKeybinds[i].key, col1X, rowY, fontSize, YELLOW);
-        DrawText(" => ", col1X + 180, rowY, fontSize, GRAY);
-        DrawText(mainKeybinds[i].action, col1X + 240, rowY, fontSize, WHITE);
+    static int scrollY = 0;
+
+    int contentStartY = startY + 100;
+    const int headerHeight = 36;
+    const int rowHeight = 24;
+    const int colX = startX + 40;
+    const int keyColWidth = 220;
+    const int sepWidth = 30;
+    const int availableHeight = 420;
+
+    // 2 headers (72px) + 18 entries (432px) = 504px total
+    int totalContentHeight = 2 * headerHeight +
+        (static_cast<int>(mainKeybinds.size()) + static_cast<int>(debugKeybinds.size())) * rowHeight;
+    int maxScroll = std::max(0, totalContentHeight - availableHeight);
+
+    scrollY -= static_cast<int>(GetMouseWheelMove()) * 24;
+    scrollY = std::clamp(scrollY, 0, maxScroll);
+
+    // Convert a local Y offset (from contentStartY) to screen Y (accounting for scroll)
+    auto screenY = [&](int localY) -> int {
+        return contentStartY + localY - scrollY;
+    };
+
+    // Check if an element at localY with given height falls within the visible area
+    auto isVisible = [&](int localY, int height) -> bool {
+        int top = screenY(localY);
+        int bottom = top + height;
+        int viewTop = contentStartY - headerHeight;
+        int viewBottom = contentStartY + availableHeight + headerHeight;
+        return bottom > viewTop && top < viewBottom;
+    };
+
+    // Current local Y offset from contentStartY (before scrolling)
+    int currentY = 0;
+
+    // ---- "=== MAIN ===" header ----
+    if (isVisible(currentY, headerHeight)) {
+        DrawTextEx(fontKeybindHeader, "=== MAIN ===",
+            Vector2{(float)colX, (float)screenY(currentY)},
+            22, 0, YELLOW);
+    }
+    currentY += headerHeight;
+
+    // ---- Main keybinds ----
+    for (const auto& entry : mainKeybinds) {
+        if (isVisible(currentY, rowHeight)) {
+            int y = screenY(currentY);
+            DrawTextEx(fontKeybindEntry, entry.key,
+                Vector2{(float)colX, (float)y}, 20, 0, YELLOW);
+            DrawTextEx(fontKeybindEntry, "=>",
+                Vector2{(float)(colX + keyColWidth), (float)y}, 20, 0, GRAY);
+            DrawTextEx(fontKeybindEntry, entry.action,
+                Vector2{(float)(colX + keyColWidth + sepWidth), (float)y}, 20, 0, WHITE);
+        }
+        currentY += rowHeight;
     }
 
-    for (int i = 0; i < 9; i++) {
-        int srcIdx = 9 + i;
-        int rowY = contentStartY + (i * 28);
+    // ---- "=== DEBUGGING ===" header ----
+    if (isVisible(currentY, headerHeight)) {
+        DrawTextEx(fontKeybindHeader, "=== DEBUGGING ===",
+            Vector2{(float)colX, (float)screenY(currentY)},
+            22, 0, GRAY);
+    }
+    currentY += headerHeight;
 
-        const KeybindEntry& entry = (srcIdx < 13)
-            ? mainKeybinds[srcIdx]
-            : debugKeybinds[srcIdx - 13];
+    // ---- Debug keybinds ----
+    for (const auto& entry : debugKeybinds) {
+        if (isVisible(currentY, rowHeight)) {
+            int y = screenY(currentY);
+            DrawTextEx(fontKeybindEntry, entry.key,
+                Vector2{(float)colX, (float)y}, 20, 0, YELLOW);
+            DrawTextEx(fontKeybindEntry, "=>",
+                Vector2{(float)(colX + keyColWidth), (float)y}, 20, 0, GRAY);
+            DrawTextEx(fontKeybindEntry, entry.action,
+                Vector2{(float)(colX + keyColWidth + sepWidth), (float)y}, 20, 0, WHITE);
+        }
+        currentY += rowHeight;
+    }
 
-        DrawText(entry.key, col2X, rowY, fontSize, YELLOW);
-        DrawText(" => ", col2X + 80, rowY, fontSize, GRAY);
-        DrawText(entry.action, col2X + 130, rowY, fontSize, WHITE);
+    // ---- Scroll indicators ----
+    if (maxScroll > 0) {
+        int indicatorX = startX + 350;
+        if (scrollY > 0) {
+            DrawTextEx(fontKeybindEntry, "^^^",
+                Vector2{(float)indicatorX, (float)(contentStartY - 5)},
+                16, 0, GRAY);
+        }
+        if (scrollY < maxScroll) {
+            DrawTextEx(fontKeybindEntry, "vvv",
+                Vector2{(float)indicatorX, (float)(contentStartY + availableHeight - 20)},
+                16, 0, GRAY);
+        }
     }
 }
