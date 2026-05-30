@@ -207,56 +207,28 @@ namespace Inventory
             return;
 
         const WeaponData &wpn = std::get<WeaponData>(def.data);
-
-        // Base angle menentukan orientasi awal swing
-        float baseAngle = 0.0f;
-        switch (attackFaceDir)
-        {
-        case RIGHT:
-            baseAngle = 0.0f;
-            break;
-        case DOWN:
-            baseAngle = 90.0f;
-            break;
-        case LEFT:
-            baseAngle = 180.0f;
-            break;
-        case UP:
-            baseAngle = -90.0f;
-            break;
-        }
-
-        player.Swing.baseAngle = baseAngle;
+        player.attack.weapon = &wpn;
 
         // Center offset disesuaikan per arah agar hitbox tidak miring
         switch (attackFaceDir)
         {
         case UP:
-            player.Swing.center.y -= wpn.centerOffset.y;
-            player.Swing.center.x += wpn.centerOffset.x;
+            player.attack.center.y -= wpn.centerOffset.y;
+            player.attack.center.x += wpn.centerOffset.x;
             break;
         case DOWN:
-            player.Swing.center.y += wpn.centerOffset.y;
-            player.Swing.center.x -= wpn.centerOffset.x;
+            player.attack.center.y += wpn.centerOffset.y;
+            player.attack.center.x -= wpn.centerOffset.x;
             break;
         case LEFT:
-            player.Swing.center.x -= wpn.centerOffset.x;
-            player.Swing.center.y -= wpn.centerOffset.y;
+            player.attack.center.x -= wpn.centerOffset.x;
+            player.attack.center.y -= wpn.centerOffset.y;
             break;
         case RIGHT:
-            player.Swing.center.x += wpn.centerOffset.x;
-            player.Swing.center.y += wpn.centerOffset.y;
+            player.attack.center.x += wpn.centerOffset.x;
+            player.attack.center.y += wpn.centerOffset.y;
             break;
         }
-
-        player.Swing.type = wpn.attackType;
-        player.Swing.duration = wpn.duration;
-        player.Swing.reach = wpn.reach;
-        player.Swing.breadth = wpn.breadth;
-        player.Swing.startAngle = baseAngle + wpn.startAngleOffset;
-        player.Swing.sweepAngle = wpn.sweepAngle;
-        player.Swing.damage = wpn.damage;
-        player.Swing.knockbackForce = wpn.knockbackForce;
     }
 
     float GetAttackManaCost(const Player &player)

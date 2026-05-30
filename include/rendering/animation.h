@@ -104,7 +104,7 @@ void LoadAnimationsFromJSON();
 void PlayAnimation(Animation &anim, State state, Direction direction);
 void UpdateAnimation(Animation &anim, float dt);
 void DrawAnimation(const Animation &anim, Color tint = WHITE);
-void DrawExplosion(Vector2 centerPosition, float radius, float progress);
+void Explosion(Vector2 centerPosition, float radius, float progress);
 
 extern std::unordered_map<std::string, AnimationSet> loadedAnimationSets;
 
