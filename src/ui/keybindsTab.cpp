@@ -9,6 +9,35 @@
 #include "../lib/raylib/include/raylib.h"
 #include <array>
 
+struct KeybindEntry {
+    const char* key;
+    const char* action;
+};
+
+static const std::array<KeybindEntry, 13> mainKeybinds = {{
+    {"W / Arrow Up", "Move Up"},
+    {"S / Arrow Down", "Move Down"},
+    {"A / Arrow Left", "Move Left"},
+    {"D / Arrow Right", "Move Right"},
+    {"E", "Interact"},
+    {"I", "Inventory"},
+    {"M", "Map"},
+    {"Q", "Drop Item"},
+    {"Left Ctrl", "Drop All"},
+    {"Mouse Left", "Attack"},
+    {"Mouse Right", "Dash / Drink"},
+    {"1 / 2 / 3 / 4", "Hotbar Slots"},
+    {"Scroll", "Hotbar Slot"}
+}};
+
+static const std::array<KeybindEntry, 5> debugKeybinds = {{
+    {"`", "Pause Menu"},
+    {"Tab", "Debug Overlay"},
+    {"R", "Revive"},
+    {"K", "Damage (No Effect)"},
+    {"B", "Previous Map"}
+}};
+
 /**
  * @brief Draw keybinds tab content
  * @param mousePosition Posisi mouse untuk efek hover
@@ -22,58 +51,23 @@ void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY) {
     int col1X = startX + 40;
     int col2X = startX + 450;
 
-    static const std::array<const char*, 18> keys = {
-        "W / Arrow Up",
-        "S / Arrow Down",
-        "A / Arrow Left",
-        "D / Arrow Right",
-        "F",
-        "I",
-        "M",
-        "Mouse Left",
-        "1",
-        "2",
-        "3",
-        "4",
-        "`",
-        "TAB",
-        "R",
-        "K",
-        "B",
-        "Scroll"
-    };
-    
-    static const std::array<const char*, 18> actions = {
-        "Move Up",
-        "Move Down",
-        "Move Left",
-        "Move Right",
-        "Interact",
-        "Inventory",
-        "Map",
-        "Action",
-        "Weapon 1",
-        "Weapon 2",
-        "Potion 1",
-        "Potion 2",
-        "Pause",
-        "Debug",
-        "Revive",
-        "Damage",
-        "Prev Map",
-        "Zoom / Hotbar Slot"
-    };
-
     for (int i = 0; i < 9; i++) {
         int rowY = contentStartY + (i * 28);
-        DrawText(keys[i], col1X, rowY, fontSize, YELLOW);
+        DrawText(mainKeybinds[i].key, col1X, rowY, fontSize, YELLOW);
         DrawText(" => ", col1X + 180, rowY, fontSize, GRAY);
-        DrawText(actions[i], col1X + 240, rowY, fontSize, WHITE);
+        DrawText(mainKeybinds[i].action, col1X + 240, rowY, fontSize, WHITE);
     }
-    for (int i = 9; i < 18; i++) {
-        int rowY = contentStartY + ((i - 9) * 28);
-        DrawText(keys[i], col2X, rowY, fontSize, YELLOW);
+
+    for (int i = 0; i < 9; i++) {
+        int srcIdx = 9 + i;
+        int rowY = contentStartY + (i * 28);
+
+        const KeybindEntry& entry = (srcIdx < 13)
+            ? mainKeybinds[srcIdx]
+            : debugKeybinds[srcIdx - 13];
+
+        DrawText(entry.key, col2X, rowY, fontSize, YELLOW);
         DrawText(" => ", col2X + 80, rowY, fontSize, GRAY);
-        DrawText(actions[i], col2X + 130, rowY, fontSize, WHITE);
+        DrawText(entry.action, col2X + 130, rowY, fontSize, WHITE);
     }
 }
