@@ -5,7 +5,7 @@
  * @brief Modul Preservasi State Game
  *
  * Handle save dan restore seluruh state game world:
- * - Player (posisi, health, inventory, mana, dash, mana regen, swing attack)
+ * - Player (posisi, health, inventory, mana, dash, mana regen, attack)
  * - Enemy (posisi, HP, alive/dead status, spawn point, regen/cooldown timers, UUID)
  * - Item (posisi, collected/remaining status, stackable amount, UUID)
  * - Map state (opened chests, bomb/crate consumed positions, triggered events)
@@ -56,7 +56,7 @@ struct SavedPlayerState {
 
     float dashCooldown;                  /**< Remaining dash cooldown timer */
     float manaRegenTimer;                /**< Timer delay before mana regen begins */
-    nlohmann::json swingAttack;          /**< Serialized SwingAttack state: active, timer, duration, currentAngle, center, type, reach, breadth, damage, knockbackForce */
+    nlohmann::json swingAttack;          /**< Serialized attack state: active, timer, duration, raycastAngle, center, pressHeld */
 };
 
 /**
@@ -145,7 +145,7 @@ extern bool hasSavedState;
  * @brief Simpan seluruh state game world
  * @details Dipanggil saat player klik "Return to Menu"
  * @param state Pointer ke GameState
- * @note Simpan: player position/health/inventory/mana/dash/manaRegen/swingAttack, enemies with spawnPoint/timers/UUID, items with amount/UUID, map state with bomb/crate/chest consumption
+ * @note Simpan: player position/health/inventory/mana/dash/manaRegen/attack, enemies with spawnPoint/timers/UUID, items with amount/UUID, map state with bomb/crate/chest consumption
  */
 void SaveGameState(GameState *state);
 

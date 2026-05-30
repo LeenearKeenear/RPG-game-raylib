@@ -34,7 +34,7 @@ Sistem ini menggunakan **struct global C++** sebagai jembatan antara game world 
 
 Semua ada di `slot0.json` (satu file JSON, version=2):
 
-- **Player**: position (x,y), health, maxHealth, mana, maxMana, hotbar[4] (definitionId, amount), bag[12] (definitionId, amount), animation state (state, direction, isDead), active hotbar slot, dashCooldown, manaRegenTimer, swingAttack (serialized sebagai JSON object: active, timer, duration, currentAngle, center, type, reach, breadth, damage, knockbackForce)
+- **Player**: position (x,y), health, maxHealth, mana, maxMana, hotbar[4] (definitionId, amount), bag[12] (definitionId, amount), animation state (state, direction, isDead), active hotbar slot, dashCooldown, manaRegenTimer, attack (serialized sebagai JSON object: active, timer, duration, raycastAngle, center, pressHeld)
 - **Musuh**: position, enemyName, currentHP, maxHealth, isAlive, aiState, patrolTarget, patrolTimer, mapObjectID, spawnPoint (sebagai {x, y}), healthRegenTimer, attackCooldownTimer, uuid
 - **Item**: position, definitionId, isPickedUp, amount, uuid
 - **Map**: mapPath, cameraTarget (x,y), cameraZoom, deadEntities list, chestsOpened list, bombConsumedPositions, crateConsumedPositions, mapHistory stack
