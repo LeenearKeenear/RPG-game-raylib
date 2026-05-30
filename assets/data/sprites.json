@@ -272,32 +272,32 @@
         "width": 3,
         "height": 3
     },
-    "slash2Sword2": {
-        "texture": "SPRITESHEET_EFFECTS",
-        "column": 12,
-        "row": 3,
-        "width": 1,
-        "height": 1
-    },
-    "slash1Sword2": {
+    "slashSilverBlueMedium1": {
         "texture": "SPRITESHEET_EFFECTS",
         "column": 13,
         "row": 3,
         "width": 3,
         "height": 2
     },
-    "slash2Sword1": {
+    "slashSilverBlueMedium2": {
         "texture": "SPRITESHEET_EFFECTS",
-        "column": 16,
+        "column": 12,
         "row": 3,
         "width": 1,
         "height": 1
     },
-    "slash1Sword1": {
+    "slashLightGraySmall1": {
         "texture": "SPRITESHEET_EFFECTS",
         "column": 17,
         "row": 3,
         "width": 2,
+        "height": 1
+    },
+    "slashLightGraySmall2": {
+        "texture": "SPRITESHEET_EFFECTS",
+        "column": 16,
+        "row": 3,
+        "width": 1,
         "height": 1
     }
 }
