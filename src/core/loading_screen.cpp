@@ -18,6 +18,7 @@
 #include "../../include/entities/entities.h"
 #include "../../include/map/propsbehavior.h"
 #include "../../include/entities/enemy_ai.h"
+#include "../../include/rendering/fonts.h"
 #include "../../lib/raylib/include/raylib.h"
 
 /*==============================================================================
@@ -205,6 +206,7 @@ void UpdateLoadingScreen(GameState *state)
         // Init first, then restore saved state - order matters!
         // InitAll() sets position to spawn, then RestoreGameState overwrites it
         InitAll();
+        InitFonts();
         if (HasSavedState())
         {
             RestoreGameState(state);

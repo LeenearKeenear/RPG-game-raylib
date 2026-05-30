@@ -15,6 +15,7 @@
 #include "../../include/ui/pauseMenu.h"
 #include "../../include/core/loading_screen.h"
 #include "../../include/core/game_state_saver.h"
+#include "../../include/rendering/fonts.h"
 #include "../../lib/raylib/include/raylib.h"
 #include "../../lib/raylib/include/raymath.h"
 #include <cstdio>
@@ -85,6 +86,8 @@ int main()
 
     // Step 6: init main menu (needed for menu buttons to render)
     InitMainMenu(&state);
+
+    InitFonts();
 
     float accumulator = 0.0f;
 
