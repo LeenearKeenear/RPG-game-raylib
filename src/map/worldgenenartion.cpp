@@ -452,14 +452,21 @@ void WorldGenPools::LoadCorridorPool(const char *basePath)
     // Load corridor vertical
     std::string vPath = std::string(basePath) + "/corridor_v";
     int vCount = 0;
-    for (auto &entry : fs::directory_iterator(vPath))
     {
-        if (entry.path().extension() != ".json")
-            continue;
-        TilesonMapData *data = new TilesonMapData();
-        PreFabLoadMap(entry.path().string().c_str(), data);
-        corridorPool.vertical.prefabs.push_back(data);
-        vCount++;
+        std::vector<fs::directory_entry> entries;
+        for (auto &entry : fs::directory_iterator(vPath))
+            entries.push_back(entry);
+        std::sort(entries.begin(), entries.end(),
+            [](auto &a, auto &b) { return a.path() < b.path(); });
+        for (auto &entry : entries)
+        {
+            if (entry.path().extension() != ".json")
+                continue;
+            TilesonMapData *data = new TilesonMapData();
+            PreFabLoadMap(entry.path().string().c_str(), data);
+            corridorPool.vertical.prefabs.push_back(data);
+            vCount++;
+        }
     }
     // Generate varian 180 derajat untuk vertical
     for (int i = 0; i < vCount; i++)
@@ -471,14 +478,21 @@ void WorldGenPools::LoadCorridorPool(const char *basePath)
     // Load corridor horizontal
     std::string hPath = std::string(basePath) + "/corridor_h";
     int hCount = 0;
-    for (auto &entry : fs::directory_iterator(hPath))
     {
-        if (entry.path().extension() != ".json")
-            continue;
-        TilesonMapData *data = new TilesonMapData();
-        PreFabLoadMap(entry.path().string().c_str(), data);
-        corridorPool.horizontal.prefabs.push_back(data);
-        hCount++;
+        std::vector<fs::directory_entry> entries;
+        for (auto &entry : fs::directory_iterator(hPath))
+            entries.push_back(entry);
+        std::sort(entries.begin(), entries.end(),
+            [](auto &a, auto &b) { return a.path() < b.path(); });
+        for (auto &entry : entries)
+        {
+            if (entry.path().extension() != ".json")
+                continue;
+            TilesonMapData *data = new TilesonMapData();
+            PreFabLoadMap(entry.path().string().c_str(), data);
+            corridorPool.horizontal.prefabs.push_back(data);
+            hCount++;
+        }
     }
     // Generate varian 180 derajat untuk horizontal
     for (int i = 0; i < hCount; i++)
@@ -522,13 +536,20 @@ void WorldGenPools::LoadRoomPoolForType(const char *basePath, const char *roomTy
         std::string path = std::string(basePath) + "/rooms/" + roomType + "/" + folder;
         if (!fs::exists(path))
             continue;
-        for (auto &entry : fs::directory_iterator(path))
         {
-            if (entry.path().extension() != ".json")
-                continue;
-            TilesonMapData *data = new TilesonMapData();
-            PreFabLoadMap(entry.path().string().c_str(), data);
-            pool.prefabs.push_back(data);
+            std::vector<fs::directory_entry> entries;
+            for (auto &entry : fs::directory_iterator(path))
+                entries.push_back(entry);
+            std::sort(entries.begin(), entries.end(),
+                [](auto &a, auto &b) { return a.path() < b.path(); });
+            for (auto &entry : entries)
+            {
+                if (entry.path().extension() != ".json")
+                    continue;
+                TilesonMapData *data = new TilesonMapData();
+                PreFabLoadMap(entry.path().string().c_str(), data);
+                pool.prefabs.push_back(data);
+            }
         }
     }
 
@@ -537,13 +558,17 @@ void WorldGenPools::LoadRoomPoolForType(const char *basePath, const char *roomTy
     std::string flatPath = std::string(basePath) + "/rooms/" + roomType;
     if (fs::exists(flatPath))
     {
+        std::vector<fs::directory_entry> flatEntries;
         for (auto &entry : fs::directory_iterator(flatPath))
+            flatEntries.push_back(entry);
+        std::sort(flatEntries.begin(), flatEntries.end(),
+            [](auto &a, auto &b) { return a.path() < b.path(); });
+        for (auto &entry : flatEntries)
         {
             if (entry.path().extension() != ".json")
                 continue;
             if (entry.is_directory())
                 continue;
-            // Skip kalo ternyata file ini udah di-load dari subfolder (cek duplikat nama)
             TilesonMapData *data = new TilesonMapData();
             PreFabLoadMap(entry.path().string().c_str(), data);
             targetPool.u.prefabs.push_back(data);

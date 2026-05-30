@@ -263,6 +263,8 @@ void UnloadMap(void)
         tilesonMap = nullptr;
     }
 
+    DynamicObstacles.clear();
+
     ClearEnemies();
     itemData.ClearItems();
     parsedMap.reset();
@@ -275,49 +277,35 @@ void UnloadMap(void)
  */
 void InitMap(void)
 {
-    // Beberapa pilihan map yang tersedia (sementara di-comment)
-
-    // LoadMap("assets/maps/floorA.json");
-    // LoadMap("assets/maps/floorB.json");
-    // LoadMap("assets/maps/floorC.json");
-    // "assets/maps/tutorial.json"
-    // Map yang aktif saat ini
-    // currentMapPath = "assets/maps/tutorial.json";
-    // currentMapPath = "assets/maps/floorB_tester.json";
-    // currentMapPath = "assets/maps/testing_size.json";
-
-    // preFabMapPath = "assets/maps/World_generation/template1(udrl).json";
-    // preFabMapPath = "assets/maps/World_generation/template2(udr).json";
-    // preFabMapPath = "assets/maps/World_generation/template3(ud).json";
-    // preFabMapPath = "assets/maps/World_generation/template4(ur).json";
-    // preFabMapPath = "assets/maps/World_generation/template5(u).json";
-    currentMapPath = "assets/maps/World_generation/background_map.json";
+    currentMapPath = "assets/maps/tutorial.json";
     LoadMap(currentMapPath.c_str());
-    BuildMapObjectIndex(); // 1. setelah load background
+    BuildMapObjectIndex();
+}
 
-    int testingSeed = 123456789;
-    uint64_t runSeed = GenerateRunSeed();
-    // WorldGenPools pools(TestingSeed);
-    WorldGenPools pools(runSeed);
+// TODO: panggil ini nanti dari door trigger worldgen
+void RunWorldgen(uint64_t seed, bool isBossStage)
+{
+    WorldGenPools pools(seed);
     pools.LoadRoomPool("assets/maps/World_generation");
     pools.LoadCorridorPool("assets/maps/World_generation/corridor");
 
-    // Load prefab → BuildMapObjectIndex tiap prefab
-    // BuildMapObjectIndex semua pool
     for (auto *p : pools.GetAllRoomPrefabs())
         BuildMapObjectIndexTarget(p);
 
-    // WorldGenLayout layout(TestingSeed);
-    WorldGenLayout layout(runSeed);
+    // Index object tilesonMap harus dibangun sebelum GetSlots() — biar slot_worldgen ketemu
+    BuildMapObjectIndexTarget(tilesonMap);
+
+    WorldGenLayout layout(seed, isBossStage);
     layout.Generate();
 
-    WorldGenCanvas canvas(tilesonMap, &pools, runSeed);
+    WorldGenCanvas canvas(tilesonMap, &pools, seed);
     auto slots = canvas.GetSlots();
     canvas.StampLayout(layout.GetGrid(), slots);
 
-    BuildMapObjectIndex(); // 2. setelah stamp room
+    InitWorldgenGrid(layout.GetGrid(), slots);
 
-    // Stamp corridors
+    BuildMapObjectIndex();
+
     std::vector<MapObject> exitObjects;
     for (const char *exitType : {EXIT_NORTH_TYPE_OBJECT_NAME, EXIT_SOUTH_TYPE_OBJECT_NAME,
                                  EXIT_EAST_TYPE_OBJECT_NAME, EXIT_WEST_TYPE_OBJECT_NAME})
@@ -336,7 +324,7 @@ void InitMap(void)
     pools.UnloadCorridorPool();
     pools.UnloadRoomPool();
 
-    BuildMapObjectIndex(); // 3. setelah semua stamp selesai
+    BuildMapObjectIndex();
 }
 
 /*==============================================================================
@@ -531,6 +519,34 @@ void GoBack(void)
     gState->currentScreen = LOADING;
 
     TraceLog(LOG_INFO, "GoBack: transitioning to LOADING screen for map: %s", prev.mapPath.c_str());
+}
+
+/**
+ * @brief Sisakan cuma entry teratas di stack riwayat
+ *
+ * Pas stage transition via NextStage(), map saat ini di-push ke stack
+ * sebagai prev stage. Tapi kita cuman mau nyimpen 1 prev aja — tutorial
+ * atau stage yang lebih lama harus dibuang.
+ */
+void TrimStageStack(void)
+{
+    if (mapHistoryStack.IsEmpty())
+    {
+        TraceLog(LOG_INFO, "TrimStageStack: stack kosong");
+        return;
+    }
+
+    // Ambil entry teratas (prev stage), hapus sisanya, push balik
+    MapSystem::MapHistoryEntry topEntry = mapHistoryStack.Pop();
+    int removedCount = 0;
+    while (!mapHistoryStack.IsEmpty())
+    {
+        mapHistoryStack.Pop();
+        removedCount++;
+    }
+    mapHistoryStack.Push(topEntry.mapPath, topEntry.doorName);
+
+    TraceLog(LOG_INFO, "TrimStageStack: nyimpen [%s], buang %d entry", topEntry.mapPath.c_str(), removedCount);
 }
 
 /**

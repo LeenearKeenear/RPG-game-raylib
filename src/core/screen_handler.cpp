@@ -38,6 +38,9 @@
 #include <cctype>
 #include "hud.h"
 #include "propsbehavior.h"
+#include "seedmanager.h"
+#include "worldgenio.h"
+#include "worldgenenartion.h"
 
 /*==============================================================================
  * External Variables & Macros
@@ -229,6 +232,30 @@ void UpdateLogicAll()
     // Handle pending map transitions dari Interaction namespace
     Interaction::ExecutePendingTransitions(PlayerInstance);
 
+    // Deteksi FINISH/BOSS cell untuk stage transition (hanya di worldgen stage)
+    // Guard isSwitchingMap — cegah double trigger dari grid + door detection
+    if (!gState->isSwitchingMap && !gState->isGoingBack)
+    {
+        const char *mapPath = GetCurrentMapPath();
+        if (mapPath && strstr(mapPath, "background_map_stage_") != nullptr)
+        {
+            if (IsKeyPressed(KEY_E))
+            {
+                Vector2 playerCenter = PlayerInstance.GetCenter();
+                CellType cellType = GetCellTypeAtWorldPos(playerCenter);
+                if (cellType == CELL_FINISH)
+                {
+                    WorldgenIO::NextStage();
+                }
+                else if (cellType == CELL_BOSS)
+                {
+                    WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
+                    gState->currentScreen = MAIN_MENU;
+                }
+            }
+        }
+    }
+
     // Update Effects (Popups, Logs, etc)
     Effects::Update(Time::DELTA_TIME);
     spikeManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
@@ -255,7 +282,7 @@ void UpdateLogicAll()
             {
                 TraceLog(LOG_INFO, "PICKUP: added to inventory");
                 item.isAdded = true;
-                
+
                 const ItemDefinition &def = itemDefs.GetById(item.definitionId);
                 std::string logMsg = def.name;
                 if (item.amount > 1)
@@ -268,7 +295,7 @@ void UpdateLogicAll()
             {
                 TraceLog(LOG_INFO, "PICKUP: inventory full");
                 item.isPickedUp = false; // balik ke world
-                
+
                 static float lastInventoryFullTime = 0.0f;
                 float currentTime = (float)GetTime();
                 if (currentTime - lastInventoryFullTime > 2.0f)

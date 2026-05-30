@@ -200,3 +200,17 @@ void SetCurrentMapPath(const char *newPath);
  * @brief Kembali ke map sebelumnya
  */
 void GoBack(void);
+
+/**
+ * @brief Generate world di map yang sudah di-load
+ * @param seed Seed deterministic
+ */
+void RunWorldgen(uint64_t seed, bool isBossStage = false);
+
+/**
+ * @brief Trim stack riwayat map — sisakan cuma 1 entry teratas (immediate prev stage)
+ *
+ * Pas stage transition, map lama di-push ke stack. Tapi kita cuman mau
+ * nyimpen 1 stage sebelumnya (bukan semua riwayat). Sisanya di-pop.
+ */
+void TrimStageStack(void);

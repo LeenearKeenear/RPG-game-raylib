@@ -5,6 +5,8 @@
 #include "map.h"
 #include "screen.h"
 #include "propsbehavior.h"
+#include "seedmanager.h"
+#include "worldgenio.h"
 #include "../lib/raylib/include/raymath.h"
 
 namespace Interaction
@@ -68,6 +70,10 @@ namespace Interaction
      */
     void CheckDoors(Player &player)
     {
+        // Skip kalau lagi transisi map — cegah double trigger dari fixed-timestep loop
+        if (gState->isSwitchingMap || gState->isGoingBack)
+            return;
+
         Rectangle playerHitbox = BuildHitbox(player.Position, player.GetHitboxOffsetX(), player.GetHitboxOffsetY(), player.GetHitboxWidth(), player.GetHitboxHeight());
         std::vector<MapObject *> doors = TiledHelperFunction.GetObjectsByType(DOOR_TYPE_OBJECT_NAME);
 
@@ -75,11 +81,42 @@ namespace Interaction
         {
             if (!CheckCollisionRecs(playerHitbox, door->bounds))
                 continue;
-            
+
             player.canInteract = true;
-            
+
             if (!InputInstance.IsInteract())
                 continue;
+
+            // Cek worldgen door — property "worldgen":"true" → InitRun + SwitchMap ke stage 1
+            auto wgIt = door->properties.find("worldgen");
+            if (wgIt != door->properties.end() && wgIt->second.getValue<std::string>() == "true")
+            {
+                // InitRun cuma sekali per run — kalau sudah aktif, lanjut ke stage terakhir
+                if (!g_SeedManager.IsRunActive())
+                    WorldgenIO::InitRun();
+
+                player.pendingSwitchMap = true;
+                player.pendingMapPath = WorldgenIO::GetStagePath(g_SeedManager.GetCurrentStage());
+                player.pendingDoorName = "start";
+                return;
+            }
+
+            // Cek door stage_exit — property "stage_exit":"next" → NextStage (finish door)
+            auto stageExitIt = door->properties.find("stage_exit");
+            if (stageExitIt != door->properties.end())
+            {
+                const std::string &val = stageExitIt->second.getValue<std::string>();
+                if (val == "next")
+                {
+                    WorldgenIO::NextStage();
+                    return;
+                }
+                if (val == "prev")
+                {
+                    WorldgenIO::PrevStage();
+                    return;
+                }
+            }
 
             // Mengambil map tujuan dan ID pintu dari properti Tiled
             auto mapIt = door->properties.find("target_map");

@@ -29,7 +29,7 @@ constexpr int WG_TILE_SIZE = FRAME_SIZE;   // Ukuran tile dalam pixel
 
 // Prim's Algorithm — tuning jumlah cell dan stop chance
 constexpr int WG_PRIM_START_CELLS = 1;  // Jumlah cell awal saat seed Prim
-constexpr int WG_PRIM_MIN_CELLS = 10;    // Minimum cell sebelum boleh random stop
+constexpr int WG_PRIM_MIN_CELLS = 7;    // Minimum cell sebelum boleh random stop
 constexpr int WG_PRIM_MAX_CELLS = 12;   // Maksimum cell (batas atas loop Prim)
 constexpr int WG_PRIM_STOP_CHANCE = 20; // Persentase chance random stop setelah MIN_CELLS
 constexpr int WG_PRIM_RETRY_MAX = 10;   // Maksimum percobaan generate layout
@@ -400,7 +400,7 @@ private:
 class WorldGenLayout
 {
 public:
-    WorldGenLayout(uint64_t seed);
+    WorldGenLayout(uint64_t seed, bool isBossStage = false);
 
     void Generate();
 
@@ -409,6 +409,7 @@ public:
 private:
     std::mt19937 wgRng;
     std::vector<std::vector<WorldCell>> grid; // 4x4
+    bool isBoss = false;
 
     void InitGrid();
     void RunPrims();
@@ -434,3 +435,22 @@ uint64_t GenerateRunSeed(void);
 
 /** @brief Dapatkan seed run yang sedang aktif */
 uint64_t GetCurrentRunSeed(void);
+
+/*==============================================================================
+ * Worldgen Grid Lookup — untuk stage transition detection
+ *==============================================================================*/
+
+struct WorldgenCellInfo
+{
+    CellType type;
+    Rectangle bounds;
+};
+
+extern WorldgenCellInfo g_worldgenCells[WG_GRID_SIZE * WG_GRID_SIZE];
+extern int g_worldgenCellCount;
+
+void InitWorldgenGrid(const std::vector<std::vector<WorldCell>> &grid,
+                      const std::vector<MapObject> &slots);
+CellType GetCellTypeAtWorldPos(Vector2 worldPos);
+int GetCellIndexAtWorldPos(Vector2 worldPos);
+bool IsCellTypeAtWorldPos(Vector2 worldPos, CellType type);

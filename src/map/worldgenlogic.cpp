@@ -26,8 +26,8 @@ void WorldGenLayout::InitGrid()
     grid.assign(WG_GRID_SIZE, std::vector<WorldCell>(WG_GRID_SIZE, {CELL_EMPTY, EXIT_NONE}));
 }
 
-WorldGenLayout::WorldGenLayout(uint64_t seed)
-    : wgRng(seed)
+WorldGenLayout::WorldGenLayout(uint64_t seed, bool isBossStage)
+    : wgRng(seed), isBoss(isBossStage)
 {
     InitGrid();
 }
@@ -233,7 +233,7 @@ void WorldGenLayout::RunPrims()
                 finishC = c;
             }
         }
-    grid[finishR][finishC].type = CELL_FINISH;
+    grid[finishR][finishC].type = isBoss ? CELL_BOSS : CELL_FINISH;
 }
 
 void WorldGenLayout::AssignCellTypes()
@@ -241,26 +241,26 @@ void WorldGenLayout::AssignCellTypes()
     auto depth = ComputeDepth();
     int total = CountActiveCells();
 
-    // Kumpulin leaf candidates (bukan START/FINISH, gak adjacent ke START/FINISH)
+    // Kumpulin leaf candidates (bukan START/FINISH/BOSS, gak adjacent ke START/FINISH/BOSS)
     std::vector<std::pair<int, int>> leaves;
     for (int r = 0; r < WG_GRID_SIZE; r++)
         for (int c = 0; c < WG_GRID_SIZE; c++)
         {
             if (grid[r][c].type == CELL_EMPTY)
                 continue;
-            if (grid[r][c].type == CELL_START)
+            if (grid[r][c].type == CELL_START ||
+                grid[r][c].type == CELL_FINISH ||
+                grid[r][c].type == CELL_BOSS)
                 continue;
-            if (grid[r][c].type == CELL_FINISH)
-                continue;
-            if (IsAdjacentToType(r, c, CELL_START))
-                continue;
-            if (IsAdjacentToType(r, c, CELL_FINISH))
+            if (IsAdjacentToType(r, c, CELL_START) ||
+                IsAdjacentToType(r, c, CELL_FINISH) ||
+                IsAdjacentToType(r, c, CELL_BOSS))
                 continue;
             if (IsLeaf(r, c))
                 leaves.push_back({r, c});
         }
 
-    // Fallback 1: semua non-START/FINISH yang memenuhi constraint
+    // Fallback 1: semua non-START/FINISH/BOSS yang memenuhi constraint
     if (leaves.empty())
     {
         for (int r = 0; r < WG_GRID_SIZE; r++)
@@ -268,13 +268,13 @@ void WorldGenLayout::AssignCellTypes()
             {
                 if (grid[r][c].type == CELL_EMPTY)
                     continue;
-                if (grid[r][c].type == CELL_START)
+                if (grid[r][c].type == CELL_START ||
+                    grid[r][c].type == CELL_FINISH ||
+                    grid[r][c].type == CELL_BOSS)
                     continue;
-                if (grid[r][c].type == CELL_FINISH)
-                    continue;
-                if (IsAdjacentToType(r, c, CELL_START))
-                    continue;
-                if (IsAdjacentToType(r, c, CELL_FINISH))
+                if (IsAdjacentToType(r, c, CELL_START) ||
+                    IsAdjacentToType(r, c, CELL_FINISH) ||
+                    IsAdjacentToType(r, c, CELL_BOSS))
                     continue;
                 leaves.push_back({r, c});
             }
@@ -290,13 +290,13 @@ void WorldGenLayout::AssignCellTypes()
             {
                 if (grid[r][c].type == CELL_EMPTY)
                     continue;
-                if (grid[r][c].type == CELL_START)
+                if (grid[r][c].type == CELL_START ||
+                    grid[r][c].type == CELL_FINISH ||
+                    grid[r][c].type == CELL_BOSS)
                     continue;
-                if (grid[r][c].type == CELL_FINISH)
-                    continue;
-                if (IsAdjacentToType(r, c, CELL_START))
-                    continue;
-                if (IsAdjacentToType(r, c, CELL_FINISH))
+                if (IsAdjacentToType(r, c, CELL_START) ||
+                    IsAdjacentToType(r, c, CELL_FINISH) ||
+                    IsAdjacentToType(r, c, CELL_BOSS))
                     continue;
                 if (depth[r][c] > maxDepth)
                 {
@@ -421,14 +421,14 @@ void WorldGenLayout::PruneSingleExitCells()
             // Simpan daftar asli sebelum constraint filter (buat removal nanti)
             std::vector<int> origActiveDirs = activeDirs;
 
-            // Constraint START: harus milih exit yang path-nya nyampe FINISH
+            // Constraint START: harus milih exit yang path-nya nyampe FINISH/BOSS
             if (type == CELL_START)
             {
-                // Cari posisi FINISH
+                // Cari posisi FINISH/BOSS
                 int finishR = INVALID_INDEX, finishC = INVALID_INDEX;
                 for (int tr = 0; tr < WG_GRID_SIZE; tr++)
                     for (int tc = 0; tc < WG_GRID_SIZE; tc++)
-                        if (grid[tr][tc].type == CELL_FINISH)
+                        if (grid[tr][tc].type == CELL_FINISH || grid[tr][tc].type == CELL_BOSS)
                         {
                             finishR = tr;
                             finishC = tc;
@@ -701,18 +701,19 @@ void WorldGenLayout::PruneOneDenseExit()
         mask &= ~DIR_EXIT_MASK[removeDir];
         grid[nr][nc].exitMask &= ~DIR_OPPOSITE_MASK[removeDir];
 
-        // Cek apakah FINISH masih reachable dari START setelah prune
+        // Cek apakah FINISH/BOSS masih reachable dari START setelah prune
         auto depth = ComputeDepth();
         bool finishReachable = false;
         for (int dr = 0; dr < WG_GRID_SIZE && !finishReachable; dr++)
             for (int dc = 0; dc < WG_GRID_SIZE && !finishReachable; dc++)
-                if (grid[dr][dc].type == CELL_FINISH && depth[dr][dc] != DEPTH_UNVISITED)
+                if ((grid[dr][dc].type == CELL_FINISH || grid[dr][dc].type == CELL_BOSS) &&
+                    depth[dr][dc] != DEPTH_UNVISITED)
                     finishReachable = true;
 
         if (finishReachable)
             return; // Prune berhasil, keluar
 
-        // Restore — prune ini putusin FINISH, coba direction lain
+        // Restore — prune ini putusin FINISH/BOSS, coba direction lain
         mask = origMask;
         grid[nr][nc].exitMask = origNeighborMask;
     }
@@ -733,13 +734,20 @@ void WorldGenLayout::EnsureTreasureExists()
                IsAdjacentToType(r, c, CELL_START);
     };
 
-    // Cari ENEMY yang bentukannya cocok & gak adjacent ke FINISH/BOSS/START
+    // Type yang gak boleh di-replace: START, FINISH, BOSS
+    auto isProtectedType = [](CellType t) -> bool
+    {
+        return t == CELL_START || t == CELL_FINISH || t == CELL_BOSS ||
+               t == CELL_TREASURE; // TREASURE udah dicek di atas, safety aja
+    };
+
+    // Cari kandidat yang bentukannya cocok & gak adjacent ke FINISH/BOSS/START
     std::vector<std::pair<int, int>> candidates;
     for (int r = 0; r < WG_GRID_SIZE; r++)
     {
         for (int c = 0; c < WG_GRID_SIZE; c++)
         {
-            if (grid[r][c].type != CELL_ENEMY)
+            if (isProtectedType(grid[r][c].type))
                 continue;
             if (isBadNeighbor(r, c))
                 continue;
@@ -769,19 +777,19 @@ void WorldGenLayout::EnsureTreasureExists()
 
     if (candidates.empty())
     {
-        // Fallback 1: ENEMY yang gak adjacent (abaikan bentuk)
+        // Fallback 1: replace type apa pun (kecuali protected) yang gak adjacent
         for (int r = 0; r < WG_GRID_SIZE; r++)
             for (int c = 0; c < WG_GRID_SIZE; c++)
-                if (grid[r][c].type == CELL_ENEMY && !isBadNeighbor(r, c))
+                if (!isProtectedType(grid[r][c].type) && !isBadNeighbor(r, c))
                     candidates.push_back({r, c});
     }
 
     if (candidates.empty())
     {
-        // Fallback 2: ENEMY mana pun (adjacent boleh)
+        // Fallback 2: replace apa pun (kecuali protected, adjacent boleh)
         for (int r = 0; r < WG_GRID_SIZE; r++)
             for (int c = 0; c < WG_GRID_SIZE; c++)
-                if (grid[r][c].type == CELL_ENEMY)
+                if (!isProtectedType(grid[r][c].type))
                     candidates.push_back({r, c});
     }
 
@@ -960,11 +968,78 @@ void WorldGenLayout::Generate()
         TraceLog(LOG_INFO, "=== WORLDGEN: after filter (count=%d) ===", count);
         DebugPrintGrid();
 
-        if (count >= WG_PRIM_MIN_CELLS)
+        bool hasFinishOrBoss = false;
+        for (int r = 0; r < WG_GRID_SIZE && !hasFinishOrBoss; r++)
+            for (int c = 0; c < WG_GRID_SIZE && !hasFinishOrBoss; c++)
+                if (grid[r][c].type == CELL_FINISH || grid[r][c].type == CELL_BOSS)
+                    hasFinishOrBoss = true;
+
+        if (count >= WG_PRIM_MIN_CELLS && hasFinishOrBoss)
             return;
 
-        TraceLog(LOG_INFO, "=== WORLDGEN: retry %d/%d (cells=%d < %d) ===",
-                 attempt + 1, WG_PRIM_RETRY_MAX, count, WG_PRIM_MIN_CELLS);
+        TraceLog(LOG_INFO, "=== WORLDGEN: retry %d/%d (cells=%d %s) ===",
+                 attempt + 1, WG_PRIM_RETRY_MAX, count,
+                 hasFinishOrBoss ? "" : ", no FINISH/BOSS cell");
         wgRng.seed(wgRng());
     }
+}
+
+/*==============================================================================
+ * Worldgen Grid Lookup
+ *==============================================================================*/
+
+WorldgenCellInfo g_worldgenCells[WG_GRID_SIZE * WG_GRID_SIZE];
+int g_worldgenCellCount = 0;
+
+void InitWorldgenGrid(const std::vector<std::vector<WorldCell>> &grid,
+                      const std::vector<MapObject> &slots)
+{
+    g_worldgenCellCount = 0;
+    for (int r = 0; r < WG_GRID_SIZE; r++)
+    {
+        for (int c = 0; c < WG_GRID_SIZE; c++)
+        {
+            int idx = r * WG_GRID_SIZE + c;
+            g_worldgenCells[idx].type = grid[r][c].type;
+            if (grid[r][c].type != CELL_EMPTY)
+                g_worldgenCellCount++;
+        }
+    }
+
+    // Map slot bounds ke cell yang sesuai. Slot naming: slot_1..slot_16
+    // Tapi urutan di Tiled bisa acak, jadi mapping pake posisi grid
+    for (auto &slot : slots)
+    {
+        int slotCol = (int)(slot.bounds.x / (WG_CELL_TILES * WG_TILE_SIZE));
+        int slotRow = (int)(slot.bounds.y / (WG_CELL_TILES * WG_TILE_SIZE));
+        if (slotCol >= 0 && slotCol < WG_GRID_SIZE &&
+            slotRow >= 0 && slotRow < WG_GRID_SIZE)
+        {
+            int idx = slotRow * WG_GRID_SIZE + slotCol;
+            g_worldgenCells[idx].bounds = slot.bounds;
+        }
+    }
+}
+
+int GetCellIndexAtWorldPos(Vector2 worldPos)
+{
+    for (int i = 0; i < WG_GRID_SIZE * WG_GRID_SIZE; i++)
+    {
+        if (g_worldgenCells[i].type == CELL_EMPTY)
+            continue;
+        if (CheckCollisionPointRec(worldPos, g_worldgenCells[i].bounds))
+            return i;
+    }
+    return -1;
+}
+
+CellType GetCellTypeAtWorldPos(Vector2 worldPos)
+{
+    int idx = GetCellIndexAtWorldPos(worldPos);
+    return (idx >= 0) ? g_worldgenCells[idx].type : CELL_EMPTY;
+}
+
+bool IsCellTypeAtWorldPos(Vector2 worldPos, CellType type)
+{
+    return GetCellTypeAtWorldPos(worldPos) == type;
 }

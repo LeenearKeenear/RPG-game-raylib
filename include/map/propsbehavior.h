@@ -104,6 +104,11 @@ public:
     /** @brief Bersihkan semua data chest */
     void Clear();
 
+    /** @brief Ambil posisi chest yang sudah dibuka */
+    const std::unordered_set<std::string> &GetConsumedPositions() const { return consumedPositions; }
+    /** @brief Set posisi chest yang sudah dibuka (buat load) */
+    void SetConsumedPositions(const std::unordered_set<std::string> &positions) { consumedPositions = positions; }
+
     /** @brief Ambil jumlah chest yang sedang dikelola */
     size_t GetCount() const { return chests.size(); }
 
@@ -232,6 +237,11 @@ public:
     /** @brief Ambil jumlah bomb yang sedang dikelola */
     size_t GetCount() const { return bombs.size(); }
 
+    /** @brief Ambil posisi bomb yang sudah meledak */
+    const std::unordered_set<std::string> &GetConsumedPositions() const { return consumedPositions; }
+    /** @brief Set posisi bomb yang sudah meledak (buat load) */
+    void SetConsumedPositions(const std::unordered_set<std::string> &positions) { consumedPositions = positions; }
+
     /** @brief Cek apakah target dalam radius ledakan (nearest-point check) */
     bool IsInExplosionRadius(Vector2 bombPos, Rectangle target);
 
@@ -294,6 +304,11 @@ public:
     int Render(Rectangle viewRect);
     /** @brief Bersihkan semua data crate */
     void Clear();
+
+    /** @brief Ambil posisi crate yang sudah hancur */
+    const std::unordered_set<std::string> &GetConsumedPositions() const { return consumedPositions; }
+    /** @brief Set posisi crate yang sudah hancur (buat load) */
+    void SetConsumedPositions(const std::unordered_set<std::string> &positions) { consumedPositions = positions; }
 
     /**
      * @brief Ambil jumlah crate yang sedang dikelola.

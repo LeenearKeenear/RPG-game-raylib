@@ -146,6 +146,16 @@ namespace Entities
     {
         return DeadEntities.find(mapPath + "_" + std::to_string(objectId)) != DeadEntities.end();
     }
+
+    const std::set<std::string> &GetDeadEntries()
+    {
+        return DeadEntities;
+    }
+
+    void SetDeadEntries(const std::set<std::string> &entries)
+    {
+        DeadEntities = entries;
+    }
 }
 
 // rendering master buat tile prop

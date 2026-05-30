@@ -1,4 +1,5 @@
 #pragma once
+#include <set>
 #include <vector>
 #include <string>
 #include "entity.h"
@@ -51,6 +52,10 @@ namespace Entities
     /** @brief Ambil reference ke enemy registry */
     std::vector<Enemy *> &GetEnemyRegistry();
 
+    /** @brief Ambil semua dead entry untuk save */
+    const std::set<std::string> &GetDeadEntries();
+    /** @brief Set dead entries (buat load) */
+    void SetDeadEntries(const std::set<std::string> &entries);
 }
 
 /** @brief Render tile props (chest, trap, dll) */
