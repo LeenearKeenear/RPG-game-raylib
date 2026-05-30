@@ -122,9 +122,46 @@ void InitTextures()
 
 void InitFonts(void)
 {
-    fontKeybindHeader = LoadFont("assets/fonts/NewDawn.ttf");
-    fontKeybindEntry = LoadFont("assets/fonts/Poppins-Regular.ttf");
-    TraceLog(LOG_INFO, "FONTS: Loaded NewDawn (header) glyphs=%d, Poppins (entry) glyphs=%d",
+    static bool loaded = false;
+    if (loaded) { TraceLog(LOG_INFO, "FONTS: Already loaded, skipping"); return; }
+    loaded = true;
+
+    const char *paths[] = { "assets/fonts/", "build/bin/assets/fonts/" };
+
+    for (int pass = 0; pass < 2; pass++)
+    {
+        const char *dir = paths[pass];
+        char buf[256];
+
+        snprintf(buf, sizeof(buf), "%sNewDawn.ttf", dir);
+        if (!FileExists(buf)) { TraceLog(LOG_WARNING, "FONTS: %s NOT FOUND", buf); continue; }
+        fontKeybindHeader = LoadFont(buf);
+        break;
+    }
+
+    for (int pass = 0; pass < 2; pass++)
+    {
+        const char *dir = paths[pass];
+        char buf[256];
+
+        snprintf(buf, sizeof(buf), "%sPoppins-Regular.ttf", dir);
+        if (!FileExists(buf)) { TraceLog(LOG_WARNING, "FONTS: %s NOT FOUND", buf); continue; }
+        fontKeybindEntry = LoadFont(buf);
+        break;
+    }
+
+    if (fontKeybindHeader.glyphCount == 0)
+    {
+        TraceLog(LOG_WARNING, "FONTS: NewDawn.ttf loaded but has 0 glyphs (using default font fallback)");
+        fontKeybindHeader = GetFontDefault();
+    }
+    if (fontKeybindEntry.glyphCount == 0)
+    {
+        TraceLog(LOG_WARNING, "FONTS: Poppins-Regular.ttf loaded but has 0 glyphs (using default font fallback)");
+        fontKeybindEntry = GetFontDefault();
+    }
+
+    TraceLog(LOG_INFO, "FONTS: NewDawn (header) glyphs=%d, Poppins (entry) glyphs=%d",
         fontKeybindHeader.glyphCount, fontKeybindEntry.glyphCount);
 }
 

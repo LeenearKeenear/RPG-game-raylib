@@ -14,6 +14,7 @@
 #include "mainMenu.h"
 #include "pauseMenu.h"
 #include "loading_screen.h"
+#include "fonts.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include <cstdio>
@@ -52,6 +53,8 @@ int main()
 
     // Step 6: init main menu (needed for menu buttons to render)
     InitMainMenu(&state);
+
+    InitFonts();
 
     float accumulator = 0.0f;
 
