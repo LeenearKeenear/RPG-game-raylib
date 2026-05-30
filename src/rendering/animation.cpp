@@ -1,4 +1,5 @@
 #include "animation.h"
+#include "fonts.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../lib/json/include/nlohmann/json.hpp"
 #include <fstream>
@@ -15,6 +16,9 @@ Frames Management
 
 Texture2D textures[MAX_TEXTURES];
 static std::unordered_map<std::string, Frame> loadedFrames;
+
+Font fontKeybindHeader = {0};
+Font fontKeybindEntry = {0};
 
 static TextureSlot ResolveTextureSlot(const std::string &str)
 {
@@ -113,6 +117,22 @@ void InitTextures()
     LoadFrameTexture(SPRITESHEET_EFFECTS, "assets/textures/effects.png");
     LoadFramesFromJSON();
     LoadAnimationsFromJSON();
+    InitFonts();
+}
+
+void InitFonts(void)
+{
+    fontKeybindHeader = LoadFont("assets/fonts/NewDawn.ttf");
+    fontKeybindEntry = LoadFont("assets/fonts/Poppins-Regular.ttf");
+    TraceLog(LOG_INFO, "FONTS: Loaded NewDawn (header) glyphs=%d, Poppins (entry) glyphs=%d",
+        fontKeybindHeader.glyphCount, fontKeybindEntry.glyphCount);
+}
+
+void UnloadFonts(void)
+{
+    UnloadFont(fontKeybindHeader);
+    UnloadFont(fontKeybindEntry);
+    TraceLog(LOG_INFO, "FONTS: Unloaded custom fonts");
 }
 
 void CloseTextures()
