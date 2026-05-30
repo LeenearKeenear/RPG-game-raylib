@@ -444,20 +444,16 @@ void SaveGameState(GameState *state)
     savedPlayerState.animState.isDead = PlayerInstance.Anim.isDead;
     savedPlayerState.animState.activeSlot = InputInstance.GetActiveSlot();
 
-    // Save new player fields: dash cooldown, mana regen timer, swing attack state
+    // Save new player fields: dash cooldown, mana regen timer, attack state
     savedPlayerState.dashCooldown = PlayerInstance.DashCooldown;
     savedPlayerState.manaRegenTimer = PlayerInstance.ManaRegenTimer;
     savedPlayerState.swingAttack = {
-        {"active", PlayerInstance.Swing.active},
-        {"timer", PlayerInstance.Swing.timer},
-        {"duration", PlayerInstance.Swing.duration},
-        {"currentAngle", PlayerInstance.Swing.currentAngle},
-        {"center", {PlayerInstance.Swing.center.x, PlayerInstance.Swing.center.y}},
-        {"type", (int)PlayerInstance.Swing.type},
-        {"reach", PlayerInstance.Swing.reach},
-        {"breadth", PlayerInstance.Swing.breadth},
-        {"damage", PlayerInstance.Swing.damage},
-        {"knockbackForce", PlayerInstance.Swing.knockbackForce}
+        {"active", PlayerInstance.attack.active},
+        {"timer", PlayerInstance.attack.timer},
+        {"duration", PlayerInstance.attack.duration},
+        {"raycastAngle", PlayerInstance.attack.raycastAngle},
+        {"center", {PlayerInstance.attack.center.x, PlayerInstance.attack.center.y}},
+        {"pressHeld", PlayerInstance.attack.pressHeld}
     };
 
     /*==============================================================================
@@ -595,22 +591,18 @@ void RestoreGameState(GameState *state)
         PlayerInstance.DashCooldown = savedPlayerState.dashCooldown;
         PlayerInstance.ManaRegenTimer = savedPlayerState.manaRegenTimer;
 
-        // Restore swing attack state
+        // Restore attack state
         if (!savedPlayerState.swingAttack.is_null())
         {
-            PlayerInstance.Swing.active = savedPlayerState.swingAttack.value("active", false);
-            PlayerInstance.Swing.timer = savedPlayerState.swingAttack.value("timer", 0.0f);
-            PlayerInstance.Swing.duration = savedPlayerState.swingAttack.value("duration", 0.9f);
-            PlayerInstance.Swing.currentAngle = savedPlayerState.swingAttack.value("currentAngle", 0.0f);
-            PlayerInstance.Swing.type = (AttackType)savedPlayerState.swingAttack.value("type", (int)ATTACK_SLASH);
-            PlayerInstance.Swing.reach = savedPlayerState.swingAttack.value("reach", 32.0f);
-            PlayerInstance.Swing.breadth = savedPlayerState.swingAttack.value("breadth", 48.0f);
-            PlayerInstance.Swing.damage = savedPlayerState.swingAttack.value("damage", 25.0f);
-            PlayerInstance.Swing.knockbackForce = savedPlayerState.swingAttack.value("knockbackForce", 1.0f);
+            PlayerInstance.attack.active = savedPlayerState.swingAttack.value("active", false);
+            PlayerInstance.attack.timer = savedPlayerState.swingAttack.value("timer", 0.0f);
+            PlayerInstance.attack.duration = savedPlayerState.swingAttack.value("duration", 0.9f);
+            PlayerInstance.attack.raycastAngle = savedPlayerState.swingAttack.value("raycastAngle", 0.0f);
+            PlayerInstance.attack.pressHeld = savedPlayerState.swingAttack.value("pressHeld", false);
             if (savedPlayerState.swingAttack.contains("center"))
             {
-                PlayerInstance.Swing.center.x = savedPlayerState.swingAttack["center"][0].get<float>();
-                PlayerInstance.Swing.center.y = savedPlayerState.swingAttack["center"][1].get<float>();
+                PlayerInstance.attack.center.x = savedPlayerState.swingAttack["center"][0].get<float>();
+                PlayerInstance.attack.center.y = savedPlayerState.swingAttack["center"][1].get<float>();
             }
         }
     }
