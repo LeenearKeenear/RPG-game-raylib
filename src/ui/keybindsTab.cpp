@@ -59,9 +59,9 @@ void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY) {
     const int sepWidth = 30;
     const int availableHeight = 420;
 
-    // 2 headers (72px) + 18 entries (432px) = 504px total
+    // 2 headers (72px) + 18 entries (432px) + 1 gap (24px) = 528px total
     int totalContentHeight = 2 * headerHeight +
-        (static_cast<int>(mainKeybinds.size()) + static_cast<int>(debugKeybinds.size())) * rowHeight;
+        (static_cast<int>(mainKeybinds.size()) + static_cast<int>(debugKeybinds.size()) + 1) * rowHeight;
     int maxScroll = std::max(0, totalContentHeight - availableHeight);
 
     scrollY -= static_cast<int>(GetMouseWheelMove()) * 24;
@@ -105,6 +105,8 @@ void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY) {
         }
         currentY += rowHeight;
     }
+
+    currentY += rowHeight;
 
     // ---- "=== DEBUGGING ===" header ----
     if (isVisible(currentY, headerHeight)) {
