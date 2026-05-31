@@ -13,6 +13,7 @@
 #include "item.h"
 #include "mainMenu.h"
 #include "pauseMenu.h"
+#include "gameOverScreen.h"
 #include "loading_screen.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
@@ -151,6 +152,12 @@ int main()
                 if (!pauseMenu.IsActive())
                 {
                     UpdateLogicAll();
+
+                    // check player death → GAME_OVER
+                    if (PlayerInstance.Anim.isDead)
+                    {
+                        state.currentScreen = GAME_OVER;
+                    }
                 }
 
                 accumulator -= Time::DELTA_TIME;
@@ -160,6 +167,13 @@ int main()
             DrawRenderTexture(&state);
 
             // scale layar virtual ke window asli
+            DrawRenderWindows(&state);
+        }
+        // State: GAME_OVER
+        else if (state.currentScreen == GAME_OVER)
+        {
+            UpdateGameOverScreen(&state);
+            RenderGameOverScreen(&state);
             DrawRenderWindows(&state);
         }
     }

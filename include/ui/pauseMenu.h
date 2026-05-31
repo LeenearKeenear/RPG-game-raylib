@@ -10,7 +10,7 @@
  */
 
 #include "../lib/raylib/include/raylib.h"
-#include "buttonTxt.h"
+#include "button.h"
 #include "screen.h"
 #include <array>
 #include <cstdint>
@@ -220,6 +220,11 @@ private:
      */
     void HandleButtonClick(int buttonIndex, GameState* state);
 
+    /**
+     * @brief Memuat texture button dari disk (lazy, sekali saja)
+     */
+    void LoadTextures();
+
     /*==========================================================================
      * Private Members
      *==========================================================================*/
@@ -227,21 +232,24 @@ private:
     /// Status aktif menu
     bool active;
 
-    /// Array tombol-tombol menu (6 buah)
-    std::array<buttonTxt, 6> buttons;
+    /// Flag apakah texture sudah dimuat
+    bool texturesLoaded;
 
-    /// Teks untuk masing-masing tombol
-    std::array<const char*, 6> buttonTexts;
+    /// Array tombol gambar (6 buah)
+    std::array<buttonImage, 6> buttons;
 
-    /// Posisi menu di layar
+    /// Texture background panel
+    Texture2D bgTexture;
+
+    /// Posisi background panel di layar
     Vector2 position;
 
-    /// Lebar menu dalam pixel
+    /// Lebar background panel
     int width;
 
-    /// Tinggi menu dalam pixel
+    /// Tinggi background panel
     int height;
 
-    /// Rectangle untuk background menu
+    /// Rectangle untuk background panel
     Rectangle backgroundRect;
 };

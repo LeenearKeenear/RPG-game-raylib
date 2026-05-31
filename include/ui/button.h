@@ -70,14 +70,47 @@ struct ImagePolicy
         hoverAmount = hover;
     }
 
-    void Unload() const
+    ImagePolicy(const ImagePolicy&) = delete;
+    ImagePolicy& operator=(const ImagePolicy&) = delete;
+
+    ImagePolicy(ImagePolicy&& other) noexcept
+        : texture(other.texture), position(other.position), hoverAmount(other.hoverAmount)
     {
-        UnloadTexture(texture);
+        other.texture = {0};
+    }
+
+    ImagePolicy& operator=(ImagePolicy&& other) noexcept
+    {
+        if (this != &other)
+        {
+            Unload();
+            texture = other.texture;
+            position = other.position;
+            hoverAmount = other.hoverAmount;
+            other.texture = {0};
+        }
+        return *this;
+    }
+
+    ~ImagePolicy()
+    {
+        Unload();
+    }
+
+    void Unload()
+    {
+        if (texture.id != 0)
+        {
+            UnloadTexture(texture);
+            texture = {0};
+        }
     }
 
     [[nodiscard]] Rectangle GetBounds() const
     {
-        return {position.x, position.y, 
+        float halfW = static_cast<float>(texture.width) / 2.0F;
+        float halfH = static_cast<float>(texture.height) / 2.0F;
+        return {position.x - halfW, position.y - halfH,
                 static_cast<float>(texture.width), static_cast<float>(texture.height)};
     }
 };
@@ -104,13 +137,10 @@ public:
     {
     }
 
-    ~Button()
-    {
-        if constexpr (std::is_same_v<PolicyType, ImagePolicy>)
-        {
-            policy.Unload();
-        }
-    }
+    Button(const Button&) = delete;
+    Button& operator=(const Button&) = delete;
+    Button(Button&&) = default;
+    Button& operator=(Button&&) = default;
 
     void Draw(Vector2 mousePosition)
     {
@@ -194,7 +224,11 @@ private:
         }
         else
         {
-            DrawTextureV(policy.texture, policy.position, color);
+            Vector2 drawPos = {
+                policy.position.x - static_cast<float>(policy.texture.width) / 2.0F,
+                policy.position.y - static_cast<float>(policy.texture.height) / 2.0F
+            };
+            DrawTextureV(policy.texture, drawPos, color);
         }
     }
 
