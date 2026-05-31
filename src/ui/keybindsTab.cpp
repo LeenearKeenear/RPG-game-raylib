@@ -71,9 +71,16 @@ void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY)
         return bottom > contentStartY - HEADER_HEIGHT && top < contentStartY + VIEW_H + HEADER_HEIGHT;
     };
 
-    // ---- Handle rebind input (skip frame we just entered on) ----
-    if (listeningAction >= 0 && !enteredThisFrame)
+    // ---- Handle rebind input ----
+    if (listeningAction >= 0)
     {
+        // On the first frame after entering, drain stale keyboard events only
+        if (enteredThisFrame)
+        {
+            while (GetKeyPressed() != 0) {}
+            enteredThisFrame = false;
+        }
+
         int key = GetKeyPressed();
         if (key != 0)
         {
@@ -101,12 +108,6 @@ void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY)
             listeningAction = -1;
         }
     }
-    else if (listeningAction >= 0)
-    {
-        // First frame after entering — drain stale key queue
-        while (GetKeyPressed() != 0) {}
-    }
-    enteredThisFrame = false;
 
     // ---- Render ----
     int currentLocalY = 0;
