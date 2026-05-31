@@ -121,6 +121,9 @@ int main()
                 pauseMenu.Show();
             }
 
+            // Poll input FIRST so pause toggle uses fresh state
+            InputInstance.PollInput();
+
             if (InputInstance.GetState().pauseMenu)
             {
                 if (pauseMenu.IsActive())
