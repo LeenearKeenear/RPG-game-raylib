@@ -17,6 +17,7 @@
 #include "fonts.h"
 #include "../lib/raylib/include/raylib.h"
 #include "input.h"
+#include "keybindManager.h"
 #include "../lib/raylib/include/raymath.h"
 #include <cstdio>
 
@@ -56,6 +57,10 @@ int main()
     InitMainMenu(&state);
 
     InitFonts();
+
+    // Load keybinds (or save defaults on first run)
+    if (!keybindManager.LoadFromFile("saves/settings.json"))
+        keybindManager.SaveToFile("saves/settings.json");
 
     float accumulator = 0.0f;
 
