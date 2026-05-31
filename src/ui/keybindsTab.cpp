@@ -15,11 +15,11 @@ struct SectionInfo {
 };
 
 static const SectionInfo sections[] = {
-    {"=== MOVEMENT ===",   YELLOW,  0, 4},  // MOVE_UP..MOVE_RIGHT
-    {"=== COMBAT ===",     YELLOW,  4, 3},  // INTERACT..DASH_DRINK
-    {"=== INVENTORY ===",  YELLOW,  7, 4},  // TOGGLE_INVENTORY..DROP_ALL
-    {"=== HOTBAR ===",     YELLOW, 11, 4},  // HOTBAR_SLOT_1..HOTBAR_SLOT_4
-    {"=== DEBUG ===",      GRAY,   15, 7},  // REVIVE..DEBUG_TOGGLE_PLAYER
+    {"MOVEMENT",   YELLOW,  0, 4},  // MOVE_UP..MOVE_RIGHT
+    {"COMBAT",     YELLOW,  4, 3},  // INTERACT..DASH_DRINK
+    {"INVENTORY",  YELLOW,  7, 4},  // TOGGLE_INVENTORY..DROP_ALL
+    {"HOTBAR",     YELLOW, 11, 4},  // HOTBAR_SLOT_1..HOTBAR_SLOT_4
+    {"DEBUG",      GRAY,   15, 7},  // REVIVE..DEBUG_TOGGLE_PLAYER
 };
 
 static const int SECTION_COUNT = sizeof(sections) / sizeof(sections[0]);
