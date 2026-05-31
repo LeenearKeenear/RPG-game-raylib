@@ -15,7 +15,10 @@
 #include "pauseMenu.h"
 #include "gameOverScreen.h"
 #include "loading_screen.h"
+#include "fonts.h"
 #include "../lib/raylib/include/raylib.h"
+#include "input.h"
+#include "keybindManager.h"
 #include "../lib/raylib/include/raymath.h"
 #include <cstdio>
 
@@ -53,6 +56,12 @@ int main()
 
     // Step 6: init main menu (needed for menu buttons to render)
     InitMainMenu(&state);
+
+    InitFonts();
+
+    // Load keybinds (or save defaults on first run)
+    if (!keybindManager.LoadFromFile("saves/settings.json"))
+        keybindManager.SaveToFile("saves/settings.json");
 
     float accumulator = 0.0f;
 
@@ -113,17 +122,15 @@ int main()
                 pauseMenu.Show();
             }
 
-            // toggle pause menu dengan tombol P
-            if (IsKeyPressed(KEY_GRAVE))
+            // Poll input FIRST so pause toggle uses fresh state
+            InputInstance.PollInput();
+
+            if (InputInstance.GetState().pauseMenu)
             {
                 if (pauseMenu.IsActive())
-                {
                     pauseMenu.Hide();
-                }
                 else
-                {
                     pauseMenu.Show();
-                }
             }
 
             // update scale sebelum rendering
