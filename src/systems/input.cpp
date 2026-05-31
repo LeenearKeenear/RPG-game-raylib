@@ -54,6 +54,12 @@ void PlayerInput::PollInput(void)
 
     Current.testLoseHP = IsKeyPressed(keybindManager.GetKeycode(TEST_LOSE_HP));
 
+    // Rogue keys absorbed into InputState
+    Current.pauseMenu         = IsKeyPressed(keybindManager.GetKeycode(PAUSE_MENU));
+    Current.debugToggle       = IsKeyPressed(keybindManager.GetKeycode(DEBUG_TOGGLE));
+    Current.debugToggleEnemy  = IsKeyPressed(keybindManager.GetKeycode(DEBUG_TOGGLE_ENEMY));
+    Current.debugTogglePlayer = IsKeyPressed(keybindManager.GetKeycode(DEBUG_TOGGLE_PLAYER));
+
     Current.mouseWheel = GetMouseWheelMove();
     Current.goBack = IsKeyPressed(keybindManager.GetKeycode(GO_BACK));
 }

@@ -16,6 +16,7 @@
 #include "loading_screen.h"
 #include "fonts.h"
 #include "../lib/raylib/include/raylib.h"
+#include "input.h"
 #include "../lib/raylib/include/raymath.h"
 #include <cstdio>
 
@@ -115,17 +116,12 @@ int main()
                 pauseMenu.Show();
             }
 
-            // toggle pause menu dengan tombol P
-            if (IsKeyPressed(KEY_GRAVE))
+            if (InputInstance.GetState().pauseMenu)
             {
                 if (pauseMenu.IsActive())
-                {
                     pauseMenu.Hide();
-                }
                 else
-                {
                     pauseMenu.Show();
-                }
             }
 
             // update scale sebelum rendering
