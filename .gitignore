@@ -16,6 +16,9 @@ floorC_tester.json
 .sisyphus/
 AGENTS.md
 
+# Runtime save data
+saves/
+
 # Auto-downloaded raylib
 raylib/
 lib/raylib/

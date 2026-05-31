@@ -1,147 +1,219 @@
-/**
- * @file keybindsTab.cpp
- * @brief Implementasi Keybinds Settings Tab
- * 
- * Handle rendering untuk daftar keybinds.
- */
-
 #include "keybindsTab.h"
 #include "fonts.h"
+#include "keybindManager.h"
 #include "../lib/raylib/include/raylib.h"
-#include <array>
 #include <algorithm>
 
-struct KeybindEntry {
-    const char* key;
-    const char* action;
+static const char* SAVE_PATH = "saves/settings.json";
+
+// Section descriptors for grouping actions in the UI
+struct SectionInfo {
+    const char* title;
+    Color color;
+    int startAction; // index in Action enum
+    int actionCount;
 };
 
-static const std::array<KeybindEntry, 13> mainKeybinds = {{
-    {"W / Arrow Up", "Move Up"},
-    {"S / Arrow Down", "Move Down"},
-    {"A / Arrow Left", "Move Left"},
-    {"D / Arrow Right", "Move Right"},
-    {"E", "Interact"},
-    {"I", "Inventory"},
-    {"M", "Map"},
-    {"Q", "Drop Item"},
-    {"Left Ctrl", "Drop All"},
-    {"Mouse Left", "Attack"},
-    {"Mouse Right", "Dash / Drink"},
-    {"1 / 2 / 3 / 4", "Hotbar Slots"},
-    {"Scroll", "Hotbar Slot"}
-}};
+static const SectionInfo sections[] = {
+    {"MOVEMENT",   YELLOW,  0, 4},  // MOVE_UP..MOVE_RIGHT
+    {"COMBAT",     YELLOW,  4, 3},  // INTERACT..DASH_DRINK
+    {"INVENTORY",  YELLOW,  7, 4},  // TOGGLE_INVENTORY..DROP_ALL
+    {"HOTBAR",     YELLOW, 11, 4},  // HOTBAR_SLOT_1..HOTBAR_SLOT_4
+    {"DEBUG",      GRAY,   15, 7},  // REVIVE..DEBUG_TOGGLE_PLAYER
+};
 
-static const std::array<KeybindEntry, 5> debugKeybinds = {{
-    {"`", "Pause Menu"},
-    {"Tab", "Debug Overlay"},
-    {"R", "Revive"},
-    {"K", "Damage (No Effect)"},
-    {"B", "Previous Map"}
-}};
+static const int SECTION_COUNT = sizeof(sections) / sizeof(sections[0]);
 
-/**
- * @brief Draw keybinds tab content
- * @param mousePosition Posisi mouse untuk efek hover
- * @param startX Posisi X awal area options
- * @param startY Posisi Y awal area options
- */
-void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY) {
+// Layout constants
+static const int HEADER_HEIGHT  = 36;
+static const int ROW_HEIGHT     = 24;
+static const int COL_X          = 40;       // offset from startX
+static const int KEY_COL_W      = 180;      // width of the key-display column
+static const int SEP_W          = 20;       // gap between columns
+static const int VIEW_H         = 380;      // visible content height
+static const int HITBOX_PAD     = 2;        // padding around clickable area
+
+static bool IsInside(int mx, int my, int x, int y, int w, int h)
+{
+    return mx >= x && mx < x + w && my >= y && my < y + h;
+}
+
+void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY)
+{
     (void)mousePosition;
+    int mx = static_cast<int>(mousePosition.x);
+    int my = static_cast<int>(mousePosition.y);
 
     static int scrollY = 0;
+    static int listeningAction = -1;
+    static bool enteredThisFrame = false;
 
-    int contentStartY = startY + 100;
-    const int headerHeight = 36;
-    const int rowHeight = 24;
-    const int colX = startX + 40;
-    const int keyColWidth = 220;
-    const int sepWidth = 30;
-    const int availableHeight = 420;
+    int contentStartY = startY + 90;
 
-    // 2 headers (72px) + 18 entries (432px) + 1 gap (24px) = 528px total
-    int totalContentHeight = 2 * headerHeight +
-        (static_cast<int>(mainKeybinds.size()) + static_cast<int>(debugKeybinds.size()) + 1) * rowHeight;
-    int maxScroll = std::max(0, totalContentHeight - availableHeight);
+    // Calculate total content height
+    int totalContentHeight = 0;
+    for (int si = 0; si < SECTION_COUNT; si++)
+    {
+        totalContentHeight += HEADER_HEIGHT;                 // section header
+        totalContentHeight += sections[si].actionCount * ROW_HEIGHT; // entries
+        totalContentHeight += ROW_HEIGHT;                    // gap after section
+    }
 
-    scrollY -= static_cast<int>(GetMouseWheelMove()) * 24;
+    int maxScroll = std::max(0, totalContentHeight - VIEW_H);
+
+    scrollY -= static_cast<int>(GetMouseWheelMove()) * ROW_HEIGHT;
     scrollY = std::clamp(scrollY, 0, maxScroll);
 
-    // Convert a local Y offset (from contentStartY) to screen Y (accounting for scroll)
-    auto screenY = [&](int localY) -> int {
-        return contentStartY + localY - scrollY;
-    };
-
-    // Check if an element at localY with given height falls within the visible area
-    auto isVisible = [&](int localY, int height) -> bool {
+    auto screenY = [&](int localY) { return contentStartY + localY - scrollY; };
+    auto isVisible = [&](int localY, int h) -> bool {
         int top = screenY(localY);
-        int bottom = top + height;
-        int viewTop = contentStartY - headerHeight;
-        int viewBottom = contentStartY + availableHeight + headerHeight;
-        return bottom > viewTop && top < viewBottom;
+        int bottom = top + h;
+        return bottom > contentStartY - HEADER_HEIGHT && top < contentStartY + VIEW_H + HEADER_HEIGHT;
     };
 
-    // Current local Y offset from contentStartY (before scrolling)
-    int currentY = 0;
-
-    // ---- "=== MAIN ===" header ----
-    if (isVisible(currentY, headerHeight)) {
-        DrawTextEx(fontKeybindHeader, "=== MAIN ===",
-            Vector2{(float)colX, (float)screenY(currentY)},
-            22, 0, YELLOW);
-    }
-    currentY += headerHeight;
-
-    // ---- Main keybinds ----
-    for (const auto& entry : mainKeybinds) {
-        if (isVisible(currentY, rowHeight)) {
-            int y = screenY(currentY);
-            DrawTextEx(fontKeybindEntry, entry.key,
-                Vector2{(float)colX, (float)y}, 20, 0, YELLOW);
-            DrawTextEx(fontKeybindEntry, "=>",
-                Vector2{(float)(colX + keyColWidth), (float)y}, 20, 0, GRAY);
-            DrawTextEx(fontKeybindEntry, entry.action,
-                Vector2{(float)(colX + keyColWidth + sepWidth), (float)y}, 20, 0, WHITE);
+    // ---- Handle rebind input ----
+    if (listeningAction >= 0)
+    {
+        // On the first frame after entering, drain stale keyboard events only
+        if (enteredThisFrame)
+        {
+            while (GetKeyPressed() != 0) {}
+            enteredThisFrame = false;
         }
-        currentY += rowHeight;
-    }
 
-    currentY += rowHeight;
-
-    // ---- "=== DEBUGGING ===" header ----
-    if (isVisible(currentY, headerHeight)) {
-        DrawTextEx(fontKeybindHeader, "=== DEBUGGING ===",
-            Vector2{(float)colX, (float)screenY(currentY)},
-            22, 0, GRAY);
-    }
-    currentY += headerHeight;
-
-    // ---- Debug keybinds ----
-    for (const auto& entry : debugKeybinds) {
-        if (isVisible(currentY, rowHeight)) {
-            int y = screenY(currentY);
-            DrawTextEx(fontKeybindEntry, entry.key,
-                Vector2{(float)colX, (float)y}, 20, 0, YELLOW);
-            DrawTextEx(fontKeybindEntry, "=>",
-                Vector2{(float)(colX + keyColWidth), (float)y}, 20, 0, GRAY);
-            DrawTextEx(fontKeybindEntry, entry.action,
-                Vector2{(float)(colX + keyColWidth + sepWidth), (float)y}, 20, 0, WHITE);
+        int key = GetKeyPressed();
+        if (key != 0)
+        {
+            if (key == KEY_ESCAPE)
+            {
+                listeningAction = -1;
+            }
+            else
+            {
+                keybindManager.SetKeybind(static_cast<Action>(listeningAction), key, false);
+                keybindManager.SaveToFile(SAVE_PATH);
+                listeningAction = -1;
+            }
         }
-        currentY += rowHeight;
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        {
+            keybindManager.SetKeybind(static_cast<Action>(listeningAction), MOUSE_BUTTON_LEFT, true);
+            keybindManager.SaveToFile(SAVE_PATH);
+            listeningAction = -1;
+        }
+        else if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+        {
+            keybindManager.SetKeybind(static_cast<Action>(listeningAction), MOUSE_BUTTON_RIGHT, true);
+            keybindManager.SaveToFile(SAVE_PATH);
+            listeningAction = -1;
+        }
     }
 
-    // ---- Scroll indicators ----
-    if (maxScroll > 0) {
-        int indicatorX = startX + 350;
-        if (scrollY > 0) {
+    // ---- Render ----
+    int currentLocalY = 0;
+
+    for (int si = 0; si < SECTION_COUNT; si++)
+    {
+        const SectionInfo& sec = sections[si];
+
+        // Section header
+        if (isVisible(currentLocalY, HEADER_HEIGHT))
+        {
+            DrawTextEx(fontKeybindHeader, sec.title,
+                Vector2{(float)(startX + COL_X), (float)screenY(currentLocalY)},
+                22, 0, sec.color);
+        }
+        currentLocalY += HEADER_HEIGHT;
+
+        // Action rows
+        for (int ai = 0; ai < sec.actionCount; ai++)
+        {
+            if (!isVisible(currentLocalY, ROW_HEIGHT))
+            {
+                currentLocalY += ROW_HEIGHT;
+                continue;
+            }
+
+            int y = screenY(currentLocalY);
+            Action action = static_cast<Action>(sec.startAction + ai);
+
+            // Key display column (clickable)
+            int keyBoxX = startX + COL_X;
+            int keyBoxY = y;
+            int keyBoxW = KEY_COL_W;
+            int keyBoxH = ROW_HEIGHT;
+
+            bool hovered = IsInside(mx, my, keyBoxX - HITBOX_PAD, keyBoxY - HITBOX_PAD,
+                                    keyBoxW + HITBOX_PAD * 2, keyBoxH + HITBOX_PAD * 2);
+
+            // Background highlight
+            bool isListening = (listeningAction == static_cast<int>(action));
+            Color bgColor = isListening ? Color{40, 80, 40, 255}
+                         : hovered ? Color{50, 50, 50, 255}
+                         : BLANK;
+
+            if (bgColor.a > 0)
+            {
+                DrawRectangle(keyBoxX, keyBoxY, keyBoxW, keyBoxH, bgColor);
+            }
+
+            // Key name text — always show the real key name
+            const char* keyName = keybindManager.GetKeyDisplayName(action);
+            Color keyColor = isListening ? GREEN : YELLOW;
+
+            DrawTextEx(fontKeybindEntry, keyName,
+                Vector2{(float)keyBoxX, (float)y}, 20, 0, keyColor);
+            DrawTextEx(fontKeybindEntry, "=>",
+                Vector2{(float)(keyBoxX + KEY_COL_W), (float)y}, 20, 0, GRAY);
+            DrawTextEx(fontKeybindEntry, keybindManager.GetActionName(action),
+                Vector2{(float)(keyBoxX + KEY_COL_W + SEP_W), (float)y}, 20, 0, WHITE);
+
+            // Click detection
+            if (hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && listeningAction != static_cast<int>(action))
+            {
+                listeningAction = static_cast<int>(action);
+                enteredThisFrame = true;
+            }
+
+            currentLocalY += ROW_HEIGHT;
+        }
+
+        // Gap after section
+        currentLocalY += ROW_HEIGHT;
+    }
+
+    // Scroll indicators
+    if (maxScroll > 0)
+    {
+        int indX = startX + 350;
+        if (scrollY > 0)
             DrawTextEx(fontKeybindEntry, "^^^",
-                Vector2{(float)indicatorX, (float)(contentStartY - 5)},
-                16, 0, GRAY);
-        }
-        if (scrollY < maxScroll) {
+                Vector2{(float)indX, (float)(contentStartY - 5)}, 16, 0, GRAY);
+        if (scrollY < maxScroll)
             DrawTextEx(fontKeybindEntry, "vvv",
-                Vector2{(float)indicatorX, (float)(contentStartY + availableHeight - 20)},
-                16, 0, GRAY);
-        }
+                Vector2{(float)indX, (float)(contentStartY + VIEW_H - 20)}, 16, 0, GRAY);
+    }
+
+    // Listening popup — centered box over the options panel, separate from keybind list
+    if (listeningAction >= 0)
+    {
+        const int POPUP_W = 420;
+        const int POPUP_H = 80;
+        const int popupX = startX + (800 - POPUP_W) / 2;
+        const int popupY = startY + (600 - POPUP_H) / 2 - 30;
+
+        DrawRectangle(popupX, popupY, POPUP_W, POPUP_H, Color{20, 20, 30, 235});
+        DrawRectangleLinesEx(Rectangle{(float)popupX, (float)popupY, (float)POPUP_W, (float)POPUP_H}, 2, GREEN);
+
+        const char* line1 = "Press a key or click a mouse button.";
+        const char* line2 = "ESC to cancel.";
+        Vector2 sz1 = MeasureTextEx(fontKeybindEntry, line1, 20, 0);
+        Vector2 sz2 = MeasureTextEx(fontKeybindEntry, line2, 20, 0);
+        DrawTextEx(fontKeybindEntry, line1,
+            Vector2{(float)(popupX + (POPUP_W - sz1.x) / 2), (float)(popupY + 12)},
+            20, 0, WHITE);
+        DrawTextEx(fontKeybindEntry, line2,
+            Vector2{(float)(popupX + (POPUP_W - sz2.x) / 2), (float)(popupY + 44)},
+            20, 0, GREEN);
     }
 }

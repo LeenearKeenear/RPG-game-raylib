@@ -135,7 +135,7 @@ void InitFonts(void)
 
         snprintf(buf, sizeof(buf), "%sNewDawn.ttf", dir);
         if (!FileExists(buf)) { TraceLog(LOG_WARNING, "FONTS: %s NOT FOUND", buf); continue; }
-        fontKeybindHeader = LoadFont(buf);
+        fontKeybindHeader = LoadFontEx(buf, 22, 0, 0);
         break;
     }
 
@@ -146,7 +146,7 @@ void InitFonts(void)
 
         snprintf(buf, sizeof(buf), "%sPoppins-Regular.ttf", dir);
         if (!FileExists(buf)) { TraceLog(LOG_WARNING, "FONTS: %s NOT FOUND", buf); continue; }
-        fontKeybindEntry = LoadFont(buf);
+        fontKeybindEntry = LoadFontEx(buf, 20, 0, 0);
         break;
     }
 

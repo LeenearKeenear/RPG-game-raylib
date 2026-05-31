@@ -16,6 +16,8 @@
 #include "../../include/core/loading_screen.h"
 #include "../../include/core/game_state_saver.h"
 #include "../../include/rendering/fonts.h"
+#include "../../include/systems/input.h"
+#include "../../include/systems/keybindManager.h"
 #include "../../lib/raylib/include/raylib.h"
 #include "../../lib/raylib/include/raymath.h"
 #include <cstdio>
@@ -89,6 +91,10 @@ int main()
 
     InitFonts();
 
+    // Load keybinds (or save defaults on first run)
+    if (!keybindManager.LoadFromFile("saves/settings.json"))
+        keybindManager.SaveToFile("saves/settings.json");
+
     float accumulator = 0.0f;
 
     // Main Game Loop
@@ -148,17 +154,15 @@ int main()
                 pauseMenu.Show();
             }
 
-            // toggle pause menu dengan tombol P
-            if (IsKeyPressed(KEY_GRAVE))
+            // Poll input FIRST so pause toggle uses fresh state
+            InputInstance.PollInput();
+
+            if (InputInstance.GetState().pauseMenu)
             {
                 if (pauseMenu.IsActive())
-                {
                     pauseMenu.Hide();
-                }
                 else
-                {
                     pauseMenu.Show();
-                }
             }
 
             // update scale sebelum rendering
