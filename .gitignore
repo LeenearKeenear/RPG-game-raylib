@@ -5,7 +5,7 @@
 .clangd
 *.bak
 /Backups/
-/assets/maps/World_generation/
+
 
 run_backup.bat
 floorB_tester.json

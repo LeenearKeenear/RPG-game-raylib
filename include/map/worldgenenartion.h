@@ -29,8 +29,8 @@ constexpr int WG_TILE_SIZE = FRAME_SIZE;   // Ukuran tile dalam pixel
 
 // Prim's Algorithm — tuning jumlah cell dan stop chance
 constexpr int WG_PRIM_START_CELLS = 1;   // Jumlah cell awal saat seed Prim
-constexpr int WG_PRIM_MIN_CELLS = 7;     // Minimum cell sebelum boleh random stop
-constexpr int WG_PRIM_MAX_CELLS = 11;    // Maksimum cell (batas atas loop Prim)
+constexpr int WG_PRIM_MIN_CELLS = 6;     // Minimum cell sebelum boleh random stop
+constexpr int WG_PRIM_MAX_CELLS = 10;    // Maksimum cell (batas atas loop Prim)
 constexpr int WG_PRIM_STOP_CHANCE = 20;  // Persentase chance random stop setelah MIN_CELLS
 constexpr int WG_PRIM_RETRY_MAX = 10;    // Maksimum percobaan generate layout
 constexpr int WG_VARIETY_ITERATIONS = 2; // Iterasi variety pruning per generate
