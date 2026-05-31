@@ -2,7 +2,10 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - nisko/dev-main
+      - nisko/dev-main-test
   pull_request:
     branches: [main]
   workflow_dispatch:
