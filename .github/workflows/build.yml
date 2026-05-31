@@ -1,0 +1,69 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: windows-latest
+            shell-cmake: msys2 {0}
+            setup-cmd: .\setup.ps1
+            artifact-name: rpg-game-windows
+            artifact-path: build/bin/main.exe
+          - os: ubuntu-latest
+            shell-cmake: bash
+            setup-cmd: bash setup.sh
+            artifact-name: rpg-game-linux
+            artifact-path: build/bin/main
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSYS2 environment (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: >-
+            mingw-w64-x86_64-clang
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-ccache
+
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang lld ninja-build ccache \
+            libgl1-mesa-dev libxrandr-dev \
+            libxinerama-dev libxcursor-dev libxi-dev
+
+      - name: Setup project dependencies
+        shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash' }}
+        run: ${{ matrix.setup-cmd }}
+
+      - name: Configure CMake
+        shell: ${{ matrix.shell-cmake }}
+        run: cmake --preset ninja
+
+      - name: Build
+        shell: ${{ matrix.shell-cmake }}
+        run: cmake --build --preset ninja
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.artifact-path }}

@@ -88,6 +88,8 @@ add_custom_command(TARGET main POST_BUILD
     COMMENT "Copying assets folder to output directory"
 )
 elseif(UNIX)
+    set(RAYLIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/raylib/lib/libraylib.a")
+    target_link_libraries(main PRIVATE "${RAYLIB_PATH}")
     if(APPLE)
         target_link_libraries(main PRIVATE -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo)
     else()
