@@ -20,6 +20,7 @@
 #include "item.h"
 #include "inventory.h"
 #include "animation.h"
+#include "fonts.h"
 #include "enemy.h"
 #include "enemy_ai.h"
 #include "entities.h"
@@ -127,6 +128,7 @@ GameState InitScreen()
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "Dungeon Game");
+    SetExitKey(KEY_NULL);  // ESC is handled by our own pause/keybind logic
     InitAudioDevice();
 
     state.WindowScreenWidth = (int)(GetMonitorWidth(0) * ScaleMultiplierMonitor);
@@ -388,6 +390,7 @@ Vector2 GetVirtualMousePosition(GameState *state)
 void GameShutDown(GameState *state)
 {
     CloseTextures();
+    UnloadFonts();
 
     Entities::Shutdown();
     UnloadMap();
