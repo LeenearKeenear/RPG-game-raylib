@@ -1,3 +1,15 @@
+/**
+ * @file player.cpp
+ * @brief Implementasi Player Character
+ *
+ * File ini berisi implementasi class Player:
+ * - Init: inisialisasi stat, spawn position, collision geometry
+ * - Update: input, lifecycle, physics, combat, inventory, interaction, animation
+ * - Render: sprite rendering, hit flash, aim indicator
+ * - TakeDamage: damage processing, knockback, hit flash
+ * - HandleAction: action handler untuk drop item
+ */
+
 #include "player.h"
 #include "screen.h"
 #include "movement.h"
@@ -35,7 +47,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
         ManaRegenTimer = 0.0f;
 
         // Inisialisasi perlengkapan hotbar default
-        Hotbar[0] = {4, 1}; // Iron Sword
+        Hotbar[0] = {1, 1}; // Iron Sword
         Hotbar[1] = {4, 1}; // Iron Axe
         Hotbar[2] = {2, 8}; // Health Potion
         Hotbar[3] = {3, 8}; // Mana Bread
@@ -228,23 +240,19 @@ void Player::TakeDamage(float amount, Vector2 knockback)
  * Private Helper Methods
  *==============================================================================*/
 
-/** @brief Cek apakah player bisa pindah ke posisi */
+// Cek apakah player bisa pindah ke posisi
 bool Player::CanMove(Vector2 newPosition)
 {
     return Movement::CanMove(*this, newPosition);
 }
 
-/** @brief Hitbox player di posisi tertentu */
+// Hitbox player di posisi tertentu
 Rectangle Player::GetPlayerHitboxAtPosition(Vector2 position)
 {
     return {position.x + HitboxOffsetX, position.y + HitboxOffsetY, HitboxWidth, HitboxHeight};
 }
 
-/**
- * @brief Gambar indicator arah aim player (debug overlay)
- * Warna berubah berdasarkan apakah arah aim valid (dot product dengan facing direction)
- * Definisi: src/player.cpp (file ini)
- */
+// Gambar indicator arah aim player (debug overlay)
 void Player::DrawAimIndicator(void)
 {
     Vector2 playerCenter = GetCenter();
@@ -311,7 +319,7 @@ void Player::DrawAimIndicator(void)
  * Action Handlers
  *==============================================================================*/
 
-/** @brief Handle action player */
+// Handle action player
 void Player::HandleAction(void)
 {
     if (InputInstance.IsInventoryOpen())

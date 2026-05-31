@@ -10,13 +10,21 @@
 #include <vector>
 #include <unordered_map>
 
+/**
+ * @file enemy.h
+ * @brief Enemy System Module
+ *
+ * Header ini mendeklarasikan data, enum, struct, dan kelas untuk
+ * sistem enemy: definisi data-driven, spawn, AI, dan manajemen.
+ */
+
 /** @brief Spawn count range constants */
-constexpr int SPAWN_PINPOINT_NORMAL_MIN = 1;  // 9
-constexpr int SPAWN_PINPOINT_NORMAL_MAX = 1; // 13
+constexpr int SPAWN_PINPOINT_NORMAL_MIN = 9;  // 9
+constexpr int SPAWN_PINPOINT_NORMAL_MAX = 13; // 13
 constexpr int SPAWN_PINPOINT_ELITE_MIN = 3;   // 3
 constexpr int SPAWN_PINPOINT_ELITE_MAX = 7;   // 7
-constexpr int SPAWN_RECT_NORMAL_MIN = 1;     // 20
-constexpr int SPAWN_RECT_NORMAL_MAX = 1;     // 25
+constexpr int SPAWN_RECT_NORMAL_MIN = 20;     // 20
+constexpr int SPAWN_RECT_NORMAL_MAX = 25;     // 25
 constexpr int SPAWN_RECT_ELITE_MIN = 10;      // 10
 constexpr int SPAWN_RECT_ELITE_MAX = 15;      // 15
 constexpr int SPAWN_RETRY_LIMIT = 200;
@@ -25,7 +33,7 @@ constexpr int SPAWN_RETRY_LIMIT = 200;
  * Enums
  *==============================================================================*/
 
-/// @brief Status AI untuk perilaku musuh (FSM).
+/** @brief Status AI untuk perilaku musuh (FSM) */
 enum EnemyAIState
 {
     ENEMY_IDLE,   // Berdiri diam atau menunggu
@@ -54,7 +62,7 @@ typedef enum EnemyRank
  * Data Structs (Data-Driven)
  *==============================================================================*/
 
-/// @brief Statistik dan parameter gameplay enemy, di-load dari JSON.
+/** @brief Statistik dan parameter gameplay enemy, di-load dari JSON */
 struct EnemyStats
 {
     float maxHealth;             // Batas HP maksimum
@@ -71,14 +79,14 @@ struct EnemyStats
     bool canTriggerTurnBased;    // Apakah enemy ini eligible memicu combat turn-based
 };
 
-/// @brief Ukuran dan offset hitbox enemy, di-load dari JSON.
+/** @brief Ukuran dan offset hitbox enemy, di-load dari JSON */
 struct EnemyHitboxData
 {
     Vector2 size;   // Lebar dan tinggi hitbox {width, height}
     Vector2 offset; // Offset hitbox relatif terhadap Position {offsetX, offsetY}
 };
 
-/// @brief Single source of truth untuk satu tipe enemy, di-load dari JSON.
+/** @brief Single source of truth untuk satu tipe enemy, di-load dari JSON */
 struct EnemyDefinition
 {
     int id;                      // ID unik, digunakan sebagai key lookup
@@ -89,7 +97,7 @@ struct EnemyDefinition
     const AnimationSet *animSet; // Pointer ke AnimationSet global, di-resolve dari type
 };
 
-// data driven management class
+/** @brief Data-driven manager untuk definisi enemy */
 class EnemyDataManager
 {
 public:
@@ -111,8 +119,11 @@ const AnimationSet *ResolveAnimSet(const std::string &name);
  * Enemy Class
  *==============================================================================*/
 
-/// @brief Kelas musuh yang mengimplementasikan logika AI berbasis FSM.
-/// Mewarisi dari Entity untuk properti dasar (Position, Health, dll).
+/**
+ * @brief Kelas musuh dengan logika AI berbasis FSM
+ *
+ * Mewarisi dari Entity untuk properti dasar (Position, Health, dll).
+ */
 class Enemy : public Entity
 {
 public:
@@ -121,11 +132,13 @@ public:
     /** @brief Virtual destructor */
     virtual ~Enemy();
 
-    /// @brief Inisialisasi enemy pada posisi dunia tertentu dari EnemyDefinition.
-    /// @param pos Posisi spawn dalam world space
-    /// @param name Nama instance enemy
-    /// @param mapId ID object Tiled untuk persistensi kematian
-    /// @param def Definisi tipe enemy dari EnemyDataManager
+    /**
+     * @brief Inisialisasi enemy pada posisi tertentu dari EnemyDefinition
+     * @param pos Posisi spawn dalam world space
+     * @param name Nama instance enemy
+     * @param mapId ID object Tiled untuk persistensi kematian
+     * @param def Definisi tipe enemy dari EnemyDataManager
+     */
     void Init(Vector2 pos, const char *name, int mapId, const EnemyDefinition &def);
 
     void Update() override;                                             // update state runtime enemy tiap frame
@@ -142,7 +155,7 @@ public:
     // --- Identitas ---
     std::string Name;     // Nama instance enemy
     int MapObjectID = -1; // ID object Tiled untuk persistensi kematian
-    EnemyRank rank;
+    EnemyRank rank;       // Rank enemy (normal/elite/boss)
 
     // --- AI State ---
     EnemyAIState AIState = ENEMY_IDLE; // State FSM aktif saat ini
@@ -203,7 +216,7 @@ public:
     const FlowField *GetReturnFlowField() const { return ReturnFlowField; } // ambil flow field return aktif
     void SetReturnFlowField(FlowField *ff) { ReturnFlowField = ff; }        // set flow field untuk kembali ke spawn
 
-    // bangun konteks steering dari state runtime enemy dan player saat ini
+    /** @brief Bangun konteks steering dari state runtime enemy dan player saat ini */
     SteeringContext BuildSteeringContext() const
     {
         SteeringContext ctx;
@@ -222,21 +235,15 @@ public:
         return ctx;
     }
 
-    Vector2 SeparationForce = {0, 0};
+    Vector2 SeparationForce = {0, 0}; // Gaya separation dari enemy lain
 
 private:
-    /** @brief Jalankan state idle */
-    void HandleIdle();
-    /** @brief Jalankan state patrol */
-    void HandlePatrol();
-    /** @brief Jalankan state chase */
-    void HandleChase();
-    /** @brief Jalankan state attack */
-    void HandleAttack();
-    /** @brief Jalankan state return */
-    void HandleReturn();
-    /** @brief Eksekusi damage ke player */
-    void PerformAttack();
+    void HandleIdle();    // Jalankan state idle
+    void HandlePatrol();  // Jalankan state patrol
+    void HandleChase();   // Jalankan state chase
+    void HandleAttack();  // Jalankan state attack
+    void HandleReturn();  // Jalankan state return
+    void PerformAttack(); // Eksekusi damage ke player
 
     FlowField *ReturnFlowField = nullptr; // Flow field untuk kembali ke spawn
 
@@ -259,8 +266,7 @@ private:
     float DeathTimer;                 // Timer animasi kematian (runtime)
     const float DeathDuration = 1.2f; // Durasi animasi kematian sebelum di-deactivate
 
-    /** @brief Helper gerak ke target dengan collision check */
-    void MoveTowards(Vector2 target, float speed);
+    void MoveTowards(Vector2 target, float speed); // Helper gerak ke target dengan collision check
 };
 
 /*==============================================================================

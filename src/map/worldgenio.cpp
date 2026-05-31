@@ -1,3 +1,11 @@
+/**
+ * @file worldgenio.cpp
+ * @brief Implementasi dari World Generation Save/Load Module
+ *
+ * File ini berisi implementasi I/O untuk persistensi world generation:
+ * save/load runtime state per stage, meta data, dan manajemen slot.
+ */
+
 #include "worldgenio.h"
 #include "seedmanager.h"
 #include "map.h"
@@ -25,6 +33,7 @@ namespace WorldgenIO
         return std::string(buf);
     }
 
+    /** @brief Dapatkan path meta.json untuk slot tertentu */
     std::string GetMetaPath(int slot)
     {
         return GetSlotDir(slot) + "/meta.json";
@@ -35,6 +44,7 @@ namespace WorldgenIO
         return GetSlotDir(slot) + "/runtime.json";
     }
 
+    /** @brief Dapatkan path file map untuk stage tertentu */
     std::string GetStagePath(int stageIndex)
     {
         int slot = g_SeedManager.GetCurrentSlot();
@@ -45,6 +55,7 @@ namespace WorldgenIO
 
     /*=== Slot Management ===*/
 
+    /** @brief Cari slot kosong berikutnya (scan folder save_*) */
     int GetNextAvailableSlot()
     {
         int maxSlot = 0;
@@ -53,18 +64,21 @@ namespace WorldgenIO
         {
             for (auto &entry : fs::directory_iterator(base))
             {
-                if (!entry.is_directory()) continue;
+                if (!entry.is_directory())
+                    continue;
                 std::string name = entry.path().filename().string();
                 if (name.rfind("save_", 0) == 0)
                 {
                     int slot = std::stoi(name.substr(5));
-                    if (slot > maxSlot) maxSlot = slot;
+                    if (slot > maxSlot)
+                        maxSlot = slot;
                 }
             }
         }
         return maxSlot + 1;
     }
 
+    /** @brief Dapatkan nomor slot tertinggi yang tersedia */
     int GetTopSlot()
     {
         int maxSlot = 0;
@@ -73,20 +87,23 @@ namespace WorldgenIO
         {
             for (auto &entry : fs::directory_iterator(base))
             {
-                if (!entry.is_directory()) continue;
+                if (!entry.is_directory())
+                    continue;
                 std::string name = entry.path().filename().string();
                 if (name.rfind("save_", 0) == 0)
                 {
                     int slot = std::stoi(name.substr(5));
-                    if (slot > maxSlot) maxSlot = slot;
+                    if (slot > maxSlot)
+                        maxSlot = slot;
                 }
             }
         }
         return maxSlot;
     }
 
-/*=== Init ===*/
+    /*=== Init ===*/
 
+    /** @brief Inisialisasi run baru di slot tertentu */
     bool InitRun(int saveSlot)
     {
         g_SeedManager.InitRun(saveSlot);
@@ -136,6 +153,7 @@ namespace WorldgenIO
 
     /*=== Runtime State ===*/
 
+    /** @brief Simpan state runtime stage tertentu */
     bool SaveRuntimeState(int stageIndex)
     {
         int slot = g_SeedManager.GetCurrentSlot();
@@ -199,6 +217,7 @@ namespace WorldgenIO
         return true;
     }
 
+    /** @brief Muat state runtime stage tertentu */
     bool LoadRuntimeState(int stageIndex)
     {
         int slot = g_SeedManager.GetCurrentSlot();
@@ -288,6 +307,7 @@ namespace WorldgenIO
 
     /*=== Transitions ===*/
 
+    /** @brief Pindah ke stage berikutnya */
     void NextStage()
     {
         int oldStage = g_SeedManager.GetCurrentStage();
@@ -312,6 +332,7 @@ namespace WorldgenIO
         TrimStageStack();
     }
 
+    /** @brief Kembali ke stage sebelumnya */
     void PrevStage()
     {
         if (!g_SeedManager.CanGoBack())

@@ -282,7 +282,7 @@ void InitMap(void)
     BuildMapObjectIndex();
 }
 
-// TODO: panggil ini nanti dari door trigger worldgen
+/** @brief Generate world di map yang sudah di-load */
 void RunWorldgen(uint64_t seed, bool isBossStage)
 {
     WorldGenPools pools(seed);
@@ -441,6 +441,7 @@ TileRange GetVisibleTileRange(void)
     return range;
 }
 
+/** @brief Dapatkan visible world rect dari camera */
 Rectangle GetVisibleWorldRect(void)
 {
     Vector2 worldMin = GetScreenToWorld2D({0.0f, 0.0f}, camera);
@@ -452,6 +453,7 @@ Rectangle GetVisibleWorldRect(void)
  * Map Switching & Navigation
  *==============================================================================*/
 
+/** @brief Pindah ke map baru di titik tujuan tertentu */
 void SwitchMap(const char *newMapPath, const char *targetDoorName)
 {
     // Safety check biar gak load path kosong

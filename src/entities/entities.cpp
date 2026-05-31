@@ -1,3 +1,14 @@
+/**
+ * @file entities.cpp
+ * @brief Implementasi Entity Registry System
+ *
+ * File ini berisi implementasi registri global untuk entity management:
+ * - Registry / DynamicRegistry untuk entity lifecycle
+ * - EnemyRegistry untuk akses enemy
+ * - DeadEntities tracking untuk respawn prevention
+ * - RenderTileProps / ClearTileProps untuk tile-based props
+ */
+
 #include "entities.h"
 #include "propsbehavior.h"
 #include <vector>
@@ -158,7 +169,7 @@ namespace Entities
     }
 }
 
-// rendering master buat tile prop
+/** @brief Render semua tile-based props yang visible */
 void RenderTileProps(Rectangle viewRect)
 {
     int chestRendered = chestManager.Render(viewRect);
@@ -168,7 +179,7 @@ void RenderTileProps(Rectangle viewRect)
     barrierManager.Render(viewRect);
 }
 
-// clear master buat tile prop
+/** @brief Clear semua state tile-based props */
 void ClearTileProps(void)
 {
     chestManager.Clear();

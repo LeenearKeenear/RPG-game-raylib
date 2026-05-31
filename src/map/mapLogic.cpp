@@ -33,6 +33,7 @@ TiledHelper::CollisionResult gCollisionCache;
  * Seluruh pointer mengarah langsung ke data object aktif di tilesonMap->Objects.
  */
 
+/** @brief Bangun index object untuk target map */
 void BuildMapObjectIndexTarget(TilesonMapData *target)
 {
     target->objectIndex.byName.clear();
@@ -82,13 +83,14 @@ void RebuildCollisionCache()
  * Low-level Query Functions
  *==============================================================================*/
 
-// Versi baru dengan target
+/** @brief Cari object berdasarkan nama di target map */
 MapObject *TilesonGetObjectByName(TilesonMapData *target, const std::string &name)
 {
     auto it = target->objectIndex.byName.find(name);
     return (it != target->objectIndex.byName.end()) ? it->second : nullptr;
 }
 
+/** @brief Ambil object berdasarkan type di target map */
 const std::vector<MapObject *> &TilesonGetObjectsByType(TilesonMapData *target, const std::string &type)
 {
     static const std::vector<MapObject *> empty;
@@ -96,6 +98,7 @@ const std::vector<MapObject *> &TilesonGetObjectsByType(TilesonMapData *target, 
     return (it != target->objectIndex.byType.end()) ? it->second : empty;
 }
 
+/** @brief Ambil object berdasarkan layer name di target map */
 const std::vector<MapObject *> &TilesonGetObjectsByLayerName(TilesonMapData *target, const std::string &layerName)
 {
     static const std::vector<MapObject *> empty;
@@ -313,11 +316,7 @@ RayHitResult RayCast::Cast(Vector2 origin, Vector2 direction, float maxDistance,
     return result;
 }
 
-/**
- * Spread ray dari -halfAngleDeg sampai +halfAngleDeg relative ke forward.
- * Tiap ray dicek via Cast() — return hit dengan distance terkecil.
- * Kalo forward near-zero (enemy diem), langsung return miss.
- */
+/** @brief Cast cone ray dan return hit terdekat */
 RayHitResult RayCast::CastCone(Vector2 origin, Vector2 forward, float maxDistance,
                                float halfAngleDeg, int rayCount,
                                std::vector<MapObject> &objects)

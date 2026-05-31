@@ -1,3 +1,14 @@
+/**
+ * @file enemy_ai.cpp
+ * @brief Implementasi Enemy AI System
+ *
+ * File ini berisi implementasi sistem AI untuk enemy:
+ * - FlowField: Dijkstra-based flow field untuk chase & return pathfinding
+ * - EnemySteering: steering behavior dengan obstacle avoidance & anti-flip
+ * - SpatialHash & Separation: spatial partitioning untuk separation force
+ * - SpawnFlowFields: flow field per spawn point untuk return behavior
+ */
+
 #include "enemy_ai.h"
 #include "screen.h"
 #include "enemy.h"

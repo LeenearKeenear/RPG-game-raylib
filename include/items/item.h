@@ -35,7 +35,7 @@ typedef enum
     ITEM_POISON, // Item poison (di json nanti namanya harus ditulis posion)
     ITEM_ARMOR,  // Item armor (di json nanti namanya harus ditulis armor)
     ITEM_NONE,   // Tidak ada item
-    ITEM_ANY
+    ITEM_ANY     // Tidak ada filter kategori
 } ItemCategory;
 
 /**
@@ -254,13 +254,11 @@ public:
      */
     void ClearItems();
 
-    // Daftar item yang sedang aktif di world
-    std::vector<ItemSpawn> activeItems;
+    std::vector<ItemSpawn> activeItems; // Daftar item yang sedang aktif di world
 
 private:
-    // Penyimpanan state item berdasarkan path map
-    std::map<std::string, std::vector<ItemSpawn>> savedMapItems;
-    std::unordered_map<std::string, ItemDefinition> definitions_;
+    std::map<std::string, std::vector<ItemSpawn>> savedMapItems;  // Penyimpanan state item per map
+    std::unordered_map<std::string, ItemDefinition> definitions_; // Definisi item lokal
 };
 
 /*==============================================================================
@@ -318,36 +316,24 @@ public:
      */
     void SpawnAll(std::vector<ItemSpawn> &activeItems);
 
+    /**
+     * @brief Pilih random definition ID dari pool item
+     * @param rng Reference ke RNG
+     * @param filterCategory Filter kategori (default: semua)
+     * @return ID definisi item yang terpilih
+     */
     int PickRandomDefinitionId(std::mt19937 &rng, ItemCategory filterCategory = ITEM_ANY);
 
 private:
     // Daftar area spawn item yang dibaca dari Tiled
     std::vector<SpawnArea> spawnAreas;
 
-    /**
-     * @brief Load spawn area dari object layer Tiled
-     * @param layerName Nama layer yang akan dibaca
-     */
-    void LoadSpawnAreas(const std::string &layerName);
-
-    /**
-     * @brief Kategorisasi area berdasarkan ukuran
-     */
-    void CategorizeAreas();
-
-    /** @brief Klasifikasikan ukuran area spawn */
-    SpawnAreaSize ClassifySize(float width, float height);
-
-    /**
-     * @brief Tentukan area spawn yang aktif untuk run saat ini
-     */
-    void DetermineActiveAreas();
-
-    /** @brief Ambil posisi random di dalam area spawn */
-    Vector2 GetRandomPosInArea(const SpawnArea &area, Vector2 hitboxSize);
-
-    /** @brief Buat seed random dari nama area */
-    unsigned int SeedFromName(const std::string &name);
+    void LoadSpawnAreas(const std::string &layerName);                     // Load spawn area dari object layer Tiled
+    void CategorizeAreas();                                                // Kategorisasi area berdasarkan ukuran
+    SpawnAreaSize ClassifySize(float width, float height);                 // Klasifikasikan ukuran area spawn
+    void DetermineActiveAreas();                                           // Tentukan area spawn yang aktif
+    Vector2 GetRandomPosInArea(const SpawnArea &area, Vector2 hitboxSize); // Ambil posisi random di area
+    unsigned int SeedFromName(const std::string &name);                    // Buat seed random dari nama area
 
     int SPAWN_SIZE_SMALL_MIN = 1;  // jumlah minimum spawn untuk area kecil
     int SPAWN_SIZE_SMALL_MAX = 2;  // jumlah maksimum spawn untuk area kecil

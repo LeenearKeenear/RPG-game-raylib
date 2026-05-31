@@ -24,6 +24,7 @@ extern TilesonMapData *tilesonMap;
 
 namespace GridMath
 {
+    /** @brief Ubah data tile flat 1D ke grid 2D */
     std::vector<std::vector<int>> ReshapeTo2D(const std::vector<int> &flatData, int width, int height)
     {
         std::vector<std::vector<int>> grid(height, std::vector<int>(width));
@@ -34,6 +35,7 @@ namespace GridMath
         return grid;
     }
 
+    /** @brief Ubah grid 2D kembali ke data tile flat 1D */
     std::vector<int> FlattenTo1D(const std::vector<std::vector<int>> &grid)
     {
         std::vector<int> flat;
@@ -47,6 +49,7 @@ namespace GridMath
         return flat;
     }
 
+    /** @brief Rotasi grid 90 derajat searah jarum jam */
     std::vector<std::vector<int>> Rotate90CW(const std::vector<std::vector<int>> &grid)
     {
         int rows = (int)grid.size();
@@ -62,6 +65,7 @@ namespace GridMath
         return result;
     }
 
+    /** @brief Rotasi grid dengan kelipatan 90 derajat */
     std::vector<std::vector<int>> RotateGrid(const std::vector<std::vector<int>> &grid, int degrees)
     {
         int times = (degrees / 90) % 4;
@@ -73,6 +77,7 @@ namespace GridMath
         return result;
     }
 
+    /** @brief Rotasi titik 2D terhadap center */
     Vector2 RotatePoint(Vector2 point, Vector2 center, int degrees)
     {
         float x = point.x - center.x;
@@ -95,11 +100,7 @@ namespace GridMath
 
 namespace
 {
-    /**
-     * @brief Load map JSON Tiled ke TilesonMapData
-     * @param mapPath Path ke file JSON
-     * @param target Target TilesonMapData yang akan diisi
-     */
+    // Load map JSON Tiled ke TilesonMapData
     void PreFabLoadMap(const char *mapPath, TilesonMapData *target)
     {
         TraceLog(LOG_INFO, "PreFabLoadMap: loading %s", mapPath);
@@ -237,10 +238,7 @@ namespace
         TraceLog(LOG_INFO, "PreFabLoadMap: done %s", mapPath);
     }
 
-    /**
-     * @brief Unload prefab dan bebaskan memory
-     * @param prefab Pointer ke TilesonMapData yang akan di-unload
-     */
+    // Unload prefab dan bebaskan memory
     void UnloadPrefab(TilesonMapData *prefab)
     {
         if (!prefab)
@@ -257,12 +255,7 @@ namespace
         delete prefab;
     }
 
-    /**
-     * @brief Rotasi tile layer prefab
-     * @param source Prefab sumber
-     * @param degrees Sudut rotasi (kelipatan 90)
-     * @return Prefab baru hasil rotasi tile layer
-     */
+    // Rotasi tile layer prefab
     TilesonMapData *RotateTileLayersInternal(TilesonMapData *source, int degrees)
     {
         TilesonMapData *result = new TilesonMapData();
@@ -290,14 +283,7 @@ namespace
         return result;
     }
 
-    /**
-     * @brief Rotasi object layer prefab
-     * @param source Prefab sumber
-     * @param result Prefab tujuan (sudah memiliki tile layer hasil rotasi)
-     * @param degrees Sudut rotasi
-     * @param tileSize Ukuran tile dalam pixel
-     * @param obstacleOnly true = hanya obstacle/exit, false = non-obstacle/non-exit
-     */
+    // Rotasi object layer prefab
     void RotateObjectLayerInternal(TilesonMapData *source, TilesonMapData *result, int degrees, int tileSize, bool obstacleOnly)
     {
         Vector2 center = {(source->width * tileSize) / 2.0f, (source->height * tileSize) / 2.0f};
@@ -362,13 +348,7 @@ namespace
         }
     }
 
-    /**
-     * @brief Rotasi penuh prefab (tile + object layer)
-     * @param source Prefab sumber
-     * @param tileDegrees Rotasi tile layer
-     * @param objectDegrees Rotasi object layer non-obstacle
-     * @return Prefab baru hasil rotasi
-     */
+    // Rotasi penuh prefab (tile + object layer)
     TilesonMapData *RotatePrefabInternal(TilesonMapData *source, int tileDegrees, int objectDegrees)
     {
         TilesonMapData *result = RotateTileLayersInternal(source, tileDegrees);
@@ -382,6 +362,7 @@ namespace
  * WorldGenPools
  *==============================================================================*/
 
+/** @brief Constructor — init pool dengan seed */
 WorldGenPools::WorldGenPools(uint64_t seed)
     : worldSeed(seed)
 {
@@ -457,7 +438,8 @@ void WorldGenPools::LoadCorridorPool(const char *basePath)
         for (auto &entry : fs::directory_iterator(vPath))
             entries.push_back(entry);
         std::sort(entries.begin(), entries.end(),
-            [](auto &a, auto &b) { return a.path() < b.path(); });
+                  [](auto &a, auto &b)
+                  { return a.path() < b.path(); });
         for (auto &entry : entries)
         {
             if (entry.path().extension() != ".json")
@@ -483,7 +465,8 @@ void WorldGenPools::LoadCorridorPool(const char *basePath)
         for (auto &entry : fs::directory_iterator(hPath))
             entries.push_back(entry);
         std::sort(entries.begin(), entries.end(),
-            [](auto &a, auto &b) { return a.path() < b.path(); });
+                  [](auto &a, auto &b)
+                  { return a.path() < b.path(); });
         for (auto &entry : entries)
         {
             if (entry.path().extension() != ".json")
@@ -504,6 +487,7 @@ void WorldGenPools::LoadCorridorPool(const char *basePath)
     corridorPool.loaded = true;
 }
 
+/** @brief Unload semua corridor prefab */
 void WorldGenPools::UnloadCorridorPool()
 {
     for (auto *p : corridorPool.vertical.prefabs)
@@ -515,6 +499,7 @@ void WorldGenPools::UnloadCorridorPool()
     corridorPool.loaded = false;
 }
 
+/** @brief Muat room prefab untuk room type tertentu (start/normal/boss) */
 void WorldGenPools::LoadRoomPoolForType(const char *basePath, const char *roomType, RoomPool &targetPool)
 {
     namespace fs = std::filesystem;
@@ -524,10 +509,10 @@ void WorldGenPools::LoadRoomPoolForType(const char *basePath, const char *roomTy
         const char *folder;
         WeightedPool &pool;
     } configs[] = {
-        {"template_u",    targetPool.u},
-        {"template_ud",   targetPool.ud},
-        {"template_ur",   targetPool.ur},
-        {"template_udr",  targetPool.udr},
+        {"template_u", targetPool.u},
+        {"template_ud", targetPool.ud},
+        {"template_ur", targetPool.ur},
+        {"template_udr", targetPool.udr},
         {"template_udrl", targetPool.udrl},
     };
 
@@ -541,7 +526,8 @@ void WorldGenPools::LoadRoomPoolForType(const char *basePath, const char *roomTy
             for (auto &entry : fs::directory_iterator(path))
                 entries.push_back(entry);
             std::sort(entries.begin(), entries.end(),
-                [](auto &a, auto &b) { return a.path() < b.path(); });
+                      [](auto &a, auto &b)
+                      { return a.path() < b.path(); });
             for (auto &entry : entries)
             {
                 if (entry.path().extension() != ".json")
@@ -562,7 +548,8 @@ void WorldGenPools::LoadRoomPoolForType(const char *basePath, const char *roomTy
         for (auto &entry : fs::directory_iterator(flatPath))
             flatEntries.push_back(entry);
         std::sort(flatEntries.begin(), flatEntries.end(),
-            [](auto &a, auto &b) { return a.path() < b.path(); });
+                  [](auto &a, auto &b)
+                  { return a.path() < b.path(); });
         for (auto &entry : flatEntries)
         {
             if (entry.path().extension() != ".json")
@@ -576,18 +563,19 @@ void WorldGenPools::LoadRoomPoolForType(const char *basePath, const char *roomTy
     }
 }
 
+/** @brief Muat semua room prefab dari direktori base */
 void WorldGenPools::LoadRoomPool(const char *basePath)
 {
     if (enemyPool.loaded)
         return;
 
-    LoadRoomPoolForType(basePath, "enemy",    enemyPool);
+    LoadRoomPoolForType(basePath, "enemy", enemyPool);
     LoadRoomPoolForType(basePath, "treasure", treasurePool);
-    LoadRoomPoolForType(basePath, "elite",    elitePool);
-    LoadRoomPoolForType(basePath, "trader",   traderPool);
-    LoadRoomPoolForType(basePath, "start",    startPool);
-    LoadRoomPoolForType(basePath, "finish",   finishPool);
-    LoadRoomPoolForType(basePath, "boss",     bossPool);
+    LoadRoomPoolForType(basePath, "elite", elitePool);
+    LoadRoomPoolForType(basePath, "trader", traderPool);
+    LoadRoomPoolForType(basePath, "start", startPool);
+    LoadRoomPoolForType(basePath, "finish", finishPool);
+    LoadRoomPoolForType(basePath, "boss", bossPool);
 
     enemyPool.loaded = true;
     treasurePool.loaded = true;
@@ -618,6 +606,7 @@ static void UnloadSingleRoomPool(RoomPool &pool)
     pool.loaded = false;
 }
 
+/** @brief Unload semua room prefab yang sudah di-load */
 void WorldGenPools::UnloadRoomPool()
 {
     UnloadSingleRoomPool(enemyPool);
@@ -629,21 +618,31 @@ void WorldGenPools::UnloadRoomPool()
     UnloadSingleRoomPool(bossPool);
 }
 
+/** @brief Dapatkan room pool berdasarkan cell type */
 RoomPool &WorldGenPools::GetPoolForType(CellType type)
 {
     switch (type)
     {
-        case CELL_ENEMY:       return enemyPool;
-        case CELL_TREASURE:    return treasurePool;
-        case CELL_ENEMY_ELITE: return elitePool;
-        case CELL_TRADER:      return traderPool;
-        case CELL_START:       return startPool;
-        case CELL_FINISH:      return finishPool;
-        case CELL_BOSS:        return bossPool;
-        default:               return enemyPool;
+    case CELL_ENEMY:
+        return enemyPool;
+    case CELL_TREASURE:
+        return treasurePool;
+    case CELL_ENEMY_ELITE:
+        return elitePool;
+    case CELL_TRADER:
+        return traderPool;
+    case CELL_START:
+        return startPool;
+    case CELL_FINISH:
+        return finishPool;
+    case CELL_BOSS:
+        return bossPool;
+    default:
+        return enemyPool;
     }
 }
 
+/** @brief Ambil semua room prefab dari seluruh pool */
 std::vector<TilesonMapData *> WorldGenPools::GetAllRoomPrefabs()
 {
     std::vector<TilesonMapData *> all;
@@ -670,6 +669,7 @@ std::vector<TilesonMapData *> WorldGenPools::GetAllRoomPrefabs()
     return all;
 }
 
+/** @brief Dapatkan corridor pool */
 CorridorPool &WorldGenPools::GetCorridorPool()
 {
     return corridorPool;
@@ -679,17 +679,20 @@ CorridorPool &WorldGenPools::GetCorridorPool()
  * WorldGenPrefab
  *==============================================================================*/
 
+/** @brief Constructor default WorldGenPrefab */
 WorldGenPrefab::WorldGenPrefab()
     : data(nullptr)
 {
 }
 
+/** @brief Load prefab dari file JSON */
 void WorldGenPrefab::Load(const char *mapPath)
 {
     data = new TilesonMapData();
     PreFabLoadMap(mapPath, data);
 }
 
+/** @brief Unload prefab */
 void WorldGenPrefab::Unload()
 {
     if (!data)
@@ -698,6 +701,7 @@ void WorldGenPrefab::Unload()
     data = nullptr;
 }
 
+/** @brief Dapatkan data tileson dari prefab */
 TilesonMapData *WorldGenPrefab::GetData() const
 {
     return data;
@@ -721,11 +725,13 @@ WorldGenPrefab WorldGenPrefab::Rotate(int tileDegrees, int objectDegrees)
  * WorldGenCanvas
  *==============================================================================*/
 
+/** @brief Constructor — init canvas untuk worldgen */
 WorldGenCanvas::WorldGenCanvas(TilesonMapData *map, WorldGenPools *pools, uint64_t seed)
     : tilesonMap(map), pools(pools), wgRng(seed)
 {
 }
 
+/** @brief Dapatkan slot object (slot_worldgen) untuk stamping */
 std::vector<MapObject> WorldGenCanvas::GetSlots()
 {
     const auto &slots = TilesonGetObjectsByType(SLOT_WORLDGEN_LAYER_NAME);
@@ -735,18 +741,18 @@ std::vector<MapObject> WorldGenCanvas::GetSlots()
         result.push_back(*ptr);
 
     std::sort(result.begin(), result.end(), [](const MapObject &a, const MapObject &b)
-    {
+              {
         int idxA = 0, idxB = 0;
         if (a.name.rfind("slot_", 0) == 0)
             idxA = std::stoi(a.name.substr(5));
         if (b.name.rfind("slot_", 0) == 0)
             idxB = std::stoi(b.name.substr(5));
-        return idxA < idxB;
-    });
+        return idxA < idxB; });
 
     return result;
 }
 
+/** @brief Expand map layers untuk accommodate worldgen layout */
 void WorldGenCanvas::ExpandLayers(int extraLayers)
 {
     int newLayerCount = tilesonMap->layerCount + extraLayers;
@@ -888,8 +894,7 @@ void WorldGenCanvas::StampCorridor(const MapObject &exitObj, int slotCol, int sl
     bool isHorizontal = (exitObj.type == "exit_east" || exitObj.type == "exit_west");
     TilesonMapData *corridor = pools->GetRandomCorridor(
         isHorizontal ? cp.horizontal : cp.vertical,
-        exitTileX, exitTileY, exitTypeHash
-    );
+        exitTileX, exitTileY, exitTypeHash);
     if (!corridor)
         return;
 
@@ -924,6 +929,7 @@ void WorldGenCanvas::StampCorridor(const MapObject &exitObj, int slotCol, int sl
     }
 }
 
+/** @brief Stamp seluruh room prefab ke canvas sesuai grid layout */
 void WorldGenCanvas::StampLayout(const std::vector<std::vector<WorldCell>> &grid,
                                  const std::vector<MapObject> &slots)
 {

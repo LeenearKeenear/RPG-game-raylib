@@ -28,11 +28,11 @@ constexpr int WG_CORRIDOR_LAYER_START = 5; // Layer awal untuk nge-stamp corrido
 constexpr int WG_TILE_SIZE = FRAME_SIZE;   // Ukuran tile dalam pixel
 
 // Prim's Algorithm — tuning jumlah cell dan stop chance
-constexpr int WG_PRIM_START_CELLS = 1;  // Jumlah cell awal saat seed Prim
-constexpr int WG_PRIM_MIN_CELLS = 7;    // Minimum cell sebelum boleh random stop
-constexpr int WG_PRIM_MAX_CELLS = 12;   // Maksimum cell (batas atas loop Prim)
-constexpr int WG_PRIM_STOP_CHANCE = 20; // Persentase chance random stop setelah MIN_CELLS
-constexpr int WG_PRIM_RETRY_MAX = 10;   // Maksimum percobaan generate layout
+constexpr int WG_PRIM_START_CELLS = 1;   // Jumlah cell awal saat seed Prim
+constexpr int WG_PRIM_MIN_CELLS = 7;     // Minimum cell sebelum boleh random stop
+constexpr int WG_PRIM_MAX_CELLS = 11;    // Maksimum cell (batas atas loop Prim)
+constexpr int WG_PRIM_STOP_CHANCE = 20;  // Persentase chance random stop setelah MIN_CELLS
+constexpr int WG_PRIM_RETRY_MAX = 10;    // Maksimum percobaan generate layout
 constexpr int WG_VARIETY_ITERATIONS = 2; // Iterasi variety pruning per generate
 
 constexpr int NUM_DIRS = 4;         // Jumlah arah mata angin
@@ -92,8 +92,8 @@ enum CellType
  */
 struct WorldCell
 {
-    CellType type;              // Tipe cell
-    int exitMask;               // Bitmask exit yang aktif
+    CellType type; // Tipe cell
+    int exitMask;  // Bitmask exit yang aktif
 };
 
 /**
@@ -250,15 +250,15 @@ public:
     std::vector<TilesonMapData *> GetAllRoomPrefabs();
 
 private:
-    uint64_t worldSeed;            // Seed global untuk deterministic generation
-    RoomPool enemyPool;            // Pool room tipe enemy
-    RoomPool treasurePool;         // Pool room tipe treasure
-    RoomPool elitePool;            // Pool room tipe elite
-    RoomPool traderPool;           // Pool room tipe trader
-    RoomPool startPool;            // Pool room tipe start
-    RoomPool finishPool;           // Pool room tipe finish
-    RoomPool bossPool;             // Pool room tipe boss
-    CorridorPool corridorPool;     // Pool corridor prefabs
+    uint64_t worldSeed;        // Seed global untuk deterministic generation
+    RoomPool enemyPool;        // Pool room tipe enemy
+    RoomPool treasurePool;     // Pool room tipe treasure
+    RoomPool elitePool;        // Pool room tipe elite
+    RoomPool traderPool;       // Pool room tipe trader
+    RoomPool startPool;        // Pool room tipe start
+    RoomPool finishPool;       // Pool room tipe finish
+    RoomPool bossPool;         // Pool room tipe boss
+    CorridorPool corridorPool; // Pool corridor prefabs
 
     /**
      * @brief SplitMix64 hash function untuk deterministic selection
@@ -277,7 +277,7 @@ private:
      */
     int PickCorridorIndex(int tileX, int tileY, int exitTypeHash, int poolSize);
 
-    void LoadRoomPoolForType(const char *basePath, const char *roomType, RoomPool &targetPool);
+    void LoadRoomPoolForType(const char *basePath, const char *roomType, RoomPool &targetPool); // Load room pool untuk satu tipe room
 };
 
 /*==============================================================================
@@ -314,7 +314,7 @@ public:
     /** @brief Unload prefab dan bebaskan memory */
     void Unload();
 
-    /** @return Pointer ke internal TilesonMapData */
+    /** @brief Dapatkan pointer ke internal TilesonMapData */
     TilesonMapData *GetData() const;
 
     /**
@@ -385,25 +385,44 @@ public:
      */
     void StampCorridor(const MapObject &exitObj, int slotCol, int slotRow);
 
+    /**
+     * @brief Stamp seluruh layout ke canvas
+     * @param grid Layout grid worldgen
+     * @param slots Daftar slot dari canvas
+     */
     void StampLayout(const std::vector<std::vector<WorldCell>> &grid,
                      const std::vector<MapObject> &slots);
 
 private:
     TilesonMapData *tilesonMap; // Main map canvas — reference ke global
     WorldGenPools *pools;       // Reference ke pools untuk akses corridor
-    std::mt19937_64 wgRng;     // RNG deterministic dari worldSeed
+    std::mt19937_64 wgRng;      // RNG deterministic dari worldSeed
     static int RotateExitMask(int mask, int degrees);
     WeightedPool *SelectPool(CellType type, int exitMask, RoomPool &roomPool, int &outBaseMask);
     WorldGenPrefab ResolveRotation(CellType type, int exitMask, std::mt19937_64 &rng);
 };
 
+/**
+ * @brief Layout generator untuk world grid dungeon
+ *
+ * Menghasilkan layout 4x4 grid menggunakan algoritma Prim's
+ * untuk menentukan konektivitas room, lalu assign tiap cell
+ * dengan tipe tertentu (enemy, treasure, boss, dll).
+ */
 class WorldGenLayout
 {
 public:
+    /**
+     * @brief Constructor layout generator
+     * @param seed Seed deterministic
+     * @param isBossStage True jika stage ini adalah boss stage
+     */
     WorldGenLayout(uint64_t seed, bool isBossStage = false);
 
+    /** @brief Generate layout grid */
     void Generate();
 
+    /** @brief Dapatkan grid hasil generate */
     const std::vector<std::vector<WorldCell>> &GetGrid() const;
 
 private:
@@ -411,19 +430,19 @@ private:
     std::vector<std::vector<WorldCell>> grid; // 4x4
     bool isBoss = false;
 
-    void InitGrid();
-    void RunPrims();
-    void AssignCellTypes();
-    void PruneSingleExitCells();
-    void RemoveDisconnectedCells();
-    void ConstrainExitsByPool();
-    void EnsureTreasureExists();
-    void PruneOneDenseExit();
-    void DebugPrintGrid() const;
-    bool IsLeaf(int r, int c) const;
-    bool IsAdjacentToType(int r, int c, CellType type) const;
-    int CountActiveCells() const;
-    std::vector<std::vector<int>> ComputeDepth() const;
+    void InitGrid();                                          // Init semua cell ke CELL_EMPTY
+    void RunPrims();                                          // Generate konektivitas room dengan Prim's algorithm
+    void AssignCellTypes();                                   // Assign tipe ke tiap cell sesuai aturan
+    void PruneSingleExitCells();                              // Hapus cell yang cuma punya 1 exit
+    void RemoveDisconnectedCells();                           // Hapus cell yang tidak terhubung
+    void ConstrainExitsByPool();                              // Sesuaikan exit mask dengan pool yang tersedia
+    void EnsureTreasureExists();                              // Pastikan minimal ada 1 treasure room
+    void PruneOneDenseExit();                                 // Prune satu exit dari cell yang terlalu padat
+    void DebugPrintGrid() const;                              // Print grid ke console (debug)
+    bool IsLeaf(int r, int c) const;                          // Cek apakah cell adalah leaf node
+    bool IsAdjacentToType(int r, int c, CellType type) const; // Cek apakah cell bertetangga dengan tipe tertentu
+    int CountActiveCells() const;                             // Hitung jumlah cell aktif di grid
+    std::vector<std::vector<int>> ComputeDepth() const;       // Hitung depth tiap cell dari start
 };
 
 /*==============================================================================
@@ -449,8 +468,12 @@ struct WorldgenCellInfo
 extern WorldgenCellInfo g_worldgenCells[WG_GRID_SIZE * WG_GRID_SIZE];
 extern int g_worldgenCellCount;
 
+/** @brief Init worldgen grid lookup dari layout + slots */
 void InitWorldgenGrid(const std::vector<std::vector<WorldCell>> &grid,
                       const std::vector<MapObject> &slots);
+/** @brief Cari tipe cell berdasarkan posisi world */
 CellType GetCellTypeAtWorldPos(Vector2 worldPos);
+/** @brief Cari index cell grid berdasarkan posisi world */
 int GetCellIndexAtWorldPos(Vector2 worldPos);
+/** @brief Cek apakah posisi world berada di cell dengan tipe tertentu */
 bool IsCellTypeAtWorldPos(Vector2 worldPos, CellType type);

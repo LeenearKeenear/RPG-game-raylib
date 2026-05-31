@@ -9,6 +9,15 @@
 #include <unordered_map>
 #include <cmath>
 
+/**
+ * @file enemy_ai.h
+ * @brief Enemy AI, Flow Field & Steering Module
+ *
+ * Header ini mendeklarasikan sistem AI untuk enemy:
+ * flow field pathfinding, steering behavior, obstacle cache,
+ * spatial hash untuk separation, dan global flow field.
+ */
+
 class Enemy;
 
 /*==============================================================================
@@ -99,12 +108,9 @@ private:
     Vector2 lastGoalTile_ = {-1, -1}; // tile terakhir saat build dilakukan
     float rebuildCooldown_ = 0.f;     // sisa waktu cooldown rebuild
 
-    /** @brief Cek apakah koordinat tile valid dalam batas grid */
-    bool IsValidTile(int x, int y) const;
-    /** @brief Hitung jarak terpendek dan arah tiap tile menuju goal */
-    void Dijkstra(int goalX, int goalY, int startX, int startY, int endX, int endY);
-    /** @brief Hitung cost traversal tile dengan penalty obstacle */
-    float ComputeTileCost(int x, int y);
+    bool IsValidTile(int x, int y) const;                                            // Cek apakah koordinat tile valid
+    void Dijkstra(int goalX, int goalY, int startX, int startY, int endX, int endY); // Hitung jarak terpendek tiap tile
+    float ComputeTileCost(int x, int y);                                             // Hitung cost traversal tile
 };
 
 /*==============================================================================
@@ -160,11 +166,8 @@ public:
     float ScoreMultiplier = 0.9f;         // bobot momentum arah lama saat scoring steering
 
 private:
-    /** @brief Pilih arah terbaik dari grid kandidat di sekitar enemy */
-    Vector2 EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir, SteeringMode mode);
-
-    /** @brief Catat perubahan arah berlawanan untuk mencegah steering bolak-balik */
-    void ApplyAntiFlip(Vector2 bestDir, Vector2 prevDir);
+    Vector2 EvaluateGrid(const SteeringContext &ctx, Vector2 flowDir, SteeringMode mode); // Pilih arah terbaik dari grid kandidat
+    void ApplyAntiFlip(Vector2 bestDir, Vector2 prevDir);                                 // Catat perubahan arah untuk cegah bolak-balik
 };
 
 /*==============================================================================
@@ -206,6 +209,7 @@ void MarkSpawnFlowFieldsDirty(Vector2 position);
 /*==============================================================================
  * SpatialHash
  *==============================================================================*/
+/** @brief Spatial hash untuk query neighbor enemy */
 struct SpatialHash
 {
     std::unordered_map<uint64_t, std::vector<int>> cells; // daftar index enemy per cell spatial hash

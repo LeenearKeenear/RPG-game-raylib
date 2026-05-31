@@ -1,3 +1,14 @@
+/**
+ * @file worldgenlogic.cpp
+ * @brief Implementasi World Generation Logic System
+ *
+ * File ini berisi implementasi algoritma world generation:
+ * - Prim's algorithm untuk layout dungeon (WorldGenLayout)
+ * - Cell type assignment dan constraint enforcement
+ * - Room prefab selection dan rotation (WorldGenCanvas)
+ * - Worldgen grid lookup runtime
+ */
+
 #include "worldgenenartion.h"
 #include <ctime>
 #include <queue>
@@ -10,33 +21,39 @@ static const int DIR_DC[] = {0, 0, -1, 1};
 static const int DIR_EXIT_MASK[] = {EXIT_NORTH, EXIT_SOUTH, EXIT_WEST, EXIT_EAST};
 static const int DIR_OPPOSITE_MASK[] = {EXIT_SOUTH, EXIT_NORTH, EXIT_EAST, EXIT_WEST};
 
+/** @brief Generate run seed baru berdasarkan waktu sistem */
 uint64_t GenerateRunSeed(void)
 {
     currentRunSeed = static_cast<uint64_t>(time(nullptr));
     return currentRunSeed;
 }
 
+/** @brief Dapatkan run seed yang aktif */
 uint64_t GetCurrentRunSeed(void)
 {
     return currentRunSeed;
 }
 
+// Init grid ke CELL_EMPTY semua
 void WorldGenLayout::InitGrid()
 {
     grid.assign(WG_GRID_SIZE, std::vector<WorldCell>(WG_GRID_SIZE, {CELL_EMPTY, EXIT_NONE}));
 }
 
+/** @brief Constructor — init grid dengan seed dan boss flag */
 WorldGenLayout::WorldGenLayout(uint64_t seed, bool isBossStage)
     : wgRng(seed), isBoss(isBossStage)
 {
     InitGrid();
 }
 
+/** @brief Dapatkan grid layout hasil generate */
 const std::vector<std::vector<WorldCell>> &WorldGenLayout::GetGrid() const
 {
     return grid;
 }
 
+// Rotasi exit mask sesuai degree
 int WorldGenCanvas::RotateExitMask(int mask, int degrees)
 {
     int steps = (degrees / 90) % 4;
@@ -56,6 +73,7 @@ int WorldGenCanvas::RotateExitMask(int mask, int degrees)
     return mask;
 }
 
+// Cek apakah cell hanya punya 1 exit (leaf node)
 bool WorldGenLayout::IsLeaf(int r, int c) const
 {
     int mask = grid[r][c].exitMask;
@@ -71,6 +89,7 @@ bool WorldGenLayout::IsLeaf(int r, int c) const
     return count == 1;
 }
 
+// Cek apakah cell bertetangga dengan cell type tertentu
 bool WorldGenLayout::IsAdjacentToType(int r, int c, CellType type) const
 {
     for (int d = 0; d < NUM_DIRS; d++)
@@ -89,6 +108,7 @@ bool WorldGenLayout::IsAdjacentToType(int r, int c, CellType type) const
     return false;
 }
 
+// Hitung jumlah cell yang aktif (bukan EMPTY)
 int WorldGenLayout::CountActiveCells() const
 {
     int count = 0;
@@ -99,6 +119,7 @@ int WorldGenLayout::CountActiveCells() const
     return count;
 }
 
+// Hitung depth (jarak) tiap cell dari START via BFS
 std::vector<std::vector<int>> WorldGenLayout::ComputeDepth() const
 {
     std::vector<std::vector<int>> depth(WG_GRID_SIZE, std::vector<int>(WG_GRID_SIZE, DEPTH_UNVISITED));
@@ -142,6 +163,7 @@ std::vector<std::vector<int>> WorldGenLayout::ComputeDepth() const
     return depth;
 }
 
+// Generate dungeon layout pake algoritma Prim's
 void WorldGenLayout::RunPrims()
 {
     // 1. Pilih random edge cell buat START
@@ -236,6 +258,7 @@ void WorldGenLayout::RunPrims()
     grid[finishR][finishC].type = isBoss ? CELL_BOSS : CELL_FINISH;
 }
 
+// Assign type (TREASURE, TRADER, ELITE, SPECIAL) ke leaf cells
 void WorldGenLayout::AssignCellTypes()
 {
     auto depth = ComputeDepth();
@@ -373,6 +396,7 @@ void WorldGenLayout::AssignCellTypes()
     TraceLog(LOG_INFO, "Total active: %d, Leaves found: %d", total, (int)leaves.size());
 }
 
+// Prune START/FINISH/BOSS — sisakan 1 exit aja
 void WorldGenLayout::PruneSingleExitCells()
 {
     for (int r = 0; r < WG_GRID_SIZE; r++)
@@ -477,6 +501,7 @@ void WorldGenLayout::PruneSingleExitCells()
     }
 }
 
+// Hapus cell yang gak reachable dari START
 void WorldGenLayout::RemoveDisconnectedCells()
 {
     // BFS dari START buat cari semua cell yang reachable
@@ -544,6 +569,7 @@ void WorldGenLayout::RemoveDisconnectedCells()
     }
 }
 
+// Batasin exit count sesuai pool yang tersedia per cell type
 void WorldGenLayout::ConstrainExitsByPool()
 {
     for (int r = 0; r < WG_GRID_SIZE; r++)
@@ -635,6 +661,7 @@ void WorldGenLayout::ConstrainExitsByPool()
     }
 }
 
+// Kurangi 1 exit dari cell dense (3+ exit) untuk variety
 void WorldGenLayout::PruneOneDenseExit()
 {
     int prefabExitCandidate = 3;
@@ -719,6 +746,7 @@ void WorldGenLayout::PruneOneDenseExit()
     }
 }
 
+// Pastikan minimal ada 1 CELL_TREASURE di grid
 void WorldGenLayout::EnsureTreasureExists()
 {
     // Cek apakah treasure masih ada
@@ -801,6 +829,7 @@ void WorldGenLayout::EnsureTreasureExists()
     grid[r][c].type = CELL_TREASURE;
 }
 
+// Print grid ke log untuk debugging
 void WorldGenLayout::DebugPrintGrid() const
 {
     for (int r = 0; r < WG_GRID_SIZE; r++)
@@ -866,11 +895,13 @@ void WorldGenLayout::DebugPrintGrid() const
     }
 }
 
+/** @brief Constructor — wrapping existing TilesonMapData */
 WorldGenPrefab::WorldGenPrefab(TilesonMapData *existingData)
     : data(existingData)
 {
 }
 
+// Pilih prefab room yang cocok dengan type & exitMask, lalu rotate
 WorldGenPrefab WorldGenCanvas::ResolveRotation(CellType type, int exitMask, std::mt19937_64 &rng)
 {
     RoomPool &roomPool = pools->GetPoolForType(type);
@@ -893,6 +924,7 @@ WorldGenPrefab WorldGenCanvas::ResolveRotation(CellType type, int exitMask, std:
     return wrapper.Rotate(0, 0); // fallback — owned copy tanpa rotasi
 }
 
+// Pilih pool yang sesuai berdasarkan cell type & exit count
 WeightedPool *WorldGenCanvas::SelectPool(CellType type, int exitMask, RoomPool &roomPool, int &outBaseMask)
 {
     int exitCount = __builtin_popcount(exitMask);
@@ -947,6 +979,7 @@ WeightedPool *WorldGenCanvas::SelectPool(CellType type, int exitMask, RoomPool &
     return &roomPool.udrl;
 }
 
+/** @brief Generate dungeon layout dengan retry logic */
 void WorldGenLayout::Generate()
 {
     for (int attempt = 0; attempt < WG_PRIM_RETRY_MAX; attempt++)
@@ -991,6 +1024,7 @@ void WorldGenLayout::Generate()
 WorldgenCellInfo g_worldgenCells[WG_GRID_SIZE * WG_GRID_SIZE];
 int g_worldgenCellCount = 0;
 
+/** @brief Init worldgen grid lookup dari hasil generate */
 void InitWorldgenGrid(const std::vector<std::vector<WorldCell>> &grid,
                       const std::vector<MapObject> &slots)
 {
@@ -1021,6 +1055,7 @@ void InitWorldgenGrid(const std::vector<std::vector<WorldCell>> &grid,
     }
 }
 
+/** @brief Cari index cell berdasarkan world position */
 int GetCellIndexAtWorldPos(Vector2 worldPos)
 {
     for (int i = 0; i < WG_GRID_SIZE * WG_GRID_SIZE; i++)
@@ -1033,12 +1068,14 @@ int GetCellIndexAtWorldPos(Vector2 worldPos)
     return -1;
 }
 
+/** @brief Dapatkan cell type di world position tertentu */
 CellType GetCellTypeAtWorldPos(Vector2 worldPos)
 {
     int idx = GetCellIndexAtWorldPos(worldPos);
     return (idx >= 0) ? g_worldgenCells[idx].type : CELL_EMPTY;
 }
 
+/** @brief Cek apakah world position memiliki cell type tertentu */
 bool IsCellTypeAtWorldPos(Vector2 worldPos, CellType type)
 {
     return GetCellTypeAtWorldPos(worldPos) == type;

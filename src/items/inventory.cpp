@@ -1,3 +1,16 @@
+/**
+ * @file inventory.cpp
+ * @brief Implementasi Inventory Interaction System
+ *
+ * File ini berisi implementasi fungsi-fungsi inventory:
+ * - HasInventorySpace, GetActiveHotbarItem
+ * - HandleInventoryActions: right-click → drink potion / equip
+ * - UsePotion: konsumsi potion dari hotbar
+ * - AddToInventory: tambah item ke hotbar/bag dengan stack logic
+ * - SetupAttackStats: setup player attack berdasarkan weapon di hotbar
+ * - GetAttackManaCost: ambil mana cost dari weapon aktif
+ */
+
 #include "item.h"
 #include "inventory.h"
 #include "player.h"
@@ -10,6 +23,7 @@ namespace Inventory
      * Utilitas Inventory
      *==============================================================================*/
 
+    /** @brief Cek apakah inventory player masih punya slot kosong */
     bool HasInventorySpace(const Player &player)
     {
         for (int i = 0; i < player.GetMaxHotbar(); i++)
@@ -21,6 +35,7 @@ namespace Inventory
         return false;
     }
 
+    /** @brief Dapatkan item dari slot hotbar yang aktif */
     InventoryItem GetActiveHotbarItem(const Player &player)
     {
         int idx = (int)InputInstance.GetActiveSlot() - 1;
@@ -33,6 +48,7 @@ namespace Inventory
      * Input & Aksi Inventory
      *==============================================================================*/
 
+    /** @brief Handle right-click action untuk potion/equip */
     void HandleInventoryActions(Player &player)
     {
         // Inventory terbuka = block semua aksi shortcut
@@ -63,6 +79,7 @@ namespace Inventory
      * Potion
      *==============================================================================*/
 
+    // Konsumsi potion di slot tertentu, cek overflow, kurangi amount
     void UsePotion(Player &player, int slotIndex)
     {
         InventoryItem &slot = player.GetHotbarItem(slotIndex);
@@ -104,6 +121,7 @@ namespace Inventory
      * Penambahan Item ke Inventory
      *==============================================================================*/
 
+    /** @brief Tambah item ke inventory dengan priority: active slot → existing stack → empty slot */
     bool AddToInventory(Player &player, const ItemSpawn &item)
     {
         const ItemDefinition &def = itemDefs.GetById(item.definitionId);
@@ -196,6 +214,7 @@ namespace Inventory
      * Senjata & Serangan
      *==============================================================================*/
 
+    /** @brief Setup player attack stats berdasarkan weapon di hotbar */
     void SetupAttackStats(Player &player, Direction attackFaceDir)
     {
         InventoryItem activeItem = GetActiveHotbarItem(player);
@@ -231,6 +250,7 @@ namespace Inventory
         }
     }
 
+    /** @brief Dapatkan mana cost dari weapon aktif */
     float GetAttackManaCost(const Player &player)
     {
         InventoryItem activeItem = GetActiveHotbarItem(player);

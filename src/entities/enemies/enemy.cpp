@@ -1,3 +1,15 @@
+/**
+ * @file enemy.cpp
+ * @brief Implementasi Enemy Entity System
+ *
+ * File ini berisi implementasi class Enemy:
+ * - EnemyDataManager: load/query definisi enemy dari JSON
+ * - Enemy lifecycle: Init, Update, AI state machine, Render
+ * - Spawn system: SpawnAtPoint, SpawnInRect, SpawnBoss, SpawnEnemiesFromMap
+ * - Combat: PerformAttack, TakeDamage
+ * - Utility: MoveTowards, ResolveAnimSet, ParseRank
+ */
+
 #include "enemy.h"
 #include "screen.h"
 #include "enemy_ai.h"
@@ -708,14 +720,15 @@ void Enemy::MoveTowards(Vector2 target, float speed)
 const AnimationSet *ResolveAnimSet(const std::string &name)
 {
     std::string lowerName = name;
-    for (auto &c : lowerName) c = std::tolower(c);
-    
+    for (auto &c : lowerName)
+        c = std::tolower(c);
+
     auto it = loadedAnimationSets.find(lowerName);
     if (it != loadedAnimationSets.end())
     {
         return &it->second;
     }
-    
+
     it = loadedAnimationSets.find("slime");
     if (it != loadedAnimationSets.end())
     {

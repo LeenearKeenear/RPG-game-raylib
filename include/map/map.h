@@ -153,7 +153,7 @@ constexpr const char *CHEST_TYPE_OBJECT_NAME = "chest";                         
 constexpr const char *SPIKE_TYPE_OBJECT_NAME = "spike";                                   // Type object unutk spike
 constexpr const char *BOMB_TYPE_OBJECT_NAME = "bomb";                                     // type object untuk bomb
 constexpr const char *CRATE_TYPE_OBJECT_NAME = "crate";                                   // type object untuk crate
-constexpr const char *SIGN_TYPE_OBJECT_NAME = "sign";
+constexpr const char *SIGN_TYPE_OBJECT_NAME = "sign";                                     // Type object untuk sign
 constexpr const char *BOSS_STAGE_TYPE_OBJECT_NAME = "boss_stage";                         // Type object untuk trigger area boss
 /*==============================================================================
  * Map Functions
@@ -165,19 +165,13 @@ constexpr const char *BOSS_STAGE_TYPE_OBJECT_NAME = "boss_stage";               
  */
 void LoadMap(const char *mapPath);
 
-/**
- * @brief Render map ke layar
- */
+/** @brief Render map ke layar */
 void RenderMap(void);
 
-/**
- * @brief Bersihkan seluruh data map yang sedang aktif
- */
+/** @brief Bersihkan seluruh data map yang sedang aktif */
 void UnloadMap(void);
 
-/**
- * @brief Inisialisasi map awal game
- */
+/** @brief Inisialisasi map awal game */
 void InitMap(void);
 
 /**
@@ -199,9 +193,7 @@ const char *GetCurrentMapPath(void);
  */
 void SetCurrentMapPath(const char *newPath);
 
-/**
- * @brief Kembali ke map sebelumnya
- */
+/** @brief Kembali ke map sebelumnya */
 void GoBack(void);
 
 /**

@@ -1,3 +1,13 @@
+/**
+ * @file seedmanager.cpp
+ * @brief Implementasi Seed Manager System
+ *
+ * File ini berisi implementasi manajemen seed untuk world generation:
+ * - InitRun: generate seed array untuk tiap stage
+ * - GetSeed: akses seed per stage
+ * - SaveMeta / LoadMeta: persistensi seed & state ke file JSON
+ */
+
 #include "seedmanager.h"
 #include <nlohmann/json.hpp>
 
@@ -6,6 +16,7 @@ SeedManager g_SeedManager;
 #include <random>
 #include <filesystem>
 
+/** @brief Generate seed untuk tiap stage dan init run state */
 void SeedManager::InitRun(int saveSlot)
 {
     std::random_device rd;
@@ -20,6 +31,7 @@ void SeedManager::InitRun(int saveSlot)
     isRunActive = true;
 }
 
+/** @brief Dapatkan seed untuk stage tertentu */
 uint32_t SeedManager::GetSeed(int stage) const
 {
     if (stage < 0 || stage >= SEED_COUNT)
@@ -27,6 +39,7 @@ uint32_t SeedManager::GetSeed(int stage) const
     return seeds[stage];
 }
 
+/** @brief Simpan seed & state run ke file meta.json */
 void SeedManager::SaveMeta(const std::string &filePath)
 {
     nlohmann::json j;
@@ -42,6 +55,7 @@ void SeedManager::SaveMeta(const std::string &filePath)
         file << j.dump(4);
 }
 
+/** @brief Load seed & state run dari file meta.json */
 bool SeedManager::LoadMeta(const std::string &filePath)
 {
     namespace fs = std::filesystem;

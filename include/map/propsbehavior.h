@@ -25,9 +25,7 @@
  * ObjectState Enum
  *==============================================================================*/
 
-/**
- * @brief State universal untuk semua tile object
- */
+/** @brief State universal untuk semua tile object */
 enum class ObjectState
 {
     Closed,  // Chest belum dibuka
@@ -40,9 +38,7 @@ enum class ObjectState
  * TileObject Struct
  *==============================================================================*/
 
-/**
- * @brief Representasi universal untuk semua props dan trap di map
- */
+/** @brief Representasi universal untuk semua props dan trap di map */
 struct TileObject
 {
     Vector2 position;  // Posisi final setelah snap ke tile grid
@@ -116,11 +112,8 @@ private:
     std::vector<TileObject> chests;                    // Daftar chest yang sedang dikelola
     std::unordered_set<std::string> consumedPositions; // Posisi chest yang sudah dikonsumsi agar tidak diproses ulang
 
-    /** @brief Cari chest terdekat dari titik hit */
-    TileObject *FindChest(Vector2 hitPos, float threshold = 32.0f);
-
-    /** @brief Spawn loot item secara random di sekitar chest */
-    void TriggerLoot(TileObject &chest);
+    TileObject *FindChest(Vector2 hitPos, float threshold = 32.0f); // Cari chest terdekat dari titik hit
+    void TriggerLoot(TileObject &chest);                            // Spawn loot item secara random di sekitar chest
 };
 
 /*==============================================================================
@@ -160,9 +153,7 @@ public:
     size_t GetCount() const { return spikes.size(); }
 
 private:
-    /**
-     * @brief Data internal satu spike
-     */
+    /** @brief Data internal satu spike */
     struct SpikeData
     {
         TileObject tile;
@@ -189,11 +180,8 @@ private:
 
     std::vector<SpikeData> spikes; // Daftar spike yang sedang dikelola
 
-    /** @brief Generate seed dari nama object untuk randomisasi timer */
-    unsigned int SeedFromName(const std::string &name);
-
-    /** @brief Setup callback onActivate, onDeactivate, onDamagePlayer */
-    void SetupCallbacks(SpikeData &spike);
+    unsigned int SeedFromName(const std::string &name); // Generate seed dari nama object untuk randomisasi timer
+    void SetupCallbacks(SpikeData &spike);              // Setup callback onActivate, onDeactivate, onDamagePlayer
 };
 
 /*==============================================================================
@@ -246,9 +234,7 @@ public:
     bool IsInExplosionRadius(Vector2 bombPos, Rectangle target);
 
 private:
-    /**
-     * @brief Data internal satu bomb
-     */
+    /** @brief Data internal satu bomb */
     struct BombData
     {
         TileObject tile;
@@ -267,16 +253,9 @@ private:
     std::unordered_set<std::string> consumedPositions; // Posisi bomb yang sudah dikonsumsi agar tidak diproses ulang
     Player *playerRef = nullptr;                       // Referensi player terakhir untuk update/interaction bomb
 
-    /** @brief Cari bomb terdekat dari titik hit */
-    TileObject *FindBomb(Vector2 hitPos, float threshold = 32.0f);
+    TileObject *FindBomb(Vector2 hitPos, float threshold = 32.0f); // Cari bomb terdekat dari titik hit
 
-    /**
-     * @brief Trigger ledakan bomb, damage area, dan chain reaction
-     * @param bomb BombData yang diledakkan
-     * @param playerBounds Bounding box player
-     * @param player Pointer ke player
-     */
-    void Explode(BombData &bomb, Rectangle playerBounds, Player *player);
+    void Explode(BombData &bomb, Rectangle playerBounds, Player *player); // Trigger ledakan, damage area, dan chain reaction
 };
 
 /*==============================================================================
@@ -329,12 +308,9 @@ private:
     std::vector<CrateData> crates;                     // Daftar crate yang sedang dikelola
     std::unordered_set<std::string> consumedPositions; // Posisi crate yang sudah dihancurkan agar tidak spawn ulang
 
-    /** @brief Cari crate terdekat dari titik hit */
-    TileObject *FindCrate(Vector2 hitPos, float threshold = 32.0f);
-    /** @brief Hancurkan crate, hapus obstacle, dan trigger loot */
-    void Destroy(CrateData &crate);
-    /** @brief Roll peluang drop loot dari crate */
-    void TriggerLoot(TileObject &crate);
+    TileObject *FindCrate(Vector2 hitPos, float threshold = 32.0f); // Cari crate terdekat dari titik hit
+    void Destroy(CrateData &crate);                                 // Hancurkan crate, hapus obstacle, dan trigger loot
+    void TriggerLoot(TileObject &crate);                            // Roll peluang drop loot dari crate
 };
 
 /*==============================================================================
@@ -372,9 +348,7 @@ public:
     void SetHasReLocked(bool v) { hasReLocked = v; }
 
 private:
-    /**
-     * @brief Data internal satu barrier
-     */
+    /** @brief Data internal satu barrier */
     struct BarrierData
     {
         TileObject tile;
@@ -382,7 +356,7 @@ private:
         bool isBoss = false; // true kalo dari type "barrier_boss"
     };
 
-    static constexpr float KILL_THRESHOLD = 0.01f;
+    static constexpr float KILL_THRESHOLD = 0.9f;
 
     std::vector<BarrierData> barriers; // Daftar barrier yang sedang dikelola
     bool isBossMap = false;            // True kalo map ini punya boss spawn
@@ -392,10 +366,8 @@ private:
     int prevDeadCount = 0;             // DeadCount sebelumnya — buat deteksi perubahan
     Rectangle bossStageBounds = {0};   // Bounds object "boss_stage" untuk deteksi area boss
 
-    /** @brief Hapus semua barrier dari DynamicObstacles */
-    void RemoveAllBarriers();
-    /** @brief Pasang ulang barrier (re-lock) — khusus boss room */
-    void ReLockBarriers();
+    void RemoveAllBarriers(); // Hapus semua barrier dari DynamicObstacles
+    void ReLockBarriers();    // Pasang ulang barrier (re-lock) — khusus boss room
 };
 
 /*==============================================================================
