@@ -7,6 +7,7 @@
 #include "propsbehavior.h"
 #include "seedmanager.h"
 #include "worldgenio.h"
+#include "entities.h"
 #include "../lib/raylib/include/raymath.h"
 
 namespace Interaction
@@ -93,7 +94,7 @@ namespace Interaction
             {
                 // InitRun cuma sekali per run — kalau sudah aktif, lanjut ke stage terakhir
                 if (!g_SeedManager.IsRunActive())
-                    WorldgenIO::InitRun();
+                    WorldgenIO::InitRun(WorldgenIO::GetNextAvailableSlot());
 
                 player.pendingSwitchMap = true;
                 player.pendingMapPath = WorldgenIO::GetStagePath(g_SeedManager.GetCurrentStage());
@@ -116,6 +117,27 @@ namespace Interaction
                     WorldgenIO::PrevStage();
                     return;
                 }
+            }
+
+            // Deteksi door boss — cuma bisa dipake kalo boss udah mati
+            if (door->name == "boss")
+            {
+                bool bossAlive = false;
+                for (auto *enemy : Entities::GetEnemyRegistry())
+                {
+                    if (enemy->rank == ENEMY_BOSS && enemy->IsActive)
+                    {
+                        bossAlive = true;
+                        break;
+                    }
+                }
+                if (!bossAlive)
+                {
+                    WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
+                    g_SeedManager.ResetRun();
+                    gState->currentScreen = MAIN_MENU;
+                }
+                return;
             }
 
             // Mengambil map tujuan dan ID pintu dari properti Tiled

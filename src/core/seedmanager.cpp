@@ -6,7 +6,7 @@ SeedManager g_SeedManager;
 #include <random>
 #include <filesystem>
 
-void SeedManager::InitRun()
+void SeedManager::InitRun(int saveSlot)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -16,6 +16,7 @@ void SeedManager::InitRun()
         seeds[i] = dist(gen);
 
     currentStage = 0;
+    currentSlot = saveSlot;
     isRunActive = true;
 }
 
@@ -33,6 +34,8 @@ void SeedManager::SaveMeta(const std::string &filePath)
     for (int i = 0; i < SEED_COUNT; i++)
         j["seeds"].push_back(seeds[i]);
     j["currentStage"] = currentStage;
+    j["prevStage"] = prevStage;
+    j["currentSlot"] = currentSlot;
 
     std::ofstream file(filePath);
     if (file.is_open())
@@ -57,6 +60,8 @@ bool SeedManager::LoadMeta(const std::string &filePath)
         for (int i = 0; i < SEED_COUNT && i < (int)seedsArr.size(); i++)
             seeds[i] = seedsArr[i];
         currentStage = j.value("currentStage", 0);
+        prevStage = j.value("prevStage", -1);
+        currentSlot = j.value("currentSlot", 1);
         isRunActive = true;
         return true;
     }

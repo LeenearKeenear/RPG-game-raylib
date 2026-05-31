@@ -35,8 +35,8 @@ void Player::Init(GameState *state, const char *spawnObjectName)
         ManaRegenTimer = 0.0f;
 
         // Inisialisasi perlengkapan hotbar default
-        Hotbar[0] = {0, 1}; // Iron Sword
-        Hotbar[1] = {1, 1}; // Iron Axe
+        Hotbar[0] = {4, 1}; // Iron Sword
+        Hotbar[1] = {4, 1}; // Iron Axe
         Hotbar[2] = {2, 8}; // Health Potion
         Hotbar[3] = {3, 8}; // Mana Bread
 

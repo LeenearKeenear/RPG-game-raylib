@@ -338,6 +338,67 @@ private:
 };
 
 /*==============================================================================
+ * BarrierManager
+ *==============================================================================*/
+
+/**
+ * @brief Manager untuk barrier door yang nutup entrance room.
+ *
+ * Barrier aktif pas room dimuat, ngeblok entrance via DynamicObstacles.
+ * Hilang setelah kill threshold terpenuhi (default 90%).
+ * Di boss room: barrier buka → re-lock pas player masuk → buka lagi setelah boss mati.
+ */
+class BarrierManager
+{
+public:
+    /** @brief Spawn semua barrier dari object layer Tiled */
+    void SpawnBarriers(const std::vector<MapObject *> &barrierObjects);
+    /** @brief Update tiap frame — cek kill threshold & boss room state */
+    void Update();
+    /** @brief Render barrier sebagai rectangle berwarna */
+    int Render(Rectangle viewRect);
+    /** @brief Bersihkan semua data barrier */
+    void Clear();
+
+    /** @brief Ambil jumlah barrier yang sedang dikelola */
+    size_t GetCount() const { return barriers.size(); }
+    /** @brief Apakah barrier sudah pernah di-clear */
+    bool IsCleared() const { return cleared; }
+    /** @brief Apakah player sudah masuk boss room (re-lock aktif) */
+    bool HasReLocked() const { return hasReLocked; }
+    /** @brief Set state cleared */
+    void SetCleared(bool v) { cleared = v; }
+    /** @brief Set state hasReLocked */
+    void SetHasReLocked(bool v) { hasReLocked = v; }
+
+private:
+    /**
+     * @brief Data internal satu barrier
+     */
+    struct BarrierData
+    {
+        TileObject tile;
+        bool isActive;
+        bool isBoss = false; // true kalo dari type "barrier_boss"
+    };
+
+    static constexpr float KILL_THRESHOLD = 0.01f;
+
+    std::vector<BarrierData> barriers; // Daftar barrier yang sedang dikelola
+    bool isBossMap = false;            // True kalo map ini punya boss spawn
+    bool hasReLocked = false;          // True setelah player masuk room boss dan barrier re-lock
+    bool cleared = false;              // True kalo barrier udah pernah di-clear
+    int totalEnemyCount = 0;           // Total enemy di EnemyRegistry pas spawn
+    int prevDeadCount = 0;             // DeadCount sebelumnya — buat deteksi perubahan
+    Rectangle bossStageBounds = {0};   // Bounds object "boss_stage" untuk deteksi area boss
+
+    /** @brief Hapus semua barrier dari DynamicObstacles */
+    void RemoveAllBarriers();
+    /** @brief Pasang ulang barrier (re-lock) — khusus boss room */
+    void ReLockBarriers();
+};
+
+/*==============================================================================
  * Global Manager Instances
  *==============================================================================*/
 
@@ -349,3 +410,5 @@ extern SpikeManager spikeManager;
 extern BombManager bombManager;
 /** @brief Instance global manager crate */
 extern CrateManager crateManager;
+/** @brief Instance global manager barrier */
+extern BarrierManager barrierManager;

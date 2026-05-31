@@ -338,6 +338,8 @@ std::vector<MapObject> BuildObstacleList()
     appendType(CHEST_TYPE_OBJECT_NAME);
     appendType(BOMB_TYPE_OBJECT_NAME);
     appendType(CRATE_TYPE_OBJECT_NAME);
+    appendType(BARRIER_TYPE_OBJECT_NAME);
+    appendType(BARRIER_BOSS_TYPE_OBJECT_NAME);
 
     return result;
 }

@@ -23,8 +23,8 @@
 constexpr int WG_GRID_SIZE = 4;            // Jumlah cell per baris/kolom grid worldgen
 constexpr int WG_CELL_TILES = 41;          // Ukuran satu cell dalam satuan tile
 constexpr int WG_CANVAS_TILES = 164;       // Total tile per sisi canvas (GRID_SIZE * CELL_TILES)
-constexpr int WG_PREFAB_LAYER_START = 2;   // Layer awal untuk nge-stamp prefab room
-constexpr int WG_CORRIDOR_LAYER_START = 4; // Layer awal untuk nge-stamp corridor
+constexpr int WG_PREFAB_LAYER_START = 3;   // Layer awal untuk nge-stamp prefab room
+constexpr int WG_CORRIDOR_LAYER_START = 5; // Layer awal untuk nge-stamp corridor
 constexpr int WG_TILE_SIZE = FRAME_SIZE;   // Ukuran tile dalam pixel
 
 // Prim's Algorithm — tuning jumlah cell dan stop chance

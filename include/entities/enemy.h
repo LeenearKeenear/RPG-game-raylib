@@ -11,14 +11,14 @@
 #include <unordered_map>
 
 /** @brief Spawn count range constants */
-constexpr int SPAWN_PINPOINT_NORMAL_MIN = 0;  // 9
-constexpr int SPAWN_PINPOINT_NORMAL_MAX = 0; // 13
-constexpr int SPAWN_PINPOINT_ELITE_MIN = 0;   // 3
-constexpr int SPAWN_PINPOINT_ELITE_MAX = 0;   // 7
-constexpr int SPAWN_RECT_NORMAL_MIN = 0;     // 20
-constexpr int SPAWN_RECT_NORMAL_MAX = 0;     // 25
-constexpr int SPAWN_RECT_ELITE_MIN = 0;      // 10
-constexpr int SPAWN_RECT_ELITE_MAX = 0;      // 15
+constexpr int SPAWN_PINPOINT_NORMAL_MIN = 1;  // 9
+constexpr int SPAWN_PINPOINT_NORMAL_MAX = 1; // 13
+constexpr int SPAWN_PINPOINT_ELITE_MIN = 3;   // 3
+constexpr int SPAWN_PINPOINT_ELITE_MAX = 7;   // 7
+constexpr int SPAWN_RECT_NORMAL_MIN = 1;     // 20
+constexpr int SPAWN_RECT_NORMAL_MAX = 1;     // 25
+constexpr int SPAWN_RECT_ELITE_MIN = 10;      // 10
+constexpr int SPAWN_RECT_ELITE_MAX = 15;      // 15
 constexpr int SPAWN_RETRY_LIMIT = 200;
 
 /*==============================================================================

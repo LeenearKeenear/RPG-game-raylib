@@ -29,11 +29,13 @@
 #include "pauseMenu.h"
 #include "combat.h"
 #include "interaction.h"
+#include "input.h"
 #include <cstdio>
 #include "enemy_ai.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include <string>
+#include <cstring>
 #include <algorithm>
 #include <cctype>
 #include "hud.h"
@@ -232,14 +234,14 @@ void UpdateLogicAll()
     // Handle pending map transitions dari Interaction namespace
     Interaction::ExecutePendingTransitions(PlayerInstance);
 
-    // Deteksi FINISH/BOSS cell untuk stage transition (hanya di worldgen stage)
+    // Deteksi FINISH cell untuk stage transition (hanya di worldgen stage)
     // Guard isSwitchingMap — cegah double trigger dari grid + door detection
     if (!gState->isSwitchingMap && !gState->isGoingBack)
     {
         const char *mapPath = GetCurrentMapPath();
-        if (mapPath && strstr(mapPath, "background_map_stage_") != nullptr)
+        if (mapPath && strstr(mapPath, "worldseed/save_") != nullptr)
         {
-            if (IsKeyPressed(KEY_E))
+            if (InputInstance.IsInteract())
             {
                 Vector2 playerCenter = PlayerInstance.GetCenter();
                 CellType cellType = GetCellTypeAtWorldPos(playerCenter);
@@ -247,11 +249,7 @@ void UpdateLogicAll()
                 {
                     WorldgenIO::NextStage();
                 }
-                else if (cellType == CELL_BOSS)
-                {
-                    WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
-                    gState->currentScreen = MAIN_MENU;
-                }
+
             }
         }
     }
@@ -261,6 +259,7 @@ void UpdateLogicAll()
     spikeManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
     bombManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
     crateManager.Update();
+    barrierManager.Update();
 
     // Update item magnet/pickup
     Vector2 center = PlayerInstance.GetCenter();

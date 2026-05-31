@@ -147,11 +147,14 @@ constexpr const char *ENEMY_SPAWN_ELITE_REC_OBJECT_NAME = "enemy_spawn_elite_rec
 constexpr const char *ENEMY_SPAWN_BOSS_OBJECT_NAME = "enemy_spawn_boss";                  // Nama object spawn boss
 constexpr const char *SPAWN_OBJECT_NAME = "spawn";                                        // Nama object spawn player
 constexpr const char *DOOR_TYPE_OBJECT_NAME = "pass";                                     // Type object untuk pintu
+constexpr const char *BARRIER_TYPE_OBJECT_NAME = "barrier";                               // Type object untuk barrier
+constexpr const char *BARRIER_BOSS_TYPE_OBJECT_NAME = "barrier_boss";                     // Type object untuk barrier boss
 constexpr const char *CHEST_TYPE_OBJECT_NAME = "chest";                                   // Type object untuk chest
 constexpr const char *SPIKE_TYPE_OBJECT_NAME = "spike";                                   // Type object unutk spike
 constexpr const char *BOMB_TYPE_OBJECT_NAME = "bomb";                                     // type object untuk bomb
 constexpr const char *CRATE_TYPE_OBJECT_NAME = "crate";                                   // type object untuk crate
-
+constexpr const char *SIGN_TYPE_OBJECT_NAME = "sign";
+constexpr const char *BOSS_STAGE_TYPE_OBJECT_NAME = "boss_stage";                         // Type object untuk trigger area boss
 /*==============================================================================
  * Map Functions
  *==============================================================================*/

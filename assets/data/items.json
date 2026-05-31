@@ -82,7 +82,7 @@
       "isStackable": false,
       "maxStack": 1,
       "weapon": {
-        "damage": 10.0,
+        "damage": 1000.0,
         "reach": 200.0,
         "breadth": 8.0,
         "duration": 0.3,
