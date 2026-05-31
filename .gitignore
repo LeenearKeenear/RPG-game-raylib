@@ -15,6 +15,11 @@ floorC_tester.json
 *.Personal.*
 
 AGENTS.md
+# AI Agents
+.sisyphus/
+
+# Runtime save data
+saves/
 
 # Auto-downloaded raylib
 raylib/

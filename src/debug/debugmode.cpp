@@ -11,6 +11,7 @@
 
 #include "game_debug.h"
 #include "../lib/raylib/include/raylib.h"
+#include "input.h"
 #include "../lib/raylib/include/raymath.h"
 #include "screen.h"
 #include "map.h"
@@ -250,16 +251,18 @@ void Debug::DrawEnemySpawnOverlay(void)
  */
 void Debug::Toggle(void)
 {
-    if (IsKeyPressed(KEY_TAB))
+    const InputState& in = InputInstance.GetState();
+
+    if (in.debugToggle)
     {
         isDebugMode = !isDebugMode;
         TraceLog(LOG_INFO, "Debug mode: %s", isDebugMode ? "ON" : "OFF");
     }
-    if (IsKeyPressed(KEY_BACKSLASH))
+    if (in.debugToggleEnemy)
     {
         showFlowFieldOverlay = !showFlowFieldOverlay;
     }
-    if (IsKeyPressed(KEY_RIGHT_BRACKET))
+    if (in.debugTogglePlayer)
     {
         showFlowFieldOverlayPlayer = !showFlowFieldOverlayPlayer;
     }

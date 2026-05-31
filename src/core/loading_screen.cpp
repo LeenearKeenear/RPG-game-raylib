@@ -20,6 +20,7 @@
 #include "enemy_ai.h"
 #include "seedmanager.h"
 #include "worldgenio.h"
+#include "fonts.h"
 #include "../lib/raylib/include/raylib.h"
 
 /*==============================================================================
@@ -194,6 +195,7 @@ void UpdateLoadingScreen(GameState *state)
         // Init first, then restore saved state - order matters!
         // InitAll() sets position to spawn, then RestoreGameState overwrites it
         InitAll();
+        InitFonts();
         if (HasSavedState())
         {
             RestoreGameState(state);
