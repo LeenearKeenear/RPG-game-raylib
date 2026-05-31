@@ -30,20 +30,26 @@
 #include "pauseMenu.h"
 #include "combat.h"
 #include "interaction.h"
+#include "input.h"
 #include <cstdio>
 #include "enemy_ai.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
 #include <string>
+#include <cstring>
 #include <algorithm>
 #include <cctype>
 #include "hud.h"
 #include "propsbehavior.h"
+#include "seedmanager.h"
+#include "worldgenio.h"
+#include "worldgenenartion.h"
 
 /*==============================================================================
  * External Variables & Macros
  *==============================================================================*/
 
+/** @brief Instance global game state */
 GameState *gState;
 
 extern PauseMenu pauseMenu;
@@ -54,7 +60,9 @@ extern PauseMenu pauseMenu;
  * Constants
  *==============================================================================*/
 
+/** @brief Skala monitor untuk UI */
 const float ScaleMultiplierMonitor = 0.7F;
+/** @brief Skala minimum monitor */
 const float ScaleMinMultiplierMonitor = 0.4F;
 
 extern const int GameScreenWidth = 1280;
@@ -167,11 +175,16 @@ GameState InitScreen()
  */
 void UpdateGame(GameState *state)
 {
-    state->WindowScreenWidth = GetScreenWidth();
-    state->WindowScreenHeight = GetScreenHeight();
-    state->ScaleMultiplier = MIN(
-        (float)state->WindowScreenWidth / GameScreenWidth,
-        (float)state->WindowScreenHeight / GameScreenHeight);
+    int w = GetScreenWidth();
+    int h = GetScreenHeight();
+    if (w != state->WindowScreenWidth || h != state->WindowScreenHeight)
+    {
+        state->WindowScreenWidth = w;
+        state->WindowScreenHeight = h;
+        state->ScaleMultiplier = MIN(
+            (float)w / GameScreenWidth,
+            (float)h / GameScreenHeight);
+    }
 }
 
 /**
@@ -223,11 +236,32 @@ void UpdateLogicAll()
     // Handle pending map transitions dari Interaction namespace
     Interaction::ExecutePendingTransitions(PlayerInstance);
 
+    // Deteksi FINISH cell untuk stage transition (hanya di worldgen stage)
+    // Guard isSwitchingMap — cegah double trigger dari grid + door detection
+    if (!gState->isSwitchingMap && !gState->isGoingBack)
+    {
+        const char *mapPath = GetCurrentMapPath();
+        if (mapPath && strstr(mapPath, "worldseed/save_") != nullptr)
+        {
+            if (InputInstance.IsInteract())
+            {
+                Vector2 playerCenter = PlayerInstance.GetCenter();
+                CellType cellType = GetCellTypeAtWorldPos(playerCenter);
+                if (cellType == CELL_FINISH)
+                {
+                    WorldgenIO::NextStage();
+                }
+
+            }
+        }
+    }
+
     // Update Effects (Popups, Logs, etc)
     Effects::Update(Time::DELTA_TIME);
     spikeManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
     bombManager.Update(Time::DELTA_TIME, PlayerInstance.GetHitbox(), &PlayerInstance);
     crateManager.Update();
+    barrierManager.Update();
 
     // Update item magnet/pickup
     Vector2 center = PlayerInstance.GetCenter();
@@ -249,7 +283,7 @@ void UpdateLogicAll()
             {
                 TraceLog(LOG_INFO, "PICKUP: added to inventory");
                 item.isAdded = true;
-                
+
                 const ItemDefinition &def = itemDefs.GetById(item.definitionId);
                 std::string logMsg = def.name;
                 if (item.amount > 1)
@@ -262,7 +296,7 @@ void UpdateLogicAll()
             {
                 TraceLog(LOG_INFO, "PICKUP: inventory full");
                 item.isPickedUp = false; // balik ke world
-                
+
                 static float lastInventoryFullTime = 0.0f;
                 float currentTime = (float)GetTime();
                 if (currentTime - lastInventoryFullTime > 2.0f)
@@ -404,6 +438,7 @@ void GameShutDown(GameState *state)
  * Window & Video Settings Functions
  *==============================================================================*/
 
+/** @brief Toggle fullscreen mode */
 void ToggleFullscreenMode(void)
 {
     if (IsWindowFullscreen())
@@ -416,11 +451,13 @@ void ToggleFullscreenMode(void)
     }
 }
 
+/** @brief Set resolusi window */
 void SetResolution(int width, int height)
 {
     SetWindowSize(width, height);
 }
 
+/** @brief Get resolusi window saat ini */
 Rectangle GetCurrentResolution(void)
 {
     Rectangle res = {0};
@@ -429,6 +466,7 @@ Rectangle GetCurrentResolution(void)
     return res;
 }
 
+/** @brief Get resolusi monitor utama */
 Rectangle GetMonitorResolution(void)
 {
     Rectangle res = {0};
@@ -437,6 +475,7 @@ Rectangle GetMonitorResolution(void)
     return res;
 }
 
+/** @brief Cek apakah fullscreen */
 bool IsFullscreen(void)
 {
     return IsWindowFullscreen();

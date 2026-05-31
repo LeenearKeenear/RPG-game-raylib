@@ -14,6 +14,8 @@
 #include "mainMenu.h"
 #include "pauseMenu.h"
 #include "loading_screen.h"
+#include "worldgenio.h"
+#include "seedmanager.h"
 #include "fonts.h"
 #include "../lib/raylib/include/raylib.h"
 #include "input.h"
@@ -80,9 +82,11 @@ int main()
          *==============================================================================*/
         else if (state.currentScreen == LOADING)
         {
-            // Initialize loading screen only on first entry
-            if (!state.enteredLoading)
+            // Initialize loading screen on first entry or after returning from MAIN_MENU
+            if (!state.enteredLoading || state.loadingComplete)
             {
+                state.enteredLoading = false;
+                state.loadingComplete = false;
                 InitLoadingScreen(&state);
             }
 
@@ -170,6 +174,10 @@ int main()
             DrawRenderWindows(&state);
         }
     }
+
+    // Auto-save sebelum exit (jika run masih aktif)
+    if (g_SeedManager.IsRunActive())
+        WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
 
     // Shutdown
     GameShutDown(&state);
