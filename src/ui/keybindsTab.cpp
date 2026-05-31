@@ -147,7 +147,7 @@ void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY)
 
             // Background highlight
             bool isListening = (listeningAction == static_cast<int>(action));
-            Color bgColor = isListening ? Color{80, 80, 40, 255}
+            Color bgColor = isListening ? Color{40, 80, 40, 255}
                          : hovered ? Color{50, 50, 50, 255}
                          : BLANK;
 
@@ -156,19 +156,9 @@ void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY)
                 DrawRectangle(keyBoxX, keyBoxY, keyBoxW, keyBoxH, bgColor);
             }
 
-            // Key name text
-            const char* keyName;
-            Color keyColor;
-            if (isListening)
-            {
-                keyName = "...";
-                keyColor = GREEN;
-            }
-            else
-            {
-                keyName = keybindManager.GetKeyDisplayName(action);
-                keyColor = YELLOW;
-            }
+            // Key name text — always show the real key name
+            const char* keyName = keybindManager.GetKeyDisplayName(action);
+            Color keyColor = isListening ? GREEN : YELLOW;
 
             DrawTextEx(fontKeybindEntry, keyName,
                 Vector2{(float)keyBoxX, (float)y}, 20, 0, keyColor);
@@ -203,12 +193,26 @@ void DrawKeybindsTab(Vector2 mousePosition, int startX, int startY)
                 Vector2{(float)indX, (float)(contentStartY + VIEW_H - 20)}, 16, 0, GRAY);
     }
 
-    // Listening hint
+    // Listening popup — centered box over the options panel, separate from keybind list
     if (listeningAction >= 0)
     {
-        const char* hint = "Press a key or click mouse. ESC to cancel.";
-        DrawTextEx(fontKeybindEntry, hint,
-            Vector2{(float)(startX + COL_X), (float)(contentStartY + VIEW_H + 8)},
-            18, 0, GREEN);
+        const int POPUP_W = 420;
+        const int POPUP_H = 80;
+        const int popupX = startX + (800 - POPUP_W) / 2;
+        const int popupY = startY + (600 - POPUP_H) / 2 - 30;
+
+        DrawRectangle(popupX, popupY, POPUP_W, POPUP_H, Color{20, 20, 30, 235});
+        DrawRectangleLinesEx(Rectangle{(float)popupX, (float)popupY, (float)POPUP_W, (float)POPUP_H}, 2, GREEN);
+
+        const char* line1 = "Press a key or click a mouse button.";
+        const char* line2 = "ESC to cancel.";
+        Vector2 sz1 = MeasureTextEx(fontKeybindEntry, line1, 20, 0);
+        Vector2 sz2 = MeasureTextEx(fontKeybindEntry, line2, 20, 0);
+        DrawTextEx(fontKeybindEntry, line1,
+            Vector2{(float)(popupX + (POPUP_W - sz1.x) / 2), (float)(popupY + 12)},
+            20, 0, WHITE);
+        DrawTextEx(fontKeybindEntry, line2,
+            Vector2{(float)(popupX + (POPUP_W - sz2.x) / 2), (float)(popupY + 44)},
+            20, 0, GREEN);
     }
 }
