@@ -13,7 +13,7 @@ floorC_tester.json
 *.Personal.*
 
 # AI Agents
-.sisyphus/
+.sisyphus/*
 AGENTS.md
 
 # Runtime save data
