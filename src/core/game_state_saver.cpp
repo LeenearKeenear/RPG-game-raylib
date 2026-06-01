@@ -13,6 +13,7 @@
 #include <fstream>
 #include <filesystem>
 #include <ctime>
+#include <unordered_set>
 
 using json = nlohmann::json;
 
@@ -614,6 +615,7 @@ void RestoreGameState(GameState *state)
     if (hasSavedState && !savedEnemyStates.empty())
     {
         auto &enemyReg = Entities::GetEnemyRegistry();
+        std::unordered_set<Enemy*> matchedEnemies;
         for (auto &saved : savedEnemyStates)
         {
             if (!saved.isAlive)
@@ -625,7 +627,7 @@ void RestoreGameState(GameState *state)
             bool matched = false;
             for (auto &enemy : enemyReg)
             {
-                if (enemy == nullptr || matched) continue;
+                if (enemy == nullptr || matchedEnemies.count(enemy)) continue;
                 if (!saved.uuid.empty() && enemy->GetUUID() == saved.uuid)
                 {
                     enemy->Position = saved.position;
@@ -642,6 +644,7 @@ void RestoreGameState(GameState *state)
                     enemy->HealthRegenTimer = saved.healthRegenTimer;
                     enemy->SetAttackCooldownTimer(saved.attackCooldownTimer);
                     enemy->IsActive = true;
+                    matchedEnemies.insert(enemy);
                     matched = true;
                 }
             }
@@ -650,7 +653,7 @@ void RestoreGameState(GameState *state)
             {
                 for (auto &enemy : enemyReg)
                 {
-                    if (enemy == nullptr) continue;
+                    if (enemy == nullptr || matchedEnemies.count(enemy)) continue;
                     if (enemy->MapObjectID == saved.mapObjectID && enemy->Name == saved.enemyName)
                     {
                         enemy->Position = saved.position;
@@ -667,6 +670,7 @@ void RestoreGameState(GameState *state)
                         enemy->HealthRegenTimer = saved.healthRegenTimer;
                         enemy->SetAttackCooldownTimer(saved.attackCooldownTimer);
                         enemy->IsActive = true;
+                        matchedEnemies.insert(enemy);
                         break;
                     }
                 }
