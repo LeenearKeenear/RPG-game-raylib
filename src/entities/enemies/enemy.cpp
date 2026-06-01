@@ -25,6 +25,7 @@
 #include <fstream>
 #include <filesystem>
 #include <stdexcept>
+#include <unordered_set>
 
 using json = nlohmann::json;
 using namespace DataDriven;
@@ -758,6 +759,7 @@ bool LoadEnemiesForMap(const std::string &mapPath)
             return false;
 
         auto &enemyReg = Entities::GetEnemyRegistry();
+        std::unordered_set<Enemy*> matchedEnemies;
         bool anyRestored = false;
 
         for (const auto &e : root.at("enemies"))
@@ -775,6 +777,7 @@ bool LoadEnemiesForMap(const std::string &mapPath)
             // Find matching enemy by MapObjectID and restore state
             for (auto &enemy : enemyReg)
             {
+                if (enemy == nullptr || matchedEnemies.count(enemy)) continue;
                 if (enemy->MapObjectID == savedMapObjectID && enemy->Name == e.value("enemyName", ""))
                 {
                     enemy->Position.x = e.at("position")[0].get<float>();
@@ -796,6 +799,7 @@ bool LoadEnemiesForMap(const std::string &mapPath)
                     if (!uuid.empty())
                         enemy->SetUUID(uuid);
                     enemy->IsActive = true;
+                    matchedEnemies.insert(enemy);
                     anyRestored = true;
                     break;
                 }
