@@ -24,7 +24,7 @@ jobs:
         with:
           msystem: MINGW64
           install: >-
-            mingw-w64-x86_64-clang
+            mingw-w64-x86_64-gcc
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-ccache
@@ -55,7 +55,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            clang clang++ lld ninja-build ccache \
+            ninja-build ccache \
             libgl1-mesa-dev libxrandr-dev \
             libxinerama-dev libxcursor-dev libxi-dev
 
