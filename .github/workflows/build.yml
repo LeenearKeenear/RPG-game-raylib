@@ -11,31 +11,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        include:
-          - os: windows-latest
-            shell-cmake: msys2 {0}
-            setup-cmd: .\setup.ps1
-            artifact-name: rpg-game-windows
-            artifact-path: build/bin/main.exe
-          - os: ubuntu-latest
-            shell-cmake: bash
-            setup-cmd: bash setup.sh
-            artifact-name: rpg-game-linux
-            artifact-path: build/bin/main
-
-    runs-on: ${{ matrix.os }}
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup MSYS2 environment (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: msys2/setup-msys2@v2
+      - uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
           install: >-
@@ -44,8 +29,29 @@ jobs:
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-ccache
 
-      - name: Install system dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest'
+      - name: Setup dependencies
+        shell: pwsh
+        run: .\setup.ps1
+
+      - name: Configure CMake
+        run: cmake --preset ninja
+
+      - name: Build
+        run: cmake --build --preset ninja
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpg-game-windows
+          path: build/bin/main.exe
+
+  linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -53,20 +59,17 @@ jobs:
             libgl1-mesa-dev libxrandr-dev \
             libxinerama-dev libxcursor-dev libxi-dev
 
-      - name: Setup project dependencies
-        shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash' }}
-        run: ${{ matrix.setup-cmd }}
+      - name: Setup dependencies
+        run: bash setup.sh
 
       - name: Configure CMake
-        shell: ${{ matrix.shell-cmake }}
         run: cmake --preset ninja
 
       - name: Build
-        shell: ${{ matrix.shell-cmake }}
         run: cmake --build --preset ninja
 
-      - name: Upload build artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact-name }}
-          path: ${{ matrix.artifact-path }}
+          name: rpg-game-linux
+          path: build/bin/main
