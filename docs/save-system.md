@@ -300,6 +300,156 @@ RestoreGameState() memeriksa savedMapState.mapPath
 | Dead enemies respawn setelah Load Game | Resolved | Disebabkan DeadEntities kosong saat spawn -- diperbaiki dengan `RestoreDeadEntities()` sebelum `InitAll()` dan `PruneDeadEntities()` safety net. Lihat [Restore Ordering Fix](#restore-ordering-fix). |
 | UUID matching untuk entitas | Resolved | Semua entitas yang dapat dipersist sekarang memiliki UUID. Multi-pass matching (UUID -> fallback) menangani kompatibilitas save lawan. Lihat [Entity Identity (UUID)](#entity-identity-uuid). |
 
+## Worldgen Runtime Persistence
+
+> Sistem save paralel untuk world generation. Stage worldgen memiliki state runtime dinamis (musuh, chest, crate, bomb, item drop, barrier) yang berubah selama satu run. State ini dikelola oleh WorldgenIO, terpisah dari main save system (game_state_saver) yang menangani state player dan non-worldgen.
+
+### File Locations
+
+Data worldgen disimpan di bawah `assets/maps/World_generation/worldseed/`, dalam subfolder `save_N` per slot. Tiap slot berisi file per-stage untuk runtime state dan satu file meta untuk metadata run.
+
+| File | Path | Isi |
+| --- | --- | --- |
+| **Runtime State** | `worldseed/save_N/runtime.json` | State runtime per stage (chests, crates, bombs, deadEnemies, itemDrops, barrier) |
+| **Meta Data** | `worldseed/save_N/meta.json` | Seeds array, currentStage, prevStage, currentSlot |
+| **Stage Map** | `worldseed/save_N/maps/stage_M.json` | File map hasil worldgen (copy dari background_map.json dengan texture path yang disesuaikan) |
+
+### Key Data di runtime.json
+
+Tiap stage punya key `"stage_X"` di runtime.json yang berisi:
+
+- **`chests`**: `Vector2[]` — posisi chest yang sudah dikonsumsi
+- **`crates`**: `Vector2[]` — posisi crate yang sudah dikonsumsi
+- **`bombs`**: `Vector2[]` — posisi bomb yang sudah dikonsumsi
+- **`deadEnemies`**: `string[]` — set entity IDs musuh yang sudah mati di stage ini
+- **`itemDrops`**: `array` — item yang di-drop di lantai, tiap entry punya `defId`, `amount`, `x`, `y`
+- **`barrier`**: `object` — `cleared` (bool) dan `hasReLocked` (bool)
+
+### Key Data di meta.json
+
+| Field | Tipe | Deskripsi |
+| --- | --- | --- |
+| `seeds` | `uint32[]` | Array 5 seed deterministic untuk tiap stage |
+| `currentStage` | `int` | Index stage saat ini (0-4) |
+| `prevStage` | `int` | Index stage sebelumnya untuk back navigation (-1 jika tidak ada) |
+| `currentSlot` | `int` | Nomor save slot aktif |
+
+### Save Flow
+
+`SaveRuntimeState(stageIndex)` membaca state dari game world dan menulisnya ke `runtime.json`:
+
+1. Baca file `runtime.json` yang sudah ada (atau buat object kosong)
+2. Tulis data stage saat ini ke key `"stage_X"`
+3. Atomic write ke disk
+
+Dipanggil dari:
+
+- **`WorldgenIO::NextStage()`** — sebelum pindah ke stage berikutnya
+- **`WorldgenIO::PrevStage()`** — sebelum kembali ke stage sebelumnya
+- **`PauseMenu::HandleButtonClick()`** (baris 359, 386) — barengan dengan `SaveGameState()` + `WriteSaveFile()`, sehingga player state dan worldgen runtime state tersimpan bersama
+
+```txt
+Pause "Save Game" (mid-worldgen):
+  WorldgenIO::SaveRuntimeState(currentStage)  -> runtime.json
+  SaveGameState() + WriteSaveFile(slot0.json) -> slot0.json
+```
+
+### Load Flow
+
+`LoadRuntimeState(stageIndex)` membaca data stage tertentu dari `runtime.json` dan meng-overwrite state game world:
+
+1. Baca `runtime.json`
+2. Cari key `"stage_X"` yang sesuai
+3. Restore chests, crates, bombs consumed positions
+4. **Overwrite DeadEntities** dengan set musuh mati stage ini
+5. Restore item drops di lantai
+6. Restore barrier state (cleared, hasReLocked)
+
+Dipanggil dari `loading_screen.cpp` baris 115, di jalur worldgen map-switch:
+
+```txt
+Case 1 loading_screen (worldseed map detected):
+  LoadMap()
+  RunWorldgen(seed, isBossStage)
+  WorldgenIO::LoadRuntimeState(currentStage)  -> overwrite DeadEntities
+  SetWorldgenPending(false)
+```
+
+### Boundary Antara Sistem
+
+Kedua sistem save berjalan paralel dengan tanggung jawab terpisah:
+
+| Aspek | WorldgenIO | game_state_saver |
+| --- | --- | --- |
+| **File** | `worldseed/save_N/runtime.json`, `meta.json` | `saves/manual/slot0.json`, `saves/autosave/*.json` |
+| **Lingkup** | Per-stage (map objects, enemies, drops, barrier) | Player (HP, mana, inventory, position), non-worldgen world state |
+| **DeadEntities** | Overwrite per stage via `LoadRuntimeState` | Simpan/restore via `savedMapState.deadEntities` |
+| **Pemicu Save** | Stage transition, pause menu | Pause menu, map switch, autosave timer |
+| **Pemicu Load** | Map switch ke worldgen stage | Load Game dari main menu atau pause menu |
+
+Keduanya dipanggil barengan di pause menu (pauseMenu.cpp:359-361), memastikan player state dan worldgen runtime state konsisten saat save.
+
+### SetWorldgenPending Flag
+
+`SetWorldgenPending(bool)` adalah static flag di `game_state_saver.cpp` yang melindungi dead entity restoration dari korupsi antar-stage. Flag ini penting karena ada tiga jalur berbeda yang bisa merestore DeadEntities, dan mereka bisa saling bertabrakan:
+
+**Masalah**: Saat save game mid-worldgen, `savedMapState.deadEntities` di `slot0.json` menangkap snapshot dead entities dari main save system. Jika Load Game dari main menu merestore snapshot ini, lalu player masuk ke worldgen door, `LoadRuntimeState` akan meng-overwrite DeadEntities dengan subset stage saat ini. Tapi antara Load Game dan door entry, snapshot dari slot0 sudah sempat digunakan -- menyebabkan musuh mati dari stage lain ikut terbawa.
+
+**Cara kerja flag**:
+
+1. **Set** di `interaction.cpp` baris 105 — saat player menyentuh worldgen door (sebelum map switch)
+2. **Set** di `loading_screen.cpp` baris 224 dan 295 — saat ReadSaveFile membaca save yang mapPath-nya mengandung `"worldseed/save_"` (indikasi save dilakukan mid-worldgen)
+3. **Guard** di `loading_screen.cpp` baris 229 dan 300 — `RestoreDeadEntities()` dilewati jika `IsWorldgenPending()` true, karena WorldgenIO yang akan mengisi DeadEntities
+4. **Clear** di `loading_screen.cpp` baris 119 — setelah `LoadRuntimeState` selesai dijalankan
+5. **Clear** di `mainMenu.cpp` baris 141 — saat New Game (Start Game), bersama `ClearSavedState()`
+6. **Clear** di `ClearSavedState()` baris 811 — reset flag untuk fresh start
+
+```txt
+Skenario load mid-worldgen:
+  Main Menu -> Load Game
+    ReadSaveFile() -> savedMapState.mapPath = "worldseed/save_1/maps/stage_1.json"
+    SetWorldgenPending(true)           [guard aktif]
+    RestoreDeadEntities() dilewati      [aman, LoadRuntimeState akan handle]
+    InitAll() + RestoreGameState()      [player direstore dari slot0, DeadEntities kosong]
+    PLAY
+
+  Player masuk worldgen door:
+    SetWorldgenPending(true)             [guard tetap aktif]
+    LOADING -> LoadMap -> RunWorldgen
+    WorldgenIO::LoadRuntimeState()       [overwrite DeadEntities dengan subset stage ini]
+    SetWorldgenPending(false)            [guard nonaktif]
+```
+
+### ClearSavedState Worldseed Cleanup
+
+Saat New Game, `ClearSavedState()` di `game_state_saver.cpp` (baris 813-825) membersihkan folder worldgen:
+
+```cpp
+// Iterasi worldseed/save_* dan hapus tiap subfolder
+for (auto& entry : std::filesystem::directory_iterator(worldseedDir))
+    if (entry.is_directory() && entry.path().string().find("save_") != std::string::npos)
+        std::filesystem::remove_all(entry.path());
+```
+
+Detail:
+- Hanya folder dengan pola `save_` di pathnya yang dihapus
+- Root `worldseed/` dipertahankan
+- Setiap penghapus dicatat via `TraceLog(LOG_INFO, ...)`
+- Dipanggil di jalur Start Game dengan konfirmasi overwrite
+
+Tanpa cleanup ini, worldgen run baru akan mendeteksi `save_1` yang sudah ada dan melanjutkan slot yang sudah ada, bukan memulai run fresh.
+
+### Integrasi slot0.json dengan Worldgen
+
+Save Game mid-worldgen menghasilkan `slot0.json` dengan `savedMapState.mapPath` yang menunjuk ke `worldseed/save_N/maps/stage_M.json`. Saat Load Game dari main menu, loading screen mendeteksi path ini dan:
+
+1. Meng-set `SetWorldgenPending(true)` untuk melewati `RestoreDeadEntities()`
+2. Di stage 1 loading, masuk ke jalur worldgen (loading_screen.cpp:110)
+3. Menjalankan `RunWorldgen()` dengan seed dari `g_SeedManager`
+4. Memanggil `WorldgenIO::LoadRuntimeState()` untuk merestore state stage tersebut
+
+Ini berarti **meta.json harus ada** agar worldgen bisa regenerasi map yang benar dari seed. Jika meta.json hilang (misalnya karena manual cleanup), load save mid-worldgen akan gagal di worldgen detection karena `g_SeedManager.LoadMeta()` tidak dijalankan di jalur load biasa.
+
 ## File Source Utama
 
 | File | Peran |
@@ -316,3 +466,8 @@ RestoreGameState() memeriksa savedMapState.mapPath
 | `src/entities/entities.cpp` | Dead entity registry (RegisterDeath, IsAlreadyDead, PruneDeadEntities) |
 | `include/map/propsbehavior.h` | BombManager/CrateManager -- GetConsumedPositions / SetConsumedPositions accessors |
 | `src/ui/popup.cpp` | Two-button confirmation popup |
+| `src/map/worldgenio.cpp` | Worldgen runtime persistence (SaveRuntimeState, LoadRuntimeState, InitRun, NextStage, PrevStage) |
+| `include/map/worldgenio.h` | Deklarasi fungsi WorldgenIO namespace |
+| `src/core/seedmanager.cpp` | SeedManager -- seed generation, SaveMeta / LoadMeta, run state management |
+| `include/core/seedmanager.h` | Deklarasi SeedManager class, SEED_COUNT constant, g_SeedManager extern |
+| `src/systems/interaction.cpp` | Worldgen door handler -- InitRun, SetWorldgenPending(true), NextStage/PrevStage |
