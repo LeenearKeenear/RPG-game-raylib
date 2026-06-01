@@ -24,9 +24,7 @@ Sistem ini menggunakan **struct global C++** sebagai jembatan antara game world 
 | File | Pemicu | Isi |
 | --- | --- | --- |
 | `saves/manual/slot0.json` | Pause "Save", Pause "Return to Menu" | Full state |
-| `saves/autosave/quick.json` | Map switch | Full state (via `WriteAutosave`) |
-| `saves/autosave/periodic.json` | Setiap 60 detik di PLAY state | Full state (via `WriteAutosave`) |
-| `saves/autosave/spawn.json` | Fresh game (player spawn) | Full state (via `WriteAutosave`) |
+| `saves/autosave/autosave_DD-MM-YYYY-HH-MM-SS.json` | Map switch, periodic 60s, fresh game | Full state (via `WriteAutosave`). Format timestamp, tidak overwrite. Maksimal 5 file — terlama dihapus. |
 | `saves/enemies/<sanitized_map_path>` | Map switch | Posisi/HP/status mati musuh per-map |
 | `saves/items/<sanitized_map_path>` | Map switch | Status pickup item per-map |
 
@@ -422,6 +420,7 @@ for (auto& entry : std::filesystem::directory_iterator(worldseedDir))
 ```
 
 Detail:
+
 - Hanya folder dengan pola `save_` di pathnya yang dihapus
 - Root `worldseed/` dipertahankan
 - Setiap penghapus dicatat via `TraceLog(LOG_INFO, ...)`
@@ -472,4 +471,3 @@ Ini berarti **meta.json harus ada** agar worldgen bisa regenerasi map yang benar
 | Dead enemies respawn setelah Load Game | Resolved | Disebabkan DeadEntities kosong saat spawn -- diperbaiki dengan `RestoreDeadEntities()` sebelum `InitAll()` dan `PruneDeadEntities()` safety net. Lihat [Restore Ordering Fix](#restore-ordering-fix). |
 | UUID matching untuk entitas | Resolved | Semua entitas yang dapat dipersist sekarang memiliki UUID. Multi-pass matching (UUID -> fallback) menangani kompatibilitas save lawan. Lihat [Entity Identity (UUID)](#entity-identity-uuid). |
 | Enemy position reset setelah Save/Load | Resolved | UUID matching selalu gagal karena `SpawnEnemiesFromMap()` menghasilkan UUID acak baru setiap spawn. Fallback MapObjectID+Name memiliki `break` sehingga semua enemy dari spawn point yang sama hanya mencocokkan enemy pertama di registry. Diperbaiki dengan `std::unordered_set<Enemy*>` tracker yang memastikan setiap saved enemy mengkonsumsi tepat satu spawned enemy yang berbeda. Lihat [Matching Saat Restore](#matching-saat-restore). |
-
