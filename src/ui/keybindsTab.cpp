@@ -4,7 +4,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include <algorithm>
 
-static const char* SAVE_PATH = "saves/settings/keybinds.json";
+static const char* SAVE_PATH = "saves/settings/keybindsTab.json";
 
 // Section descriptors for grouping actions in the UI
 struct SectionInfo {

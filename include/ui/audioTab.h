@@ -10,7 +10,7 @@
  * Contains volume controls and audio settings.
  */
 
-static const char* AUDIO_SETTINGS_PATH = "saves/settings/audio.json";
+static const char* AUDIO_SETTINGS_PATH = "saves/settings/audioTab.json";
 
 /**
  * @brief Me-render tab Audio

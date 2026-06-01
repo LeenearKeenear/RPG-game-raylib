@@ -11,7 +11,7 @@
  * Contains fullscreen toggle and FPS display toggle.
  */
 
-static const char* VIDEO_SETTINGS_PATH = "saves/settings/video.json";
+static const char* VIDEO_SETTINGS_PATH = "saves/settings/videoTab.json";
 
 /**
  * @brief Me-render tab Video

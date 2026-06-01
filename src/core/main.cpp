@@ -96,20 +96,26 @@ int main()
 
     InitFonts();
 
-    // Migrasi satu kali: saves/settings.json -> saves/settings/keybinds.json
+    // Migrasi satu kali: saves/settings.json -> saves/settings/keybindsTab.json
     {
         namespace fs = std::filesystem;
-        if (fs::exists("saves/settings.json") && !fs::exists("saves/settings/keybinds.json"))
+        fs::create_directories("saves/settings");
+        const char* target = "saves/settings/keybindsTab.json";
+        if (fs::exists("saves/settings.json"))
         {
-            fs::create_directories("saves/settings");
-            fs::rename("saves/settings.json", "saves/settings/keybinds.json");
-            TraceLog(LOG_INFO, "KEYBIND: settings.json dimigrasi ke settings/keybinds.json");
+            fs::rename("saves/settings.json", target);
+            TraceLog(LOG_INFO, "KEYBIND: settings.json dimigrasi ke keybindsTab.json");
+        }
+        else if (fs::exists("saves/settings/keybinds.json"))
+        {
+            fs::rename("saves/settings/keybinds.json", target);
+            TraceLog(LOG_INFO, "KEYBIND: keybinds.json dimigrasi ke keybindsTab.json");
         }
     }
 
     // Load keybinds (or save defaults on first run)
-    if (!keybindManager.LoadFromFile("saves/settings/keybinds.json"))
-        keybindManager.SaveToFile("saves/settings/keybinds.json");
+    if (!keybindManager.LoadFromFile("saves/settings/keybindsTab.json"))
+        keybindManager.SaveToFile("saves/settings/keybindsTab.json");
 
     // Muat pengaturan video
     LoadVideoSettings(&state);
