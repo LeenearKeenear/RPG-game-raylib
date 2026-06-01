@@ -169,6 +169,21 @@ bool HasSavedState(void);
  */
 void ClearSavedState(void);
 
+/**
+ * @brief Set or clear the worldgen pending flag
+ * @details When true, RestoreDeadEntities() will be skipped in the loading
+ *          screen because WorldgenIO::LoadRuntimeState handles dead entity
+ *          restoration. Set before worldgen map switches, cleared after.
+ */
+void SetWorldgenPending(bool pending);
+
+/**
+ * @brief Check if a worldgen stage load is pending
+ * @return true if the next loading screen should skip RestoreDeadEntities()
+ *         (worldgen's LoadRuntimeState will set dead entities instead)
+ */
+bool IsWorldgenPending(void);
+
 /*==============================================================================
  * File I/O Functions
  *==============================================================================*/

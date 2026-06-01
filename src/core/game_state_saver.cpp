@@ -44,6 +44,7 @@ SavedMapState savedMapState;
  * @brief Flag menandakan apakah ada state tersimpan
  */
 bool hasSavedState = false;
+static bool worldgenPending = false;
 
 /*==============================================================================
  * File I/O Functions
@@ -771,9 +772,30 @@ bool HasSavedState(void)
     return hasSavedState;
 }
 
+/** @brief SetWorldgenPending()
+ * Set atau clear flag worldgen pending.
+ * Saat true, loading screen skip RestoreDeadEntities()
+ * karena WorldgenIO::LoadRuntimeState yang handle.
+ * @param pending true = worldgen load pending; false = normal flow
+ */
+void SetWorldgenPending(bool pending)
+{
+    worldgenPending = pending;
+}
+
+/** @brief IsWorldgenPending()
+ * Check apakah ada worldgen stage load yang tertunda.
+ * @return true jika loading screen harus skip RestoreDeadEntities
+ */
+bool IsWorldgenPending(void)
+{
+    return worldgenPending;
+}
+
 /**
  * @brief ClearSavedState()
  * Bersihkan state tersimpan untuk fresh start.
+ * Juga membersihkan folder worldseed/save_* untuk worldgen fresh start.
  */
 void ClearSavedState(void)
 {
@@ -796,4 +818,20 @@ void ClearSavedState(void)
     savedMapState.deadEntities.clear();
     savedMapState.chestsOpened.clear();
     savedMapState.mapHistory.clear();
+
+    worldgenPending = false;
+
+    // Clean up stale worldseed save_N folders for a fresh worldgen start
+    const char* worldseedDir = "assets/maps/World_generation/worldseed";
+    if (std::filesystem::exists(worldseedDir))
+    {
+        for (auto& entry : std::filesystem::directory_iterator(worldseedDir))
+        {
+            if (entry.is_directory() && entry.path().string().find("save_") != std::string::npos)
+            {
+                std::filesystem::remove_all(entry.path());
+                TraceLog(LOG_INFO, "[ClearSavedState] Removed stale worldgen save: %s", entry.path().string().c_str());
+            }
+        }
+    }
 }

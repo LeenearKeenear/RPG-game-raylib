@@ -137,6 +137,8 @@ void UpdateMainMenu(GameState *state)
         {
             DeleteSaveFile("saves/manual/slot0.json");
             ClearSavedState();
+            // Reset worldgen flag for fresh start
+            SetWorldgenPending(false);
             // Clean up per-map persistence from previous session so enemies/items
             // spawn fresh instead of being loaded as dead from old save files
             Entities::SetDeadEntities({});

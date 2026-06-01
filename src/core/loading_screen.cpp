@@ -106,13 +106,25 @@ void UpdateLoadingScreen(GameState *state)
             // Update map path segera agar IsAlreadyDead() pakai path yang benar
             SetCurrentMapPath(state->pendingMapPath.c_str());
 
-            // Kalau ini worldgen stage, generate world pake seed yang sesuai
+            /**
+             * @brief Worldgen map-switch: run worldgen stage and load runtime state
+             * Block ini jalan saat map-switch (bukan Load Game) ketika masuk ke
+             * worldgen stage. Panggil RunWorldgenStage() untuk generate stage map,
+             * lalu LoadRuntimeState() untuk restore runtime state per-stage.
+             * LoadRuntimeState() overwrite DeadEntities dengan subset stage ini —
+             * intentional. Clear worldgen pending flag setelah load agar
+             * RestoreDeadEntities selanjutnya jalan normal.
+             */
             if (!isBack && state->pendingMapPath.find("worldseed/save_") != std::string::npos)
             {
                 int stageIdx = g_SeedManager.GetCurrentStage();
                 uint64_t seed = g_SeedManager.GetSeed(stageIdx);
                 RunWorldgen(seed, stageIdx == SeedManager::SEED_COUNT - 1);
                 WorldgenIO::LoadRuntimeState(g_SeedManager.GetCurrentStage());
+                // Worldgen runtime state is now active — clear the pending flag so
+                // future calls to RestoreDeadEntities (e.g. after returning to overworld)
+                // restore from the main save file as normal.
+                SetWorldgenPending(false);
             }
             else
             {
@@ -213,8 +225,20 @@ void UpdateLoadingScreen(GameState *state)
             InitMap();
         }
 
-        // Restore dead entities BEFORE InitAll to prevent dead enemies respawning
-        if (HasSavedState())
+        /**
+         * @brief Worldgen save detection (fast path)
+         * Jika savedMapState.mapPath mengandung "worldseed/save_", save dibuat
+         * saat mid-worldgen. Set pending flag agar RestoreDeadEntities() di bawah
+         * di-skip — WorldgenIO's LoadRuntimeState akan handle dead entities
+         * dari per-stage runtime data saat worldgen switch nanti.
+         */
+        if (HasSavedState() && savedMapState.mapPath.find("worldseed/save_") != std::string::npos)
+            SetWorldgenPending(true);
+
+        // Restore dead entities BEFORE InitAll to prevent dead enemies respawning.
+        // Skip if save points to a worldgen map -- WorldgenIO's LoadRuntimeState
+        // will set dead entities from per-stage runtime data during the next switch.
+        if (HasSavedState() && !IsWorldgenPending())
             RestoreDeadEntities();
         // Init first, then restore saved state - order matters!
         // InitAll() sets position to spawn, then RestoreGameState overwrites it
@@ -276,8 +300,20 @@ void UpdateLoadingScreen(GameState *state)
         state->loadingText = "Loading complete!";
         state->currentScreen = PLAY;
 
-        // Restore dead entities BEFORE InitAll to prevent dead enemies respawning
-        if (HasSavedState())
+        /**
+         * @brief Worldgen save detection (initial load)
+         * Jika savedMapState.mapPath mengandung "worldseed/save_", save dibuat
+         * saat mid-worldgen. Set pending flag agar RestoreDeadEntities di bawah
+         * di-skip — WorldgenIO's LoadRuntimeState akan handle dead entities
+         * dari per-stage runtime data saat worldgen switch nanti.
+         */
+        if (HasSavedState() && savedMapState.mapPath.find("worldseed/save_") != std::string::npos)
+            SetWorldgenPending(true);
+
+        // Restore dead entities BEFORE InitAll to prevent dead enemies respawning.
+        // Skip if save points to a worldgen map -- WorldgenIO's LoadRuntimeState
+        // will set dead entities from per-stage runtime data during the next switch.
+        if (HasSavedState() && !IsWorldgenPending())
             RestoreDeadEntities();
         // Initialize everything first, then restore saved state
         InitAll();
