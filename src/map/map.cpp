@@ -9,6 +9,7 @@
  * - Handle perpindahan map dan riwayat navigasi
  */
 
+#include <climits>
 #include "../lib/raylib/include/raymath.h"
 #include "entities.h"
 #include "mapLogic.h"
