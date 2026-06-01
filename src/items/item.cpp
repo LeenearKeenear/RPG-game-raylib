@@ -34,9 +34,13 @@ using json = nlohmann::json;
 using namespace DataDriven;
 
 // instance global keempat class
+/** @brief Instance global definisi item */
 ItemDefinitionManager itemDefs;
+/** @brief Instance global data item */
 ItemDataManager itemData;
+/** @brief Instance global render item */
 ItemRenderManager itemRender;
+/** @brief Instance global spawn manager */
 ItemSpawnManager spawnManager;
 
 /*==============================================================================
@@ -185,6 +189,10 @@ void ItemDefinitionManager::Load(const std::string &path)
 
         definitions_[name] = std::move(def);
     }
+
+    // Populasi index ID numerik untuk O(1) lookup
+    for (auto &[name, def] : definitions_)
+        byId_[def.id] = &def;
 }
 
 /**
@@ -192,13 +200,12 @@ void ItemDefinitionManager::Load(const std::string &path)
  * @param id ID item yang dicari
  * @return Referensi ke ItemDefinition yang cocok
  * @throws std::runtime_error Jika ID tidak ditemukan
- * @note Linear search — acceptable untuk pool item kecil
  */
 const ItemDefinition &ItemDefinitionManager::GetById(int id) const
 {
-    for (auto &[_, def] : definitions_)
-        if (def.id == id)
-            return def;
+    auto it = byId_.find(id);
+    if (it != byId_.end())
+        return *it->second;
     throw std::runtime_error("ItemDefinition not found for id: " + std::to_string(id));
 }
 
@@ -237,9 +244,10 @@ ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
 {
     const ItemDefinition &def = itemDefs.GetById(definitionId);
 
-    // cari posisi aman, maksimal 5 attempt
+    // cari posisi aman, maksimal `spawnPosRetryLimit` attempt
+    int spawnPosRetryLimit = 5;
     Vector2 safePos = pos;
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < spawnPosRetryLimit; i++)
     {
         if (IsPositionSafe(safePos, def.hitboxSize.x, def.hitboxSize.y, 0, 0))
             break;
@@ -476,12 +484,13 @@ void ItemRenderManager::Update(std::vector<ItemSpawn> &items, Vector2 playerCent
                                Rectangle playerHitbox, float magnetRadius, float itemSpeed)
 {
 
+    float spawnImmunityDuration = 1.0f;
     float currentTime = (float)GetTime();
     for (auto &item : items)
     {
         if (item.isPickedUp)
             continue;
-        if (currentTime - item.spawnTime < 1.0f)
+        if (currentTime - item.spawnTime < spawnImmunityDuration)
             continue;
         Vector2 itemCenter = {
             item.hitbox.x + item.hitbox.width / 2,
@@ -564,7 +573,7 @@ void ItemRenderManager::Render(ItemSpawn &item)
  * ItemSpawnManager
  *==============================================================================*/
 
-// Rarity chance dalam persen — total harus 100
+/** @brief Bobot drop berdasarkan rarity */
 static const std::map<ItemRarity, int> RARITY_WEIGHTS = {
     {RARITY_COMMON, 80},
     {RARITY_UNCOMMON, 60},
@@ -635,8 +644,10 @@ void ItemSpawnManager::CategorizeAreas()
         if (area.isPolygon)
         {
             area.sizeClass = SPAWN_SIZE_SMALL;
-            area.minSpawn = 2;
-            area.maxSpawn = 3;
+            int polygonMinSpawn = 2;
+            int polygonMaxSpawn = 3;
+            area.minSpawn = polygonMinSpawn;
+            area.maxSpawn = polygonMaxSpawn;
             continue;
         }
         area.sizeClass = ClassifySize(area.bounds.width, area.bounds.height);
@@ -711,9 +722,9 @@ void ItemSpawnManager::DetermineActiveAreas()
  */
 Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area, Vector2 hitboxSize)
 {
-    int MaxAttempts = 100;
+    int maxAttempts = 100;
 
-    for (int i = 0; i < MaxAttempts; i++)
+    for (int i = 0; i < maxAttempts; i++)
     {
         Vector2 pos = {
             (float)GetRandomValue((int)area.bounds.x, (int)(area.bounds.x + area.bounds.width)),

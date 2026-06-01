@@ -15,6 +15,8 @@
 #include "../../include/ui/pauseMenu.h"
 #include "../../include/core/loading_screen.h"
 #include "../../include/core/game_state_saver.h"
+#include "../../include/map/worldgenio.h"
+#include "../../include/core/seedmanager.h"
 #include "../../include/rendering/fonts.h"
 #include "../../include/systems/input.h"
 #include "../../include/systems/keybindManager.h"
@@ -113,9 +115,11 @@ int main()
          *==============================================================================*/
         else if (state.currentScreen == LOADING)
         {
-            // Initialize loading screen only on first entry
-            if (!state.enteredLoading)
+            // Initialize loading screen on first entry or after returning from MAIN_MENU
+            if (!state.enteredLoading || state.loadingComplete)
             {
+                state.enteredLoading = false;
+                state.loadingComplete = false;
                 InitLoadingScreen(&state);
             }
 
@@ -216,6 +220,10 @@ int main()
             }
         }
     }
+
+    // Auto-save sebelum exit (jika run masih aktif)
+    if (g_SeedManager.IsRunActive())
+        WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
 
     // Shutdown
     GameShutDown(&state);

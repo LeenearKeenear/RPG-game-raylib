@@ -18,6 +18,8 @@
 #include "../../include/entities/entities.h"
 #include "../../include/map/propsbehavior.h"
 #include "../../include/entities/enemy_ai.h"
+#include "../../include/core/seedmanager.h"
+#include "../../include/map/worldgenio.h"
 #include "../../include/rendering/fonts.h"
 #include "../../lib/raylib/include/raylib.h"
 
@@ -100,11 +102,25 @@ void UpdateLoadingScreen(GameState *state)
             TraceLog(LOG_INFO, "LOADING: [stage 2/4] Loading map: %s", state->pendingMapPath.c_str());
             state->loadingText = isBack ? "Reloading previous map..." : "Loading new map...";
             LoadMap(state->pendingMapPath.c_str());
+
+            // Update map path segera agar IsAlreadyDead() pakai path yang benar
             SetCurrentMapPath(state->pendingMapPath.c_str());
-            BuildMapObjectIndex();
+
+            // Kalau ini worldgen stage, generate world pake seed yang sesuai
+            if (!isBack && state->pendingMapPath.find("worldseed/save_") != std::string::npos)
+            {
+                int stageIdx = g_SeedManager.GetCurrentStage();
+                uint64_t seed = g_SeedManager.GetSeed(stageIdx);
+                RunWorldgen(seed, stageIdx == SeedManager::SEED_COUNT - 1);
+                WorldgenIO::LoadRuntimeState(g_SeedManager.GetCurrentStage());
+            }
+            else
+            {
+                BuildMapObjectIndex();
+            }
             SpawnObject();
             RebuildObstacleCache();
-            globalFlowField.Invalidate(); // nanti diganti kalo nambah method ai nya
+            globalFlowField.Invalidate();
             state->loadingStage++;
             state->loadingProgress = (float)state->loadingStage / MAP_SWITCH_STAGES * 100.0F;
             break;
@@ -145,9 +161,6 @@ void UpdateLoadingScreen(GameState *state)
             camera.rotation = 0;
             camera.zoom = 1.0F;
             Movement::UpdateCamera(PlayerInstance);
-
-            // Update current map path
-            SetCurrentMapPath(state->pendingMapPath.c_str());
 
             // Clear map switch state
             state->isSwitchingMap = false;

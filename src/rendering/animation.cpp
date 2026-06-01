@@ -14,12 +14,14 @@ Frames Management
 ====================
 */
 
+/** @brief Array global texture */
 Texture2D textures[MAX_TEXTURES];
+/** @brief Cache frame dari JSON */
 static std::unordered_map<std::string, Frame> loadedFrames;
 
+/** @brief Map string ke TextureSlot */
 Font fontKeybindHeader = {0};
 Font fontKeybindEntry = {0};
-
 static TextureSlot ResolveTextureSlot(const std::string &str)
 {
     static const std::unordered_map<std::string, TextureSlot> mapping = {
@@ -452,7 +454,7 @@ float TextFloat(float currentOffset, float speed, float dt)
 
 void DamageFloat(Vector2& pos, Vector2& vel, float gravity, float friction, float dt)
 {
-    pos = Vector2Add(pos, Vector2Scale(vel, dt * 60.0f));
+    pos = Vector2Add(pos, Vector2Scale(vel, dt));
     vel.y += gravity;
     vel.x *= friction;
 }

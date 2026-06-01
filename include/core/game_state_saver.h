@@ -81,7 +81,7 @@ struct SavedEnemyState {
 
 /**
  * @brief Struktur data untuk menyimpan state satu item
- * 
+ *
  * Hanya menyimpan state yang unik per instance.
  * Data statis item (nama, kategori, rarity, dll) diambil dari
  * ItemDefinitionManager via definitionId.
@@ -112,29 +112,19 @@ struct SavedMapState {
  * Global Saved State Variables
  *==============================================================================*/
 
-/**
- * @brief State player yang tersimpan
- */
+/** @brief State player yang tersimpan */
 extern SavedPlayerState savedPlayerState;
 
-/**
- * @brief Daftar state enemy yang tersimpan
- */
+/** @brief Daftar state enemy yang tersimpan */
 extern std::vector<SavedEnemyState> savedEnemyStates;
 
-/**
- * @brief Daftar state item yang tersimpan
- */
+/** @brief Daftar state item yang tersimpan */
 extern std::vector<SavedItemState> savedItemStates;
 
-/**
- * @brief State map yang tersimpan
- */
+/** @brief State map yang tersimpan */
 extern SavedMapState savedMapState;
 
-/**
- * @brief Flag menandakan apakah ada state tersimpan
- */
+/** @brief Flag menandakan apakah ada state tersimpan */
 extern bool hasSavedState;
 
 /*==============================================================================
@@ -168,8 +158,8 @@ void RestoreDeadEntities(void);
 
 /**
  * @brief Cek apakah ada state tersimpan
- * @return true jika ada state yang bisa direstore
- * @note Dipakai untuk判断 apakah ini new game atau resume
+ * @return true jika ada state yang bisa di-restore
+ * @note Dipakai untuk menentukan apakah ini new game atau resume
  */
 bool HasSavedState(void);
 

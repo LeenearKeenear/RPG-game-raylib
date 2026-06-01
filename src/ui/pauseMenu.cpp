@@ -13,6 +13,8 @@
 #include "../../include/ui/audioTab.h"
 #include "../../include/ui/keybindsTab.h"
 #include "../../include/core/game_state_saver.h"
+#include "../../include/map/worldgenio.h"
+#include "../../include/core/seedmanager.h"
 
 /*==============================================================================
  * Static Variables (Popup Notifications)
@@ -353,6 +355,8 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             Hide();
             break;
         case 1:
+            // Save Game — simpan runtime + player state ke disk
+            WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
             SaveGameState(state);
             if (WriteSaveFile("saves/manual/slot0.json"))
                 savePopup.Show();
@@ -378,6 +382,9 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             returnConfirmPopup.Show();
             break;
         case 5:
+            // Close Game — save dulu baru tutup
+            WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
+            SaveGameState(state);
             CloseWindow();
             break;
         default:

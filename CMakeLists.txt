@@ -16,6 +16,7 @@ project(RPGGame VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Unity build: combine all sources into single translation unit
 # This parses tileson.hpp only once instead of per .cpp file

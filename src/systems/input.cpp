@@ -3,6 +3,7 @@
 #include "item.h"
 #include "keybindManager.h"
 
+/** @brief Instance global input */
 PlayerInput InputInstance;
 
 PlayerInput::PlayerInput()
