@@ -94,8 +94,8 @@ int main()
     InitFonts();
 
     // Load keybinds (or save defaults on first run)
-    if (!keybindManager.LoadFromFile("saves/settings.json"))
-        keybindManager.SaveToFile("saves/settings.json");
+    if (!keybindManager.LoadFromFile("saves/settings/keybinds.json"))
+        keybindManager.SaveToFile("saves/settings/keybinds.json");
 
     float accumulator = 0.0f;
 
