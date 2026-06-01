@@ -197,10 +197,10 @@ bool IsWorldgenPending(void);
 bool WriteSaveFile(const std::string& path);
 
 /**
- * @brief Write an autosave to saves/autosave/ directory
- * @details Calls SaveGameState() then writes to saves/autosave/filename.
+ * @brief Write a timestamped autosave to saves/autosave/ directory
+ * @details Calls SaveGameState() then writes to saves/autosave/autosave_DD-MM-YYYY-HH-MM-SS.json.
+ *          Each call generates a unique filename so autosaves never overwrite each other.
  *          Creates the autosave directory if it doesn't exist.
- * @param filename The filename within the autosave directory (e.g., "periodic.json")
  * @return true if successful, false if write failed
  */
 bool WriteAutosave(const std::string& filename);

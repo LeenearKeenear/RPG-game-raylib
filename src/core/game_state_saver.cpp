@@ -13,6 +13,7 @@
 #include <fstream>
 #include <filesystem>
 #include <ctime>
+#include <algorithm>
 #include <unordered_set>
 
 using json = nlohmann::json;
@@ -193,15 +194,47 @@ bool WriteSaveFile(const std::string& path)
 }
 
 /**
- * WriteAutosave - Save game state to saves/autosave/ directory.
+ * WriteAutosave - Simpan state game ke direktori saves/autosave/.
+ * Membuat nama file dengan timestamp (autosave_DD-MM-YYYY-HH-MM-SS.json)
+ * agar autosave tidak saling menimpa. Maksimal 5 file autosave —
+ * jika lebih, file terlama akan dihapus.
  */
-bool WriteAutosave(const std::string& filename)
+bool WriteAutosave(const std::string&)
 {
-    TraceLog(LOG_INFO, "Autosaving to saves/autosave/%s", filename.c_str());
+    std::time_t t = std::time(nullptr);
+    char buf[64];
+    std::strftime(buf, sizeof(buf), "autosave_%d-%m-%Y-%H-%M-%S.json", std::localtime(&t));
+    std::string autosaveName(buf);
+    TraceLog(LOG_INFO, "Autosaving to saves/autosave/%s", autosaveName.c_str());
     SaveGameState(gState);
     std::string dir = "saves/autosave";
     std::filesystem::create_directories(dir);
-    return WriteSaveFile(dir + "/" + filename);
+
+    bool result = WriteSaveFile(dir + "/" + autosaveName);
+
+    // Batasi maksimal 5 slot autosave — hapus file terlama jika melebihi
+    constexpr int MAX_AUTOSAVE_SLOTS = 5;
+    std::vector<std::filesystem::path> autosaveFiles;
+    for (const auto& entry : std::filesystem::directory_iterator(dir))
+    {
+        if (entry.path().filename().string().find("autosave_") == 0 && entry.path().extension() == ".json")
+            autosaveFiles.push_back(entry.path());
+    }
+    if (autosaveFiles.size() > MAX_AUTOSAVE_SLOTS)
+    {
+        std::sort(autosaveFiles.begin(), autosaveFiles.end(),
+            [](const auto& a, const auto& b) {
+                return std::filesystem::last_write_time(a) < std::filesystem::last_write_time(b);
+            });
+        // Hapus file terlama hingga hanya MAX_AUTOSAVE_SLOTS tersisa
+        for (size_t i = 0; i < autosaveFiles.size() - MAX_AUTOSAVE_SLOTS; i++)
+        {
+            std::filesystem::remove(autosaveFiles[i]);
+            TraceLog(LOG_INFO, "Pruned old autosave: %s", autosaveFiles[i].filename().string().c_str());
+        }
+    }
+
+    return result;
 }
 
 /**
