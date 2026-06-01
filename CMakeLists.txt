@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 # Try to use clang, fallback to default compiler if not available
 find_program(CLANG_COMPILER_NAME clang++)
-find_program(CLANG_COMPILER_C CMAKE_C_COMPILER)
+find_program(CLANG_COMPILER_C clang)
 if(CLANG_COMPILER_NAME AND CLANG_COMPILER_C)
     set(CMAKE_CXX_COMPILER "clang++" CACHE STRING "C++ compiler" FORCE)
     set(CMAKE_C_COMPILER "clang" CACHE STRING "C compiler" FORCE)

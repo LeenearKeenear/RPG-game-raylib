@@ -55,7 +55,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            clang lld ninja-build ccache \
+            clang clang++ lld ninja-build ccache \
             libgl1-mesa-dev libxrandr-dev \
             libxinerama-dev libxcursor-dev libxi-dev
 
