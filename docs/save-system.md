@@ -290,16 +290,6 @@ RestoreGameState() memeriksa savedMapState.mapPath
 | **Fresh game start** | Full state ke `spawn.json` |
 | **Main menu Load Game** | Baca `slot0.json`, restore semua |
 
-## Known Issues / Notices
-
-> Daftar bug yang diketahui dan catatan penting tentang sistem save/load saat ini.
-
-| Issue | Status | Detail |
-| --- | --- | --- |
-| Crash saat load save dari map berbeda | Intermiten | Terjadi secara tidak konsisten saat loading save yang dibuat di map berbeda dari map saat ini. Belum bisa direproduksi secara andal. Kemungkinan terkait dengan enemy/item restore yang merujuk ke entitas yang belum di-spawn. |
-| Dead enemies respawn setelah Load Game | Resolved | Disebabkan DeadEntities kosong saat spawn -- diperbaiki dengan `RestoreDeadEntities()` sebelum `InitAll()` dan `PruneDeadEntities()` safety net. Lihat [Restore Ordering Fix](#restore-ordering-fix). |
-| UUID matching untuk entitas | Resolved | Semua entitas yang dapat dipersist sekarang memiliki UUID. Multi-pass matching (UUID -> fallback) menangani kompatibilitas save lawan. Lihat [Entity Identity (UUID)](#entity-identity-uuid). |
-
 ## Worldgen Runtime Persistence
 
 > Sistem save paralel untuk world generation. Stage worldgen memiliki state runtime dinamis (musuh, chest, crate, bomb, item drop, barrier) yang berubah selama satu run. State ini dikelola oleh WorldgenIO, terpisah dari main save system (game_state_saver) yang menangani state player dan non-worldgen.
@@ -471,3 +461,14 @@ Ini berarti **meta.json harus ada** agar worldgen bisa regenerasi map yang benar
 | `src/core/seedmanager.cpp` | SeedManager -- seed generation, SaveMeta / LoadMeta, run state management |
 | `include/core/seedmanager.h` | Deklarasi SeedManager class, SEED_COUNT constant, g_SeedManager extern |
 | `src/systems/interaction.cpp` | Worldgen door handler -- InitRun, SetWorldgenPending(true), NextStage/PrevStage |
+
+## Known Issues / Notices
+
+> Daftar bug yang diketahui dan catatan penting tentang sistem save/load saat ini. Bagian ini **WAJIB** tetap berada di posisi paling akhir dokumen.
+
+| Issue | Status | Detail |
+| --- | --- | --- |
+| Crash saat load save dari map berbeda | Intermiten | Terjadi secara tidak konsisten saat loading save yang dibuat di map berbeda dari map saat ini. Belum bisa direproduksi secara andal. Kemungkinan terkait dengan enemy/item restore yang merujuk ke entitas yang belum di-spawn. |
+| Dead enemies respawn setelah Load Game | Resolved | Disebabkan DeadEntities kosong saat spawn -- diperbaiki dengan `RestoreDeadEntities()` sebelum `InitAll()` dan `PruneDeadEntities()` safety net. Lihat [Restore Ordering Fix](#restore-ordering-fix). |
+| UUID matching untuk entitas | Resolved | Semua entitas yang dapat dipersist sekarang memiliki UUID. Multi-pass matching (UUID -> fallback) menangani kompatibilitas save lawan. Lihat [Entity Identity (UUID)](#entity-identity-uuid). |
+| Enemy position reset setelah Save/Load | Resolved | UUID matching selalu gagal karena `SpawnEnemiesFromMap()` menghasilkan UUID acak baru setiap spawn. Fallback MapObjectID+Name memiliki `break` sehingga semua enemy dari spawn point yang sama hanya mencocokkan enemy pertama di registry. Diperbaiki dengan `std::unordered_set<Enemy*>` tracker yang memastikan setiap saved enemy mengkonsumsi tepat satu spawned enemy yang berbeda. Lihat [Matching Saat Restore](#matching-saat-restore). |
