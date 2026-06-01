@@ -65,10 +65,7 @@ target_include_directories(main PUBLIC
 
 # Force-include missing standard headers for tileson.hpp compatibility
 # tileson v1.4.0 assumes transitive includes which newer compilers (Clang 18+, GCC 15+) don't provide
-target_compile_options(main PRIVATE
-    "-include" "cstdint"
-    "-include" "algorithm"
-)
+target_compile_options(main PRIVATE "SHELL:-include cstdint" "SHELL:-include algorithm")
 
 # Raylib library
 if(WIN32)
