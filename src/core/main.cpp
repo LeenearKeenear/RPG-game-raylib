@@ -20,6 +20,7 @@
 #include "../../include/rendering/fonts.h"
 #include "../../include/systems/input.h"
 #include "../../include/systems/keybindManager.h"
+#include "../../include/ui/videoTab.h"
 #include "../../lib/raylib/include/raylib.h"
 #include "../../lib/raylib/include/raymath.h"
 #include <cstdio>
@@ -96,6 +97,9 @@ int main()
     // Load keybinds (or save defaults on first run)
     if (!keybindManager.LoadFromFile("saves/settings/keybinds.json"))
         keybindManager.SaveToFile("saves/settings/keybinds.json");
+
+    // Load video settings (fullscreen, showFPS)
+    LoadVideoSettings(&state);
 
     float accumulator = 0.0f;
 
