@@ -25,6 +25,7 @@
 #include "../../lib/raylib/include/raylib.h"
 #include "../../lib/raylib/include/raymath.h"
 #include <cstdio>
+#include <filesystem>
 
 /**
  * @brief Global instances for menu systems
@@ -95,14 +96,25 @@ int main()
 
     InitFonts();
 
+    // Migrasi satu kali: saves/settings.json -> saves/settings/keybinds.json
+    {
+        namespace fs = std::filesystem;
+        if (fs::exists("saves/settings.json") && !fs::exists("saves/settings/keybinds.json"))
+        {
+            fs::create_directories("saves/settings");
+            fs::rename("saves/settings.json", "saves/settings/keybinds.json");
+            TraceLog(LOG_INFO, "KEYBIND: settings.json dimigrasi ke settings/keybinds.json");
+        }
+    }
+
     // Load keybinds (or save defaults on first run)
     if (!keybindManager.LoadFromFile("saves/settings/keybinds.json"))
         keybindManager.SaveToFile("saves/settings/keybinds.json");
 
-    // Load video settings (fullscreen, showFPS)
+    // Muat pengaturan video
     LoadVideoSettings(&state);
 
-    // Load audio settings (volume defaults — UI masih Coming Soon)
+    // Muat pengaturan audio
     LoadAudioSettings();
 
     float accumulator = 0.0f;
