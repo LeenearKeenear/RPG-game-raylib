@@ -63,6 +63,13 @@ target_include_directories(main PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/json/include>
 )
 
+# Force-include missing standard headers for tileson.hpp compatibility
+# tileson v1.4.0 assumes transitive includes which newer compilers (Clang 18+, GCC 15+) don't provide
+target_compile_options(main PRIVATE
+    "-include" "cstdint"
+    "-include" "algorithm"
+)
+
 # Raylib library
 if(WIN32)
     set(RAYLIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/raylib/lib/libraylib.a")
