@@ -21,6 +21,7 @@
 #include "../../include/systems/input.h"
 #include "../../include/systems/keybindManager.h"
 #include "../../include/ui/videoTab.h"
+#include "../../include/ui/audioTab.h"
 #include "../../lib/raylib/include/raylib.h"
 #include "../../lib/raylib/include/raymath.h"
 #include <cstdio>
@@ -100,6 +101,9 @@ int main()
 
     // Load video settings (fullscreen, showFPS)
     LoadVideoSettings(&state);
+
+    // Load audio settings (volume defaults — UI masih Coming Soon)
+    LoadAudioSettings();
 
     float accumulator = 0.0f;
 
