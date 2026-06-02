@@ -22,6 +22,7 @@ static std::unordered_map<std::string, Frame> loadedFrames;
 /** @brief Map string ke TextureSlot */
 Font fontKeybindHeader = {0};
 Font fontKeybindEntry = {0};
+Font fontLoadingTitle = {0};
 static TextureSlot ResolveTextureSlot(const std::string &str)
 {
     static const std::unordered_map<std::string, TextureSlot> mapping = {
@@ -152,6 +153,17 @@ void InitFonts(void)
         break;
     }
 
+    for (int pass = 0; pass < 2; pass++)
+    {
+        const char *dir = paths[pass];
+        char buf[256];
+
+        snprintf(buf, sizeof(buf), "%sPoppins-Bold.ttf", dir);
+        if (!FileExists(buf)) { TraceLog(LOG_WARNING, "FONTS: %s NOT FOUND", buf); continue; }
+        fontLoadingTitle = LoadFontEx(buf, 32, 0, 0);
+        break;
+    }
+
     if (fontKeybindHeader.glyphCount == 0)
     {
         TraceLog(LOG_WARNING, "FONTS: NewDawn.ttf loaded but has 0 glyphs (using default font fallback)");
@@ -162,15 +174,21 @@ void InitFonts(void)
         TraceLog(LOG_WARNING, "FONTS: Poppins-Regular.ttf loaded but has 0 glyphs (using default font fallback)");
         fontKeybindEntry = GetFontDefault();
     }
+    if (fontLoadingTitle.glyphCount == 0)
+    {
+        TraceLog(LOG_WARNING, "FONTS: Poppins-Bold.ttf loaded but has 0 glyphs (using default font fallback)");
+        fontLoadingTitle = GetFontDefault();
+    }
 
-    TraceLog(LOG_INFO, "FONTS: NewDawn (header) glyphs=%d, Poppins (entry) glyphs=%d",
-        fontKeybindHeader.glyphCount, fontKeybindEntry.glyphCount);
+    TraceLog(LOG_INFO, "FONTS: NewDawn (header) glyphs=%d, Poppins (entry) glyphs=%d, Poppins-Bold (loading) glyphs=%d",
+        fontKeybindHeader.glyphCount, fontKeybindEntry.glyphCount, fontLoadingTitle.glyphCount);
 }
 
 void UnloadFonts(void)
 {
     UnloadFont(fontKeybindHeader);
     UnloadFont(fontKeybindEntry);
+    UnloadFont(fontLoadingTitle);
     TraceLog(LOG_INFO, "FONTS: Unloaded custom fonts");
 }
 
