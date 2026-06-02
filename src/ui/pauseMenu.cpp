@@ -6,7 +6,10 @@
  */
 
 #include <algorithm>
+#include <filesystem>
+#include <system_error>
 
+#include "../../include/systems/keybindManager.h"
 #include "../../include/ui/pauseMenu.h"
 #include "../../include/ui/popup.h"
 #include "../../include/ui/videoTab.h"
@@ -185,6 +188,22 @@ void OptionsScreen::CalculateDimensions()
         labelFontSize,
         showFPS ? GREEN : GRAY,
         0.7F);
+
+    resetTabButton = buttonTxt(
+        "Reset Tab",
+        startX + 40,
+        startY + height - 110,
+        20,
+        ORANGE,
+        0.7F);
+
+    resetOptionsButton = buttonTxt(
+        "Reset All",
+        startX + 200,
+        startY + height - 110,
+        20,
+        ORANGE,
+        0.7F);
 }
 
 /**
@@ -211,6 +230,50 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
             CalculateDimensions();
             return;
         }
+    }
+
+    if (resetTabButton.isClicked(mousePosition, mouseClicked)) {
+        const char* paths[] = {
+            "saves/settings/videoTab.json",
+            "saves/settings/audioTab.json",
+            "saves/settings/keybindsTab.json"
+        };
+        std::error_code ec;
+        std::filesystem::remove(paths[selectedTab], ec);
+
+        if (selectedTab == 0) {
+            state->showFPS = false;
+            showFPS = false;
+            LoadVideoSettings(state);
+        } else if (selectedTab == 1) {
+            LoadAudioSettings();
+        } else if (selectedTab == 2) {
+            keybindManager.ResetDefaults();
+            keybindManager.SaveToFile(paths[2]);
+        }
+        CalculateDimensions();
+        return;
+    }
+
+    if (resetOptionsButton.isClicked(mousePosition, mouseClicked)) {
+        const char* allPaths[] = {
+            "saves/settings/videoTab.json",
+            "saves/settings/audioTab.json",
+            "saves/settings/keybindsTab.json"
+        };
+        std::error_code ec;
+        for (const auto& p : allPaths) {
+            std::filesystem::remove(p, ec);
+        }
+
+        state->showFPS = false;
+        showFPS = false;
+        LoadVideoSettings(state);
+        LoadAudioSettings();
+        keybindManager.ResetDefaults();
+        keybindManager.SaveToFile("saves/settings/keybindsTab.json");
+        CalculateDimensions();
+        return;
     }
 
     if (selectedTab == 0) {
@@ -259,6 +322,9 @@ void OptionsScreen::Draw(Vector2 mousePosition)
         case 1: DrawAudioTab(mousePosition, startX + contentOX, startY + contentOY); break;
         case 2: DrawKeybindsTab(mousePosition, startX + contentOX, startY + contentOY); break;
     }
+
+    resetTabButton.Draw(mousePosition);
+    resetOptionsButton.Draw(mousePosition);
 }
 
 /*==============================================================================
