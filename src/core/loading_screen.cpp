@@ -21,6 +21,7 @@
 #include "../../include/core/seedmanager.h"
 #include "../../include/map/worldgenio.h"
 #include "../../include/rendering/fonts.h"
+#include <algorithm>
 #include "../../lib/raylib/include/raylib.h"
 
 /*==============================================================================
@@ -347,8 +348,31 @@ void RenderLoadingScreen(GameState *state)
     float textY = (float)(GameScreenHeight / 2) - textSize.y - 30.0f;
     DrawTextEx(fontLoadingTitle, state->loadingText, {textX, textY}, 32, 2, WHITE);
 
-    DrawRectangle((GameScreenWidth / 2) - 150, (GameScreenHeight / 2) + 20, 300, 20, DARKGRAY);
-    DrawRectangle((GameScreenWidth / 2) - 150, (GameScreenHeight / 2) + 20, (int)(state->loadingProgress * 3), 20, GREEN);
+    // Smooth progress bar animation
+    static float currentDisplayProgress = 0.0f;
+    float dt = fminf(GetFrameTime(), 0.1f);
+    float targetProgress = state->loadingProgress / 100.0f;
+
+    if (state->loadingComplete) {
+        currentDisplayProgress = targetProgress;
+    } else {
+        currentDisplayProgress += (targetProgress - currentDisplayProgress) * fminf(dt * 5.0f, 1.0f);
+    }
+
+    currentDisplayProgress = std::clamp(currentDisplayProgress, 0.0f, 1.0f);
+
+    float barX = (float)(GameScreenWidth / 2) - 150.0f;
+    float barY = (float)(GameScreenHeight / 2) + 20.0f;
+    float barWidth = 300.0f;
+    float barHeight = 20.0f;
+    float animatedWidth = barWidth * currentDisplayProgress;
+
+    // Draw progress bar (track + fill + border)
+    DrawRectangleRounded({barX, barY, barWidth, barHeight}, 0.3f, 8, DARKGRAY);
+    if (currentDisplayProgress > 0.0f) {
+        DrawRectangleRounded({barX, barY, animatedWidth, barHeight}, 0.3f, 8, GREEN);
+    }
+    DrawRectangleRoundedLines({barX, barY, barWidth, barHeight}, 0.3f, 8, ColorAlpha(WHITE, 0.2f));
 
     std::array<char, 10> progressText;
     sprintf(progressText.data(), "%d%%", (int)state->loadingProgress);
