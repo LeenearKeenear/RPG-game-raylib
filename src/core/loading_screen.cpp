@@ -192,6 +192,12 @@ void UpdateLoadingScreen(GameState *state)
         state->loadingComplete = true;
         state->currentScreen = PLAY;
 
+        // Fresh start: load default map so we don't respawn on the last map
+        if (!HasSavedState())
+        {
+            InitMap();
+        }
+
         // Init first, then restore saved state - order matters!
         // InitAll() sets position to spawn, then RestoreGameState overwrites it
         InitAll();

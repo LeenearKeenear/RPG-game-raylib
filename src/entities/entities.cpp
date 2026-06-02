@@ -158,6 +158,11 @@ namespace Entities
         return DeadEntities.find(mapPath + "_" + std::to_string(objectId)) != DeadEntities.end();
     }
 
+    void ClearDeadEntities()
+    {
+        DeadEntities.clear();
+    }
+
     const std::set<std::string> &GetDeadEntries()
     {
         return DeadEntities;

@@ -256,6 +256,11 @@ void ChestManager::Clear()
     chests.clear();
 }
 
+void ChestManager::ResetConsumed()
+{
+    consumedPositions.clear();
+}
+
 /*==============================================================================
  * SpikeManager Implementation
  *==============================================================================*/
@@ -703,6 +708,11 @@ void BombManager::Clear()
     bombs.clear();
 }
 
+void BombManager::ResetConsumed()
+{
+    consumedPositions.clear();
+}
+
 /*==============================================================================
  * CrateManager Implementation
  *==============================================================================*/
@@ -847,6 +857,11 @@ int CrateManager::Render(Rectangle viewRect)
 void CrateManager::Clear()
 {
     crates.clear();
+}
+
+void CrateManager::ResetConsumed()
+{
+    consumedPositions.clear();
 }
 
 /*==============================================================================

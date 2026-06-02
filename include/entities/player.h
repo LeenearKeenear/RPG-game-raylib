@@ -99,6 +99,7 @@ public:
 
     /** @brief Inisialisasi player dan lokasi spawn */
     void Init(GameState *state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
+    void ResetForNewGame();
     /** @brief Update player tiap frame */
     void Update() override;
     /** @brief Render player */
