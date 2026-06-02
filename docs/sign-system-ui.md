@@ -11,12 +11,14 @@
    - **Value**: teks yang mau ditampilkan
 
 **Contoh properti dialog (pake `|` buat baris baru):**
-```
+
+```txt
 Halo adventurer!|Selamat datang di dungeon.|Waspada dengan monster di depan!
 ```
 
 Hasilnya bakal tampil sebagai 3 baris:
-```
+
+```txt
 Halo adventurer!
 Selamat datang di dungeon.
 Waspada dengan monster di depan!
@@ -42,19 +44,21 @@ Kalo gamau pake `|`, bisa pake Enter langsung di Tiled (multiline) — nanti oto
 ## Yang Perlu Didesign (Placeholder Saat Ini)
 
 ### 1. Screen Dim
+
 Sekarang: `ColorAlpha(BLACK, 0.4f)` — 40% hitam full screen
 
 | Bisa diubah | Keterangan |
-|-------------|------------|
+| --- | --- |
 | Warna | Ganti dari hitam ke warna lain |
 | Intensitas | 0.0 — 1.0 |
 | Efek | Bisa pake blur atau gradient |
 
 ### 2. Dialog Box
+
 Sekarang: rectangle rounded, `DARKGRAY` 95% alpha, border putih
 
 | Properti | Nilai Sekarang | Keterangan |
-|----------|----------------|------------|
+| --- | --- |
 | Posisi X | `GameScreenWidth * 0.1` | 10% margin kiri |
 | Posisi Y | `GameScreenHeight * 0.6` | 60% dari atas |
 | Lebar | `GameScreenWidth * 0.8` | 80% lebar layar |
@@ -66,10 +70,11 @@ Sekarang: rectangle rounded, `DARKGRAY` 95% alpha, border putih
 Bisa diganti: ukuran, posisi, warna, border, background texture, font, dll.
 
 ### 3. Teks Dialog
+
 Sekarang: font default raylib, size 16, putih, pake loop per baris
 
 | Properti | Nilai Sekarang |
-|----------|----------------|
+| --- | --- |
 | Font | Default raylib |
 | Size | 16 |
 | Color | WHITE |
@@ -78,6 +83,7 @@ Sekarang: font default raylib, size 16, putih, pake loop per baris
 | Line spacing | 22 px |
 
 ### 4. Hint Dismiss
+
 Sekarang: text `[Klik kiri] untuk tutup` di pojok kanan bawah box
 
 ---
@@ -104,7 +110,7 @@ signManager.DismissDialog()
 ## File yang Relevan
 
 | File | Fungsinya |
-|------|-----------|
+| --- | --- |
 | `include/rendering/hud.h` | Deklarasi `DrawSignDialog()` |
 | `src/rendering/hud.cpp` | Implementasi render dialog (yang bakal diedit UI designer) |
 | `src/core/screen_handler.cpp` | Panggil `DrawSignDialog()` di `DrawUIOverlay()` |
