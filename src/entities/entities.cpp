@@ -182,6 +182,7 @@ void RenderTileProps(Rectangle viewRect)
     int bombRendered = bombManager.Render(viewRect);
     int crateRendered = crateManager.Render(viewRect);
     barrierManager.Render(viewRect);
+    signManager.Render(viewRect);
 }
 
 /** @brief Clear semua state tile-based props */
@@ -192,4 +193,5 @@ void ClearTileProps(void)
     bombManager.Clear();
     crateManager.Clear();
     barrierManager.Clear();
+    signManager.Clear();
 }

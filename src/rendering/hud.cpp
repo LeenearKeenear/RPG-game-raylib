@@ -4,6 +4,7 @@
 #include "inventory.h"
 #include "inv-bst-sort.h"
 #include "effectQueue.h"
+#include "propsbehavior.h"
 #include "../lib/raylib/include/raymath.h"
 #include <cstdio>
 #include <vector>
@@ -670,4 +671,37 @@ void DrawPlayerHUD()
     DrawInventory();
     if (InputInstance.IsInventoryOpen())
         DrawDragGhost(GetVirtualMousePosition(gState));
+}
+
+/**
+ * @brief Render dialog sign overlay
+ *
+ * Tampilkan screen dim, dialog box di bawah, teks baris, dan hint dismiss.
+ * Hanya render kalo ada dialog aktif.
+ */
+void DrawSignDialog()
+{
+    if (!signManager.IsDialogActive())
+        return;
+
+    DrawRectangle(0, 0, GameScreenWidth, GameScreenHeight, ColorAlpha(BLACK, 0.4f));
+
+    Rectangle box = {
+        GameScreenWidth * 0.1f,
+        GameScreenHeight * 0.6f,
+        GameScreenWidth * 0.8f,
+        GameScreenHeight * 0.3f
+    };
+    DrawRectangleRounded(box, 0.15f, 8, ColorAlpha(DARKGRAY, 0.95f));
+    DrawRectangleRoundedLines(box, 0.15f, 8, WHITE);
+
+    const auto &lines = signManager.GetActiveDialogLines();
+    float lineY = box.y + 16;
+    for (const auto &line : lines)
+    {
+        DrawText(line.c_str(), (int)box.x + 16, (int)lineY, 16, WHITE);
+        lineY += 22;
+    }
+
+    DrawText("[Klik kiri] untuk tutup", (int)box.x + (int)box.width - 140, (int)box.y + (int)box.height - 20, 10, GRAY);
 }

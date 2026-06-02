@@ -18,6 +18,7 @@
 #include "worldgenio.h"
 #include "seedmanager.h"
 #include "fonts.h"
+#include "propsbehavior.h"
 #include "../lib/raylib/include/raylib.h"
 #include "input.h"
 #include "keybindManager.h"
@@ -147,15 +148,22 @@ int main()
                 frameTime = Time::MAX_FRAME;
             accumulator += frameTime;
 
+            // update semua logic game — skip kalo pause atau dialog aktif
             while (accumulator >= Time::DELTA_TIME)
             {
-                if (!pauseMenu.IsActive())
+                if (!pauseMenu.IsActive() && !signManager.IsDialogActive())
                 {
                     UpdateLogicAll();
                     if (PlayerInstance.Anim.isDead)
                         state.currentScreen = GAME_OVER;
                 }
                 accumulator -= Time::DELTA_TIME;
+            }
+
+            // dismiss dialog via left-click — skip kalo pause aktif
+            if (signManager.IsDialogActive() && !pauseMenu.IsActive() && InputInstance.IsLeftClickPressed())
+            {
+                signManager.DismissDialog();
             }
 
             // render semua ke layar virtual

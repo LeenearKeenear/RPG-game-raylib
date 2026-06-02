@@ -136,7 +136,7 @@ GameState InitScreen()
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "Dungeon Game");
-    SetExitKey(KEY_NULL);  // ESC is handled by our own pause/keybind logic
+    SetExitKey(KEY_ESCAPE);  // ESC is handled by our own pause/keybind logic
     InitAudioDevice();
 
     state.WindowScreenWidth = (int)(GetMonitorWidth(0) * ScaleMultiplierMonitor);
@@ -366,7 +366,10 @@ void DrawUIOverlay(GameState *state)
         DrawText(fpsText, 10, 10, 20, GREEN);
     }
 
-    // 3. Menus
+    // 3. Sign dialog overlay (placeholder UI)
+    DrawSignDialog();
+
+    // 4. Menus
     if (pauseMenu.IsActive())
     {
         Vector2 mousePos = GetVirtualMousePosition(state);
