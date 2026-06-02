@@ -101,12 +101,18 @@ public:
     /** @brief Bersihkan semua data chest */
     void Clear();
 
+    /** @brief Reset posisi chest yang sudah dikonsumsi (untuk new game) */
+    void ResetConsumed();
+
     /** @brief Ambil posisi chest yang sudah dibuka */
     const std::unordered_set<std::string> &GetConsumedPositions() const { return consumedPositions; }
     /** @brief Set posisi chest yang sudah dibuka (buat load) */
     void SetConsumedPositions(const std::unordered_set<std::string> &positions) { consumedPositions = positions; }
 
-    /** @brief Ambil jumlah chest yang sedang dikelola */
+    /**
+     * @brief Ambil jumlah chest yang sedang dikelola.
+     * @return Jumlah chest aktif di manager
+     */
     size_t GetCount() const { return chests.size(); }
 
 private:
@@ -224,6 +230,9 @@ public:
     /** @brief Bersihkan semua data bomb */
     void Clear();
 
+    /** @brief Reset posisi bomb yang sudah meledak (untuk new game) */
+    void ResetConsumed();
+
     /** @brief Ambil jumlah bomb yang sedang dikelola */
     size_t GetCount() const { return bombs.size(); }
 
@@ -290,6 +299,9 @@ public:
     const std::unordered_set<std::string> &GetConsumedPositions() const { return consumedPositions; }
     /** @brief Set posisi crate yang sudah hancur (buat load) */
     void SetConsumedPositions(const std::unordered_set<std::string> &positions) { consumedPositions = positions; }
+
+    /** @brief Reset posisi crate yang sudah hancur (untuk new game) */
+    void ResetConsumed();
 
     /**
      * @brief Ambil jumlah crate yang sedang dikelola.

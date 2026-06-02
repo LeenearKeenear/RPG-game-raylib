@@ -10,7 +10,7 @@
  */
 
 #include "../lib/raylib/include/raylib.h"
-#include "buttonTxt.h"
+#include "button.h"
 #include "screen.h"
 #include <array>
 #include <cstdint>
@@ -96,17 +96,20 @@ private:
     /// Status aktif layar options
     bool active;
 
+    /// Flag apakah texture sudah dimuat
+    bool texturesLoaded;
+
     /// Layar tujuan saat tombol BACK diklik
     ScreenState returnScreen;
 
     /// Tab yang sedang dipilih (0=Video, 1=Audio, 2=Keybinds)
     int selectedTab;
 
-    /// Array tombol tab (VIDEO, AUDIO, KEYBINDS)
-    std::array<buttonTxt, 3> tabButtons;
+    /// Array tombol tab gambar (VIDEO, AUDIO, KEYBINDS)
+    std::array<buttonImage, 3> tabButtons;
 
     /// Tombol BACK untuk kembali ke layar sebelumnya
-    buttonTxt backButton;
+    buttonImage backButton;
 
     /// Tombol toggle fullscreen (ON/OFF)
     buttonTxt fullscreenButton;
@@ -131,6 +134,9 @@ private:
 
     /// Rectangle background area options
     Rectangle backgroundRect;
+
+    /// Texture background settings
+    Texture2D bgTexture;
 
     /// Vektor opsi resolusi yang tersedia
     std::vector<ResOption> resolutionOptions;
@@ -214,6 +220,11 @@ private:
      */
     void HandleButtonClick(int buttonIndex, GameState* state);
 
+    /**
+     * @brief Memuat texture button dari disk (lazy, sekali saja)
+     */
+    void LoadTextures();
+
     /*==========================================================================
      * Private Members
      *==========================================================================*/
@@ -221,21 +232,24 @@ private:
     /// Status aktif menu
     bool active;
 
-    /// Array tombol-tombol menu (6 buah)
-    std::array<buttonTxt, 6> buttons;
+    /// Flag apakah texture sudah dimuat
+    bool texturesLoaded;
 
-    /// Teks untuk masing-masing tombol
-    std::array<const char*, 6> buttonTexts;
+    /// Array tombol gambar (6 buah)
+    std::array<buttonImage, 6> buttons;
 
-    /// Posisi menu di layar
+    /// Texture background panel
+    Texture2D bgTexture;
+
+    /// Posisi background panel di layar
     Vector2 position;
 
-    /// Lebar menu dalam pixel
+    /// Lebar background panel
     int width;
 
-    /// Tinggi menu dalam pixel
+    /// Tinggi background panel
     int height;
 
-    /// Rectangle untuk background menu
+    /// Rectangle untuk background panel
     Rectangle backgroundRect;
 };

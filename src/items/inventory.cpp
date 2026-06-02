@@ -13,6 +13,7 @@
 
 #include "item.h"
 #include "inventory.h"
+#include "inv-bst-sort.h"
 #include "player.h"
 #include "input.h"
 #include "effects.h"
@@ -125,7 +126,10 @@ namespace Inventory
 
         slot.amount--;
         if (slot.amount <= 0)
-            slot = {-1, 0}; // kosongkan slot jika habis
+        {
+            BstRemove(g_BstRoot, slotIndex, player);
+            slot = {-1, 0};
+        }
 
         player.PotionCooldown = player.PotionCooldownMax;
     }
@@ -151,6 +155,7 @@ namespace Inventory
             {
                 int add = std::min(remaining, maxStack);
                 active = {item.definitionId, add};
+                BstInsert(g_BstRoot, activeSlot, player);
                 remaining -= add;
             }
             else if (isStackable && active.definitionId == item.definitionId && active.amount < maxStack)
@@ -204,6 +209,7 @@ namespace Inventory
             {
                 int add = std::min(remaining, maxStack);
                 player.GetHotbarItem(i) = {item.definitionId, add};
+                BstInsert(g_BstRoot, i, player);
                 remaining -= add;
             }
         }
@@ -215,6 +221,7 @@ namespace Inventory
             {
                 int add = std::min(remaining, maxStack);
                 player.GetBagItem(i) = {item.definitionId, add};
+                BstInsert(g_BstRoot, player.GetMaxHotbar() + i, player);
                 remaining -= add;
             }
         }
