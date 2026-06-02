@@ -1,11 +1,12 @@
 #include "enemy.h"
 #include "enemy_ai.h"
 #include "player.h"
+#include "item.h"
 #include "map.h"
 #include "datadriven.h"
 #include "../lib/raylib/include/raymath.h"
 #include "../lib/json/include/nlohmann/json.hpp"
-#include "debug.h"
+#include "game_debug.h"
 #include "entities.h"
 #include <cmath>
 #include <fstream>
@@ -52,7 +53,11 @@ void EnemyDataManager::Load(const std::string &path)
         def.hitbox.size = ParseVector2(h.at("size"));
         def.hitbox.offset = ParseVector2(h.at("offset"));
 
-        def.animSet = ResolveAnimSet(name);
+        def.Scale = SafeGet<float>(data, "scale", 1.0f);
+        def.AnimSetName = SafeGet<std::string>(data, "animSet", "");
+        if (def.AnimSetName.empty())
+            def.AnimSetName = name;
+        def.animSet = ResolveAnimSet(def.AnimSetName);
 
         definitions_[name] = std::move(def);
     }
@@ -64,6 +69,11 @@ const EnemyDefinition &EnemyDataManager::Get(const std::string &name) const
     if (it == definitions_.end())
         throw std::runtime_error("EnemyDefinition not found: " + name);
     return it->second;
+}
+
+bool EnemyDataManager::Has(const std::string &name) const
+{
+    return definitions_.count(name) > 0;
 }
 
 std::vector<std::string> EnemyDataManager::GetAllNames() const
@@ -146,6 +156,9 @@ void Enemy::Update()
             AIState = ENEMY_IDLE;
             DetectionRange = Def->stats.baseDetectionRange;
             Entities::RegisterDeath(GetCurrentMapPath(), MapObjectID);
+
+            if (!Def->stats.canTriggerTurnBased)
+                itemData.SpawnItemAtLocation(Position);
         }
 
         DeathTimer += GetFrameTime();
@@ -219,6 +232,9 @@ void Enemy::UpdateAI()
         if (Health > MaxHealth)
             Health = MaxHealth;
     }
+
+    if (Def->stats.canTriggerTurnBased && Health <= MaxHealth * 0.5f)
+        isTurnBasedMode = true;
 
     switch (AIState)
     {
@@ -469,8 +485,9 @@ void Enemy::Render()
     if (!IsActive)
         return;
 
+    float scale = Def ? Def->Scale : 1.0f;
     // Shadow sederhana di bawah enemy
-    DrawEllipse((int)Position.x + 16, (int)Position.y + 30, 10, 4, {0, 0, 0, 80});
+    DrawEllipse((int)(Position.x + 16), (int)(Position.y + 30), (int)(10 * scale), (int)(4 * scale), {0, 0, 0, 80});
 
     bool shouldDraw = true;
     if (Health <= 0)
@@ -483,14 +500,17 @@ void Enemy::Render()
     if (shouldDraw)
     {
         Color tint = (HitFlashTimer > 0) ? RED : WHITE;
-        DrawAnimation(Anim, TEXTURE_ENEMIES, tint);
+        DrawAnimation(Anim, TEXTURE_ENEMIES, tint, scale);
     }
 
     // Health bar hanya tampil saat agresif
     if (AIState == ENEMY_CHASE || AIState == ENEMY_ATTACK)
     {
-        DrawRectangle((int)Position.x + 4, (int)Position.y + 38, 24, 4, BLACK);
-        DrawRectangle((int)Position.x + 4, (int)Position.y + 38, (int)(24 * (Health / MaxHealth)), 4, RED);
+        int barWidth = (int)(24 * scale);
+        int barX = (int)(Position.x + 16 - barWidth / 2.0f);
+        int barY = (int)(Position.y + TILE_SIZE * scale + 4);
+        DrawRectangle(barX, barY, barWidth, 4, BLACK);
+        DrawRectangle(barX, barY, (int)(barWidth * (Health / MaxHealth)), 4, RED);
     }
 
     if (isDebugMode)
@@ -599,9 +619,9 @@ void Enemy::MoveTowards(Vector2 target, float speed)
 // Fallback ke SlimeAnimationSet jika nama tidak dikenali
 const AnimationSet *ResolveAnimSet(const std::string &name)
 {
-    if (name == "Skeleton")
+    if (name.find("Skeleton") != std::string::npos)
         return &SkeletonAnimationSet;
-    if (name == "Wolf")
+    if (name.find("Wolf") != std::string::npos)
         return &WolfAnimationSet;
     return &SlimeAnimationSet;
 }

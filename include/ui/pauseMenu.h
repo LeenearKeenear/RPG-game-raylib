@@ -91,7 +91,7 @@ public:
      * @brief Mengatur layar kembali (layar tujuan saat tombol BACK diklik)
      * @param screen Layar tujuan
      */
-    void SetReturnScreen(ScreenState screen);
+    void SetReturnScreen(ScreenState screen) { returnScreen = screen; }
 
 private:
     /**

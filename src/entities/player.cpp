@@ -4,7 +4,7 @@
 #include "interaction.h"
 #include "inventory.h"
 #include "mapLogic.h"
-#include "debug.h"
+#include "game_debug.h"
 #include "../lib/raylib/include/raymath.h"
 #include "propsbehavior.h"
 #include <cmath>

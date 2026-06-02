@@ -166,14 +166,16 @@ void UpdateAnimation(Animation &anim, float dt)
     }
 }
 
-void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint)
+void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint, float scale)
 {
     if (!anim.currentConfig) return;
 
     int frameX = anim.currentConfig->startFrame + anim.currentFrame;
     int row = anim.currentConfig->row;
 
-    Rectangle dest = { anim.position.x, anim.position.y, (float)TILE_SIZE, (float)TILE_SIZE };
+    float s = TILE_SIZE * scale;
+    float offset = (s - TILE_SIZE) * 0.5f;
+    Rectangle dest = { anim.position.x - offset, anim.position.y - offset, s, s };
     DrawTileTexture(texture, frameX, row, dest, {0,0}, 0.0f, tint);
 }
 

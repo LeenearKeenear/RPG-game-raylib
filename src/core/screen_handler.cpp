@@ -23,7 +23,7 @@
 #include "entities.h"
 #include "mapLogic.h"
 #include "effects.h"
-#include "debug.h"
+#include "game_debug.h"
 #include "pauseMenu.h"
 #include "combat.h"
 #include "interaction.h"
@@ -36,6 +36,7 @@
 #include <cctype>
 #include "hud.h"
 #include "propsbehavior.h"
+#include "combatTurn.h"
 
 /*==============================================================================
  * External Variables & Macros
@@ -177,7 +178,22 @@ void SpawnEnemiesFromMap()
                 }
             }
 
-            // 2. Tentukan Radius Patroli (Default: 128, atau dari properti 'radius')
+            // 2a. Random chance untuk elite/boss variant (testing)
+            int variantRoll = GetRandomValue(0, 2);
+            if (variantRoll == 1)
+            {
+                std::string eliteName = enemyName + "_Elite";
+                if (enemyData.Has(eliteName))
+                    enemyName = eliteName;
+            }
+            else if (variantRoll == 2)
+            {
+                std::string bossName = enemyName + "_Boss";
+                if (enemyData.Has(bossName))
+                    enemyName = bossName;
+            }
+
+            // 2b. Tentukan Radius Patroli (Default: 128, atau dari properti 'radius')
             float radius = 128.0f;
             if (obj.properties.count("radius"))
             {
@@ -273,12 +289,47 @@ void UpdateGame(GameState *state)
  */
 void UpdateLogicAll()
 {
+    TurnCombat::UpdateCooldown();
+
+    // If turn-based combat is active, process it and skip all normal logic
+    if (TurnCombat::IsActive())
+    {
+        TurnCombat::Update();
+
+        // Still update effects and items for visual feedback
+        Effects::Update(GetFrameTime());
+        return;
+    }
+
     // update flow field sebelum enemy di-update
     if (tilesonMap)
         globalFlowField.Update(PlayerInstance.GetPosition(), tilesonMap->width, tilesonMap->height);
 
     // Update semua entity (Player + semua Enemy) via Entities registry
     Entities::Update();
+
+    // Check if any enemy triggered turn-based mode after updating
+    for (Entity *entity : Entities::GetRegistry())
+    {
+        Enemy *enemy = dynamic_cast<Enemy *>(entity);
+        if (enemy && enemy->IsActive && enemy->isTurnBasedMode)
+        {
+            if (PlayerInstance.Health <= 0)
+            {
+                TraceLog(LOG_INFO, "TURN: Player is dead, skipping trigger");
+                continue;
+            }
+            if (TurnCombat::GetDefeatCooldown() > 0.0f)
+            {
+                TraceLog(LOG_INFO, "TURN: Defeat cooldown active (%.1fs), skipping", TurnCombat::GetDefeatCooldown());
+                continue;
+            }
+            TraceLog(LOG_INFO, "TURN: Turn-based combat triggered by %s", enemy->Name.c_str());
+            TurnCombat::Init(enemy, &PlayerInstance);
+            TurnCombat::Update(); // Process first state immediately
+            break;
+        }
+    }
 
     // Handle pending map transitions dari Interaction namespace
     Interaction::ExecutePendingTransitions(PlayerInstance);
@@ -379,6 +430,12 @@ void DrawUIOverlay(GameState *state)
     {
         Vector2 mousePos = GetVirtualMousePosition(state);
         pauseMenu.Draw(mousePos);
+    }
+
+    // 4. Turn-based combat overlay
+    if (TurnCombat::IsActive())
+    {
+        TurnCombat::Draw();
     }
 }
 

@@ -3,7 +3,7 @@
 #include "mapLogic.h"
 #include "input.h"
 #include "tiles.h"
-#include "debug.h"
+#include "debug/game_debug.h"
 #include <cmath>
 
 namespace Movement

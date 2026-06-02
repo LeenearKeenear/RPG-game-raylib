@@ -117,9 +117,9 @@ void DrawSmallSprite(TextureAsset slot, Vector2 sheetCoord, Vector2 worldPos, fl
 void UpdateAnimation(Animation &anim, float dt);
 
 /**
- * @brief Me-render animasi pada frame saat ini.
+ * @brief Me-render animasi pada frame saat ini dengan skala opsional.
  */
-void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint = WHITE);
+void DrawAnimation(const Animation &anim, TextureAsset texture, Color tint = WHITE, float scale = 1.0f);
 
 /**
  * @brief Berpindah ke status animasi dan arah yang baru.

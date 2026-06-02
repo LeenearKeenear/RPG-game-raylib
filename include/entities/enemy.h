@@ -56,7 +56,9 @@ struct EnemyDefinition
     std::string name;            ///< Nama tipe enemy (e.g. "Slime", "Skeleton")
     EnemyStats stats;            ///< Statistik gameplay
     EnemyHitboxData hitbox;      ///< Konfigurasi hitbox
-    const AnimationSet *animSet; ///< Pointer ke AnimationSet global, di-resolve dari type
+    float Scale = 1.0f;          ///< Skala visual (1.0 = normal, 1.25 = elite, 1.75 = boss)
+    std::string AnimSetName;     ///< Nama AnimationSet yang digunakan (e.g. "Slime", "Skeleton", "Wolf")
+    const AnimationSet *animSet; ///< Pointer ke AnimationSet global, di-resolve dari AnimSetName
 };
 
 // data driven management class
@@ -64,6 +66,7 @@ class EnemyDataManager
 {
 public:
     void Load(const std::string &path);
+    bool Has(const std::string &name) const;
     const EnemyDefinition &Get(const std::string &name) const;
     std::vector<std::string> GetAllNames() const;
 
