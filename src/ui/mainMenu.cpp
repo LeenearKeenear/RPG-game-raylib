@@ -79,11 +79,7 @@ void UpdateMainMenu(GameState *state)
             switch (i) {
                 case 0:  // Start Game
                     ClearSavedState();
-                    PlayerInstance.Anim.isDead = false;
-                    PlayerInstance.Anim.isAttacking = false;
-                    PlayerInstance.Health = PlayerInstance.MaxHealth;
-                    PlayerInstance.Mana = PlayerInstance.MaxMana;
-                    PlayerInstance.KnockbackVelocity = {0, 0};
+                    PlayerInstance.ResetForNewGame();
                     state->currentScreen = LOADING;
                     break;
                 case 2:  // Options

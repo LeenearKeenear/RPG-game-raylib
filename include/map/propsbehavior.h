@@ -107,6 +107,9 @@ public:
     /** @brief Bersihkan semua data chest */
     void Clear();
 
+    /** @brief Reset posisi chest yang sudah dikonsumsi (untuk new game) */
+    void ResetConsumed();
+
     /**
      * @brief Ambil jumlah chest yang sedang dikelola.
      * @return Jumlah chest aktif di manager
@@ -252,6 +255,9 @@ public:
     /** @brief Bersihkan semua data bomb */
     void Clear();
 
+    /** @brief Reset posisi bomb yang sudah meledak (untuk new game) */
+    void ResetConsumed();
+
     /**
      * @brief Ambil jumlah bomb yang sedang dikelola.
      * @return Jumlah bomb aktif di manager
@@ -327,6 +333,9 @@ public:
     void HitByExplosion(Vector2 bombPos, BombManager *bomber);      // hancurkan crate yang terkena radius ledakan bomb
     int Render(Rectangle viewRect);                                 // render crate yang terlihat dalam view
     void Clear();                                                   // bersihkan semua data crate
+
+    /** @brief Reset posisi crate yang sudah hancur (untuk new game) */
+    void ResetConsumed();
 
     /**
      * @brief Ambil jumlah crate yang sedang dikelola.

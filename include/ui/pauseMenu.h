@@ -102,17 +102,20 @@ private:
     /// Status aktif layar options
     bool active;
 
+    /// Flag apakah texture sudah dimuat
+    bool texturesLoaded;
+
     /// Layar tujuan saat tombol BACK diklik
     ScreenState returnScreen;
 
     /// Tab yang sedang dipilih (0=Video, 1=Audio, 2=Keybinds)
     int selectedTab;
 
-    /// Array tombol tab (VIDEO, AUDIO, KEYBINDS)
-    std::array<buttonTxt, 3> tabButtons;
+    /// Array tombol tab gambar (VIDEO, AUDIO, KEYBINDS)
+    std::array<buttonImage, 3> tabButtons;
 
     /// Tombol BACK untuk kembali ke layar sebelumnya
-    buttonTxt backButton;
+    buttonImage backButton;
 
     /// Tombol toggle fullscreen (ON/OFF)
     buttonTxt fullscreenButton;
@@ -137,6 +140,9 @@ private:
 
     /// Rectangle background area options
     Rectangle backgroundRect;
+
+    /// Texture background settings
+    Texture2D bgTexture;
 
     /// Vektor opsi resolusi yang tersedia
     std::vector<ResOption> resolutionOptions;

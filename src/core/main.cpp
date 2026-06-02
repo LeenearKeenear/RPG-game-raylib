@@ -68,59 +68,53 @@ int main()
     // Main Game Loop
     while (!WindowShouldClose())
     {
-        // State: MAIN_MENU
+        // ===== State: MAIN_MENU =====
         if (state.currentScreen == MAIN_MENU)
         {
             UpdateGame(&state);
             UpdateMainMenu(&state);
+            if (WindowShouldClose()) break;
             RenderMainMenuToVirtualScreen(&state);
             DrawRenderWindows(&state);
         }
-        /*==============================================================================
-         * State: LOADING
-         *==============================================================================*/
+        // ===== State: LOADING =====
         else if (state.currentScreen == LOADING)
         {
-            // Initialize loading screen only on first entry
             if (!state.enteredLoading)
-            {
                 InitLoadingScreen(&state);
-            }
-
-            // Update and render loading screen
             UpdateLoadingScreen(&state);
+            if (WindowShouldClose()) break;
             RenderLoadingScreen(&state);
             DrawRenderWindows(&state);
         }
-        // State: OPTIONS
+        // ===== State: OPTIONS =====
         else if (state.currentScreen == OPTIONS)
         {
-            // Show options screen and set return screen on first entry
             if (!optionsScreen.IsActive())
             {
                 optionsScreen.SetReturnScreen(state.previousScreen);
                 optionsScreen.Show();
             }
-
             UpdateGame(&state);
             bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
             optionsScreen.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
-
+            if (WindowShouldClose()) break;
             BeginTextureMode(state.Dungeon);
             ClearBackground(DARKGRAY);
             optionsScreen.Draw(GetVirtualMousePosition(&state));
             EndTextureMode();
-
             DrawRenderWindows(&state);
         }
-        // State: PLAY
+        // ===== State: PLAY =====
         else if (state.currentScreen == PLAY)
         {
+            UpdateGame(&state);
+
+            gState = &state;
+
             // If returning from OPTIONS, ensure pause menu is shown
             if (state.previousScreen == OPTIONS && !pauseMenu.IsActive())
-            {
                 pauseMenu.Show();
-            }
 
             // Poll input FIRST so pause toggle uses fresh state
             InputInstance.PollInput();
@@ -133,53 +127,40 @@ int main()
                     pauseMenu.Show();
             }
 
-            // update scale sebelum rendering
-            UpdateGame(&state);
-
             // capture mouse click before rendering
             bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 
             // update pause menu if active (HARUS sebelum rendering)
             if (pauseMenu.IsActive())
-            {
                 pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
-            }
 
             // Fixed timestep
             float frameTime = GetFrameTime();
-
             if (frameTime > Time::MAX_FRAME)
                 frameTime = Time::MAX_FRAME;
-
             accumulator += frameTime;
 
-            // update semua logic game - skip when paused
             while (accumulator >= Time::DELTA_TIME)
             {
                 if (!pauseMenu.IsActive())
                 {
                     UpdateLogicAll();
-
-                    // check player death → GAME_OVER
                     if (PlayerInstance.Anim.isDead)
-                    {
                         state.currentScreen = GAME_OVER;
-                    }
                 }
-
                 accumulator -= Time::DELTA_TIME;
             }
 
             // render semua ke layar virtual
             DrawRenderTexture(&state);
-
             // scale layar virtual ke window asli
             DrawRenderWindows(&state);
         }
-        // State: GAME_OVER
+        // ===== State: GAME_OVER =====
         else if (state.currentScreen == GAME_OVER)
         {
             UpdateGameOverScreen(&state);
+            if (WindowShouldClose()) break;
             RenderGameOverScreen(&state);
             DrawRenderWindows(&state);
         }

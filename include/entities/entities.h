@@ -43,6 +43,11 @@ namespace Entities
      */
     bool IsAlreadyDead(const std::string &mapPath, int objectId);
 
+    /**
+     * @brief Membersihkan semua catatan entitas mati (untuk new game).
+     */
+    void ClearDeadEntities();
+
     std::vector<Enemy *> &GetEnemyRegistry();
 
 }

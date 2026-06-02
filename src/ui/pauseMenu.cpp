@@ -38,12 +38,8 @@ static Popup loadPopup("Game Loaded!", "OK", 0.7F);
  * 
  * Menginisialisasi semua tombol tab, tombol back, dan dimensi awal.
  */
-OptionsScreen::OptionsScreen() : active(false), returnScreen(PLAY), selectedTab(0), showFPS(false), width(0), height(0), startX(0), startY(0)
+OptionsScreen::OptionsScreen() : active(false), texturesLoaded(false), returnScreen(PLAY), selectedTab(0), showFPS(false), width(0), height(0), startX(0), startY(0), bgTexture({0})
 {
-    tabButtons = {buttonTxt("VIDEO", 0, 0, 30, WHITE, 0.7F),
-                buttonTxt("AUDIO", 0, 0, 30, WHITE, 0.7F),
-                buttonTxt("KEYBINDS", 0, 0, 30, WHITE, 0.7F)};
-    backButton = buttonTxt("BACK", 0, 0, 30, WHITE, 0.7F);
 }
 
 /**
@@ -51,6 +47,9 @@ OptionsScreen::OptionsScreen() : active(false), returnScreen(PLAY), selectedTab(
  */
 OptionsScreen::~OptionsScreen()
 {
+    if (bgTexture.id != 0) {
+        UnloadTexture(bgTexture);
+    }
 }
 
 /**
@@ -59,6 +58,14 @@ OptionsScreen::~OptionsScreen()
 void OptionsScreen::Show()
 {
     active = true;
+    if (!texturesLoaded) {
+        Image img = LoadImage("assets/textures/settingsButt/settingsBG.png");
+        if (img.data != nullptr) {
+            bgTexture = LoadTextureFromImage(img);
+            UnloadImage(img);
+        }
+        texturesLoaded = true;
+    }
     CalculateDimensions();
 }
 
@@ -128,44 +135,41 @@ std::vector<ResOption> GetAvailableResolutions()
  */
 void OptionsScreen::CalculateDimensions()
 {
-    const int fontSize = 30;
-    const int padding = 20;
-    const int tabWidth = 200;
-    const int tabSpacing = 10;
+    const int tabHeight = 56;
 
-    width = 800;
-    height = 600;
+    width = bgTexture.width > 0 ? bgTexture.width : 800;
+    height = bgTexture.height > 0 ? bgTexture.height : 600;
     startX = (GameScreenWidth - width) / 2;
     startY = (GameScreenHeight - height) / 2;
 
     backgroundRect = {static_cast<float>(startX), static_cast<float>(startY), static_cast<float>(width), static_cast<float>(height)};
 
-    int tabStartX = startX + padding;
+    int tabY = startY + 15 + 120;
+
+    const char* tabFiles[3] = {
+        "assets/textures/settingsButt/settingsVideo.png",
+        "assets/textures/settingsButt/settingsAudio.png",
+        "assets/textures/settingsButt/settingsKeybinds.png"
+    };
     for (int i = 0; i < 3; i++) {
-        tabButtons[i] = buttonTxt(
-            i == 0 ? "VIDEO" : (i == 1 ? "AUDIO" : "KEYBINDS"),
-            tabStartX + (i * (tabWidth + tabSpacing)),
-            startY + padding,
-            fontSize,
-            (selectedTab == i) ? YELLOW : WHITE,
-            0.7F);
+        float cx = static_cast<float>(startX + width / 2 + (i - 1) * 302);
+        float cy = static_cast<float>(tabY + tabHeight / 2);
+        tabButtons[i] = buttonImage(tabFiles[i], Vector2{cx, cy}, 1.0F, 0.7F);
     }
 
-    int backWidth = MeasureText("BACK", fontSize);
-    backButton = buttonTxt(
-        "BACK", 
-        startX + width - backWidth - padding - 20, 
-        startY + height - fontSize - padding - 20, 
-        fontSize, WHITE, 0.7F);
+    backButton = buttonImage(
+        "assets/textures/settingsButt/settingsBack.png",
+        Vector2{static_cast<float>(startX + width - 133),
+                static_cast<float>(startY + height - 53)},
+        1.0F, 0.7F);
 
     if (resolutionOptions.empty()) {
         resolutionOptions = GetAvailableResolutions();
     }
 
     const int labelFontSize = 24;
-    int labelX = startX + 40;
-    int valueX = startX + 250;
-    int contentStartY = startY + 100;
+    int valueX = startX + 339;
+    int contentStartY = startY + 221;
 
     bool isFullscreen = IsWindowFullscreen();
     fullscreenButton = buttonTxt(
@@ -176,7 +180,7 @@ void OptionsScreen::CalculateDimensions()
         isFullscreen ? GREEN : RED,
         0.7F);
 
-fpsButton = buttonTxt(
+    fpsButton = buttonTxt(
         showFPS ? "ON" : "OFF",
         valueX,
         contentStartY + 75,
@@ -229,9 +233,13 @@ void OptionsScreen::Draw(Vector2 mousePosition)
         return;
     }
 
-    Color bgColor = {40, 40, 40, 230};
-    DrawRectangleRec(backgroundRect, bgColor);
-    DrawRectangleLinesEx(backgroundRect, 2, WHITE);
+    if (bgTexture.id != 0) {
+        DrawTexture(bgTexture, startX, startY, WHITE);
+    } else {
+        Color bgColor = {40, 40, 40, 230};
+        DrawRectangleRec(backgroundRect, bgColor);
+        DrawRectangleLinesEx(backgroundRect, 2, WHITE);
+    }
 
     for (int i = 0; i < 3; i++) {
         tabButtons[i].Draw(mousePosition);
@@ -239,10 +247,19 @@ void OptionsScreen::Draw(Vector2 mousePosition)
 
     backButton.Draw(mousePosition);
 
+    int contentOX = 89, contentOY = 121;
+    Rectangle contentRect = {
+        static_cast<float>(startX + contentOX + 20),
+        static_cast<float>(startY + 200),
+        static_cast<float>(width - 2 * (contentOX + 20)),
+        static_cast<float>(height - 323)
+    };
+    DrawRectangleRec(contentRect, {0, 0, 0, 51});
+
     switch (selectedTab) {
-        case 0: DrawVideoTab(fullscreenButton, fpsButton, mousePosition, startX, startY); break;
-        case 1: DrawAudioTab(mousePosition, startX, startY); break;
-        case 2: DrawKeybindsTab(mousePosition, startX, startY); break;
+        case 0: DrawVideoTab(fullscreenButton, fpsButton, mousePosition, startX + contentOX, startY + contentOY); break;
+        case 1: DrawAudioTab(mousePosition, startX + contentOX, startY + contentOY); break;
+        case 2: DrawKeybindsTab(mousePosition, startX + contentOX, startY + contentOY); break;
     }
 }
 
@@ -361,11 +378,7 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             break;
         case 3: // Restart (New Game)
             ClearSavedState();
-            PlayerInstance.Anim.isDead = false;
-            PlayerInstance.Anim.isAttacking = false;
-            PlayerInstance.Health = PlayerInstance.MaxHealth;
-            PlayerInstance.Mana = PlayerInstance.MaxMana;
-            PlayerInstance.KnockbackVelocity = {0, 0};
+            PlayerInstance.ResetForNewGame();
             state->enteredLoading = false;
             state->loadingStage = 0;
             state->loadingProgress = 0.0F;

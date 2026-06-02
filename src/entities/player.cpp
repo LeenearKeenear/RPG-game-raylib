@@ -84,6 +84,26 @@ void Player::Init(GameState *state, const char *spawnObjectName)
 }
 
 /**
+ * @brief Reset pemain untuk new game (health, mana, inventory, flags).
+ */
+void Player::ResetForNewGame()
+{
+    isInitialized = false;
+    Health = MaxHealth = 100.0f;
+    Mana = MaxMana = 100.0f;
+    ManaRegenTimer = 0.0f;
+    Hotbar[0] = {0, 1};
+    Hotbar[1] = {1, 1};
+    Hotbar[2] = {2, 8};
+    Hotbar[3] = {3, 8};
+    for (int i = 0; i < MaxBag; i++)
+        Bag[i] = {-1, 0};
+    Anim.isDead = false;
+    Anim.isAttacking = false;
+    KnockbackVelocity = {0, 0};
+}
+
+/**
  * Loop update utama untuk pemain.
  * Dipanggil oleh Entities::Update() setiap frame.
  *

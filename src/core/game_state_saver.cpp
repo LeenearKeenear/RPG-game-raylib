@@ -7,6 +7,8 @@
 
 #include "game_state_saver.h"
 #include "map.h"
+#include "entities.h"
+#include "propsbehavior.h"
 
 /*==============================================================================
  * Global Saved State Variables
@@ -212,4 +214,10 @@ void ClearSavedState(void)
     savedEnemyStates.clear();
     savedItemStates.clear();
     savedMapState.chestOpened.clear();
+
+    // Reset persistent world state for a fresh game
+    Entities::ClearDeadEntities();
+    chestManager.ResetConsumed();
+    bombManager.ResetConsumed();
+    crateManager.ResetConsumed();
 }
