@@ -376,8 +376,10 @@ void RenderLoadingScreen(GameState *state)
 
     std::array<char, 10> progressText;
     sprintf(progressText.data(), "%d%%", (int)state->loadingProgress);
-    int progressTextWidth = MeasureText(progressText.data(), 20);
-    DrawText(progressText.data(), (GameScreenWidth / 2) - (progressTextWidth / 2), (GameScreenHeight / 2) + 50, 20, WHITE);
+    Vector2 pctSize = MeasureTextEx(fontLoadingTitle, progressText.data(), 20, 1);
+    float pctX = (GameScreenWidth - pctSize.x) / 2.0f;
+    float pctY = (float)(GameScreenHeight / 2) + 50.0f;
+    DrawTextEx(fontLoadingTitle, progressText.data(), {pctX, pctY}, 20, 1, WHITE);
 
     EndTextureMode();
 }
