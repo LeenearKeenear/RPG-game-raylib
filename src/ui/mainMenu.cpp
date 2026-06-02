@@ -186,6 +186,18 @@ void UpdateMainMenu(GameState *state)
     {
         mainCorruptPopup.Update(mousePosition, mouseClicked);
     }
+
+    // Bersihkan semua popup saat keluar dari main menu ke layar lain
+    // (misal Start Game → LOADING atau Options → OPTIONS).
+    // Mencegah popup yang tidak sempat di-dismiss (seperti mainNoSavePopup)
+    // tetap aktif dan muncul kembali saat player kembali ke main menu.
+    if (state->currentScreen != MAIN_MENU)
+    {
+        if (startNewPopup.IsActive()) startNewPopup.Hide();
+        if (loadPopup.IsActive()) loadPopup.Hide();
+        if (mainNoSavePopup.IsActive()) mainNoSavePopup.Hide();
+        if (mainCorruptPopup.IsActive()) mainCorruptPopup.Hide();
+    }
 }
 
 /**

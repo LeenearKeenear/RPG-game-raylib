@@ -201,6 +201,10 @@ int main()
             if (pauseMenu.IsActive())
                 pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
 
+            // Flush input bila pause menu mengubah layar (misal "To Main" → MAIN_MENU)
+            if (state.currentScreen != PLAY)
+                PollInputEvents();
+
             // Fixed timestep
             float frameTime = GetFrameTime();
             if (frameTime > Time::MAX_FRAME)
