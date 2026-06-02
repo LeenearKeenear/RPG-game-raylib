@@ -504,7 +504,7 @@ void DrawMenuBackground(void)
     DrawRectangleGradientV(
         0, 0,
         GameScreenWidth, GameScreenHeight,
-        {15, 15, 25, 255},   // top: dark blue-black
-        {5, 5, 15, 255}      // bottom: deeper black-blue
+        {36, 28, 58, 255},   // top: muted dark purple-blue
+        {5, 5, 15, 255}      // bottom: near-black
     );
 }
