@@ -340,7 +340,7 @@ void UpdateLoadingScreen(GameState *state)
 void RenderLoadingScreen(GameState *state)
 {
     BeginTextureMode(state->Dungeon);
-    ClearBackground(DARKGRAY);
+    DrawRectangleGradientV(0, 0, GameScreenWidth, GameScreenHeight, {15, 15, 25, 255}, {5, 5, 15, 255});
 
     int textWidth = MeasureText(state->loadingText, 20);
     DrawText(state->loadingText, (GameScreenWidth / 2) - (textWidth / 2), (GameScreenHeight / 2) - 20, 20, WHITE);
