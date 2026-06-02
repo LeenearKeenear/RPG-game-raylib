@@ -820,7 +820,10 @@ void SpawnInRect(const MapObject *obj, const std::string &enemyName, float ratio
         for (int retry = 0; retry < SPAWN_RETRY_LIMIT; retry++)
         {
             spawnPos = {xDist(rng), yDist(rng)};
-            if (IsPositionSafe(spawnPos, def.hitbox.size.x, def.hitbox.size.y,
+            // Convert center (Enemy::Init expectation) ke Entity::Position (IsPositionSafe expectation)
+            Vector2 entityPos = {spawnPos.x - def.hitbox.size.x / 2.0f - def.hitbox.offset.x,
+                                 spawnPos.y - def.hitbox.size.y / 2.0f - def.hitbox.offset.y};
+            if (IsPositionSafe(entityPos, def.hitbox.size.x, def.hitbox.size.y,
                                def.hitbox.offset.x, def.hitbox.offset.y))
             {
                 valid = true;

@@ -4,7 +4,7 @@
  *
  * File ini berisi implementasi fungsi-fungsi inventory:
  * - HasInventorySpace, GetActiveHotbarItem
- * - HandleInventoryActions: right-click → drink potion / equip
+ * - HandleInventoryActions: left-click → drink potion / equip
  * - UsePotion: konsumsi potion dari hotbar
  * - AddToInventory: tambah item ke hotbar/bag dengan stack logic
  * - SetupAttackStats: setup player attack berdasarkan weapon di hotbar
@@ -16,6 +16,7 @@
 #include "player.h"
 #include "input.h"
 #include "effects.h"
+#include "screen.h"
 
 namespace Inventory
 {
@@ -48,9 +49,13 @@ namespace Inventory
      * Input & Aksi Inventory
      *==============================================================================*/
 
-    /** @brief Handle right-click action untuk potion/equip */
+    /** @brief Handle left-click action untuk potion/equip */
     void HandleInventoryActions(Player &player)
     {
+        // Cooldown timer tick
+        if (player.PotionCooldown > 0.0f)
+            player.PotionCooldown -= Time::DELTA_TIME;
+
         // Inventory terbuka = block semua aksi shortcut
         if (InputInstance.IsInventoryOpen())
             return;
@@ -58,7 +63,7 @@ namespace Inventory
         if (player.IsDashing)
             return;
 
-        if (!InputInstance.IsRightClickPressed())
+        if (!InputInstance.IsLeftClickPressed())
             return;
 
         PlayerAction action = InputInstance.ResolveAction();
@@ -107,6 +112,12 @@ namespace Inventory
             return;
         }
 
+        if (player.PotionCooldown > 0.0f)
+        {
+            Effects::AddLog("Potion sedang cooldown!");
+            return;
+        }
+
         if (potion.isMana)
             player.Mana = std::min(player.Mana + (float)potion.healValue, player.MaxMana);
         else
@@ -115,6 +126,8 @@ namespace Inventory
         slot.amount--;
         if (slot.amount <= 0)
             slot = {-1, 0}; // kosongkan slot jika habis
+
+        player.PotionCooldown = player.PotionCooldownMax;
     }
 
     /*==============================================================================

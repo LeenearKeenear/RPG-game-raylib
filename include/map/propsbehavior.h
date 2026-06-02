@@ -9,6 +9,7 @@
  * - SpikeManager: trap spike dengan timer aktif/nonaktif dan damage area
  * - BombManager: trap bomb yang meledak saat dipukul, dengan chain reaction
  * - CrateManager: crate yang bisa dihancurkan player/bomb dan punya chance drop loot
+ * - SignManager: spawn dan interaksi sign yang bisa dibaca player
  */
 
 #include "map.h"
@@ -111,6 +112,7 @@ public:
 private:
     std::vector<TileObject> chests;                    // Daftar chest yang sedang dikelola
     std::unordered_set<std::string> consumedPositions; // Posisi chest yang sudah dikonsumsi agar tidak diproses ulang
+    float chestSpread = 60.0f;                         // Radius sebaran loot dari chest
 
     TileObject *FindChest(Vector2 hitPos, float threshold = 32.0f); // Cari chest terdekat dari titik hit
     void TriggerLoot(TileObject &chest);                            // Spawn loot item secara random di sekitar chest
@@ -303,10 +305,11 @@ private:
         bool isAlive;    // False jika crate sudah dihancurkan
     };
 
-    static constexpr float CRATE_LOOT_CHANCE = 0.10f; // 10% chance drop loot
+    static constexpr float CRATE_LOOT_CHANCE = 1.0f; // 10% chance drop loot
 
     std::vector<CrateData> crates;                     // Daftar crate yang sedang dikelola
     std::unordered_set<std::string> consumedPositions; // Posisi crate yang sudah dihancurkan agar tidak spawn ulang
+    float crateSpread = 60.0f;                         // Radius sebaran loot dari crate
 
     TileObject *FindCrate(Vector2 hitPos, float threshold = 32.0f); // Cari crate terdekat dari titik hit
     void Destroy(CrateData &crate);                                 // Hancurkan crate, hapus obstacle, dan trigger loot
@@ -371,6 +374,59 @@ private:
 };
 
 /*==============================================================================
+ * SignManager
+ *==============================================================================*/
+
+/**
+ * @brief Manager untuk semua sign yang bisa dibaca player
+ *
+ * Sign adalah object interaktif di map yang saat di-raycast oleh player
+ * akan menampilkan teks dialog. Teks diambil dari custom property "dialog"
+ * di Tiled.
+ */
+class SignManager
+{
+public:
+    /** @brief Spawn semua sign dari object layer Tiled */
+    void SpawnSigns(const std::vector<MapObject *> &signObjects);
+
+    /** @brief Interaksi player dengan sign yang terkena raycast */
+    void Interact(Vector2 hitPos);
+
+    /** @brief Render placeholder sign (DARKGREEN rectangle) */
+    int Render(Rectangle viewRect);
+
+    /** @brief Bersihkan semua data sign */
+    void Clear();
+
+    /** @brief Apakah dialog sign sedang aktif */
+    bool IsDialogActive() const { return isDialogActive; }
+    /** @brief Ambil baris dialog yang aktif */
+    const std::vector<std::string> &GetActiveDialogLines() const { return activeDialogLines; }
+    /** @brief Tutup dialog */
+    void DismissDialog();
+
+private:
+    /** @brief Data internal satu sign */
+    struct SignData
+    {
+        TileObject tile;                // Posisi, bounds, state
+        std::vector<std::string> lines; // Baris dialog hasil split (| atau \n)
+    };
+
+    std::vector<SignData> signs; // Daftar sign yang sedang dikelola
+
+    bool isDialogActive = false;
+    std::vector<std::string> activeDialogLines;
+
+    /** @brief Split teks dialog jadi baris-baris berdasarkan | atau \n */
+    static std::vector<std::string> SplitDialog(const std::string &text);
+
+    /** @brief Cari sign terdekat dari titik hit */
+    SignData *FindSign(Vector2 hitPos, float threshold = 32.0f);
+};
+
+/*==============================================================================
  * Global Manager Instances
  *==============================================================================*/
 
@@ -384,3 +440,5 @@ extern BombManager bombManager;
 extern CrateManager crateManager;
 /** @brief Instance global manager barrier */
 extern BarrierManager barrierManager;
+/** @brief Instance global manager sign */
+extern SignManager signManager;

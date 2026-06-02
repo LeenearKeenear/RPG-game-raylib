@@ -203,6 +203,13 @@ public:
     /** @brief Ambil semua definisi item */
     const std::unordered_map<std::string, ItemDefinition> &GetAll() const;
 
+    /**
+     * @brief Dapatkan hitboxSize terbesar dari semua item dalam kategori tertentu
+     * @param category Kategori item yang dicek (ITEM_ANY = semua)
+     * @return Vector2 hitboxSize maksimum
+     */
+    Vector2 GetMaxHitboxForCategory(ItemCategory category) const;
+
 private:
     std::unordered_map<std::string, ItemDefinition> definitions_; // Key = nama item
     std::unordered_map<int, const ItemDefinition *> byId_;        // Key = ID numerik, untuk O(1) lookup
