@@ -22,6 +22,8 @@
 #include "../../include/map/worldgenio.h"
 #include "../../include/rendering/fonts.h"
 #include <algorithm>
+#include <cstring>
+#include <cctype>
 #include "../../lib/raylib/include/raylib.h"
 
 /*==============================================================================
@@ -334,6 +336,46 @@ void UpdateLoadingScreen(GameState *state)
 }
 
 /**
+ * @brief GetDisplayMapName()
+ * Mendapatkan display name dari map path saat ini.
+ * @return std::string Nama yang ditampilkan, atau empty string jika belum ada map.
+ */
+static std::string GetDisplayMapName()
+{
+    const char* mapPath = GetCurrentMapPath();
+    if (!mapPath || mapPath[0] == '\0')
+    {
+        mapPath = nullptr;
+    }
+
+    if (!mapPath)
+    {
+        return "";
+    }
+
+    // Handle worldgen paths
+    if (strstr(mapPath, "worldseed") != nullptr)
+    {
+        return "Generating World...";
+    }
+
+    // Extract filename stem
+    const char* filename = strrchr(mapPath, '/');
+    if (!filename) filename = strrchr(mapPath, '\\');
+    if (!filename) filename = mapPath; else filename++;
+
+    // Remove .json extension
+    std::string name(filename);
+    size_t dot = name.rfind('.');
+    if (dot != std::string::npos) name = name.substr(0, dot);
+
+    // Capitalize first letter
+    if (!name.empty()) name[0] = (char)toupper((unsigned char)name[0]);
+
+    return name;
+}
+
+/**
  * @brief RenderLoadingScreen()
  * Render loading screen ke layar virtual.
  * @param state Pointer ke GameState
@@ -380,6 +422,15 @@ void RenderLoadingScreen(GameState *state)
     float pctX = (GameScreenWidth - pctSize.x) / 2.0f;
     float pctY = (float)(GameScreenHeight / 2) + 50.0f;
     DrawTextEx(fontLoadingTitle, progressText.data(), {pctX, pctY}, 20, 1, WHITE);
+
+    // Map name display
+    std::string mapName = GetDisplayMapName();
+    if (!mapName.empty()) {
+        Vector2 mapSize = MeasureTextEx(fontLoadingTitle, mapName.c_str(), 18, 1);
+        float mapX = (GameScreenWidth - mapSize.x) / 2.0f;
+        float mapY = (float)(GameScreenHeight / 2) + 80.0f;
+        DrawTextEx(fontLoadingTitle, mapName.c_str(), {mapX, mapY}, 18, 1, ColorAlpha(WHITE, 0.6f));
+    }
 
     EndTextureMode();
 }
