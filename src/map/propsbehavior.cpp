@@ -91,6 +91,12 @@ void SpawnObject()
 
     auto crateObjs = TiledHelper::GetObjectsByType(CRATE_TYPE_OBJECT_NAME);
     crateManager.SpawnCrates(crateObjs);
+
+    // Spawn barriers — gabungin biasa + boss
+    auto barrierObjs = TiledHelper::GetObjectsByType(BARRIER_TYPE_OBJECT_NAME);
+    auto bossBarrierObjs = TiledHelper::GetObjectsByType(BARRIER_BOSS_TYPE_OBJECT_NAME);
+    barrierObjs.insert(barrierObjs.end(), bossBarrierObjs.begin(), bossBarrierObjs.end());
+    barrierManager.SpawnBarriers(barrierObjs);
 }
 
 /**
@@ -205,13 +211,13 @@ void ChestManager::TriggerLoot(TileObject &chest)
     int jumlahLoot = GetRandomValue(1, 3);
 
     std::mt19937 rng(static_cast<unsigned int>(time(nullptr)));
+    int lootSpread = 60;
     for (int i = 0; i < jumlahLoot; i++)
     {
-        // Kasih sedikit offset random (misal sejauh -20 sampai 20 pixel)
-        // Biar itemnya mencar di sekitar chest
+        // Kasih sedikit offset random biar itemnya mencar di sekitar chest
         Vector2 spawnPos = {
-            chest.position.x + (float)GetRandomValue(-60, 60),
-            chest.position.y + (float)GetRandomValue(-60, 60)};
+            chest.position.x + (float)GetRandomValue(-lootSpread, lootSpread),
+            chest.position.y + (float)GetRandomValue(-lootSpread, lootSpread)};
 
         itemData.SpawnItemAtLocation(spawnPos, &rng, ITEM_ANY);
     }
@@ -815,9 +821,10 @@ void CrateManager::TriggerLoot(TileObject &crate)
         return;
 
     std::mt19937 rng(static_cast<unsigned int>(time(nullptr)));
+    int lootSpread = 60;
     Vector2 spawnPos = {
-        crate.position.x + (float)GetRandomValue(-60, 60),
-        crate.position.y + (float)GetRandomValue(-60, 60)};
+        crate.position.x + (float)GetRandomValue(-lootSpread, lootSpread),
+        crate.position.y + (float)GetRandomValue(-lootSpread, lootSpread)};
 
     itemData.SpawnItemAtLocation(spawnPos, &rng, ITEM_POTION);
 }
@@ -855,4 +862,242 @@ void CrateManager::Clear()
 void CrateManager::ResetConsumed()
 {
     consumedPositions.clear();
+}
+
+/*==============================================================================
+ * BarrierManager Implementation
+ *==============================================================================*/
+
+BarrierManager barrierManager;
+
+/**
+ * @brief Spawn semua barrier dari object layer Tiled
+ *
+ * 1. Cek apakah map ini punya boss spawn — untuk mode re-lock
+ * 2. Cari object "boss" (pass) sebagai detektor area room boss
+ * 3. Snap posisi ke tile grid, daftarkan ke DynamicObstacles
+ *
+ * @param barrierObjects Daftar pointer MapObject bertipe barrier
+ */
+void BarrierManager::SpawnBarriers(const std::vector<MapObject *> &barrierObjects)
+{
+    barriers.clear();
+    isBossMap = false;
+    bossStageBounds = {0};
+
+    // Cek apakah ada object boss_stage — kalo ada, ini boss map
+    isBossMap = false;
+    bossStageBounds = {0};
+    auto stageObjs = TiledHelper::GetObjectsByType(BOSS_STAGE_TYPE_OBJECT_NAME);
+    if (!stageObjs.empty())
+    {
+        isBossMap = true;
+        bossStageBounds = stageObjs[0]->bounds;
+        TraceLog(LOG_INFO, "BarrierManager: boss_stage detected at (%.0f,%.0f w=%.0f h=%.0f)",
+                 bossStageBounds.x, bossStageBounds.y, bossStageBounds.width, bossStageBounds.height);
+    }
+
+    // totalEnemyCount di-capture pas Update pertama, karena enemy belum di-spawn pas SpawnObject
+    totalEnemyCount = 0;
+
+    // JANGAN reset cleared/hasReLocked — state ini bisa di-set oleh LoadRuntimeState sebelumnya
+    // Kalo sudah cleared (dari save load), skip spawn barrier sama sekali
+    if (cleared)
+    {
+        TraceLog(LOG_INFO, "BarrierManager: stage already cleared, skipping barrier spawn");
+        return;
+    }
+
+    for (auto *obj : barrierObjects)
+    {
+        Vector2 snapped = SnapToTileGrid({obj->bounds.x, obj->bounds.y});
+
+        BarrierData data;
+        data.tile.name = obj->name;
+        data.tile.bounds = obj->bounds;
+        data.tile.position = snapped;
+        data.tile.state = ObjectState::Active;
+        data.isActive = true;
+        data.isBoss = (obj->type == BARRIER_BOSS_TYPE_OBJECT_NAME);
+
+        barriers.push_back(data);
+        DynamicObstacles.push_back(data.tile.bounds);
+    }
+}
+
+/**
+ * @brief Update tiap frame — cek kill threshold & boss room state
+ *
+ * Non-boss map: barrier hilang permanen setelah 90% enemy mati.
+ * Boss map:     barrier buka (90%) → re-lock pas player masuk → buka lagi setelah boss mati.
+ */
+void BarrierManager::Update()
+{
+    if (barriers.empty())
+        return;
+
+    // Delayed capture totalEnemyCount — enemy belum di-spawn pas SpawnObject
+    if (totalEnemyCount == 0)
+    {
+        // Di boss map: exclude boss dari hitungan threshold
+        totalEnemyCount = 0;
+        for (auto *enemy : Entities::GetEnemyRegistry())
+        {
+            if (isBossMap && enemy->rank == ENEMY_BOSS)
+                continue;
+            totalEnemyCount++;
+        }
+        TraceLog(LOG_INFO, "BarrierManager: total enemy count = %d (boss excluded: %s)",
+                 totalEnemyCount, isBossMap ? "yes" : "no");
+    }
+
+    // Kalo gak ada enemy sama sekali, langsung clear
+    if (totalEnemyCount == 0)
+    {
+        RemoveAllBarriers();
+        return;
+    }
+
+    // Hitung jumlah enemy non-boss yang sudah mati (boss map: boss excluded)
+    int deadCount = 0;
+    int bossAlive = 0;
+    for (auto *enemy : Entities::GetEnemyRegistry())
+    {
+        if (isBossMap && enemy->rank == ENEMY_BOSS)
+        {
+            if (enemy->IsActive) bossAlive++;
+            continue;
+        }
+        if (!enemy->IsActive)
+            deadCount++;
+    }
+
+    // Trace tiap kali ada enemy baru yang mati
+    if (deadCount != prevDeadCount)
+    {
+        int alive = totalEnemyCount - deadCount;
+        TraceLog(LOG_INFO, "BarrierManager: enemy killed — remaining %d / total %d", alive, totalEnemyCount);
+        prevDeadCount = deadCount;
+    }
+
+    if (isBossMap)
+    {
+        /*-------- Boss map: 3-step flow --------*/
+
+        Rectangle playerBounds = PlayerInstance.GetHitbox();
+
+        if (!cleared && !hasReLocked && totalEnemyCount > 0 &&
+            (float)deadCount / (float)totalEnemyCount >= KILL_THRESHOLD)
+        {
+            // Step 1 — threshold terpenuhi, barrier buka
+            RemoveAllBarriers();
+            TraceLog(LOG_INFO, "BarrierManager: boss barrier opened (threshold met)");
+        }
+
+        if (cleared && !hasReLocked && bossStageBounds.width > 0 && bossStageBounds.height > 0)
+        {
+            // Step 2 — player masuk boss room → re-lock
+            if (CheckCollisionRecs(playerBounds, bossStageBounds))
+            {
+                ReLockBarriers();
+                hasReLocked = true;
+                TraceLog(LOG_INFO, "BarrierManager: boss barrier re-locked (player entered boss room)");
+            }
+        }
+
+        if (hasReLocked && !cleared)
+        {
+            // Step 3 — cek apa boss udah mati
+            if (bossAlive == 0)
+            {
+                RemoveAllBarriers();
+                TraceLog(LOG_INFO, "BarrierManager: boss barrier unlocked (boss defeated)");
+            }
+        }
+    }
+    else
+    {
+        /*-------- Normal map: unlock once threshold met --------*/
+        if (!cleared && totalEnemyCount > 0 &&
+            (float)deadCount / (float)totalEnemyCount >= KILL_THRESHOLD)
+            RemoveAllBarriers();
+    }
+}
+
+/**
+ * @brief Render barrier sebagai rectangle semi-transparan
+ *
+ * Sementara pake warna YELLONG selama belum ada texture pack.
+ *
+ * @param viewRect Area kamera/viewport aktif
+ * @return Jumlah barrier yang berhasil dirender
+ */
+int BarrierManager::Render(Rectangle viewRect)
+{
+    int rendered = 0;
+    for (auto &b : barriers)
+    {
+        if (!b.isActive)
+            continue;
+        if (!CheckCollisionRecs(b.tile.bounds, viewRect))
+            continue;
+
+        DrawRectangleRec(b.tile.bounds, ColorAlpha(YELLOW, 0.3f));
+        DrawRectangleLinesEx(b.tile.bounds, 2.0f, YELLOW);
+        rendered++;
+    }
+    return rendered;
+}
+
+/**
+ * @brief Hapus semua barrier dari DynamicObstacles
+ */
+void BarrierManager::RemoveAllBarriers()
+{
+    for (auto &b : barriers)
+    {
+        if (!b.isActive) continue;
+        b.isActive = false;
+        DynamicObstacles.erase(
+            std::remove_if(DynamicObstacles.begin(), DynamicObstacles.end(),
+                [&](const Rectangle &r)
+                {
+                    return r.x == b.tile.bounds.x && r.y == b.tile.bounds.y;
+                }),
+            DynamicObstacles.end());
+    }
+    cleared = true;
+    RebuildObstacleCache();
+}
+
+/**
+ * @brief Pasang ulang barrier (re-lock) — khusus boss room
+ *
+ * Setelah player masuk room boss, barrier ditutup lagi
+ * dan baru akan terbuka setelah boss mati.
+ */
+void BarrierManager::ReLockBarriers()
+{
+    for (auto &b : barriers)
+    {
+        if (b.isActive) continue;
+        b.isActive = true;
+        DynamicObstacles.push_back(b.tile.bounds);
+    }
+    cleared = false;
+    RebuildObstacleCache();
+}
+
+/**
+ * @brief Bersihkan semua data barrier
+ */
+void BarrierManager::Clear()
+{
+    barriers.clear();
+    cleared = false; // Default: barrier belum di-clear — di-set ulang sama LoadRuntimeState kalo ada save
+    isBossMap = false;
+    hasReLocked = false;
+    bossStageBounds = {0};
+    totalEnemyCount = 0;
+    prevDeadCount = 0;
 }

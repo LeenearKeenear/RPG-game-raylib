@@ -14,13 +14,18 @@ extern const int GameScreenWidth;
 extern const int GameScreenHeight;
 
 // Drag & Drop State
-static int dragSlot = -1;                // slot asal drag (-1 = tidak aktif)
-static InventoryItem dragItem = {-1, 0}; // salinan item yang sedang di-drag
+/** @brief Slot asal drag */
+static int dragSlot = -1;
+/** @brief Item yang sedang di-drag */
+static InventoryItem dragItem = {-1, 0};
 
 // Split stack state
-static bool isDragSplit = false;           // true jika sedang mode split
-static int splitTotalAmount = 0;           // total item sebelum split dimulai
-static std::vector<int> splitVisitedSlots; // slot yang sudah diisi saat split
+/** @brief Flag mode split stack */
+static bool isDragSplit = false;
+/** @brief Total item sebelum split */
+static int splitTotalAmount = 0;
+/** @brief Slot yang sudah diisi saat split */
+static std::vector<int> splitVisitedSlots;
 
 // Inventory panel textures
 static Texture2D invBgTex = {0};

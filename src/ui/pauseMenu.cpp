@@ -14,6 +14,8 @@
 #include "keybindsTab.h"
 #include "game_state_saver.h"
 #include "player.h"
+#include "worldgenio.h"
+#include "seedmanager.h"
 
 /*==============================================================================
  * Static Variables (Popup Notifications)
@@ -370,7 +372,10 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
         case 0: // Resume
             Hide();
             break;
-        case 1: // Save
+        case 1:
+            // Save Game — simpan runtime + player state ke disk
+            WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
+            SaveGameState(state);
             savePopup.Show();
             break;
         case 2: // Load
@@ -386,16 +391,21 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             state->currentScreen = LOADING;
             Hide();
             break;
-        case 4: // Return to Main Menu
+        case 4:
+            // Return to Main Menu — save dulu baru pindah
+            WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
+            SaveGameState(state);
             state->enteredLoading = false;
             state->loadingStage = 0;
             state->loadingProgress = 0.0F;
             state->loadingComplete = false;
-            SaveGameState(state);
             state->currentScreen = MAIN_MENU;
             Hide();
             break;
-        case 5: // Close Game
+        case 5:
+            // Close Game — save dulu baru tutup
+            WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
+            SaveGameState(state);
             CloseWindow();
             break;
         default:

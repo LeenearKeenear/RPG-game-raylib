@@ -10,6 +10,8 @@
 #include "screen.h"
 #include "player.h"
 #include "game_state_saver.h"
+#include "seedmanager.h"
+#include "worldgenio.h"
 #include "../lib/raylib/include/raylib.h"
 #include <array>
 
@@ -89,7 +91,22 @@ void UpdateMainMenu(GameState *state)
                 case 3:  // Quit
                     CloseWindow();
                     break;
-                case 1:  // Load Game
+                case 1:  // Load Game — load dari top slot
+                {
+                    int slot = WorldgenIO::GetTopSlot();
+                    if (slot > 0)
+                    {
+                        std::string metaPath = WorldgenIO::GetMetaPath(slot);
+                        if (g_SeedManager.LoadMeta(metaPath))
+                        {
+                            state->pendingMapPath = WorldgenIO::GetStagePath(g_SeedManager.GetCurrentStage());
+                            state->pendingDoorName = "start";
+                            state->isSwitchingMap = true;
+                            state->currentScreen = LOADING;
+                        }
+                    }
+                    break;
+                }
                 default:
                     break;
             }

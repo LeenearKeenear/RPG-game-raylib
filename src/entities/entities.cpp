@@ -1,3 +1,14 @@
+/**
+ * @file entities.cpp
+ * @brief Implementasi Entity Registry System
+ *
+ * File ini berisi implementasi registri global untuk entity management:
+ * - Registry / DynamicRegistry untuk entity lifecycle
+ * - EnemyRegistry untuk akses enemy
+ * - DeadEntities tracking untuk respawn prevention
+ * - RenderTileProps / ClearTileProps untuk tile-based props
+ */
+
 #include "entities.h"
 #include "propsbehavior.h"
 #include <vector>
@@ -18,6 +29,7 @@ namespace Entities
      */
     static std::vector<Entity *> DynamicRegistry;
 
+    /** @brief Registri global enemy */
     std::vector<Enemy *> EnemyRegistry;
 
     /**
@@ -51,6 +63,7 @@ namespace Entities
     int Render(Rectangle viewRect)
     {
         std::vector<Entity *> visible;
+        visible.reserve(Registry.size());
         for (auto entity : Registry)
         {
             if (entity && entity->IsActive && CheckCollisionRecs(entity->GetHitbox(), viewRect))
@@ -123,6 +136,7 @@ namespace Entities
         return Registry;
     }
 
+    /** @brief Getter EnemyRegistry */
     std::vector<Enemy *> &GetEnemyRegistry()
     {
         return EnemyRegistry;
@@ -148,22 +162,34 @@ namespace Entities
     {
         DeadEntities.clear();
     }
+
+    const std::set<std::string> &GetDeadEntries()
+    {
+        return DeadEntities;
+    }
+
+    void SetDeadEntries(const std::set<std::string> &entries)
+    {
+        DeadEntities = entries;
+    }
 }
 
-// rendering master buat tile prop
+/** @brief Render semua tile-based props yang visible */
 void RenderTileProps(Rectangle viewRect)
 {
     int chestRendered = chestManager.Render(viewRect);
     int spikeRendered = spikeManager.Render(viewRect);
     int bombRendered = bombManager.Render(viewRect);
     int crateRendered = crateManager.Render(viewRect);
+    barrierManager.Render(viewRect);
 }
 
-// clear master buat tile prop
+/** @brief Clear semua state tile-based props */
 void ClearTileProps(void)
 {
     chestManager.Clear();
     spikeManager.Clear();
     bombManager.Clear();
     crateManager.Clear();
+    barrierManager.Clear();
 }

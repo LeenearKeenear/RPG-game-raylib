@@ -31,14 +31,17 @@ struct TextPolicy
     int textWidth;
     float hoverAmount;
 
+    /** @brief Default constructor */
     TextPolicy() : text(nullptr), posX(0), posY(0), fontSize(0), textColor(BLANK), textWidth(0), hoverAmount(1.0F) {}
 
+    /** @brief Construct dengan text, posisi, font, warna, hover */
     TextPolicy(const char *text, int posX, int posY, int fontSize, Color color, float hover)
         : text(text), posX(posX), posY(posY), fontSize(fontSize), textColor(color), hoverAmount(hover)
     {
         textWidth = MeasureText(text, fontSize);
     }
 
+    /** @brief Dapatkan bounds button text */
     [[nodiscard]] Rectangle GetBounds() const
     {
         return {static_cast<float>(posX), static_cast<float>(posY), 
@@ -56,8 +59,10 @@ struct ImagePolicy
     Vector2 position;
     float hoverAmount;
 
+    /** @brief Default constructor */
     ImagePolicy() : texture({0}), position({0, 0}), hoverAmount(1.0F) {}
 
+    /** @brief Construct dari file texture dengan scale dan hover */
     ImagePolicy(const char *texturePath, Vector2 pos, float scale, float hover)
     {
         Image image = LoadImage(texturePath);
@@ -106,6 +111,7 @@ struct ImagePolicy
         }
     }
 
+    /** @brief Dapatkan bounds button image */
     [[nodiscard]] Rectangle GetBounds() const
     {
         float halfW = static_cast<float>(texture.width) / 2.0F;
@@ -130,8 +136,10 @@ template<typename PolicyType>
 class Button
 {
 public:
+    /** @brief Default constructor */
     Button() : policy() {}
 
+    /** @brief Construct button dengan args untuk policy */
     template<typename... Args>
     Button(Args... args) : policy(args...)
     {
@@ -142,6 +150,16 @@ public:
     Button(Button&&) = default;
     Button& operator=(Button&&) = default;
 
+    /** @brief Destructor (unload texture kalo ImagePolicy) */
+    ~Button()
+    {
+        if constexpr (std::is_same_v<PolicyType, ImagePolicy>)
+        {
+            policy.Unload();
+        }
+    }
+
+    /** @brief Render button */
     void Draw(Vector2 mousePosition)
     {
         Color currentColor = GetNormalColor();
@@ -152,21 +170,25 @@ public:
         Render(currentColor);
     }
 
+    /** @brief Cek klik */
     [[nodiscard]] bool isClicked(Vector2 mousePosition, bool mouseClicked) const
     {
         return CheckCollisionPointRec(mousePosition, policy.GetBounds()) && mouseClicked;
     }
 
+    /** @brief Cek hover */
     [[nodiscard]] bool isHovered(Vector2 mousePosition) const
     {
         return CheckCollisionPointRec(mousePosition, policy.GetBounds());
     }
 
+    /** @brief Dapatkan bounds */
     [[nodiscard]] Rectangle GetBounds() const
     {
         return policy.GetBounds();
     }
 
+    /** @brief Perbandingan bounds */
     [[nodiscard]] bool operator==(const Button &other) const
     {
         Rectangle a = policy.GetBounds();
@@ -174,11 +196,13 @@ public:
         return a.x == b.x && a.y == b.y && a.width == b.width && a.height == b.height;
     }
 
+    /** @brief Perbandingan bounds */
     [[nodiscard]] bool operator!=(const Button &other) const
     {
         return !(*this == other);
     }
 
+    /** @brief Perbandingan bounds */
     [[nodiscard]] bool operator<(const Button &other) const
     {
         Rectangle a = policy.GetBounds();
@@ -188,22 +212,26 @@ public:
         return a.x < b.x;
     }
 
+    /** @brief Perbandingan bounds */
     [[nodiscard]] bool operator<=(const Button &other) const
     {
         return !(other < *this);
     }
 
+    /** @brief Perbandingan bounds */
     [[nodiscard]] bool operator>(const Button &other) const
     {
         return other < *this;
     }
 
+    /** @brief Perbandingan bounds */
     [[nodiscard]] bool operator>=(const Button &other) const
     {
         return !(*this < other);
     }
 
 private:
+    /** @brief Dapatkan warna normal sesuai policy */
     [[nodiscard]] Color GetNormalColor() const
     {
         if constexpr (std::is_same_v<PolicyType, TextPolicy>)
@@ -216,6 +244,7 @@ private:
         }
     }
 
+    /** @brief Render button sesuai policy type */
     void Render(Color color)
     {
         if constexpr (std::is_same_v<PolicyType, TextPolicy>)
@@ -232,6 +261,7 @@ private:
         }
     }
 
+    /** @brief Gelapkan warna dengan faktor amount */
     static Color DarkenColor(Color color, float amount)
     {
         return {
@@ -242,7 +272,7 @@ private:
         };
     }
 
-    PolicyType policy;
+    PolicyType policy; // Policy instance
 };
 
 /*==============================================================================
