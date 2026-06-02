@@ -211,7 +211,7 @@ void RenderMainMenuToVirtualScreen(GameState *state)
 
     // Mulai render ke texture virtual
     BeginTextureMode(state->Dungeon);
-    ClearBackground(DARKGRAY);
+    DrawMenuBackground();
 
     // Render logo
     int logoX = (GameScreenWidth / 2) - (logoTexture.width / 2);

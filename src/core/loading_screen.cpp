@@ -383,7 +383,7 @@ static std::string GetDisplayMapName()
 void RenderLoadingScreen(GameState *state)
 {
     BeginTextureMode(state->Dungeon);
-    DrawRectangleGradientV(0, 0, GameScreenWidth, GameScreenHeight, {15, 15, 25, 255}, {5, 5, 15, 255});
+    DrawMenuBackground();
 
     Vector2 textSize = MeasureTextEx(fontLoadingTitle, state->loadingText, 32, 2);
     float textX = (GameScreenWidth - textSize.x) / 2.0f;
