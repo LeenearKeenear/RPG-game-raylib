@@ -242,9 +242,10 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
         std::filesystem::remove(paths[selectedTab], ec);
 
         if (selectedTab == 0) {
+            if (IsWindowFullscreen())
+                ToggleFullscreenMode();
             state->showFPS = false;
             showFPS = false;
-            LoadVideoSettings(state);
         } else if (selectedTab == 1) {
             LoadAudioSettings();
         } else if (selectedTab == 2) {
@@ -266,9 +267,10 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
             std::filesystem::remove(p, ec);
         }
 
+        if (IsWindowFullscreen())
+            ToggleFullscreenMode();
         state->showFPS = false;
         showFPS = false;
-        LoadVideoSettings(state);
         LoadAudioSettings();
         keybindManager.ResetDefaults();
         keybindManager.SaveToFile("saves/settings/keybindsTab.json");
