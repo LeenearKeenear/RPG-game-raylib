@@ -39,6 +39,7 @@
 #include <cstring>
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 #include "hud.h"
 #include "propsbehavior.h"
 #include "seedmanager.h"
@@ -162,6 +163,10 @@ GameState InitScreen()
     state.isGoingBack = false;
     state.pendingMapPath.clear();
     state.pendingDoorName.clear();
+
+    // Create save directories at startup
+    std::filesystem::create_directories("saves/manual");
+    std::filesystem::create_directories("saves/autosave");
 
     return state;
 }
@@ -482,4 +487,24 @@ Rectangle GetMonitorResolution(void)
 bool IsFullscreen(void)
 {
     return IsWindowFullscreen();
+}
+
+/*==============================================================================
+ * Shared Background
+ *==============================================================================*/
+
+/**
+ * @brief Gambar background gradient untuk layar non-gameplay (main menu, loading screen).
+ *
+ * Dipanggil oleh RenderMainMenuToVirtualScreen() dan RenderLoadingScreen().
+ * Begitu animated BG tersedia, cukup ganti implementasi di sini saja.
+ */
+void DrawMenuBackground(void)
+{
+    DrawRectangleGradientV(
+        0, 0,
+        GameScreenWidth, GameScreenHeight,
+        {36, 28, 58, 255},   // top: muted dark purple-blue
+        {5, 5, 15, 255}      // bottom: near-black
+    );
 }

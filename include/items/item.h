@@ -145,7 +145,8 @@ struct ItemSpawn
     bool isPickedUp;  // True jika item sudah diambil player
     bool isAdded;     // True jika item sudah ditambahkan ke inventory
     float spawnTime;  // Timestamp saat item di-spawn (untuk efek atau despawn)
-    int amount = 1;   // Jumlah item dalam satu spawn (untuk stackable item)
+    int amount = 1;   ///< Jumlah item dalam satu spawn (untuk stackable item)
+    std::string uuid; ///< Unique identifier for persistent entity matching across save/load cycles. Generated at spawn time, persisted in save files, used for restore matching.
 };
 
 /**
@@ -264,7 +265,9 @@ public:
     std::vector<ItemSpawn> activeItems; // Daftar item yang sedang aktif di world
 
 private:
-    std::map<std::string, std::vector<ItemSpawn>> savedMapItems;  // Penyimpanan state item per map
+    // Penyimpanan state item berdasarkan path map
+    // @deprecated Use SaveItemsForMapDir / LoadItemsForMapDir free functions instead
+    std::map<std::string, std::vector<ItemSpawn>> savedMapItems;
     std::unordered_map<std::string, ItemDefinition> definitions_; // Definisi item lokal
 };
 
@@ -382,3 +385,29 @@ extern ItemRenderManager itemRender;
 extern ItemSpawnManager spawnManager;
 /** @brief Instance global ItemDefinitionManager */
 extern ItemDefinitionManager itemDefs;
+
+/*==============================================================================
+ * Per-Map File Persistence (replaces in-memory ItemDataManager::savedMapItems)
+ *==============================================================================*/
+
+/**
+ * @brief Save all active items for a map to the saves/items/ filesystem directory.
+ *
+ * Serializes `itemData.activeItems` to a JSON file at `saves/items/<sanitized_path>`.
+ * Uses atomic write via .tmp file + rename to prevent corruption.
+ * Follows the same pattern as SaveEnemiesForMap() in enemy.cpp.
+ *
+ * @param mapPath Raw map file path used to derive the save file name (e.g., "assets/maps/tutorial.json")
+ */
+void SaveItemsForMapDir(const std::string &mapPath);
+
+/**
+ * @brief Load items for a map from the saves/items/ filesystem directory.
+ *
+ * Reads `saves/items/<sanitized_path>`, deserializes each item's fields,
+ * reconstructs hitboxes from definitions, and populates `itemData.activeItems`.
+ *
+ * @param mapPath Raw map file path used to derive the save file name
+ * @return true if items were loaded, false if no save data exists or parse failed
+ */
+bool LoadItemsForMapDir(const std::string &mapPath);

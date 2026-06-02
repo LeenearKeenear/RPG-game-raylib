@@ -157,6 +157,12 @@ void SetResolution(int width, int height);
 Rectangle GetCurrentResolution(void);
 
 /**
+ * @brief Gambar background gradient yang seragam untuk semua layar non-gameplay
+ * (main menu, loading screen, dll). Nantinya bisa diganti dengan animated BG.
+ */
+void DrawMenuBackground(void);
+
+/**
  * @brief Ambil resolusi monitor utama
  * @return Rectangle berisi width dan height monitor
  */

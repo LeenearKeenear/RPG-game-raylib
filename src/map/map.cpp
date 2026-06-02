@@ -9,6 +9,7 @@
  * - Handle perpindahan map dan riwayat navigasi
  */
 
+#include <climits>
 #include "../lib/raylib/include/raymath.h"
 #include "entities.h"
 #include "mapLogic.h"
@@ -46,7 +47,7 @@ int lastTilesRendered = 0;
 TileRange currentVisibleRange = {0, 0, 0, 0};
 
 /** Stack riwayat perpindahan map */
-static MapSystem::MapStack mapHistoryStack;
+MapSystem::MapStack mapHistoryStack;
 
 /** Path map yang sedang aktif */
 static std::string currentMapPath = "";
@@ -324,6 +325,10 @@ void RunWorldgen(uint64_t seed, bool isBossStage)
     pools.UnloadCorridorPool();
     pools.UnloadRoomPool();
 
+    if (!LoadItemsForMapDir(currentMapPath))
+    {
+        SpawnItemWave();
+    }
     BuildMapObjectIndex();
 }
 
@@ -467,7 +472,7 @@ void SwitchMap(const char *newMapPath, const char *targetDoorName)
     if (!currentMapPath.empty())
     {
         SaveEnemiesForMap(currentMapPath);
-        itemData.SaveItemsForMap(currentMapPath);
+        SaveItemsForMapDir(currentMapPath);
         mapHistoryStack.Push(currentMapPath, "");
     }
 
@@ -503,7 +508,7 @@ void GoBack(void)
 
     // Simpan state map sekarang
     SaveEnemiesForMap(currentMapPath);
-    itemData.SaveItemsForMap(currentMapPath);
+    SaveItemsForMapDir(currentMapPath);
 
     // Ambil history teratas dan pop dari stack
     MapSystem::MapHistoryEntry prev = mapHistoryStack.Pop();

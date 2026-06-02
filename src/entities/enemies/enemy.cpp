@@ -20,9 +20,12 @@
 #include "../lib/json/include/nlohmann/json.hpp"
 #include "game_debug.h"
 #include "entities.h"
+#include "core/utils.h"
 #include <cmath>
 #include <fstream>
+#include <filesystem>
 #include <stdexcept>
+#include <unordered_set>
 
 using json = nlohmann::json;
 using namespace DataDriven;
@@ -668,13 +671,147 @@ void InitEnemy()
     enemyData.Load("assets/data/enemies.json");
 }
 
-/** @brief Simpan state enemy per map */
-void SaveEnemiesForMap(const std::string &mapPath) {}
+/**
+ * @brief Save all active enemy states for a map to the saves/enemies/ filesystem directory.
+ * @details Serializes each live enemy's position, name, HP, AI state, patrol data, spawn point,
+ *          health regen timer, attack cooldown timer, and UUID to a JSON file. Uses atomic
+ *          write via .tmp + rename to prevent corruption. Skips inactive enemies.
+ *          Save file path derived by sanitizing mapPath (replacing / and \\ with _).
+ * @param mapPath Raw map file path used to derive save file name (e.g., "assets/maps/tutorial.json")
+ */
+void SaveEnemiesForMap(const std::string &mapPath)
+{
+    // Build per-map save file path
+    std::string safeName = mapPath;
+    for (auto &c : safeName)
+    {
+        if (c == '/' || c == '\\') c = '_';
+    }
+    std::string dir = "saves/enemies";
+    std::string filePath = dir + "/" + safeName;
 
-/** @brief Muat state enemy per map */
+    std::filesystem::create_directories(dir);
+
+    json root;
+    json enemiesJson = json::array();
+
+    auto &enemyReg = Entities::GetEnemyRegistry();
+    for (const auto &enemy : enemyReg)
+
+    {
+        if (!enemy->IsActive) continue;
+        json e;
+        e["position"] = {enemy->Position.x, enemy->Position.y};
+        e["enemyName"] = enemy->Name;
+        e["currentHP"] = (int)enemy->Health;
+        e["isAlive"] = enemy->IsAlive();
+        e["maxHealth"] = enemy->MaxHealth;
+        e["aiState"] = (int)enemy->AIState;
+        e["patrolTargetX"] = enemy->PatrolTarget.x;
+        e["patrolTargetY"] = enemy->PatrolTarget.y;
+        e["patrolTimer"] = enemy->PatrolTimer;
+        e["mapObjectID"] = enemy->MapObjectID;
+        e["spawnPoint"] = {{"x", enemy->SpawnPoint.x}, {"y", enemy->SpawnPoint.y}};
+        e["healthRegenTimer"] = enemy->HealthRegenTimer;
+        e["attackCooldownTimer"] = enemy->GetAttackCooldownTimer();
+        e["uuid"] = enemy->GetUUID();
+        enemiesJson.push_back(e);
+    }
+
+    root["enemies"] = enemiesJson;
+
+    // Atomic write
+    std::string tmpPath = filePath + ".tmp";
+    std::ofstream file(tmpPath);
+    file << root.dump(4);
+    file.close();
+    std::filesystem::rename(tmpPath, filePath);
+}
+
+/**
+ * @brief Load enemy states for a map from the saves/enemies/ filesystem directory.
+ * @details Reads the per-map save file, deserializes each enemy's state, and restores
+ *          position, HP, AI state, patrol data, spawn point, timers, and UUID to the
+ *          matching Enemy instance (matched by MapObjectID + Name). Dead enemies are
+ *          registered via Entities::RegisterDeath to prevent respawn.
+ * @param mapPath Raw map file path used to derive save file name
+ * @return true if at least one enemy was restored, false if no save file or parse failed
+ */
 bool LoadEnemiesForMap(const std::string &mapPath)
 {
-    return true;
+    // Build per-map save file path
+    std::string safeName = mapPath;
+    for (auto &c : safeName)
+    {
+        if (c == '/' || c == '\\') c = '_';
+    }
+    std::string filePath = "saves/enemies/" + safeName;
+
+    if (!std::filesystem::exists(filePath))
+        return false;
+
+    try
+    {
+        std::ifstream file(filePath);
+        json root = json::parse(file);
+
+        if (!root.contains("enemies"))
+            return false;
+
+        auto &enemyReg = Entities::GetEnemyRegistry();
+        std::unordered_set<Enemy*> matchedEnemies;
+        bool anyRestored = false;
+
+        for (const auto &e : root.at("enemies"))
+        {
+            int savedMapObjectID = e.value("mapObjectID", -1);
+            bool isAlive = e.value("isAlive", true);
+
+            if (!isAlive)
+            {
+                if (savedMapObjectID >= 0)
+                    Entities::RegisterDeath(mapPath, savedMapObjectID);
+                continue;
+            }
+
+            // Find matching enemy by MapObjectID and restore state
+            for (auto &enemy : enemyReg)
+            {
+                if (enemy == nullptr || matchedEnemies.count(enemy)) continue;
+                if (enemy->MapObjectID == savedMapObjectID && enemy->Name == e.value("enemyName", ""))
+                {
+                    enemy->Position.x = e.at("position")[0].get<float>();
+                    enemy->Position.y = e.at("position")[1].get<float>();
+                    enemy->Health = e.value("currentHP", 100);
+                    enemy->MaxHealth = e.value("maxHealth", 100.0f);
+                    enemy->AIState = (EnemyAIState)e.value("aiState", 0);
+                    enemy->PatrolTarget.x = e.value("patrolTargetX", 0.0f);
+                    enemy->PatrolTarget.y = e.value("patrolTargetY", 0.0f);
+                    enemy->PatrolTimer = e.value("patrolTimer", 0.0f);
+                    if (e.contains("spawnPoint"))
+                    {
+                        enemy->SpawnPoint.x = e["spawnPoint"]["x"].get<float>();
+                        enemy->SpawnPoint.y = e["spawnPoint"]["y"].get<float>();
+                    }
+                    enemy->HealthRegenTimer = e.value("healthRegenTimer", 0.0f);
+                    enemy->SetAttackCooldownTimer(e.value("attackCooldownTimer", 0.0f));
+                    std::string uuid = e.value("uuid", "");
+                    if (!uuid.empty())
+                        enemy->SetUUID(uuid);
+                    enemy->IsActive = true;
+                    matchedEnemies.insert(enemy);
+                    anyRestored = true;
+                    break;
+                }
+            }
+        }
+
+        return anyRestored;
+    }
+    catch (...)
+    {
+        return false;
+    }
 }
 
 /**
@@ -779,6 +916,7 @@ void SpawnAtPoint(const MapObject *obj, EnemyRank rank)
 
         Enemy *enemy = new Enemy();
         enemy->Init(spawnPos, picked.c_str(), obj->id, def);
+        enemy->SetUUID(GenerateUUID());
         enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
         Entities::AddDynamic(enemy);
     }
@@ -836,6 +974,7 @@ void SpawnInRect(const MapObject *obj, const std::string &enemyName, float ratio
 
         Enemy *enemy = new Enemy();
         enemy->Init(spawnPos, enemyName.c_str(), obj->id, def);
+        enemy->SetUUID(GenerateUUID());
         enemy->SpawnRect = obj->bounds;
         enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
         Entities::AddDynamic(enemy);
@@ -870,6 +1009,7 @@ void SpawnBoss(const MapObject *obj)
 
     Enemy *enemy = new Enemy();
     enemy->Init(spawnPos, picked.c_str(), obj->id, def);
+    enemy->SetUUID(GenerateUUID());
     enemy->SetReturnFlowField(&spawnFlowFields[obj->id].field);
     Entities::AddDynamic(enemy);
 }

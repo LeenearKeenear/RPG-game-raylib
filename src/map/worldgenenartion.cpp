@@ -10,6 +10,7 @@
  * - WorldGenCanvas: stamping prefab dan corridor ke main map
  */
 
+#include <climits>
 #include "worldgenenartion.h"
 #include "mapLogic.h"
 #include <filesystem>

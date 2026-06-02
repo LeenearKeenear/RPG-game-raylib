@@ -7,29 +7,25 @@
 
 #include <algorithm>
 
-#include "pauseMenu.h"
-#include "popup.h"
-#include "videoTab.h"
-#include "audioTab.h"
-#include "keybindsTab.h"
-#include "game_state_saver.h"
-#include "player.h"
-#include "worldgenio.h"
-#include "seedmanager.h"
+#include "../../include/ui/pauseMenu.h"
+#include "../../include/ui/popup.h"
+#include "../../include/ui/videoTab.h"
+#include "../../include/ui/audioTab.h"
+#include "../../include/ui/keybindsTab.h"
+#include "../../include/core/game_state_saver.h"
+#include "../../include/map/worldgenio.h"
+#include "../../include/core/seedmanager.h"
 
 /*==============================================================================
  * Static Variables (Popup Notifications)
  *==============================================================================*/
 
-/**
- * @brief Popup notifikasi untuk save game
- */
 static Popup savePopup("Game Saved!", "OK", 0.7F);
-
-/**
- * @brief Popup notifikasi untuk load game
- */
-static Popup loadPopup("Game Loaded!", "OK", 0.7F);
+static Popup saveErrorPopup("Failed to save game.", "OK", 0.7F);
+static Popup loadConfirmPopup("Load from save? Current progress will be lost.", "Load Save", "Cancel", 0.7f);
+static Popup noSavePopup("No save file found.", "OK", 0.7F);
+static Popup pauseCorruptPopup("Save file corrupted or unreadable.", "OK", 0.7f);
+static Popup returnConfirmPopup("Return to main menu?", "Continue", "Cancel", 0.7f);
 
 /*==============================================================================
  * OptionsScreen Implementation
@@ -376,10 +372,20 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             // Save Game — simpan runtime + player state ke disk
             WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
             SaveGameState(state);
-            savePopup.Show();
+            if (WriteSaveFile("saves/manual/slot0.json"))
+                savePopup.Show();
+            else
+                saveErrorPopup.Show();
             break;
-        case 2: // Load
-            loadPopup.Show();
+        case 2:
+            if (HasSaveFile("saves/manual/slot0.json"))
+            {
+                loadConfirmPopup.Show();
+            }
+            else
+            {
+                noSavePopup.Show();
+            }
             break;
         case 3: // Restart (New Game)
             ClearSavedState();
@@ -392,15 +398,8 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             Hide();
             break;
         case 4:
-            // Return to Main Menu — save dulu baru pindah
-            WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
-            SaveGameState(state);
-            state->enteredLoading = false;
-            state->loadingStage = 0;
-            state->loadingProgress = 0.0F;
-            state->loadingComplete = false;
-            state->currentScreen = MAIN_MENU;
-            Hide();
+            returnConfirmPopup.SetSubMessage("Unsaved progress will be lost.");
+            returnConfirmPopup.Show();
             break;
         case 5:
             // Close Game — save dulu baru tutup
@@ -430,8 +429,54 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
         return;
     }
 
-    if (loadPopup.IsActive()) {
-        loadPopup.Update(mousePosition, mouseClicked);
+    if (saveErrorPopup.IsActive()) {
+        saveErrorPopup.Update(mousePosition, mouseClicked);
+        return;
+    }
+
+    if (loadConfirmPopup.IsActive()) {
+        loadConfirmPopup.Update(mousePosition, mouseClicked);
+        if (loadConfirmPopup.IsConfirmClicked()) {
+            if (ReadSaveFile("saves/manual/slot0.json"))
+            {
+                loadConfirmPopup.Hide();
+                state->enteredLoading = false;
+                state->loadingStage = 0;
+                state->loadingProgress = 0.0F;
+                state->loadingComplete = false;
+                state->currentScreen = LOADING;
+                Hide();
+            }
+            else
+            {
+                loadConfirmPopup.Hide();
+                DeleteSaveFile("saves/manual/slot0.json");
+                pauseCorruptPopup.Show();
+            }
+        }
+        return;
+    }
+
+    if (noSavePopup.IsActive()) {
+        noSavePopup.Update(mousePosition, mouseClicked);
+        return;
+    }
+
+    if (pauseCorruptPopup.IsActive()) {
+        pauseCorruptPopup.Update(mousePosition, mouseClicked);
+        return;
+    }
+
+    if (returnConfirmPopup.IsActive()) {
+        returnConfirmPopup.Update(mousePosition, mouseClicked);
+        if (returnConfirmPopup.IsConfirmClicked()) {
+            state->enteredLoading = false;
+            state->loadingStage = 0;
+            state->loadingProgress = 0.0F;
+            state->loadingComplete = false;
+            state->currentScreen = MAIN_MENU;
+            Hide();
+        }
         return;
     }
 
@@ -465,7 +510,19 @@ void PauseMenu::Draw(Vector2 mousePosition)
     if (savePopup.IsActive()) {
         savePopup.Draw(mousePosition);
     }
-    if (loadPopup.IsActive()) {
-        loadPopup.Draw(mousePosition);
+    if (saveErrorPopup.IsActive()) {
+        saveErrorPopup.Draw(mousePosition);
+    }
+    if (loadConfirmPopup.IsActive()) {
+        loadConfirmPopup.Draw(mousePosition);
+    }
+    if (noSavePopup.IsActive()) {
+        noSavePopup.Draw(mousePosition);
+    }
+    if (pauseCorruptPopup.IsActive()) {
+        pauseCorruptPopup.Draw(mousePosition);
+    }
+    if (returnConfirmPopup.IsActive()) {
+        returnConfirmPopup.Draw(mousePosition);
     }
 }

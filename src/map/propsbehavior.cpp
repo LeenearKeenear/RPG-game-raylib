@@ -17,6 +17,7 @@
 #include "enemy.h"
 #include "enemy_ai.h"
 #include "entities.h"
+#include "core/utils.h"
 #include "game_debug.h"
 #include <sstream>
 
@@ -516,6 +517,7 @@ void BombManager::SpawnBombs(const std::vector<MapObject *> &bombObjects)
         data.tile.bounds = obj->bounds;
         data.tile.state = ObjectState::Active;
         data.tile.position = SnapToTileGrid({obj->bounds.x, obj->bounds.y});
+        data.tile.uuid = GenerateUUID();
 
         data.isAlive = true;
         data.isExploding = false;
@@ -775,6 +777,7 @@ void CrateManager::SpawnCrates(const std::vector<MapObject *> &crateObjects)
         data.tile.bounds = obj->bounds;
         data.tile.position = snapped;
         data.tile.state = ObjectState::Active;
+        data.tile.uuid = GenerateUUID();
         data.isAlive = true;
 
         crates.push_back(data);

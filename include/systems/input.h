@@ -127,7 +127,7 @@ public:
     bool IsTestLoseHP() const { return Current.testLoseHP; }
     /** @brief Ambil slot aktif */
     ItemSlot GetActiveSlot() const { return ActiveSlot; }
-    /** @brief Cek apakah inventory terbuka */
+    void SetActiveSlot(ItemSlot slot) { ActiveSlot = slot; }
     bool IsInventoryOpen() const { return InventoryOpen; }
     /** @brief Cek apakah map terbuka */
     bool IsMapOpen() const { return MapOpen; }
