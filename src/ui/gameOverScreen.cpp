@@ -6,9 +6,9 @@
 #include "button.h"
 
 static Texture2D goTitle = {0};
-static Texture2D goRevive = {0};
+static buttonImage reviveBtn;
 static buttonImage goToMain;
-static float goTitleY, goReviveY, goToMainY;
+static float goTitleY, goToMainY;
 static bool goLoaded = false;
 
 void InitGameOverScreen()
@@ -20,12 +20,15 @@ void InitGameOverScreen()
     UnloadImage(img);
 
     img = LoadImage("assets/textures/gameOver/gameover-revive.png");
-    goRevive = LoadTextureFromImage(img);
+    float reviveH = (float)img.height;
     UnloadImage(img);
 
     goTitleY = (GameScreenHeight - goTitle.height) / 2.0F - 80;
-    goReviveY = goTitleY + goTitle.height + 10;
-    goToMainY = goReviveY + goRevive.height + 85;
+    float goReviveTopY = goTitleY + goTitle.height + 10;
+    goToMainY = goReviveTopY + reviveH + 85;
+
+    Vector2 revivePos = {GameScreenWidth / 2.0F, goReviveTopY + reviveH / 2.0F};
+    reviveBtn = buttonImage("assets/textures/gameOver/gameover-revive.png", revivePos, 1.0F, 0.6F);
 
     Vector2 toMainPos = {GameScreenWidth / 2.0F, goToMainY};
     goToMain = buttonImage("assets/textures/gameOver/gameover-to-main.png", toMainPos, 1.0F, 0.6F);
@@ -35,7 +38,12 @@ void InitGameOverScreen()
 
 void UpdateGameOverScreen(GameState *state)
 {
-    if (IsKeyPressed(KEY_R))
+    Vector2 mousePos = GetVirtualMousePosition(state);
+    bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+
+    if (!goLoaded) InitGameOverScreen();
+
+    if (reviveBtn.isClicked(mousePos, mouseClicked))
     {
         PlayerInstance.Anim.isDead = false;
         PlayerInstance.Anim.isAttacking = false;
@@ -47,8 +55,7 @@ void UpdateGameOverScreen(GameState *state)
         return;
     }
 
-    Vector2 mousePos = GetVirtualMousePosition(state);
-    if (goToMain.isClicked(mousePos, IsMouseButtonPressed(MOUSE_LEFT_BUTTON)))
+    if (goToMain.isClicked(mousePos, mouseClicked))
     {
         state->enteredLoading = false;
         state->loadingStage = 0;
@@ -70,17 +77,8 @@ void RenderGameOverScreen(GameState *state)
 
     DrawTexture(goTitle, (GameScreenWidth - goTitle.width) / 2, (int)goTitleY, WHITE);
 
-    DrawTexture(goRevive, (GameScreenWidth - goRevive.width) / 2, (int)goReviveY, WHITE);
-
-    const char *hint = "Press 'R'";
-    int hintSize = 20;
-    int hintW = MeasureText(hint, hintSize);
-    int hintX = (GameScreenWidth - hintW) / 2;
-    int hintY = (int)goReviveY + goRevive.height + 10;
-    DrawRectangle(hintX - 4, hintY - 2, hintW + 8, hintSize + 4, (Color){0, 0, 0, 180});
-    DrawText(hint, hintX, hintY, hintSize, RAYWHITE);
-
     Vector2 mousePos = GetVirtualMousePosition(state);
+    reviveBtn.Draw(mousePos);
     goToMain.Draw(mousePos);
 
     EndTextureMode();
