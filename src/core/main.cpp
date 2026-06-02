@@ -167,7 +167,7 @@ int main()
             optionsScreen.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
             if (WindowShouldClose()) break;
             BeginTextureMode(state.Dungeon);
-            ClearBackground(DARKGRAY);
+            DrawMenuBackground();
             optionsScreen.Draw(GetVirtualMousePosition(&state));
             EndTextureMode();
             DrawRenderWindows(&state);
