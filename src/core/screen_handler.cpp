@@ -137,7 +137,7 @@ GameState InitScreen()
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "Dungeon Game");
-    SetExitKey(KEY_ESCAPE);  // ESC is handled by our own pause/keybind logic
+    SetExitKey(0);  // ESC handled by keybindManager (pause toggle), not by raylib quit
     InitAudioDevice();
 
     state.WindowScreenWidth = (int)(GetMonitorWidth(0) * ScaleMultiplierMonitor);
