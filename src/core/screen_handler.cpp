@@ -488,3 +488,23 @@ bool IsFullscreen(void)
 {
     return IsWindowFullscreen();
 }
+
+/*==============================================================================
+ * Shared Background
+ *==============================================================================*/
+
+/**
+ * @brief Gambar background gradient untuk layar non-gameplay (main menu, loading screen).
+ *
+ * Dipanggil oleh RenderMainMenuToVirtualScreen() dan RenderLoadingScreen().
+ * Begitu animated BG tersedia, cukup ganti implementasi di sini saja.
+ */
+void DrawMenuBackground(void)
+{
+    DrawRectangleGradientV(
+        0, 0,
+        GameScreenWidth, GameScreenHeight,
+        {15, 15, 25, 255},   // top: dark blue-black
+        {5, 5, 15, 255}      // bottom: deeper black-blue
+    );
+}
