@@ -342,8 +342,10 @@ void RenderLoadingScreen(GameState *state)
     BeginTextureMode(state->Dungeon);
     DrawRectangleGradientV(0, 0, GameScreenWidth, GameScreenHeight, {15, 15, 25, 255}, {5, 5, 15, 255});
 
-    int textWidth = MeasureText(state->loadingText, 20);
-    DrawText(state->loadingText, (GameScreenWidth / 2) - (textWidth / 2), (GameScreenHeight / 2) - 20, 20, WHITE);
+    Vector2 textSize = MeasureTextEx(fontLoadingTitle, state->loadingText, 32, 2);
+    float textX = (GameScreenWidth - textSize.x) / 2.0f;
+    float textY = (float)(GameScreenHeight / 2) - textSize.y - 30.0f;
+    DrawTextEx(fontLoadingTitle, state->loadingText, {textX, textY}, 32, 2, WHITE);
 
     DrawRectangle((GameScreenWidth / 2) - 150, (GameScreenHeight / 2) + 20, 300, 20, DARKGRAY);
     DrawRectangle((GameScreenWidth / 2) - 150, (GameScreenHeight / 2) + 20, (int)(state->loadingProgress * 3), 20, GREEN);
