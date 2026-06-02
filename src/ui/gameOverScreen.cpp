@@ -75,7 +75,10 @@ void RenderGameOverScreen(GameState *state)
     const char *hint = "Press 'R'";
     int hintSize = 20;
     int hintW = MeasureText(hint, hintSize);
-    DrawText(hint, (GameScreenWidth - hintW) / 2, (int)goReviveY + goRevive.height + 10, hintSize, GRAY);
+    int hintX = (GameScreenWidth - hintW) / 2;
+    int hintY = (int)goReviveY + goRevive.height + 10;
+    DrawRectangle(hintX - 4, hintY - 2, hintW + 8, hintSize + 4, (Color){0, 0, 0, 180});
+    DrawText(hint, hintX, hintY, hintSize, RAYWHITE);
 
     Vector2 mousePos = GetVirtualMousePosition(state);
     goToMain.Draw(mousePos);
