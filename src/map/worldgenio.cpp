@@ -192,7 +192,7 @@ namespace WorldgenIO
             stageData["bombs"].push_back(pos);
 
         stageData["deadEnemies"] = nlohmann::json::array();
-        for (auto &entry : Entities::GetDeadEntries())
+        for (auto &entry : Entities::GetDeadEntities())
             stageData["deadEnemies"].push_back(entry);
 
         stageData["itemDrops"] = nlohmann::json::array();
@@ -275,7 +275,7 @@ namespace WorldgenIO
             std::set<std::string> entries;
             for (auto &entry : stageData["deadEnemies"])
                 entries.insert(entry.get<std::string>());
-            Entities::SetDeadEntries(entries);
+            Entities::SetDeadEntities(entries);
         }
 
         if (stageData.contains("itemDrops"))

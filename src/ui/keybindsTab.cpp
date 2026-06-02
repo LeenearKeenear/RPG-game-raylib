@@ -4,7 +4,7 @@
 #include "../lib/raylib/include/raylib.h"
 #include <algorithm>
 
-static const char* SAVE_PATH = "saves/settings.json";
+static const char* SAVE_PATH = "saves/settings/keybindsTab.json";
 
 struct SectionInfo {
     const char* title;

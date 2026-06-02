@@ -119,7 +119,7 @@ public:
     bool IsSelectSlot4() const { return Current.selectSlot4; }
     /** @brief Ambil slot aktif */
     ItemSlot GetActiveSlot() const { return ActiveSlot; }
-    /** @brief Cek apakah inventory terbuka */
+    void SetActiveSlot(ItemSlot slot) { ActiveSlot = slot; }
     bool IsInventoryOpen() const { return InventoryOpen; }
     /** @brief Cek apakah map terbuka */
     bool IsMapOpen() const { return MapOpen; }

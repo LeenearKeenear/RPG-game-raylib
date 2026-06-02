@@ -115,7 +115,9 @@ void Player::ResetForNewGame()
         Bag[i] = {-1, 0};
     Anim.isDead = false;
     Anim.isAttacking = false;
+    HitFlashTimer = 0.0f;
     KnockbackVelocity = {0, 0};
+    TraceLog(LOG_INFO, "PLAYER: Reset for new game");
 }
 
 /**

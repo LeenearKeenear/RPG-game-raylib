@@ -7,6 +7,7 @@
 #include "propsbehavior.h"
 #include "seedmanager.h"
 #include "worldgenio.h"
+#include "game_state_saver.h"
 #include "entities.h"
 #include "../lib/raylib/include/raymath.h"
 
@@ -88,7 +89,12 @@ namespace Interaction
             if (!InputInstance.IsInteract())
                 continue;
 
-            // Cek worldgen door — property "worldgen":"true" → InitRun + SwitchMap ke stage 1
+            /**
+             * @brief Worldgen door handler (interaction.cpp)
+             * Deteksi door dengan property "worldgen". Signal loading screen
+             * bahwa worldgen map switch pending agar RestoreDeadEntities() di-
+             * skip — WorldgenIO handle dead entity restoration per-stage.
+             */
             auto wgIt = door->properties.find("worldgen");
             if (wgIt != door->properties.end() && wgIt->second.getValue<std::string>() == "true")
             {
@@ -99,6 +105,7 @@ namespace Interaction
                 player.pendingSwitchMap = true;
                 player.pendingMapPath = WorldgenIO::GetStagePath(g_SeedManager.GetCurrentStage());
                 player.pendingDoorName = "start";
+                SetWorldgenPending(true);
                 return;
             }
 

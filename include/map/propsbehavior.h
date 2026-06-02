@@ -46,6 +46,7 @@ struct TileObject
     Rectangle bounds;  // Bounding box asli dari MapObject Tiled
     ObjectState state; // State saat ini
     std::string name;  // Nama object dari Tiled untuk identifikasi
+    std::string uuid;  ///< Unique identifier for persistent entity matching across save/load cycles. Generated at spawn time, persisted in save files, used for restore matching.
 };
 
 /*==============================================================================
@@ -236,12 +237,27 @@ public:
     /** @brief Ambil jumlah bomb yang sedang dikelola */
     size_t GetCount() const { return bombs.size(); }
 
-    /** @brief Ambil posisi bomb yang sudah meledak */
-    const std::unordered_set<std::string> &GetConsumedPositions() const { return consumedPositions; }
-    /** @brief Set posisi bomb yang sudah meledak (buat load) */
-    void SetConsumedPositions(const std::unordered_set<std::string> &positions) { consumedPositions = positions; }
+    /**
+     * @brief Dapatkan posisi bomb yang sudah meledak (consumed).
+     * @return Const reference ke unordered_set posisi yang sudah dikonsumsi
+     */
+    const std::unordered_set<std::string>& GetConsumedPositions() const { return consumedPositions; }
 
-    /** @brief Cek apakah target dalam radius ledakan (nearest-point check) */
+    /**
+     * @brief Set posisi bomb yang sudah meledak (untuk restore save state).
+     * @param positions Set posisi yang sudah dikonsumsi
+     */
+    void SetConsumedPositions(const std::unordered_set<std::string>& positions) { consumedPositions = positions; }
+
+    /**
+     * @brief Cek apakah target berada dalam radius ledakan
+     *
+     * Pakai nearest-point check, bukan center-to-center.
+     *
+     * @param bombPos Posisi center bomb
+     * @param target Bounding box target
+     * @return true jika jarak nearest point <= BOMB_EXPLOSION_RADIUS
+     */
     bool IsInExplosionRadius(Vector2 bombPos, Rectangle target);
 
 private:

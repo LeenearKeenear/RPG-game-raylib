@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 # Try to use clang, fallback to default compiler if not available
 find_program(CLANG_COMPILER_NAME clang++)
-find_program(CLANG_COMPILER_C CMAKE_C_COMPILER)
+find_program(CLANG_COMPILER_C clang)
 if(CLANG_COMPILER_NAME AND CLANG_COMPILER_C)
     set(CMAKE_CXX_COMPILER "clang++" CACHE STRING "C++ compiler" FORCE)
     set(CMAKE_C_COMPILER "clang" CACHE STRING "C compiler" FORCE)
@@ -63,6 +63,10 @@ target_include_directories(main PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/json/include>
 )
 
+# Force-include missing standard headers for tileson.hpp compatibility
+# tileson v1.4.0 assumes transitive includes which newer compilers (Clang 18+, GCC 15+) don't provide
+target_compile_options(main PRIVATE "SHELL:-include cstdint" "SHELL:-include algorithm")
+
 # Raylib library
 if(WIN32)
     set(RAYLIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/raylib/lib/libraylib.a")
@@ -89,6 +93,8 @@ add_custom_command(TARGET main POST_BUILD
     COMMENT "Copying assets folder to output directory"
 )
 elseif(UNIX)
+    set(RAYLIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/raylib/lib/libraylib.a")
+    target_link_libraries(main PRIVATE "${RAYLIB_PATH}")
     if(APPLE)
         target_link_libraries(main PRIVATE -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo)
     else()

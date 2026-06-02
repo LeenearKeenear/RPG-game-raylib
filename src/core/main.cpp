@@ -6,30 +6,63 @@
  * Handle state management (MAIN_MENU, PLAY, OPTIONS) dan pause menu.
  */
 
-#include "screen.h"
-#include "map.h"
-#include "player.h"
-#include "enemy.h"
-#include "item.h"
-#include "mainMenu.h"
-#include "pauseMenu.h"
-#include "gameOverScreen.h"
-#include "loading_screen.h"
-#include "worldgenio.h"
-#include "seedmanager.h"
-#include "fonts.h"
-#include "propsbehavior.h"
-#include "../lib/raylib/include/raylib.h"
-#include "input.h"
-#include "keybindManager.h"
-#include "../lib/raylib/include/raymath.h"
+#include "../../include/core/screen.h"
+#include "../../include/map/map.h"
+#include "../../include/entities/player.h"
+#include "../../include/entities/enemy.h"
+#include "../../include/items/item.h"
+#include "../../include/ui/mainMenu.h"
+#include "../../include/ui/pauseMenu.h"
+#include "../../include/ui/gameOverScreen.h"
+#include "../../include/core/loading_screen.h"
+#include "../../include/core/game_state_saver.h"
+#include "../../include/map/worldgenio.h"
+#include "../../include/core/seedmanager.h"
+#include "../../include/rendering/fonts.h"
+#include "../../include/systems/input.h"
+#include "../../include/systems/keybindManager.h"
+#include "../../include/ui/videoTab.h"
+#include "../../include/ui/audioTab.h"
+#include "../../include/map/propsbehavior.h"
+#include "../../lib/raylib/include/raylib.h"
+#include "../../lib/raylib/include/raymath.h"
 #include <cstdio>
+#include <filesystem>
 
 /**
  * @brief Global instances for menu systems
  */
 PauseMenu pauseMenu;
 OptionsScreen optionsScreen;
+
+/**
+ * @brief Custom TraceLog callback to prepend HH:mm:ss.fff timestamps
+ */
+static void TimestampLog(int msgType, const char *text, va_list args)
+{
+    double now = GetTime();
+    int hours = (int)(now / 3600) % 24;
+    int minutes = (int)(now / 60) % 60;
+    int seconds = (int)now % 60;
+    int millis = (int)((now - (int)now) * 1000);
+
+    char buf[1024] = {0};
+    vsnprintf(buf, sizeof(buf), text, args);
+
+    const char *level = "";
+    switch (msgType)
+    {
+        case LOG_TRACE: level = "TRACE"; break;
+        case LOG_DEBUG: level = "DEBUG"; break;
+        case LOG_INFO:  level = "INFO"; break;
+        case LOG_WARNING: level = "WARNING"; break;
+        case LOG_ERROR: level = "ERROR"; break;
+        case LOG_FATAL: level = "FATAL"; break;
+        default: level = "UNKNOWN"; break;
+    }
+
+    printf("%02d:%02d:%02d.%03d %s: %s\n", hours, minutes, seconds, millis, level, buf);
+}
 
 /**
  * @brief Main entry point game application
@@ -45,6 +78,9 @@ int main()
     GameState state = InitScreen();
     state.previousScreen = MAIN_MENU; // Default return to main menu
     gState = &state;
+
+    // Register custom TraceLog callback for timestamps
+    SetTraceLogCallback(TimestampLog);
 
     // Initialize loading state variables
     state.loadingProgress = 0.0f;
@@ -62,9 +98,32 @@ int main()
 
     InitFonts();
 
+    // Migrasi satu kali: saves/settings.json -> saves/settings/keybindsTab.json
+    {
+        namespace fs = std::filesystem;
+        fs::create_directories("saves/settings");
+        const char* target = "saves/settings/keybindsTab.json";
+        if (fs::exists("saves/settings.json"))
+        {
+            fs::rename("saves/settings.json", target);
+            TraceLog(LOG_INFO, "KEYBIND: settings.json dimigrasi ke keybindsTab.json");
+        }
+        else if (fs::exists("saves/settings/keybinds.json"))
+        {
+            fs::rename("saves/settings/keybinds.json", target);
+            TraceLog(LOG_INFO, "KEYBIND: keybinds.json dimigrasi ke keybindsTab.json");
+        }
+    }
+
     // Load keybinds (or save defaults on first run)
-    if (!keybindManager.LoadFromFile("saves/settings.json"))
-        keybindManager.SaveToFile("saves/settings.json");
+    if (!keybindManager.LoadFromFile("saves/settings/keybindsTab.json"))
+        keybindManager.SaveToFile("saves/settings/keybindsTab.json");
+
+    // Muat pengaturan video
+    LoadVideoSettings(&state);
+
+    // Muat pengaturan audio
+    LoadAudioSettings();
 
     float accumulator = 0.0f;
 
@@ -108,7 +167,7 @@ int main()
             optionsScreen.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
             if (WindowShouldClose()) break;
             BeginTextureMode(state.Dungeon);
-            ClearBackground(DARKGRAY);
+            DrawMenuBackground();
             optionsScreen.Draw(GetVirtualMousePosition(&state));
             EndTextureMode();
             DrawRenderWindows(&state);
@@ -142,16 +201,32 @@ int main()
             if (pauseMenu.IsActive())
                 pauseMenu.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
 
+            // Flush input bila pause menu mengubah layar (misal "To Main" → MAIN_MENU)
+            if (state.currentScreen != PLAY)
+                PollInputEvents();
+
             // Fixed timestep
             float frameTime = GetFrameTime();
             if (frameTime > Time::MAX_FRAME)
                 frameTime = Time::MAX_FRAME;
+            // Autosave timer - only count when not paused
+            static float autosaveTimer = 0.0f;
+            if (!pauseMenu.IsActive())
+            {
+                autosaveTimer += frameTime;
+                if (autosaveTimer >= 60.0f)
+                {
+                    WriteAutosave("periodic.json");
+                    autosaveTimer = 0.0f;
+                }
+            }
+
             accumulator += frameTime;
 
-            // update semua logic game — skip kalo pause atau dialog aktif
+            // update semua logic game - skip when paused, dialog active, or screen changed
             while (accumulator >= Time::DELTA_TIME)
             {
-                if (!pauseMenu.IsActive() && !signManager.IsDialogActive())
+                if (!pauseMenu.IsActive() && !signManager.IsDialogActive() && state.currentScreen == PLAY)
                 {
                     UpdateLogicAll();
                     if (PlayerInstance.Anim.isDead)
@@ -166,10 +241,12 @@ int main()
                 signManager.DismissDialog();
             }
 
-            // render semua ke layar virtual
-            DrawRenderTexture(&state);
-            // scale layar virtual ke window asli
-            DrawRenderWindows(&state);
+            // render hanya jika masih dalam PLAY state
+            if (state.currentScreen == PLAY)
+            {
+                DrawRenderTexture(&state);
+                DrawRenderWindows(&state);
+            }
         }
         // ===== State: GAME_OVER =====
         else if (state.currentScreen == GAME_OVER)
