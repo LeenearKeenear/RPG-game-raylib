@@ -189,9 +189,11 @@ namespace Interaction
             return; // Di luar area pandang, tidak bisa interaksi
 
         const std::string &type = player.LastHit.object->type;
-        if (type != CHEST_TYPE_OBJECT_NAME)
-            return; // Hanya objek tipe CHEST_TYPE_OBJECT_NAME yang bisa diinteraksi via raycast
-            
+
+        // Cuma chest & sign yang bisa diinteraksi via raycast
+        if (type != CHEST_TYPE_OBJECT_NAME && type != SIGN_TYPE_OBJECT_NAME)
+            return;
+
         player.canInteract = true;
 
         if (!InputInstance.IsInteract())
@@ -202,8 +204,11 @@ namespace Interaction
         // Percabangan logika berdasarkan tipe objek
         if (type == CHEST_TYPE_OBJECT_NAME)
         {
-            TraceLog(LOG_INFO, "Membuka peti: '%s'", player.LastHit.object->name.c_str());
             chestManager.Interact(player.LastHit.point);
+        }
+        else if (type == SIGN_TYPE_OBJECT_NAME)
+        {
+            signManager.Interact(player.LastHit.point);
         }
     }
 }

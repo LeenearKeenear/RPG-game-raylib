@@ -36,12 +36,8 @@ static Popup returnConfirmPopup("Return to main menu?", "Continue", "Cancel", 0.
  * 
  * Menginisialisasi semua tombol tab, tombol back, dan dimensi awal.
  */
-OptionsScreen::OptionsScreen() : active(false), returnScreen(PLAY), selectedTab(0), showFPS(false), width(0), height(0), startX(0), startY(0)
+OptionsScreen::OptionsScreen() : active(false), texturesLoaded(false), returnScreen(PLAY), selectedTab(0), showFPS(false), width(0), height(0), startX(0), startY(0), bgTexture({0})
 {
-    tabButtons = {buttonTxt("VIDEO", 0, 0, 30, WHITE, 0.7F),
-                buttonTxt("AUDIO", 0, 0, 30, WHITE, 0.7F),
-                buttonTxt("KEYBINDS", 0, 0, 30, WHITE, 0.7F)};
-    backButton = buttonTxt("BACK", 0, 0, 30, WHITE, 0.7F);
 }
 
 /**
@@ -49,6 +45,9 @@ OptionsScreen::OptionsScreen() : active(false), returnScreen(PLAY), selectedTab(
  */
 OptionsScreen::~OptionsScreen()
 {
+    if (bgTexture.id != 0) {
+        UnloadTexture(bgTexture);
+    }
 }
 
 /**
@@ -57,6 +56,14 @@ OptionsScreen::~OptionsScreen()
 void OptionsScreen::Show()
 {
     active = true;
+    if (!texturesLoaded) {
+        Image img = LoadImage("assets/textures/settingsButt/settingsBG.png");
+        if (img.data != nullptr) {
+            bgTexture = LoadTextureFromImage(img);
+            UnloadImage(img);
+        }
+        texturesLoaded = true;
+    }
     CalculateDimensions();
 }
 
@@ -126,44 +133,41 @@ std::vector<ResOption> GetAvailableResolutions()
  */
 void OptionsScreen::CalculateDimensions()
 {
-    const int fontSize = 30;
-    const int padding = 20;
-    const int tabWidth = 200;
-    const int tabSpacing = 10;
+    const int tabHeight = 56;
 
-    width = 800;
-    height = 600;
+    width = bgTexture.width > 0 ? bgTexture.width : 800;
+    height = bgTexture.height > 0 ? bgTexture.height : 600;
     startX = (GameScreenWidth - width) / 2;
     startY = (GameScreenHeight - height) / 2;
 
     backgroundRect = {static_cast<float>(startX), static_cast<float>(startY), static_cast<float>(width), static_cast<float>(height)};
 
-    int tabStartX = startX + padding;
+    int tabY = startY + 15 + 120;
+
+    const char* tabFiles[3] = {
+        "assets/textures/settingsButt/settingsVideo.png",
+        "assets/textures/settingsButt/settingsAudio.png",
+        "assets/textures/settingsButt/settingsKeybinds.png"
+    };
     for (int i = 0; i < 3; i++) {
-        tabButtons[i] = buttonTxt(
-            i == 0 ? "VIDEO" : (i == 1 ? "AUDIO" : "KEYBINDS"),
-            tabStartX + (i * (tabWidth + tabSpacing)),
-            startY + padding,
-            fontSize,
-            (selectedTab == i) ? YELLOW : WHITE,
-            0.7F);
+        float cx = static_cast<float>(startX + width / 2 + (i - 1) * 302);
+        float cy = static_cast<float>(tabY + tabHeight / 2);
+        tabButtons[i] = buttonImage(tabFiles[i], Vector2{cx, cy}, 1.0F, 0.7F);
     }
 
-    int backWidth = MeasureText("BACK", fontSize);
-    backButton = buttonTxt(
-        "BACK", 
-        startX + width - backWidth - padding - 20, 
-        startY + height - fontSize - padding - 20, 
-        fontSize, WHITE, 0.7F);
+    backButton = buttonImage(
+        "assets/textures/settingsButt/settingsBack.png",
+        Vector2{static_cast<float>(startX + width - 133),
+                static_cast<float>(startY + height - 53)},
+        1.0F, 0.7F);
 
     if (resolutionOptions.empty()) {
         resolutionOptions = GetAvailableResolutions();
     }
 
     const int labelFontSize = 24;
-    int labelX = startX + 40;
-    int valueX = startX + 250;
-    int contentStartY = startY + 100;
+    int valueX = startX + 339;
+    int contentStartY = startY + 221;
 
     bool isFullscreen = IsWindowFullscreen();
     fullscreenButton = buttonTxt(
@@ -174,7 +178,7 @@ void OptionsScreen::CalculateDimensions()
         isFullscreen ? GREEN : RED,
         0.7F);
 
-fpsButton = buttonTxt(
+    fpsButton = buttonTxt(
         showFPS ? "ON" : "OFF",
         valueX,
         contentStartY + 75,
@@ -227,9 +231,13 @@ void OptionsScreen::Draw(Vector2 mousePosition)
         return;
     }
 
-    Color bgColor = {40, 40, 40, 230};
-    DrawRectangleRec(backgroundRect, bgColor);
-    DrawRectangleLinesEx(backgroundRect, 2, WHITE);
+    if (bgTexture.id != 0) {
+        DrawTexture(bgTexture, startX, startY, WHITE);
+    } else {
+        Color bgColor = {40, 40, 40, 230};
+        DrawRectangleRec(backgroundRect, bgColor);
+        DrawRectangleLinesEx(backgroundRect, 2, WHITE);
+    }
 
     for (int i = 0; i < 3; i++) {
         tabButtons[i].Draw(mousePosition);
@@ -237,10 +245,19 @@ void OptionsScreen::Draw(Vector2 mousePosition)
 
     backButton.Draw(mousePosition);
 
+    int contentOX = 89, contentOY = 121;
+    Rectangle contentRect = {
+        static_cast<float>(startX + contentOX + 20),
+        static_cast<float>(startY + 200),
+        static_cast<float>(width - 2 * (contentOX + 20)),
+        static_cast<float>(height - 323)
+    };
+    DrawRectangleRec(contentRect, {0, 0, 0, 51});
+
     switch (selectedTab) {
-        case 0: DrawVideoTab(fullscreenButton, fpsButton, mousePosition, startX, startY); break;
-        case 1: DrawAudioTab(mousePosition, startX, startY); break;
-        case 2: DrawKeybindsTab(mousePosition, startX, startY); break;
+        case 0: DrawVideoTab(fullscreenButton, fpsButton, mousePosition, startX + contentOX, startY + contentOY); break;
+        case 1: DrawAudioTab(mousePosition, startX + contentOX, startY + contentOY); break;
+        case 2: DrawKeybindsTab(mousePosition, startX + contentOX, startY + contentOY); break;
     }
 }
 
@@ -248,22 +265,21 @@ void OptionsScreen::Draw(Vector2 mousePosition)
  * PauseMenu Implementation
  *==============================================================================*/
 
+static const char* BUTTON_PATHS[6] = {
+    "assets/textures/pauseButt/pause-resume.png",
+    "assets/textures/pauseButt/pause-save.png",
+    "assets/textures/pauseButt/pause-load.png",
+    "assets/textures/pauseButt/pause-restart.png",
+    "assets/textures/pauseButt/pause-tomain.png",
+    "assets/textures/pauseButt/pause-exit.png"
+};
+
 /**
  * @brief Constructor
- * 
- * Menginisialisasi semua tombol menu: Resume, Save, Load, Options, Return, Close
  */
-PauseMenu::PauseMenu() : active(false), position({0, 0}), width(0), height(0)
+PauseMenu::PauseMenu()
+    : active(false), texturesLoaded(false), bgTexture({0}), position({0, 0}), width(0), height(0)
 {
-    buttonTexts = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-    buttonTexts[0] = "Resume";
-    buttonTexts[1] = "Save Game";
-    buttonTexts[2] = "Load Game";
-    buttonTexts[3] = "Options";
-    buttonTexts[4] = "Return to Main Menu";
-    buttonTexts[5] = "Close Game";
-
-    CalculateDimensions();
 }
 
 /**
@@ -271,6 +287,40 @@ PauseMenu::PauseMenu() : active(false), position({0, 0}), width(0), height(0)
  */
 PauseMenu::~PauseMenu()
 {
+    if (bgTexture.id != 0)
+        UnloadTexture(bgTexture);
+}
+
+/**
+ * @brief Memuat texture dari disk (lazy, sekali saja)
+ */
+void PauseMenu::LoadTextures()
+{
+    if (texturesLoaded)
+        return;
+    texturesLoaded = true;
+
+    Image img = LoadImage("assets/textures/pauseButt/pause-bg.png");
+    bgTexture = LoadTextureFromImage(img);
+    UnloadImage(img);
+
+    width = bgTexture.width;
+    height = bgTexture.height;
+    position.x = (GameScreenWidth - width) / 2.0F;
+    position.y = (GameScreenHeight - height) / 2.0F;
+    backgroundRect = {position.x, position.y, static_cast<float>(width), static_cast<float>(height)};
+
+    float centerX = position.x + width / 2.0F;
+    float gap = 17.0F;
+    float btnHeight = 56.0F;
+    float totalBtnHeight = 6.0F * btnHeight + 5.0F * gap;
+    float startY = position.y + (height - totalBtnHeight) / 2.0F + 30.0F;
+
+    for (int i = 0; i < 6; i++)
+    {
+        float btnY = startY + i * (btnHeight + gap) + btnHeight / 2.0F;
+        buttons[i] = buttonImage(BUTTON_PATHS[i], Vector2{centerX, btnY}, 1.0F, 0.6F);
+    }
 }
 
 /**
@@ -278,7 +328,7 @@ PauseMenu::~PauseMenu()
  */
 void PauseMenu::Show()
 {
-    CalculateDimensions();
+    LoadTextures();
     active = true;
 }
 
@@ -300,47 +350,11 @@ bool PauseMenu::IsActive() const
 }
 
 /**
- * @brief Menghitung dimensi menu berdasarkan layar
+ * @brief Menghitung ulang dimensi (dummy — virtual screen fixed, tidak perlu)
  */
 void PauseMenu::CalculateDimensions()
 {
-    const int maxWidth = static_cast<int>(GameScreenWidth * 0.30F);
-    const int fontSize = 30;
-    const int paddingY = 20;
-    const int buttonSpacing = 10;
-    const int separatorSpacing = 30;
-
-    int maxButtonWidth = 0;
-    for (std::uint8_t i = 0; i < 6; i++) {
-        int btnWidth = MeasureText(buttonTexts[i], fontSize);
-        maxButtonWidth = std::max(btnWidth, maxButtonWidth);
-    }
-
-    width = maxButtonWidth;
-    height = GameScreenHeight;
-    position.x = 0;
-    position.y = 0;
-
-    backgroundRect = {position.x, position.y, static_cast<float>(width), static_cast<float>(height)};
-
-    for (std::uint8_t i = 0; i < 6; i++) {
-        int btnWidth = MeasureText(buttonTexts[i], fontSize);
-        int btnX = position.x + ((width - btnWidth) / 2);
-
-        int separatorCount = 0;
-        if (i > 0) {
-            separatorCount++;
-        }
-        if (i > 2) {
-            separatorCount++;
-        }
-        if (i > 4) {
-            separatorCount++;
-        }
-
-        int btnY = position.y + paddingY + (i * (fontSize + buttonSpacing)) + (separatorCount * (separatorSpacing - buttonSpacing));
-        buttons[i] = buttonTxt(buttonTexts[i], btnX, btnY, fontSize, WHITE, 0.7F);
-    }
+    // Virtual screen 1280x720 is fixed; textures loaded once in LoadTextures()
 }
 
 /**
@@ -351,7 +365,7 @@ void PauseMenu::CalculateDimensions()
 void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
 {
     switch (buttonIndex) {
-        case 0:
+        case 0: // Resume
             Hide();
             break;
         case 1:
@@ -373,9 +387,15 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
                 noSavePopup.Show();
             }
             break;
-        case 3:
-            state->previousScreen = PLAY;
-            state->currentScreen = OPTIONS;
+        case 3: // Restart (New Game)
+            ClearSavedState();
+            PlayerInstance.ResetForNewGame();
+            state->enteredLoading = false;
+            state->loadingStage = 0;
+            state->loadingProgress = 0.0F;
+            state->loadingComplete = false;
+            state->currentScreen = LOADING;
+            Hide();
             break;
         case 4:
             returnConfirmPopup.SetSubMessage("Unsaved progress will be lost.");
@@ -475,20 +495,13 @@ void PauseMenu::Draw(Vector2 mousePosition)
 {
     if (!active) {
         return;
-}
+    }
 
     Rectangle fullScreen = {0, 0, static_cast<float>(GameScreenWidth), static_cast<float>(GameScreenHeight)};
     Color dimColor = {0, 0, 0, static_cast<unsigned char>(255 * 0.2F)};
     DrawRectangleRec(fullScreen, dimColor);
 
-    Color bgColor = DARKGRAY;
-    DrawRectangleRec(backgroundRect, bgColor);
-    DrawRectangleLines(
-        static_cast<int>(backgroundRect.x),
-        static_cast<int>(backgroundRect.y),
-        static_cast<int>(backgroundRect.width),
-        static_cast<int>(backgroundRect.height),
-        WHITE);
+    DrawTextureV(bgTexture, position, WHITE);
 
     for (std::uint8_t i = 0; i < 6; i++) {
         buttons[i].Draw(mousePosition);

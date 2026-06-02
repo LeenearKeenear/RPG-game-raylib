@@ -21,6 +21,7 @@ AGENTS.md
 
 # Runtime save data
 saves/
+**/worldseed/*
 
 # Auto-downloaded raylib
 raylib/

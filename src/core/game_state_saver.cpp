@@ -858,6 +858,12 @@ void ClearSavedState(void)
 
     worldgenPending = false;
 
+    // Reset persistent world state for a fresh game
+    Entities::ClearDeadEntities();
+    chestManager.ResetConsumed();
+    bombManager.ResetConsumed();
+    crateManager.ResetConsumed();
+
     // Clean up stale worldseed save_N folders for a fresh worldgen start
     const char* worldseedDir = "assets/maps/World_generation/worldseed";
     if (std::filesystem::exists(worldseedDir))

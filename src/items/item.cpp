@@ -148,7 +148,7 @@ void ItemDefinitionManager::Load(const std::string &path)
             wd.damage = SafeGet<float>(w, "damage", 10.f);                    // nilai fallback 10
             wd.reach = SafeGet<float>(w, "reach", 10.f);                      // nilai fallback 10
             wd.breadth = SafeGet<float>(w, "breadth", 10.f);                  // nilai fallback 10
-            wd.duration = SafeGet<float>(w, "duration", 0.9f);                 // nilai fallback 0.9
+            wd.duration = SafeGet<float>(w, "duration", 0.9f);                // nilai fallback 0.9
             wd.knockbackForce = SafeGet<float>(w, "knockbackForce", 1.f);     // nilai fallback 1
             wd.startAngleOffset = SafeGet<float>(w, "startAngleOffset", 0.f); // nilai fallback 0
             wd.sweepAngle = SafeGet<float>(w, "sweepAngle", 0.f);             // nilai fallback 0
@@ -218,6 +218,21 @@ const std::unordered_map<std::string, ItemDefinition> &ItemDefinitionManager::Ge
     return definitions_;
 }
 
+Vector2 ItemDefinitionManager::GetMaxHitboxForCategory(ItemCategory category) const
+{
+    Vector2 maxSize = {0, 0};
+    for (const auto &[name, def] : definitions_)
+    {
+        if (category != ITEM_ANY && def.category != category)
+            continue;
+        if (def.hitboxSize.x > maxSize.x)
+            maxSize.x = def.hitboxSize.x;
+        if (def.hitboxSize.y > maxSize.y)
+            maxSize.y = def.hitboxSize.y;
+    }
+    return maxSize;
+}
+
 /*==============================================================================
  * ItemDataSpawnManager
  *==============================================================================*/
@@ -247,9 +262,13 @@ ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
     // cari posisi aman, maksimal `spawnPosRetryLimit` attempt
     int spawnPosRetryLimit = 5;
     Vector2 safePos = pos;
+    float halfW = def.hitboxSize.x / 2.0f;
+    float halfH = def.hitboxSize.y / 2.0f;
     for (int i = 0; i < spawnPosRetryLimit; i++)
     {
-        if (IsPositionSafe(safePos, def.hitboxSize.x, def.hitboxSize.y, 0, 0))
+        // Convert center→top-left karena IsPositionSafe expect top-left
+        Vector2 topLeft = {safePos.x - halfW, safePos.y - halfH};
+        if (IsPositionSafe(topLeft, def.hitboxSize.x, def.hitboxSize.y, 0, 0))
             break;
         safePos = {
             pos.x + (float)GetRandomValue(-32, 32),
@@ -258,9 +277,9 @@ ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
 
     ItemSpawn item;
     item.definitionId = definitionId;
-    item.position = pos;
-    item.hitbox = {pos.x - def.hitboxSize.x / 2,
-                   pos.y - def.hitboxSize.y / 2,
+    item.position = safePos;
+    item.hitbox = {safePos.x - halfW,
+                   safePos.y - halfH,
                    def.hitboxSize.x,
                    def.hitboxSize.y};
     item.isPickedUp = false;
@@ -270,7 +289,7 @@ ItemSpawn ItemDataManager::CreateItem(Vector2 pos, int definitionId)
     item.uuid = GenerateUUID();
 
     TraceLog(LOG_INFO, "ITEM: Spawned '%s' at (%.1f, %.1f)",
-             def.name.c_str(), pos.x, pos.y);
+             def.name.c_str(), safePos.x, safePos.y);
     return item;
 }
 
@@ -724,17 +743,29 @@ Vector2 ItemSpawnManager::GetRandomPosInArea(const SpawnArea &area, Vector2 hitb
 {
     int maxAttempts = 100;
 
+    float halfW = hitboxSize.x / 2.0f;
+    float halfH = hitboxSize.y / 2.0f;
+    float minX = area.bounds.x + halfW;
+    float maxX = area.bounds.x + area.bounds.width - halfW;
+    float minY = area.bounds.y + halfH;
+    float maxY = area.bounds.y + area.bounds.height - halfH;
+
     for (int i = 0; i < maxAttempts; i++)
     {
-        Vector2 pos = {
-            (float)GetRandomValue((int)area.bounds.x, (int)(area.bounds.x + area.bounds.width)),
-            (float)GetRandomValue((int)area.bounds.y, (int)(area.bounds.y + area.bounds.height))};
+        // Generate center position dengan margin hitbox agar tidak keluar area
+        Vector2 center = {
+            (float)GetRandomValue((int)minX, (int)maxX),
+            (float)GetRandomValue((int)minY, (int)maxY)};
 
-        if (IsPositionSafe(pos, hitboxSize.x, hitboxSize.y, 0, 0))
-            return pos;
+        // Convert center→top-left karena IsPositionSafe expect top-left
+        Vector2 topLeft = {center.x - halfW, center.y - halfH};
+        if (IsPositionSafe(topLeft, hitboxSize.x, hitboxSize.y, 0, 0))
+            return center;
     }
 
-    return {area.bounds.x + area.bounds.width / 2, area.bounds.y + area.bounds.height / 2};
+    // fallback ke center area
+    return {area.bounds.x + area.bounds.width / 2,
+            area.bounds.y + area.bounds.height / 2};
 }
 
 // Pilih definitionId random berdasarkan rarity weight

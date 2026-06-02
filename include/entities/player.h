@@ -100,6 +100,7 @@ public:
     /** @brief Inisialisasi player dan lokasi spawn */
     void Init(GameState *state, const char *spawnObjectName = SPAWN_OBJECT_NAME);
     void ResetForNewGame();
+    /** @brief Update player tiap frame */
     void Update() override;
     /** @brief Render player */
     void Render(void) override;
@@ -218,6 +219,8 @@ public:
     bool IsDashing = false;       // Flag sedang dashing
     bool IsMoving = false;        // Flag sedang bergerak
     bool canInteract = false;     // Flag bisa interaksi
+    float PotionCooldown = 0.0f;  // Timer cooldown potion
+    float PotionCooldownMax = 1.0f; // Durasi cooldown potion
 
     // Feedback visual/fisika
     float HitFlashTimer = 0.0f;         // Durasi efek kilatan saat terkena hit

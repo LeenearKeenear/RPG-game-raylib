@@ -22,7 +22,7 @@
  *==============================================================================*/
 
 /** Array tombol menu utama (Start, Load, Options, Quit) */
-static std::array<buttonTxt, 4> buttons;
+static std::array<buttonImage, 4> buttons;
 
 /** Logo texture untuk main menu */
 static Texture2D logoTexture;
@@ -50,25 +50,29 @@ void InitMainMenu(GameState *state)
 
     // Load dan resize logo
     Image logoImg = LoadImage("assets/textures/logo.png");
-    int targetWidth = static_cast<int>(3840 * 0.13F);
-    int targetHeight = static_cast<int>(2160 * 0.13F);
+    int targetWidth = static_cast<int>(3840 * 0.25F);
+    int targetHeight = static_cast<int>(2160 * 0.25F);
     ImageResize(&logoImg, targetWidth, targetHeight);
     logoTexture = LoadTextureFromImage(logoImg);
     UnloadImage(logoImg);
 
-    // Daftar teks tombol sesuai urutan enum MenuButton
-    std::array<const char *, 4> texts = {"Start Game", "Load Game", "Options", "Quit"};
+    // Konfigurasi individu untuk setiap tombol (path, scale, yOffset)
+    struct { const char *path; float scale; int yOffset; } btnConfig[4] = {
+        {"assets/textures/mainMenuButt/main-start.png",    1, -40},
+        {"assets/textures/mainMenuButt/main-load.png",     1,  50},
+        {"assets/textures/mainMenuButt/main-settings.png", 1, 140},
+        {"assets/textures/mainMenuButt/main-quit.png",     1, 230},
+    };
 
-    // Hitung posisi tengah layar virtual
-    int centerX = (GameScreenWidth / 2) - 50;
     int startY = (GameScreenHeight / 2) + 20;
-    int buttonSpacing = 70;
-    int fontSize = 30;
 
-    // Looping bilang 4 tombol dengan posisi vertikal berurutan
     for (int i = 0; i < 4; i++)
     {
-        buttons[i] = buttonTxt(texts[i], centerX, startY + (i * buttonSpacing), fontSize, WHITE, 0.6F);
+        Vector2 pos = {
+            GameScreenWidth / 2.0F,
+            static_cast<float>(startY + btnConfig[i].yOffset)
+        };
+        buttons[i] = buttonImage(btnConfig[i].path, pos, btnConfig[i].scale, 0.6F);
     }
 }
 
@@ -199,7 +203,7 @@ void RenderMainMenuToVirtualScreen(GameState *state)
 
     // Render logo
     int logoX = (GameScreenWidth / 2) - (logoTexture.width / 2);
-    DrawTexture(logoTexture, logoX, 60, WHITE);
+    DrawTexture(logoTexture, logoX, 10, WHITE);
 
     // Render semua tombol menu
     for (int i = 0; i < 4; i++)
