@@ -14,4 +14,4 @@ Isi folder ini dapat berubah-ubah sepanjang waktu. Apabila menambahkan atau meng
 4. `./sign-system-ui.md` :
 5. `./source-structure.md` :
 6. `./worldgeneration.md` :
-7. (Lanjut untuk mengisi)
+7. `./debug-keybinds.md` : Berisi dokumentasi keybind debug dan akses pengembang
