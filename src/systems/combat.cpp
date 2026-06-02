@@ -335,20 +335,6 @@ namespace Combat
         DrawFrame(slashFrame, slashDisplay);
     }
 
-    void HandleRevive(Player &player)
-    {
-        if (player.Anim.isDead)
-        {
-            player.Anim.isDead = false;
-            player.Anim.isAttacking = false;
-            PlayAnimation(player.Anim, IDLE, player.Anim.direction);
-            player.Health = player.MaxHealth;
-            player.Mana = player.MaxMana;
-            player.KnockbackVelocity = {0, 0};
-            TraceLog(LOG_INFO, "PLAYER: Dihidupkan kembali!");
-        }
-    }
-
     void PerformHitDetection(Player &player)
     {
         if (!player.attack.active || !player.attack.weapon)

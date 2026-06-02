@@ -124,7 +124,7 @@ void Player::ResetForNewGame()
  *
  * Urutan:
  * 1. Input polling
- * 2. Lifecycle checkup (revive)
+ * 2. Lifecycle checkup
  * 3. Timer & Status effects
  * 4. Physics & Knockback
  * 5. Logic modules (Movement, Combat, Inventory, Interaction)
@@ -138,12 +138,6 @@ void Player::Update()
     InputInstance.UpdateState();
 
     // 2. Pemeriksaan Lifecycle
-    if (InputInstance.IsRevive())
-    {
-        Combat::HandleRevive(*this);
-        return;
-    }
-
     if (Anim.isDead)
         return;
 
