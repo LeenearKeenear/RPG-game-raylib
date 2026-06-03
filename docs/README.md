@@ -14,4 +14,5 @@ Isi folder ini dapat berubah-ubah sepanjang waktu. Apabila menambahkan atau meng
 4. `./sign-system-ui.md` :
 5. `./source-structure.md` :
 6. `./worldgeneration.md` :
-7. (Lanjut untuk mengisi)
+7. `./item_spawn_rng_issue.md` : Issue & analisis RNG item spawn tidak deterministic (worldgen + fixed map).
+8. (Lanjut untuk mengisi)

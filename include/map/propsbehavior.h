@@ -333,7 +333,7 @@ private:
         bool isAlive;    // False jika crate sudah dihancurkan
     };
 
-    static constexpr float CRATE_LOOT_CHANCE = 1.0f; // 10% chance drop loot
+    static constexpr float CRATE_LOOT_CHANCE = 0.1f; // 10% chance drop loot
 
     std::vector<CrateData> crates;                     // Daftar crate yang sedang dikelola
     std::unordered_set<std::string> consumedPositions; // Posisi crate yang sudah dihancurkan agar tidak spawn ulang

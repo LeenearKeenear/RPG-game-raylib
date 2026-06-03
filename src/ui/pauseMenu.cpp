@@ -15,6 +15,13 @@
 #include "../../include/core/game_state_saver.h"
 #include "../../include/map/worldgenio.h"
 #include "../../include/core/seedmanager.h"
+#include "entities.h"
+#include "item.h"
+#include "propsbehavior.h"
+#include "enemy.h"
+#include "enemy_ai.h"
+#include "map.h"
+#include "mapLogic.h"
 
 /*==============================================================================
  * Static Variables (Popup Notifications)
@@ -26,6 +33,7 @@ static Popup loadConfirmPopup("Load from save? Current progress will be lost.", 
 static Popup noSavePopup("No save file found.", "OK", 0.7F);
 static Popup pauseCorruptPopup("Save file corrupted or unreadable.", "OK", 0.7f);
 static Popup returnConfirmPopup("Return to main menu?", "Continue", "Cancel", 0.7f);
+static Popup restartConfirmPopup("Restart Run?", "Restart", "Cancel", 0.7f);
 
 /*==============================================================================
  * OptionsScreen Implementation
@@ -387,15 +395,9 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
                 noSavePopup.Show();
             }
             break;
-        case 3: // Restart (New Game)
-            ClearSavedState();
-            PlayerInstance.ResetForNewGame();
-            state->enteredLoading = false;
-            state->loadingStage = 0;
-            state->loadingProgress = 0.0F;
-            state->loadingComplete = false;
-            state->currentScreen = LOADING;
-            Hide();
+        case 3: // Restart
+            restartConfirmPopup.SetSubMessage("Current progress will be lost.");
+            restartConfirmPopup.Show();
             break;
         case 4:
             returnConfirmPopup.SetSubMessage("Unsaved progress will be lost.");
@@ -480,6 +482,61 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
         return;
     }
 
+    if (restartConfirmPopup.IsActive()) {
+        restartConfirmPopup.Update(mousePosition, mouseClicked);
+        if (restartConfirmPopup.IsConfirmClicked()) {
+            restartConfirmPopup.Hide();
+            // Clear semua runtime state
+            Entities::Clear();
+            itemData.activeItems.clear();
+            ClearTileProps();
+            Entities::ClearDeadEntities();
+            chestManager.ResetConsumed();
+            spikeManager.Clear();
+            bombManager.ResetConsumed();
+            crateManager.ResetConsumed();
+            barrierManager.Clear();
+
+            // Spawn enemies fresh dari map, lalu restore state dari cache kalo ada
+            SpawnEnemiesFromMap();
+            const char *mapPath = GetCurrentMapPath();
+            bool cacheLoaded = false;
+            if (mapPath)
+            {
+                std::string cachePath = std::string(mapPath) + ".cache";
+                cacheLoaded = LoadEnemiesForMap(cachePath);
+                cacheLoaded = LoadItemsForMapDir(cachePath) || cacheLoaded;
+            }
+
+            // Fallback: kalo cache gak ada, spawn item fresh dari map
+            if (!cacheLoaded)
+                SpawnItemWave();
+
+            // Reset & reposition player
+            PlayerInstance.ResetForNewGame();
+            PlayerInstance.Init(state, SPAWN_OBJECT_NAME);
+            TiledHelperFunction.TryGetObjectPositionByName(SPAWN_OBJECT_NAME, state->startSpawnPos);
+            PlayerInstance.hasDroppedItems = false;
+            Entities::Add(&PlayerInstance);
+
+            // Reset camera ke posisi player
+            Vector2 spawnPos = PlayerInstance.GetPosition();
+            camera.target = {spawnPos.x + (FRAME_SIZE / 2.0F), spawnPos.y + (FRAME_SIZE / 2.0F)};
+            camera.offset = {(float)(GameScreenWidth / 2), (float)(GameScreenHeight / 2)};
+            camera.rotation = 0;
+            camera.zoom = 1.0F;
+
+            // Re-init world objects & collision
+            SpawnObject();
+            RebuildObstacleCache();
+            globalFlowField.Invalidate();
+
+            state->currentScreen = PLAY;
+            Hide();
+        }
+        return;
+    }
+
     for (std::uint8_t i = 0; i < 6; i++) {
         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
             HandleButtonClick(i, state);
@@ -524,5 +581,8 @@ void PauseMenu::Draw(Vector2 mousePosition)
     }
     if (returnConfirmPopup.IsActive()) {
         returnConfirmPopup.Draw(mousePosition);
+    }
+    if (restartConfirmPopup.IsActive()) {
+        restartConfirmPopup.Draw(mousePosition);
     }
 }

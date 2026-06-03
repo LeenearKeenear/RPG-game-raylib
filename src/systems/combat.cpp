@@ -14,6 +14,7 @@
 #include <string>
 #include "mapLogic.h"
 #include "propsbehavior.h"
+#include "item.h"
 
 namespace Combat
 {
@@ -35,6 +36,8 @@ namespace Combat
         if (player.Health <= 0)
         {
             player.Health = 0;
+            if (!player.hasDroppedItems)
+                DropAllItems(player);
             PlayAnimation(player.Anim, DEAD, player.Anim.direction);
             player.Anim.isDead = true;
         }

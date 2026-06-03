@@ -146,6 +146,9 @@ void UpdateLoadingScreen(GameState *state)
             // Re-init player berdasarkan target door di map baru
             PlayerInstance.Init(gState, state->pendingDoorName.c_str());
 
+            // Capture start room spawn position untuk revive
+            TiledHelperFunction.TryGetObjectPositionByName(SPAWN_OBJECT_NAME, gState->startSpawnPos);
+
             // Bersihkan entitas map sebelumnya dan add player
             Entities::Clear();
             Entities::Add(&PlayerInstance);
@@ -160,6 +163,17 @@ void UpdateLoadingScreen(GameState *state)
             if (!LoadItemsForMapDir(state->pendingMapPath))
             {
                 SpawnItemWave();
+            }
+
+            // Capture cache untuk restart
+            {
+                const char *currentPath = GetCurrentMapPath();
+                if (currentPath)
+                {
+                    std::string cachePath = std::string(currentPath) + ".cache";
+                    SaveEnemiesForMap(cachePath);
+                    SaveItemsForMapDir(cachePath);
+                }
             }
 
             state->loadingStage++;

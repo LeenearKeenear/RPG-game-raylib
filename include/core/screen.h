@@ -75,6 +75,9 @@ struct GameState
     bool isGoingBack;            // Flag menandakan sedang dalam proses kembali ke map sebelumnya
     std::string pendingMapPath;  // Path map tujuan yang akan dimuat
     std::string pendingDoorName; // Nama door atau spawn point tujuan
+
+    /* Revive State Variables */
+    Vector2 startSpawnPos{};     // Posisi spawn start room untuk revive
 };
 
 /** @brief Pointer global ke GameState aktif */

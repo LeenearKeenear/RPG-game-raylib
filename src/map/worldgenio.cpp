@@ -104,8 +104,26 @@ namespace WorldgenIO
     /*=== Init ===*/
 
     /** @brief Inisialisasi run baru di slot tertentu */
+    /*=== Cache Management ===*/
+
+    /** @brief Hapus semua runtime per-map state dari folder saves/enemies dan saves/items */
+    void ClearCache()
+    {
+        const std::string dirs[] = {"saves/enemies", "saves/items"};
+        for (const auto &dir : dirs)
+        {
+            if (!fs::exists(dir))
+                continue;
+            for (const auto &entry : fs::directory_iterator(dir))
+            {
+                fs::remove(entry.path());
+            }
+        }
+    }
+
     bool InitRun(int saveSlot)
     {
+        ClearCache();
         g_SeedManager.InitRun(saveSlot);
 
         std::string slotDir = GetSlotDir(saveSlot);
