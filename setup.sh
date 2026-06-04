@@ -28,7 +28,7 @@ write_err() {
 get_installed_raylib_version() {
   local header="lib/raylib/include/raylib.h"
   if [[ -f "$header" ]]; then
-    grep -oP 'RAYLIB_VERSION "\K[0-9]+\.[0-9]+' "$header" 2>/dev/null || echo ""
+    grep -oP 'RAYLIB_VERSION\s+"\K[0-9]+\.[0-9]+' "$header" 2>/dev/null || echo ""
   fi
 }
 
