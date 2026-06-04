@@ -99,12 +99,14 @@ static void DrawSliderBar(
         DrawRectangle(barX, barY, fillWidth, SLIDER_HEIGHT, SLIDER_FILL);
     }
 
-    // Value text
+    // Value text (di tengah slider bar)
     char valueStr[16];
     snprintf(valueStr, sizeof(valueStr), "%d%%", valuePct);
+    Vector2 textSize = MeasureTextEx(fontKeybindEntry, valueStr, FONT_SIZE, 0);
+    float valX = barX + (SLIDER_WIDTH - textSize.x) * 0.5f;
+    float valY = barY + (SLIDER_HEIGHT - textSize.y) * 0.5f;
     DrawTextEx(fontKeybindEntry, valueStr,
-        Vector2{static_cast<float>(VALUE_X), static_cast<float>(barY - 5)},
-        FONT_SIZE, 0, YELLOW);
+        Vector2{valX, valY}, FONT_SIZE, 0, BLACK);
 
     // Hover effect
     Rectangle sliderRect = {
