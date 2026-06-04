@@ -1,40 +1,260 @@
 /**
  * @file audioTab.cpp
  * @brief Implementasi Audio Settings Tab
- * 
- * Handle rendering untuk pengaturan audio.
+ *
+ * Handle rendering dan input untuk 3 slider volume (Master, Music, SFX)
+ * dengan persistence ke JSON dan real-time audio control via AudioManager.
  */
 
 #include "audioTab.h"
+#include "../../include/systems/audioManager.h"
 #include "../lib/raylib/include/raylib.h"
+#include "../lib/raylib/include/raymath.h"
 #include "../lib/json/include/nlohmann/json.hpp"
 #include <fstream>
 #include <filesystem>
 
 using json = nlohmann::json;
 
+/*==============================================================================
+ * Static State
+ *==============================================================================*/
+
+/** @brief Global slider state untuk tab Audio */
+SliderState g_sliders = {100, 80, 100, false, -1};
+
+/*==============================================================================
+ * Constants
+ *==============================================================================*/
+
+/** @brief Lebar slider bar dalam pixel */
+static const int SLIDER_WIDTH = 250;
+
+/** @brief Tinggi slider bar dalam pixel */
+static const int SLIDER_HEIGHT = 20;
+
+/** @brief Warna background slider */
+static const Color SLIDER_BG    = {80, 80, 80, 255};
+
+/** @brief Warna fill slider (hijau) */
+static const Color SLIDER_FILL  = {50, 200, 50, 255};
+
+/** @brief Warna border saat hover */
+static const Color SLIDER_HOVER = {255, 255, 255, 120};
+
+/** @brief Posisi X label */
+static const int LABEL_X = 40;
+
+/** @brief Posisi X slider bar */
+static const int SLIDER_BAR_X = 180;
+
+/** @brief Posisi X value text */
+static const int VALUE_X = 460;
+
+/** @brief Font size untuk label dan value */
+static const int FONT_SIZE = 20;
+
+/** @brief Row offset per slider */
+static const int ROW_OFFSETS[3] = {15, 75, 135};
+
+/** @brief Label teks untuk tiap slider */
+static const char* SLIDER_LABELS[3] = {
+    "Master Volume",
+    "Music Volume",
+    "SFX Volume"
+};
+
+/*==============================================================================
+ * Draw Functions
+ *==============================================================================*/
+
+/**
+ * @brief Me-render satu slider bar
+ * @param label Teks label slider
+ * @param valuePct Nilai persen 0-100
+ * @param barX Posisi X slider bar
+ * @param barY Posisi Y slider bar
+ * @param mousePosition Posisi mouse untuk hover
+ */
+static void DrawSliderBar(
+    const char* label,
+    int valuePct,
+    int barX,
+    int barY,
+    Vector2 mousePosition)
+{
+    // Label
+    DrawText(label, LABEL_X, barY - 2, FONT_SIZE, WHITE);
+
+    // Background bar
+    DrawRectangle(barX, barY, SLIDER_WIDTH, SLIDER_HEIGHT, SLIDER_BG);
+
+    // Fill bar (proporsional)
+    int fillWidth = (valuePct * SLIDER_WIDTH) / 100;
+    if (fillWidth > 0)
+    {
+        DrawRectangle(barX, barY, fillWidth, SLIDER_HEIGHT, SLIDER_FILL);
+    }
+
+    // Value text
+    char valueStr[16];
+    snprintf(valueStr, sizeof(valueStr), "%d%%", valuePct);
+    DrawText(valueStr, VALUE_X, barY - 2, FONT_SIZE, YELLOW);
+
+    // Hover effect
+    Rectangle sliderRect = {
+        static_cast<float>(barX),
+        static_cast<float>(barY),
+        static_cast<float>(SLIDER_WIDTH),
+        static_cast<float>(SLIDER_HEIGHT)
+    };
+    if (CheckCollisionPointRec(mousePosition, sliderRect))
+    {
+        DrawRectangleLines(barX, barY, SLIDER_WIDTH, SLIDER_HEIGHT, SLIDER_HOVER);
+    }
+}
+
+/*==============================================================================
+ * Public Draw
+ *==============================================================================*/
+
 void DrawAudioTab(
     Vector2 mousePosition,
     int startX,
     int startY)
 {
-    (void)mousePosition;
     int contentStartY = startY + 100;
-    const int fontSize = 24;
-    int labelX = startX + 40;
-    int valueX = startX + 250;
+    int barX = startX + SLIDER_BAR_X;
 
-    DrawText("Master Volume", labelX, contentStartY + 15, fontSize, WHITE);
-    DrawText("100%", valueX, contentStartY + 15, fontSize, YELLOW);
+    for (int i = 0; i < 3; i++)
+    {
+        int barY = contentStartY + ROW_OFFSETS[i];
+        int value = (i == 0) ? g_sliders.masterVolume :
+                    (i == 1) ? g_sliders.musicVolume :
+                               g_sliders.sfxVolume;
 
-    DrawText("Music Volume", labelX, contentStartY + 75, fontSize, WHITE);
-    DrawText("80%", valueX, contentStartY + 75, fontSize, YELLOW);
-
-    DrawText("SFX Volume", labelX, contentStartY + 135, fontSize, WHITE);
-    DrawText("100%", valueX, contentStartY + 135, fontSize, YELLOW);
-
-    DrawText("(Coming Soon)", labelX, contentStartY + 180, 18, GRAY);
+        DrawSliderBar(SLIDER_LABELS[i], value, barX, barY, mousePosition);
+    }
 }
+
+/*==============================================================================
+ * Update
+ *==============================================================================*/
+
+bool UpdateAudioTab(
+    SliderState& sliders,
+    Vector2 mousePosition,
+    bool mouseClicked,
+    int startX,
+    int startY)
+{
+    int contentStartY = startY + 100;
+    int barX = startX + SLIDER_BAR_X;
+
+    auto calcVolumeFromMouse = [&](int index) -> int
+    {
+        int barY = contentStartY + ROW_OFFSETS[index];
+        float relX = mousePosition.x - static_cast<float>(barX);
+        float pct = (relX / SLIDER_WIDTH) * 100.0f;
+        int vol = static_cast<int>(pct + 0.5f);
+        if (vol < 0) vol = 0;
+        if (vol > 100) vol = 100;
+        return vol;
+    };
+
+    auto getSliderUnderMouse = [&]() -> int
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            int barY = contentStartY + ROW_OFFSETS[i];
+            Rectangle rect = {
+                static_cast<float>(barX),
+                static_cast<float>(barY),
+                static_cast<float>(SLIDER_WIDTH),
+                static_cast<float>(SLIDER_HEIGHT)
+            };
+            if (CheckCollisionPointRec(mousePosition, rect))
+                return i;
+        }
+        return -1;
+    };
+
+    // Initiate drag on click
+    if (mouseClicked && !sliders.isDragging)
+    {
+        int idx = getSliderUnderMouse();
+        if (idx >= 0)
+        {
+            sliders.isDragging = true;
+            sliders.dragIndex = idx;
+
+            int newVol = calcVolumeFromMouse(idx);
+            switch (idx)
+            {
+                case 0: sliders.masterVolume = newVol; break;
+                case 1: sliders.musicVolume = newVol; break;
+                case 2: sliders.sfxVolume = newVol; break;
+            }
+
+            AudioManager::SetVolumesFromPct(
+                sliders.masterVolume,
+                sliders.musicVolume,
+                sliders.sfxVolume
+            );
+
+            TraceLog(LOG_INFO, "AUDIO: Slider %d digeser ke %d%%", idx, newVol);
+        }
+    }
+
+    // Drag update — real-time volume change
+    if (sliders.isDragging && IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+    {
+        int idx = sliders.dragIndex;
+        if (idx >= 0)
+        {
+            int newVol = calcVolumeFromMouse(idx);
+            switch (idx)
+            {
+                case 0: sliders.masterVolume = newVol; break;
+                case 1: sliders.musicVolume = newVol; break;
+                case 2: sliders.sfxVolume = newVol; break;
+            }
+
+            AudioManager::SetVolumesFromPct(
+                sliders.masterVolume,
+                sliders.musicVolume,
+                sliders.sfxVolume
+            );
+        }
+    }
+
+    // Mouse release — simpan settings
+    if (sliders.isDragging && IsMouseButtonUp(MOUSE_BUTTON_LEFT))
+    {
+        sliders.isDragging = false;
+        sliders.dragIndex = -1;
+
+        SaveAudioSettings(
+            sliders.masterVolume,
+            sliders.musicVolume,
+            sliders.sfxVolume
+        );
+
+        TraceLog(LOG_INFO, "AUDIO: Settings disimpan (M=%d, Mu=%d, S=%d)",
+            sliders.masterVolume,
+            sliders.musicVolume,
+            sliders.sfxVolume
+        );
+
+        return true;
+    }
+
+    return false;
+}
+
+/*==============================================================================
+ * Load / Save
+ *==============================================================================*/
 
 bool LoadAudioSettings()
 {
@@ -55,7 +275,29 @@ bool LoadAudioSettings()
             return false;
         }
 
-        TraceLog(LOG_INFO, "AUDIO: Settings dimuat dari %s", AUDIO_SETTINGS_PATH);
+        int master = root.value("masterVolume", 100);
+        int music  = root.value("musicVolume", 80);
+        int sfx    = root.value("sfxVolume", 100);
+
+        // Clamp ke 0-100
+        if (master < 0) master = 0;
+        if (master > 100) master = 100;
+        if (music < 0) music = 0;
+        if (music > 100) music = 100;
+        if (sfx < 0) sfx = 0;
+        if (sfx > 100) sfx = 100;
+
+        // Apply ke AudioManager
+        AudioManager::SetVolumesFromPct(master, music, sfx);
+
+        // Sync slider state
+        g_sliders.masterVolume = master;
+        g_sliders.musicVolume = music;
+        g_sliders.sfxVolume = sfx;
+
+        TraceLog(LOG_INFO, "AUDIO: Settings dimuat dari %s (M=%d, Mu=%d, S=%d)",
+            AUDIO_SETTINGS_PATH, master, music, sfx);
+
         return true;
     }
     catch (const std::exception& e)
