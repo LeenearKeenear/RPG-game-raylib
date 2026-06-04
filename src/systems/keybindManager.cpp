@@ -38,7 +38,7 @@ const Keybind KeybindManager::defaultBindings[ACTION_COUNT] = {
     /* HOTBAR_SLOT_3       */ {KEY_THREE,         false},
     /* HOTBAR_SLOT_4       */ {KEY_FOUR,          false},
     /* GO_BACK             */ {KEY_B,             false},
-    /* PAUSE_MENU          */ {KEY_GRAVE,         false},
+    /* PAUSE_MENU          */ {KEY_ESCAPE,        false},
     /* DEBUG_TOGGLE        */ {KEY_TAB,           false},
     /* DEBUG_TOGGLE_ENEMY  */ {KEY_BACKSLASH,     false},
     /* DEBUG_TOGGLE_PLAYER */ {KEY_RIGHT_BRACKET, false},

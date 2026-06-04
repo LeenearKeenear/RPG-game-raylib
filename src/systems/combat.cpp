@@ -9,6 +9,7 @@
 #include "effects.h"
 #include "propsbehavior.h"
 #include "../lib/raylib/include/raymath.h"
+#include "../../include/systems/audioManager.h"
 #include <algorithm>
 #include <cmath>
 #include <string>
@@ -122,6 +123,7 @@ namespace Combat
                     Inventory::SetupAttackStats(player, attackFaceDir);
 
                     player.Anim.isAttacking = true;
+                    AudioManager::PlaySfx();
                     TraceLog(LOG_INFO, "PLAYER: Serangan diarahkan ke (%.2f, %.2f)", attackDir.x, attackDir.y);
 
                     if (player.attack.weapon->attackType == ATTACK_PIERCE)

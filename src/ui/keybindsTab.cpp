@@ -6,6 +6,11 @@
 
 static const char* SAVE_PATH = "saves/settings/keybindsTab.json";
 
+const char* GetKeybindsSettingsPath()
+{
+    return SAVE_PATH;
+}
+
 struct SectionInfo {
     const char* title;
     Color color;
@@ -18,7 +23,6 @@ static const SectionInfo sections[] = {
     {"COMBAT",     YELLOW,  4, 3},
     {"INVENTORY",  YELLOW,  7, 4},
     {"HOTBAR",     YELLOW, 11, 4},
-    {"DEBUG",      GRAY,   15, 7},
 };
 
 static const int SECTION_COUNT = sizeof(sections) / sizeof(sections[0]);

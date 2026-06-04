@@ -6,7 +6,10 @@
  */
 
 #include <algorithm>
+#include <filesystem>
+#include <system_error>
 
+#include "../../include/systems/keybindManager.h"
 #include "../../include/ui/pauseMenu.h"
 #include "../../include/ui/popup.h"
 #include "../../include/ui/videoTab.h"
@@ -193,6 +196,22 @@ void OptionsScreen::CalculateDimensions()
         labelFontSize,
         showFPS ? GREEN : GRAY,
         0.7F);
+
+    resetTabButton = buttonTxt(
+        "Reset Tab",
+        startX + 40,
+        startY + height - 110,
+        20,
+        ORANGE,
+        0.7F);
+
+    resetOptionsButton = buttonTxt(
+        "Reset All",
+        startX + 200,
+        startY + height - 110,
+        20,
+        ORANGE,
+        0.7F);
 }
 
 /**
@@ -221,11 +240,65 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
         }
     }
 
+    if (resetTabButton.isClicked(mousePosition, mouseClicked)) {
+        const char* paths[] = {
+            "saves/settings/videoTab.json",
+            "saves/settings/audioTab.json",
+            "saves/settings/keybindsTab.json"
+        };
+        std::error_code ec;
+        std::filesystem::remove(paths[selectedTab], ec);
+
+        if (selectedTab == 0) {
+            if (IsWindowFullscreen())
+                ToggleFullscreenMode();
+            state->showFPS = false;
+            showFPS = false;
+        } else if (selectedTab == 1) {
+            g_sliders = {100, 80, 100, false, -1};
+            AudioManager::SetVolumesFromPct(100, 80, 100);
+            SaveAudioSettings(g_sliders.masterVolume, g_sliders.musicVolume, g_sliders.sfxVolume);
+        } else if (selectedTab == 2) {
+            keybindManager.ResetDefaults();
+            keybindManager.SaveToFile(paths[2]);
+        }
+        CalculateDimensions();
+        return;
+    }
+
+    if (resetOptionsButton.isClicked(mousePosition, mouseClicked)) {
+        const char* allPaths[] = {
+            "saves/settings/videoTab.json",
+            "saves/settings/audioTab.json",
+            "saves/settings/keybindsTab.json"
+        };
+        std::error_code ec;
+        for (const auto& p : allPaths) {
+            std::filesystem::remove(p, ec);
+        }
+
+        if (IsWindowFullscreen())
+            ToggleFullscreenMode();
+        state->showFPS = false;
+        showFPS = false;
+        g_sliders = {100, 80, 100, false, -1};
+        AudioManager::SetVolumesFromPct(100, 80, 100);
+        SaveAudioSettings(g_sliders.masterVolume, g_sliders.musicVolume, g_sliders.sfxVolume);
+        keybindManager.ResetDefaults();
+        keybindManager.SaveToFile("saves/settings/keybindsTab.json");
+        CalculateDimensions();
+        return;
+    }
+
     if (selectedTab == 0) {
         if (UpdateVideoTab(fullscreenButton, fpsButton, state, mousePosition, mouseClicked)) {
             showFPS = state->showFPS;
             CalculateDimensions();
         }
+    }
+
+    if (selectedTab == 1) {
+        UpdateAudioTab(g_sliders, mousePosition, mouseClicked, startX + 89, startY + 121);
     }
 }
 
@@ -267,6 +340,9 @@ void OptionsScreen::Draw(Vector2 mousePosition)
         case 1: DrawAudioTab(mousePosition, startX + contentOX, startY + contentOY); break;
         case 2: DrawKeybindsTab(mousePosition, startX + contentOX, startY + contentOY); break;
     }
+
+    resetTabButton.Draw(mousePosition);
+    resetOptionsButton.Draw(mousePosition);
 }
 
 /*==============================================================================
