@@ -42,7 +42,7 @@ jobs:
       - name: Build tests
         run: cmake --build build --target test_constants
 
-      - name: Run tests
+      - name: Run test constant check
         run: cd build && ctest --output-on-failure
 
       - name: Upload artifact
