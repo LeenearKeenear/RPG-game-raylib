@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Configuration
-RAYLIB_VERSION="5.5"
+RAYLIB_VERSION="6.0"
 TILESON_VERSION="v1.4.0"
 JSON_VERSION="v3.12.0"
 
