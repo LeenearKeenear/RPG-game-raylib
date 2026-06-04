@@ -177,7 +177,9 @@ void AudioManager::Update(ScreenState currentScreen)
 
     // Deteksi perubahan screen untuk auto-switch
     // LOADING dan OPTIONS tidak memicu switch
-    if (currentScreen != LOADING && currentScreen != OPTIONS && currentScreen != _lastMusicScreen)
+    // Juga start track kalo belum ada yg playing (_activeTrackIndex == -1)
+    if (currentScreen != LOADING && currentScreen != OPTIONS &&
+        (_activeTrackIndex == -1 || currentScreen != _lastMusicScreen))
     {
         int newTrackIndex = ScreenToTrackIndex(currentScreen);
 
