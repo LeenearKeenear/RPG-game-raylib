@@ -7,6 +7,7 @@
  */
 
 #include "audioTab.h"
+#include "fonts.h"
 #include "../../include/systems/audioManager.h"
 #include "../lib/raylib/include/raylib.h"
 #include "../lib/raylib/include/raymath.h"
@@ -43,16 +44,16 @@ static const Color SLIDER_FILL  = {50, 200, 50, 255};
 static const Color SLIDER_HOVER = {255, 255, 255, 120};
 
 /** @brief Posisi X label */
-static const int LABEL_X = 40;
+static const int LABEL_X = 180;
 
 /** @brief Posisi X slider bar */
-static const int SLIDER_BAR_X = 180;
+static const int SLIDER_BAR_X = 380;
 
 /** @brief Posisi X value text */
-static const int VALUE_X = 460;
+static const int VALUE_X = 660;
 
 /** @brief Font size untuk label dan value */
-static const int FONT_SIZE = 20;
+static const int FONT_SIZE = 30;
 
 /** @brief Row offset per slider */
 static const int ROW_OFFSETS[3] = {15, 75, 135};
@@ -84,7 +85,9 @@ static void DrawSliderBar(
     Vector2 mousePosition)
 {
     // Label
-    DrawText(label, LABEL_X, barY - 2, FONT_SIZE, WHITE);
+    DrawTextEx(fontKeybindEntry, label,
+        Vector2{static_cast<float>(LABEL_X), static_cast<float>(barY - 5)},
+        FONT_SIZE, 0, WHITE);
 
     // Background bar
     DrawRectangle(barX, barY, SLIDER_WIDTH, SLIDER_HEIGHT, SLIDER_BG);
@@ -99,7 +102,9 @@ static void DrawSliderBar(
     // Value text
     char valueStr[16];
     snprintf(valueStr, sizeof(valueStr), "%d%%", valuePct);
-    DrawText(valueStr, VALUE_X, barY - 2, FONT_SIZE, YELLOW);
+    DrawTextEx(fontKeybindEntry, valueStr,
+        Vector2{static_cast<float>(VALUE_X), static_cast<float>(barY - 5)},
+        FONT_SIZE, 0, YELLOW);
 
     // Hover effect
     Rectangle sliderRect = {
