@@ -15,6 +15,17 @@ function Write-Debug($message) {
     Write-Host "  [DEBUG] $message" -ForegroundColor Gray
 }
 
+function Get-InstalledRaylibVersion {
+    $headerPath = Join-Path $cwd "lib\raylib\include\raylib.h"
+    if (Test-Path $headerPath) {
+        $content = Get-Content $headerPath -Raw
+        if ($content -match 'RAYLIB_VERSION "(\d+\.\d+)"') {
+            return $Matches[1]
+        }
+    }
+    return $null
+}
+
 function Write-Err($message) {
     Write-Host "[ERROR] $message" -ForegroundColor Red
 }
@@ -25,6 +36,8 @@ $raylibDir = Join-Path $cwd "lib\raylib"
 $tilesonDir = Join-Path $cwd "lib\tileson"
 $jsonDir = Join-Path $cwd "lib\json"
 $raylibReady = (Test-Path (Join-Path $raylibDir "include\raylib.h")) -and (Test-Path (Join-Path $raylibDir "lib\libraylib.a"))
+$raylibInstalledVersion = if ($raylibReady) { Get-InstalledRaylibVersion } else { $null }
+$raylibVersionMatch = if ($raylibInstalledVersion) { $raylibInstalledVersion -eq $RaylibVersion } else { $false }
 $tilesonReady = Test-Path (Join-Path $tilesonDir "tileson.hpp")
 $jsonReady = Test-Path (Join-Path $jsonDir "include\nlohmann\json.hpp")
 
@@ -39,9 +52,15 @@ if ($raylibReady) {
     }
 }
 
-if ($raylibReady -and $tilesonReady -and $jsonReady) {
+if ($raylibReady -and $raylibVersionMatch -and $tilesonReady -and $jsonReady) {
     Write-Step "All required libraries already installed" -ForegroundColor Green
     exit 0
+}
+
+# Version mismatch — force reinstall
+if ($raylibReady -and -not $raylibVersionMatch) {
+    Write-Step "raylib version mismatch: installed $raylibInstalledVersion, needed $RaylibVersion. Reinstalling..."
+    Remove-Item -Path $raylibDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 function Install-Raylib() {
@@ -55,8 +74,13 @@ function Install-Raylib() {
     
     if ((Test-Path (Join-Path $installDir "include\raylib.h")) -and 
         (Test-Path (Join-Path $installDir "lib\libraylib.a"))) {
-        Write-Step "raylib already installed at $installDir"
-        return
+        $curVersion = Get-InstalledRaylibVersion
+        if ($curVersion -eq $RaylibVersion) {
+            Write-Step "raylib already installed at $installDir"
+            return
+        }
+        Write-Step "raylib version mismatch at $installDir (installed: $curVersion, needed: $RaylibVersion). Removing..."
+        Remove-Item -Path $installDir -Recurse -Force -ErrorAction SilentlyContinue
     }
     
     Write-Step "raylib not found. Downloading raylib $RaylibVersion from GitHub..."
