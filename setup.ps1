@@ -16,10 +16,11 @@ function Write-Debug($message) {
 }
 
 function Get-InstalledRaylibVersion {
-    $headerPath = Join-Path $cwd "lib\raylib\include\raylib.h"
+    param([string]$basePath)
+    $headerPath = Join-Path $basePath "lib\raylib\include\raylib.h"
     if (Test-Path $headerPath) {
         $content = Get-Content $headerPath -Raw
-        if ($content -match 'RAYLIB_VERSION "(\d+\.\d+)"') {
+        if ($content -match 'RAYLIB_VERSION\s+"(\d+\.\d+)"') {
             return $Matches[1]
         }
     }
@@ -36,7 +37,7 @@ $raylibDir = Join-Path $cwd "lib\raylib"
 $tilesonDir = Join-Path $cwd "lib\tileson"
 $jsonDir = Join-Path $cwd "lib\json"
 $raylibReady = (Test-Path (Join-Path $raylibDir "include\raylib.h")) -and (Test-Path (Join-Path $raylibDir "lib\libraylib.a"))
-$raylibInstalledVersion = if ($raylibReady) { Get-InstalledRaylibVersion } else { $null }
+$raylibInstalledVersion = if ($raylibReady) { Get-InstalledRaylibVersion -basePath $cwd } else { $null }
 $raylibVersionMatch = if ($raylibInstalledVersion) { $raylibInstalledVersion -eq $RaylibVersion } else { $false }
 $tilesonReady = Test-Path (Join-Path $tilesonDir "tileson.hpp")
 $jsonReady = Test-Path (Join-Path $jsonDir "include\nlohmann\json.hpp")
@@ -74,7 +75,7 @@ function Install-Raylib() {
     
     if ((Test-Path (Join-Path $installDir "include\raylib.h")) -and 
         (Test-Path (Join-Path $installDir "lib\libraylib.a"))) {
-        $curVersion = Get-InstalledRaylibVersion
+        $curVersion = Get-InstalledRaylibVersion -basePath $cwd
         if ($curVersion -eq $RaylibVersion) {
             Write-Step "raylib already installed at $installDir"
             return
