@@ -284,6 +284,10 @@ void OptionsScreen::Update(GameState* state, Vector2 mousePosition, bool mouseCl
             CalculateDimensions();
         }
     }
+
+    if (selectedTab == 1) {
+        UpdateAudioTab(g_sliders, mousePosition, mouseClicked, startX + 89, startY + 121);
+    }
 }
 
 /**

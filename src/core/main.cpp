@@ -23,6 +23,7 @@
 #include "../../include/systems/keybindManager.h"
 #include "../../include/ui/videoTab.h"
 #include "../../include/ui/audioTab.h"
+#include "../../include/systems/audioManager.h"
 #include "../../include/map/propsbehavior.h"
 #include "../../lib/raylib/include/raylib.h"
 #include "../../lib/raylib/include/raymath.h"
@@ -125,11 +126,18 @@ int main()
     // Muat pengaturan audio
     LoadAudioSettings();
 
+    // Inisialisasi AudioManager dan muat aset audio
+    AudioManager::Init();
+    AudioManager::LoadAudioAssets();
+
     float accumulator = 0.0f;
 
     // Main Game Loop
     while (!WindowShouldClose())
     {
+        // Update audio system setiap frame (UpdateMusicStream + auto-switch track)
+        AudioManager::Update(state.currentScreen);
+
         // ===== State: MAIN_MENU =====
         if (state.currentScreen == MAIN_MENU)
         {
@@ -261,6 +269,9 @@ int main()
     // Auto-save sebelum exit (jika run masih aktif)
     if (g_SeedManager.IsRunActive())
         WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
+
+    // Shutdown audio sebelum close audio device
+    AudioManager::Shutdown();
 
     // Shutdown
     GameShutDown(&state);
