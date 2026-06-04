@@ -97,6 +97,9 @@ void UpdateMainMenu(GameState *state)
                     }
                     else
                     {
+                        // Bersihkan per-map state dari sesi sebelumnya
+                        std::filesystem::remove_all("saves/enemies");
+                        std::filesystem::remove_all("saves/items");
                         state->enteredLoading = false;
                         state->currentScreen = LOADING;
                     }

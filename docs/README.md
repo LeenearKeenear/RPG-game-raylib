@@ -15,3 +15,5 @@ Isi folder ini dapat berubah-ubah sepanjang waktu. Apabila menambahkan atau meng
 5. `./source-structure.md` :
 6. `./worldgeneration.md` :
 7. `./debug-keybinds.md` : Berisi dokumentasi keybind debug dan akses pengembang
+8. `./save-system-changelog.md` : Changelog sesi restart system, cache, bug fix save system (human readable)
+9. `./save-system-changelog-ai.md` : Versi AI/machine-parseable dari changelog sistem save

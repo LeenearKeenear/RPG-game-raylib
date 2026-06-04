@@ -90,6 +90,7 @@ public:
     std::string pendingDoorName;   // Nama pintu tujuan di map baru
     bool pendingGoBack = false;    // Flag untuk kembali ke map sebelumnya
     GameState *State = nullptr;    // Pointer ke status game global
+    bool hasDroppedItems = false;  // Flag cegah double-drop pas mati
 
     RayCast Ray;                                         // Raycast untuk interaksi
     RayHitResult LastHit;                                // Data tabrakan raycast terakhir
@@ -215,7 +216,7 @@ public:
     float DashCooldownMax = 0.6f; // Durasi cooldown
     float DashDuration = 0.0f;    // Timer durasi dash aktif
     float DashDurationMax = 0.1f; // Max durasi dash
-    float DashManaCost = 7.0f;    // Biaya mana per dash
+    float DashManaCost = 8.0f;    // Biaya mana per dash
     bool IsDashing = false;       // Flag sedang dashing
     bool IsMoving = false;        // Flag sedang bergerak
     bool canInteract = false;     // Flag bisa interaksi

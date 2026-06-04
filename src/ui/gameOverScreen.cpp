@@ -51,6 +51,8 @@ void UpdateGameOverScreen(GameState *state)
         PlayerInstance.Health = PlayerInstance.MaxHealth;
         PlayerInstance.Mana = PlayerInstance.MaxMana;
         PlayerInstance.KnockbackVelocity = {0, 0};
+        PlayerInstance.Position = state->startSpawnPos;
+        PlayerInstance.hasDroppedItems = false;
         state->currentScreen = PLAY;
         return;
     }

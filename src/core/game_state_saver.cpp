@@ -6,6 +6,7 @@
  */
 
 #include "game_state_saver.h"
+#include "seedmanager.h"
 #include "map.h"
 #include "propsbehavior.h"
 #include "entities.h"
@@ -857,6 +858,10 @@ void ClearSavedState(void)
     savedMapState.mapHistory.clear();
 
     worldgenPending = false;
+
+    // Reset SeedManager agar IsRunActive() false — tanpanya, New Game
+    // kedua di worldgen skip InitRun() dan crash karena slot lama
+    g_SeedManager.ResetRun();
 
     // Reset persistent world state for a fresh game
     Entities::ClearDeadEntities();

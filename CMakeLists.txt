@@ -101,3 +101,24 @@ elseif(UNIX)
         target_link_libraries(main PRIVATE GL m pthread dl rt)
     endif()
 endif()
+
+# Test target — compile-time constants test (Phase 1)
+add_executable(test_constants tests/constants_test.cpp)
+target_include_directories(test_constants PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/entities
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/items
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/map
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/rendering
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ui
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/debug
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/utils
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/systems
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/tileson
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/raylib/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/json/include
+)
+set_target_properties(test_constants PROPERTIES UNITY_BUILD OFF WIN32_EXECUTABLE FALSE)
+enable_testing()
+add_test(NAME constants_test COMMAND test_constants)
