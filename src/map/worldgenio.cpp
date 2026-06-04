@@ -106,7 +106,7 @@ namespace WorldgenIO
     /** @brief Inisialisasi run baru di slot tertentu */
     /*=== Cache Management ===*/
 
-    /** @brief Hapus semua runtime per-map state dari folder saves/enemies dan saves/items */
+    /** @brief Hapus hanya file .cache dari folder saves/enemies dan saves/items */
     void ClearCache()
     {
         const std::string dirs[] = {"saves/enemies", "saves/items"};
@@ -116,7 +116,10 @@ namespace WorldgenIO
                 continue;
             for (const auto &entry : fs::directory_iterator(dir))
             {
-                fs::remove(entry.path());
+                if (entry.path().extension() == ".cache")
+                {
+                    fs::remove(entry.path());
+                }
             }
         }
     }

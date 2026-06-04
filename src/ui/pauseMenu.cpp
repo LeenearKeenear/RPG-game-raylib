@@ -607,6 +607,17 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
             RebuildObstacleCache();
             globalFlowField.Invalidate();
 
+            // Re-capture cache agar restart berikutnya punya state yang segar
+            {
+                const char *curPath = GetCurrentMapPath();
+                if (curPath)
+                {
+                    std::string cp = std::string(curPath) + ".cache";
+                    SaveEnemiesForMap(cp);
+                    SaveItemsForMapDir(cp);
+                }
+            }
+
             state->currentScreen = PLAY;
             Hide();
         }
