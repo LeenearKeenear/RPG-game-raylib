@@ -110,6 +110,7 @@ void AudioManager::LoadAudioAssets()
         }
         else
         {
+            _tracks[i].looping = true;
             TraceLog(LOG_INFO, "AUDIO: Music track dimuat: %s", TRACK_FILES[i]);
         }
     }
