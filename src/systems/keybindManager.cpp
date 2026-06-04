@@ -40,7 +40,7 @@ const Keybind KeybindManager::defaultBindings[ACTION_COUNT] = {
     /* REVIVE              */ {KEY_R,             false},
     /* TEST_LOSE_HP        */ {KEY_K,             false},
     /* GO_BACK             */ {KEY_B,             false},
-    /* PAUSE_MENU          */ {KEY_GRAVE,         false},
+    /* PAUSE_MENU          */ {KEY_ESCAPE,        false},
     /* DEBUG_TOGGLE        */ {KEY_TAB,           false},
     /* DEBUG_TOGGLE_ENEMY  */ {KEY_BACKSLASH,     false},
     /* DEBUG_TOGGLE_PLAYER */ {KEY_RIGHT_BRACKET, false},
