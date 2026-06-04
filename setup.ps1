@@ -1,9 +1,9 @@
 # setup.ps1 - Auto-download raylib if not present
-# Downloads raylib 5.5 from GitHub releases to lib/raylib/
+# Downloads raylib 6.0 from GitHub releases to lib/raylib/
 
 param(
-    [string]$RaylibVersion = "5.5",
-    [string]$RepoUrl = "https://github.com/raysan5/raylib/releases/download/5.5/raylib-5.5_win64_mingw-w64.zip",
+    [string]$RaylibVersion = "6.0",
+    [string]$RepoUrl = "https://github.com/raysan5/raylib/releases/download/6.0/raylib-6.0_win64_mingw-w64.zip",
     [string]$ZipFile = "raylib.zip"
 )
 
