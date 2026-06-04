@@ -116,7 +116,7 @@ void AudioManager::LoadAudioAssets()
     }
 
     // Load SFX
-    const char* sfxPath = "assets/audio/sfx/666herohero-slash-21834.mp3";
+    const char* sfxPath = "assets/audio/sfx/SwordSlash.mp3";
     _sfx = LoadSound(sfxPath);
     if (_sfx.stream.buffer == nullptr)
     {
@@ -328,4 +328,20 @@ void AudioManager::StopMusic()
         _activeTrackIndex = -1;
         TraceLog(LOG_INFO, "AUDIO: Music dihentikan");
     }
+}
+
+/*==============================================================================
+ * SFX Control
+ *==============================================================================*/
+
+void AudioManager::PlaySfx()
+{
+    if (!_initialized) return;
+    if (_sfx.stream.buffer == nullptr) return;
+
+    float effectiveVolume = _sfxVolume * _masterVolume;
+    SetSoundVolume(_sfx, effectiveVolume);
+    PlaySound(_sfx);
+
+    TraceLog(LOG_INFO, "AUDIO: SFX serangan diputar (volume=%.2f)", effectiveVolume);
 }

@@ -124,4 +124,16 @@ void PlayTrack(const char* trackName);
 /** @brief Menghentikan semua music playback */
 void StopMusic();
 
+/*------------------------------------------------------------------------------
+ * SFX Control
+ *------------------------------------------------------------------------------*/
+
+/**
+ * @brief Memainkan efek suara (SFX) untuk serangan player
+ *
+ * Volume SFX dipengaruhi oleh _sfxVolume * _masterVolume.
+ * Aman dipanggil dari combat.cpp saat player melee attack.
+ */
+void PlaySfx();
+
 }  // namespace AudioManager
