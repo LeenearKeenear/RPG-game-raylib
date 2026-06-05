@@ -299,3 +299,35 @@ bool HasSaveFile(const std::string& path);
  * @param path Path to the save file to delete
  */
 void DeleteSaveFile(const std::string& path);
+
+/*==============================================================================
+ * Migration v2 -> v3
+ *==============================================================================*/
+
+/**
+ * @brief Periksa apakah migrasi v2->v3 diperlukan.
+ * @return true jika file saves/manual/slot0.json ada DAN sentinel
+ *         saves/.migration_completed_v3 tidak ada.
+ * @details Sentinel mencegah migrasi ulang pada launch berikutnya.
+ *          Panggil sekali saat startup sebelum menyimpan.
+ */
+bool NeedsMigration(void);
+
+/**
+ * @brief Jalankan pipeline migrasi v2->v3.
+ * @return true jika semua langkah berhasil, false jika ada yang gagal.
+ * @details Urutan:
+ *          1. Copy saves/manual/slot0.json -> saves/slot_0/manual/manual.json (v2->v3 upgrade)
+ *          2. Pindahkan saves/enemies/ -> saves/slot_0/enemies/
+ *          3. Pindahkan saves/items/ -> saves/slot_0/items/
+ *          4. Hapus direktori lama + tulis sentinel
+ *          Jika langkah manapun gagal, abort tanpa cleanup.
+ */
+bool RunMigration(void);
+
+/**
+ * @brief Tandai migrasi sebagai selesai dengan menulis sentinel.
+ * @details Membuat file kosong saves/.migration_completed_v3.
+ *          Sentinel dicek oleh NeedsMigration() untuk skip migrasi.
+ */
+void MarkMigrationComplete(void);

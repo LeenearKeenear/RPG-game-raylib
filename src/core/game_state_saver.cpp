@@ -569,6 +569,222 @@ void DeleteSaveFile(const std::string& path)
 }
 
 /*==============================================================================
+ * Migration v2 -> v3
+ *==============================================================================*/
+
+/**
+ * @brief Periksa apakah migrasi v2->v3 diperlukan.
+ * @return true jika file saves/manual/slot0.json ada DAN sentinel
+ *         saves/.migration_completed_v3 tidak ada.
+ */
+bool NeedsMigration(void)
+{
+    bool oldSaveExists = std::filesystem::exists("saves/manual/slot0.json");
+    bool sentinelExists = std::filesystem::exists("saves/.migration_completed_v3");
+    bool needs = oldSaveExists && !sentinelExists;
+    TraceLog(LOG_INFO, "[Migration] NeedsMigration: oldSave=%d sentinel=%d -> %s",
+             oldSaveExists, sentinelExists, needs ? "YES" : "NO");
+    return needs;
+}
+
+/**
+ * @brief Tandai migrasi sebagai selesai dengan menulis sentinel.
+ * Membuat file kosong saves/.migration_completed_v3.
+ */
+void MarkMigrationComplete(void)
+{
+    std::ofstream sentinel("saves/.migration_completed_v3");
+    if (sentinel.is_open())
+    {
+        sentinel.close();
+        TraceLog(LOG_INFO, "[Migration] Sentinel written: saves/.migration_completed_v3");
+    }
+    else
+    {
+        TraceLog(LOG_WARNING, "[Migration] Failed to write sentinel file!");
+    }
+}
+
+/**
+ * @brief Jalankan pipeline migrasi v2->v3.
+ * @return true jika semua langkah berhasil, false jika ada yang gagal.
+ *
+ * Urutan:
+ *  1. Copy saves/manual/slot0.json -> saves/slot_0/manual/manual.json (v2->v3 upgrade)
+ *  2. Pindahkan saves/enemies/ -> saves/slot_0/enemies/
+ *  3. Pindahkan saves/items/ -> saves/slot_0/items/
+ *  4. Hapus direktori lama + tulis sentinel
+ *
+ * Atomic: jika langkah manapun gagal, abort tanpa cleanup.
+ * Sentinel mencegah migrasi ulang pada launch berikutnya.
+ */
+bool RunMigration(void)
+{
+    TraceLog(LOG_INFO, "[Migration] Starting v2->v3 migration pipeline...");
+
+    /*----------------------------------------------------------------------
+     * Task 14: Copy saves/manual/slot0.json -> saves/slot_0/manual/manual.json
+     * dengan upgrade v2->v3.
+     *----------------------------------------------------------------------*/
+    {
+        if (!std::filesystem::exists("saves/manual/slot0.json"))
+        {
+            TraceLog(LOG_WARNING, "[Migration] slot0.json not found, aborting.");
+            return false;
+        }
+
+        try
+        {
+            std::ifstream srcFile("saves/manual/slot0.json");
+            json root = json::parse(srcFile);
+            srcFile.close();
+
+            // Upgrade version from 2 to 3
+            root["version"] = 3;
+
+            // Add v3 fields if not present
+            if (!root.contains("slotIndex"))     root["slotIndex"] = 0;
+            if (!root.contains("saveType"))      root["saveType"] = "manual";
+            if (!root.contains("playTime"))      root["playTime"] = 0.0f;
+            if (!root.contains("mapDisplayName")) root["mapDisplayName"] = "";
+            if (!root.contains("worldgenSlot"))  root["worldgenSlot"] = -1;
+
+            // Ensure target directory exists
+            std::filesystem::create_directories("saves/slot_0/manual");
+
+            // Atomic write: .tmp + rename
+            std::string targetPath = "saves/slot_0/manual/manual.json";
+            std::string tmpPath = targetPath + ".tmp";
+            if (std::filesystem::exists(tmpPath))
+                std::filesystem::remove(tmpPath);
+
+            std::ofstream outFile(tmpPath);
+            outFile << root.dump(4);
+            outFile.close();
+
+            std::filesystem::rename(tmpPath, targetPath);
+
+            if (!std::filesystem::exists(targetPath))
+            {
+                TraceLog(LOG_WARNING, "[Migration] Failed to write %s", targetPath.c_str());
+                return false;
+            }
+
+            TraceLog(LOG_INFO, "[Migration] Task 14: Copied slot0.json -> %s (v2->v3)", targetPath.c_str());
+        }
+        catch (const std::exception& e)
+        {
+            TraceLog(LOG_WARNING, "[Migration] Task 14 failed: %s", e.what());
+            return false;
+        }
+    }
+
+    /*----------------------------------------------------------------------
+     * Task 15: Pindahkan saves/enemies/ -> saves/slot_0/enemies/
+     *----------------------------------------------------------------------*/
+    {
+        if (std::filesystem::exists("saves/enemies") && std::filesystem::is_directory("saves/enemies"))
+        {
+            EnsureSlotDirectory(0); // ensures saves/slot_0/enemies/ exists
+
+            try
+            {
+                for (const auto& entry : std::filesystem::directory_iterator("saves/enemies"))
+                {
+                    if (entry.path().extension() == ".json")
+                    {
+                        std::string dest = "saves/slot_0/enemies/" + entry.path().filename().string();
+                        std::filesystem::rename(entry.path(), dest);
+                        TraceLog(LOG_INFO, "[Migration] Moved %s -> %s",
+                                 entry.path().filename().string().c_str(), dest.c_str());
+                    }
+                }
+                TraceLog(LOG_INFO, "[Migration] Task 15: Enemy files moved successfully.");
+            }
+            catch (const std::exception& e)
+            {
+                TraceLog(LOG_WARNING, "[Migration] Task 15 failed: %s", e.what());
+                return false;
+            }
+        }
+        else
+        {
+            TraceLog(LOG_INFO, "[Migration] Task 15: saves/enemies/ not found, skipping.");
+        }
+    }
+
+    /*----------------------------------------------------------------------
+     * Task 16: Pindahkan saves/items/ -> saves/slot_0/items/
+     *----------------------------------------------------------------------*/
+    {
+        if (std::filesystem::exists("saves/items") && std::filesystem::is_directory("saves/items"))
+        {
+            EnsureSlotDirectory(0); // ensures saves/slot_0/items/ exists
+
+            try
+            {
+                for (const auto& entry : std::filesystem::directory_iterator("saves/items"))
+                {
+                    if (entry.path().extension() == ".json")
+                    {
+                        std::string dest = "saves/slot_0/items/" + entry.path().filename().string();
+                        std::filesystem::rename(entry.path(), dest);
+                        TraceLog(LOG_INFO, "[Migration] Moved %s -> %s",
+                                 entry.path().filename().string().c_str(), dest.c_str());
+                    }
+                }
+                TraceLog(LOG_INFO, "[Migration] Task 16: Item files moved successfully.");
+            }
+            catch (const std::exception& e)
+            {
+                TraceLog(LOG_WARNING, "[Migration] Task 16 failed: %s", e.what());
+                return false;
+            }
+        }
+        else
+        {
+            TraceLog(LOG_INFO, "[Migration] Task 16: saves/items/ not found, skipping.");
+        }
+    }
+
+    /*----------------------------------------------------------------------
+     * Task 17: Hapus direktori lama + tulis sentinel
+     *----------------------------------------------------------------------*/
+    {
+        try
+        {
+            // Hapus direktori flat lama
+            if (std::filesystem::exists("saves/manual") && std::filesystem::is_directory("saves/manual"))
+            {
+                std::filesystem::remove_all("saves/manual");
+                TraceLog(LOG_INFO, "[Migration] Removed saves/manual/");
+            }
+            if (std::filesystem::exists("saves/enemies") && std::filesystem::is_directory("saves/enemies"))
+            {
+                std::filesystem::remove_all("saves/enemies");
+                TraceLog(LOG_INFO, "[Migration] Removed saves/enemies/");
+            }
+            if (std::filesystem::exists("saves/items") && std::filesystem::is_directory("saves/items"))
+            {
+                std::filesystem::remove_all("saves/items");
+                TraceLog(LOG_INFO, "[Migration] Removed saves/items/");
+            }
+
+            // Tulis sentinel
+            MarkMigrationComplete();
+
+            TraceLog(LOG_INFO, "[Migration] v2->v3 migration completed successfully.");
+            return true;
+        }
+        catch (const std::exception& e)
+        {
+            TraceLog(LOG_WARNING, "[Migration] Task 17 failed: %s", e.what());
+            return false;
+        }
+    }
+}
+
+/*==============================================================================
  * State Save/Restore Functions
  *==============================================================================*/
 
@@ -581,6 +797,16 @@ void DeleteSaveFile(const std::string& path)
 void SaveGameState(GameState *state)
 {
     TraceLog(LOG_INFO, "Saving game state...");
+
+    // Jalankan migrasi v2->v3 jika diperlukan (sebelum EnsureSlotDirectory)
+    if (NeedsMigration())
+    {
+        bool migrated = RunMigration();
+        if (!migrated)
+        {
+            TraceLog(LOG_WARNING, "[Migration] Pipeline failed, proceeding with normal save anyway.");
+        }
+    }
 
     // Pastikan direktori slot tersedia sebelum menulis
     if (g_ActiveSaveSlot >= 0)
