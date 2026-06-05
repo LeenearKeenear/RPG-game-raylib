@@ -26,7 +26,7 @@
  * Constants
  *==============================================================================*/
 
-static constexpr int SAVE_VERSION = 2;      /**< Current save file format version */
+static constexpr int SAVE_VERSION = 3;      /**< Current save file format version */
 
 /*==============================================================================
  * Saved State Structures
@@ -57,6 +57,12 @@ struct SavedPlayerState {
     float dashCooldown;                  /**< Remaining dash cooldown timer */
     float manaRegenTimer;                /**< Timer delay before mana regen begins */
     nlohmann::json swingAttack;          /**< Serialized attack state: active, timer, duration, raycastAngle, center, pressHeld */
+
+    int slotIndex = -1;                  /**< Save slot index (0-4 manual, -1 unassigned) */
+    std::string saveType = "manual";     /**< "manual" or "autosave" */
+    float playTime = 0.0f;               /**< Placeholder play time (tracking deferred) */
+    std::string mapDisplayName;          /**< Human-readable map name for UI preview */
+    int worldgenSlot = -1;               /**< Worldgen slot mapping (-1 = unassigned) */
 };
 
 /**

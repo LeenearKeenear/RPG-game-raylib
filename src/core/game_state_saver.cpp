@@ -68,6 +68,13 @@ bool WriteSaveFile(const std::string& path)
     std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", std::gmtime(&t));
     root["timestamp"] = std::string(buf);
 
+    // Multi-slot metadata (will be populated by caller in later phases)
+    root["slotIndex"] = -1;            ///< -1 = unassigned, 0-4 = manual slot
+    root["saveType"] = "manual";       ///< "manual" or "autosave"
+    root["playTime"] = 0.0f;           ///< Placeholder: gameplay timer deferred
+    root["mapDisplayName"] = "";       ///< Will be populated once GetMapDisplayName() exists (Task 5)
+    root["worldgenSlot"] = -1;         ///< -1 = unassigned, maps to worldseed/save_N/
+
     // Player section
     json playerJson;
     playerJson["position"] = {savedPlayerState.position.x, savedPlayerState.position.y};
@@ -262,11 +269,16 @@ bool ReadSaveFile(const std::string& path)
             return false;
         }
 
-        // Validate version
+        // Validate version — only v3 is supported
         int version = root.at("version").get<int>();
+        if (version == 2)
+        {
+            TraceLog(LOG_WARNING, "Save file is v2 format (no longer supported): %s. Migration needed.", path.c_str());
+            return false;
+        }
         if (version != SAVE_VERSION)
         {
-            TraceLog(LOG_WARNING, "Save file version mismatch (expected %d): %s", SAVE_VERSION, path.c_str());
+            TraceLog(LOG_WARNING, "Save file version mismatch (expected %d, got %d): %s", SAVE_VERSION, version, path.c_str());
             return false;
         }
 
@@ -399,6 +411,18 @@ bool ReadSaveFile(const std::string& path)
             savedMapState.bombConsumedPositions = map.at("bombConsumedPositions");
         if (map.contains("crateConsumedPositions"))
             savedMapState.crateConsumedPositions = map.at("crateConsumedPositions");
+
+        // Read multi-slot metadata (v3+ fields, optional for backward compat)
+        if (root.contains("slotIndex"))
+            savedPlayerState.slotIndex = root.at("slotIndex").get<int>();
+        if (root.contains("saveType"))
+            savedPlayerState.saveType = root.value("saveType", "manual");
+        if (root.contains("playTime"))
+            savedPlayerState.playTime = root.value("playTime", 0.0f);
+        if (root.contains("mapDisplayName"))
+            savedPlayerState.mapDisplayName = root.value("mapDisplayName", "");
+        if (root.contains("worldgenSlot"))
+            savedPlayerState.worldgenSlot = root.value("worldgenSlot", -1);
 
         hasSavedState = true;
         TraceLog(LOG_INFO, "Save file %s loaded successfully (%d enemies, %d items)", path.c_str(), (int)savedEnemyStates.size(), (int)savedItemStates.size());
