@@ -16,6 +16,7 @@
 #include "../../include/ui/popup.h"
 #include "../../include/core/game_state_saver.h"
 #include "../../include/entities/entities.h"
+#include "../../include/ui/saveLoadScreen.h"
 
 /*==============================================================================
  * Static Variables
@@ -34,6 +35,7 @@ static Popup mainNoSavePopup("No save file found.", "OK", 0.7f);
 static Popup mainCorruptPopup("Save file corrupted or unreadable.", "OK", 0.7f);
 static bool waitingStartConfirm = false;
 static bool waitingLoadConfirm = false;
+extern SaveLoadScreen saveLoadScreen;
 
 /*==============================================================================
  * Public Functions
@@ -104,24 +106,10 @@ void UpdateMainMenu(GameState *state)
                         state->currentScreen = LOADING;
                     }
                     break;
-                case 1:  // Load Game
-                    if (HasSaveFile(GetSlotPath(0, "manual")))
-                    {
-                        if (ReadSaveFile(GetSlotPath(0, "manual")))
-                        {
-                            waitingLoadConfirm = true;
-                            loadPopup.Show();
-                        }
-                        else
-                        {
-                            DeleteSaveFile(GetSlotPath(0, "manual"));
-                            mainCorruptPopup.Show();
-                        }
-                    }
-                    else
-                    {
-                        mainNoSavePopup.Show();
-                    }
+                case 1:  // Load Game — buka SaveLoadScreen dalam mode load
+                    state->previousScreen = MAIN_MENU;
+                    saveLoadScreen.SetMode(SaveLoadMode::LOAD_MODE);
+                    state->currentScreen = SAVE_LOAD;
                     break;
                 case 2:  // Options
                     state->previousScreen = MAIN_MENU;
