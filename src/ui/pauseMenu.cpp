@@ -456,13 +456,13 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             // Save Game — simpan runtime + player state ke disk
             WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
             SaveGameState(state);
-            if (WriteSaveFile("saves/manual/slot0.json"))
+            if (WriteSaveFile(GetSlotPath(g_ActiveSaveSlot, "manual")))
                 savePopup.Show();
             else
                 saveErrorPopup.Show();
             break;
         case 2:
-            if (HasSaveFile("saves/manual/slot0.json"))
+            if (HasSaveFile(GetSlotPath(g_ActiveSaveSlot, "manual")))
             {
                 loadConfirmPopup.Show();
             }
@@ -515,7 +515,7 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
     if (loadConfirmPopup.IsActive()) {
         loadConfirmPopup.Update(mousePosition, mouseClicked);
         if (loadConfirmPopup.IsConfirmClicked()) {
-            if (ReadSaveFile("saves/manual/slot0.json"))
+            if (ReadSaveFile(GetSlotPath(g_ActiveSaveSlot, "manual")))
             {
                 loadConfirmPopup.Hide();
                 state->enteredLoading = false;
@@ -528,7 +528,7 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
             else
             {
                 loadConfirmPopup.Hide();
-                DeleteSaveFile("saves/manual/slot0.json");
+                DeleteSaveFile(GetSlotPath(g_ActiveSaveSlot, "manual"));
                 pauseCorruptPopup.Show();
             }
         }

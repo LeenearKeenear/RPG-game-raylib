@@ -90,7 +90,7 @@ void UpdateMainMenu(GameState *state)
         if (buttons[i].isClicked(mousePosition, mouseClicked)) {
             switch (i) {
                 case 0:  // Start Game
-                    if (HasSaveFile("saves/manual/slot0.json"))
+                    if (HasSaveFile(GetSlotPath(0, "manual")))
                     {
                         waitingStartConfirm = true;
                         startNewPopup.Show();
@@ -98,23 +98,23 @@ void UpdateMainMenu(GameState *state)
                     else
                     {
                         // Bersihkan per-map state dari sesi sebelumnya
-                        std::filesystem::remove_all("saves/enemies");
-                        std::filesystem::remove_all("saves/items");
+                        std::filesystem::remove_all("saves/slot_0/enemies");
+                        std::filesystem::remove_all("saves/slot_0/items");
                         state->enteredLoading = false;
                         state->currentScreen = LOADING;
                     }
                     break;
                 case 1:  // Load Game
-                    if (HasSaveFile("saves/manual/slot0.json"))
+                    if (HasSaveFile(GetSlotPath(0, "manual")))
                     {
-                        if (ReadSaveFile("saves/manual/slot0.json"))
+                        if (ReadSaveFile(GetSlotPath(0, "manual")))
                         {
                             waitingLoadConfirm = true;
                             loadPopup.Show();
                         }
                         else
                         {
-                            DeleteSaveFile("saves/manual/slot0.json");
+                            DeleteSaveFile(GetSlotPath(0, "manual"));
                             mainCorruptPopup.Show();
                         }
                     }
@@ -142,7 +142,7 @@ void UpdateMainMenu(GameState *state)
         startNewPopup.Update(mousePosition, mouseClicked);
         if (startNewPopup.IsConfirmClicked())
         {
-            DeleteSaveFile("saves/manual/slot0.json");
+            DeleteSaveFile(GetSlotPath(0, "manual"));
             SetActiveSlot(0);
             ResetMemoryState();
             ResetWorldseed(0);
@@ -151,8 +151,8 @@ void UpdateMainMenu(GameState *state)
             // Clean up per-map persistence from previous session so enemies/items
             // spawn fresh instead of being loaded as dead from old save files
             Entities::SetDeadEntities({});
-            std::filesystem::remove_all("saves/enemies");
-            std::filesystem::remove_all("saves/items");
+            std::filesystem::remove_all("saves/slot_0/enemies");
+            std::filesystem::remove_all("saves/slot_0/items");
             state->enteredLoading = false;
             state->currentScreen = LOADING;
             waitingStartConfirm = false;

@@ -269,11 +269,12 @@ bool IsWorldgenPending(void);
 bool WriteSaveFile(const std::string& path);
 
 /**
- * @brief Write a timestamped autosave to saves/autosave/ directory
- * @details Calls SaveGameState() then writes to saves/autosave/autosave_DD-MM-YYYY-HH-MM-SS.json.
+ * @brief Write a timestamped autosave to per-slot autosave directory
+ * @details Calls SaveGameState() then writes to saves/slot_N/autosave/autosave_DD-MM-YYYY-HH-MM-SS.json.
  *          Each call generates a unique filename so autosaves never overwrite each other.
- *          Creates the autosave directory if it doesn't exist.
- * @return true if successful, false if write failed
+ *          Creates the slot directory if it doesn't exist.
+ *          After write, prunes to keep only the 5 newest autosave files per slot.
+ * @return true if successful, false if write failed or no active slot
  */
 bool WriteAutosave(const std::string& filename);
 

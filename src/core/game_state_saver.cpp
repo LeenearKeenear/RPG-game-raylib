@@ -299,31 +299,38 @@ bool WriteSaveFile(const std::string& path)
 }
 
 /**
- * WriteAutosave - Simpan state game ke direktori saves/autosave/.
+ * WriteAutosave - Simpan state game ke direktori autosave per-slot.
  * Membuat nama file dengan timestamp (autosave_DD-MM-YYYY-HH-MM-SS.json)
- * agar autosave tidak saling menimpa. Maksimal 5 file autosave —
+ * agar autosave tidak saling menimpa. Maksimal 5 file autosave per slot --
  * jika lebih, file terlama akan dihapus.
+ * Path tujuan: saves/slot_N/autosave/autosave_DD-MM-YYYY-HH-MM-SS.json
  */
 bool WriteAutosave(const std::string&)
 {
+    if (g_ActiveSaveSlot < 0) return false;
+
+    EnsureSlotDirectory(g_ActiveSaveSlot);
+
     std::time_t t = std::time(nullptr);
     char buf[64];
     std::strftime(buf, sizeof(buf), "autosave_%d-%m-%Y-%H-%M-%S.json", std::localtime(&t));
     std::string autosaveName(buf);
-    TraceLog(LOG_INFO, "Autosaving to saves/autosave/%s", autosaveName.c_str());
+    std::string dir = GetSlotPath(g_ActiveSaveSlot, "autosave");
+    TraceLog(LOG_INFO, "Autosaving to %s/%s", dir.c_str(), autosaveName.c_str());
     SaveGameState(gState);
-    std::string dir = "saves/autosave";
-    std::filesystem::create_directories(dir);
 
     bool result = WriteSaveFile(dir + "/" + autosaveName);
 
-    // Batasi maksimal 5 slot autosave — hapus file terlama jika melebihi
+    // Batasi maksimal 5 file autosave per slot — hapus file terlama jika melebihi
     constexpr int MAX_AUTOSAVE_SLOTS = 5;
     std::vector<std::filesystem::path> autosaveFiles;
-    for (const auto& entry : std::filesystem::directory_iterator(dir))
+    if (std::filesystem::exists(dir))
     {
-        if (entry.path().filename().string().find("autosave_") == 0 && entry.path().extension() == ".json")
-            autosaveFiles.push_back(entry.path());
+        for (const auto& entry : std::filesystem::directory_iterator(dir))
+        {
+            if (entry.path().filename().string().find("autosave_") == 0 && entry.path().extension() == ".json")
+                autosaveFiles.push_back(entry.path());
+        }
     }
     if (autosaveFiles.size() > MAX_AUTOSAVE_SLOTS)
     {
@@ -574,6 +581,11 @@ void DeleteSaveFile(const std::string& path)
 void SaveGameState(GameState *state)
 {
     TraceLog(LOG_INFO, "Saving game state...");
+
+    // Pastikan direktori slot tersedia sebelum menulis
+    if (g_ActiveSaveSlot >= 0)
+        EnsureSlotDirectory(g_ActiveSaveSlot);
+
     /*==============================================================================
      * Save Player State
      *==============================================================================*/
