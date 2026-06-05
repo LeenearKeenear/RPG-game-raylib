@@ -143,6 +143,7 @@ void UpdateMainMenu(GameState *state)
         if (startNewPopup.IsConfirmClicked())
         {
             DeleteSaveFile("saves/manual/slot0.json");
+            SetActiveSlot(0);
             ResetMemoryState();
             ResetWorldseed(0);
             // Reset worldgen flag for fresh start
@@ -168,12 +169,14 @@ void UpdateMainMenu(GameState *state)
         loadPopup.Update(mousePosition, mouseClicked);
         if (loadPopup.IsConfirmClicked())
         {
+            SetActiveSlot(0);
             state->enteredLoading = false;
             state->currentScreen = LOADING;
             waitingLoadConfirm = false;
         }
         else if (!loadPopup.IsActive())
         {
+            SetActiveSlot(-1);
             ResetMemoryState();
             waitingLoadConfirm = false;
         }

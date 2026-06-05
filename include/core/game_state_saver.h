@@ -134,6 +134,46 @@ extern SavedMapState savedMapState;
 extern bool hasSavedState;
 
 /*==============================================================================
+ * Active Slot Tracking
+ *==============================================================================*/
+
+/** @brief Slot save yang sedang aktif (-1 = tidak ada) */
+extern int g_ActiveSaveSlot;
+
+/** @brief Flag apakah ada slot yang sedang aktif */
+extern bool g_SaveSlotActive;
+
+/**
+ * @brief Set slot save yang aktif.
+ * @param slot Nomor slot (0-4 valid, -1 = inactive)
+ * @note Dipanggil saat: manual save, manual load, autosave, new game.
+ *       Reset ke -1 saat kembali ke main menu.
+ */
+void SetActiveSlot(int slot);
+
+/**
+ * @brief Dapatkan slot save yang aktif.
+ * @return Nomor slot aktif, -1 jika tidak ada
+ */
+int GetActiveSlot(void);
+
+/**
+ * @brief Cek apakah ada slot yang sedang aktif.
+ * @return true jika ada slot aktif
+ */
+bool IsSlotActive(void);
+
+/**
+ * @brief Dapatkan path file save untuk slot dan tipe tertentu.
+ * @param slot Nomor slot (0-4)
+ * @param type Tipe save ("manual" atau "autosave")
+ * @return Path lengkap file save (contoh: "saves/slot_2/manual/manual.json")
+ * @note Untuk tipe "manual", return path ke file manual.json.
+ *       Untuk tipe "autosave", return path ke direktori autosave (tanpa nama file).
+ */
+std::string GetSlotPath(int slot, const std::string& type);
+
+/*==============================================================================
  * State Save/Restore Functions
  *==============================================================================*/
 
