@@ -135,6 +135,7 @@ void SaveLoadScreen::Update(GameState* state, Vector2 mousePosition, bool mouseC
             m_showOverwritePopup = false;
             SetActiveSlot(m_selectedSlot);
             SaveGameState(state);
+            WriteSaveFile(GetSlotPath(m_selectedSlot, "manual"));
             active = false;
             state->currentScreen = returnScreen;
         } else if (!m_overwritePopup.IsActive()) {
@@ -180,6 +181,7 @@ void SaveLoadScreen::Update(GameState* state, Vector2 mousePosition, bool mouseC
                 } else {
                     SetActiveSlot(clickedSlot);
                     SaveGameState(state);
+                    WriteSaveFile(GetSlotPath(clickedSlot, "manual"));
                     active = false;
                     state->currentScreen = returnScreen;
                 }
