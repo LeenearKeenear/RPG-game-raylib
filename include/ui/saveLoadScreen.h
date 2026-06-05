@@ -12,6 +12,11 @@
 #include "../lib/raylib/include/raylib.h"
 #include "button.h"
 #include "screen.h"
+#include <string>
+#include <chrono>
+#include <ctime>
+#include <filesystem>
+#include <fstream>
 
 /*==============================================================================
  * SaveLoadScreen Class
@@ -75,6 +80,44 @@ private:
      */
     void CalculateDimensions();
 
+    /**
+     * @brief Gambar satu slot box
+     * @param slotIndex Indeks slot (0-9)
+     * @param posX Posisi X slot
+     * @param posY Posisi Y slot
+     * @param occupied Apakah slot terisi data
+     * @param mapName Nama map yang ditampilkan
+     * @param timestamp Timestamp save
+     * @param mousePosition Posisi mouse untuk efek hover
+     */
+    void DrawSlotBox(int slotIndex, int posX, int posY, bool occupied, const std::string& mapName, const std::string& timestamp, Vector2 mousePosition);
+
+    /**
+     * @brief Gambar grid slot manual dan autosave
+     * @param mousePosition Posisi mouse untuk efek hover
+     */
+    void DrawSlotGrid(Vector2 mousePosition);
+
+    /**
+     * @brief Muat metadata semua slot dari disk
+     *
+     * Untuk setiap slot N (0-9), periksa saves/slot_N/manual/manual.json.
+     * Jika ada, baca mapDisplayName dan timestamp.
+     * Jika tidak, tandai sebagai kosong.
+     */
+    void RefreshSlotMetadata(void);
+
+    /// Jumlah slot manual (0-4)
+    static constexpr int MANUAL_SLOT_COUNT = 5;
+    /// Jumlah slot autosave (0-4)
+    static constexpr int AUTOSAVE_SLOT_COUNT = 5;
+    /// Slot box width in pixels
+    static constexpr int SLOT_WIDTH = 250;
+    /// Slot box height in pixels
+    static constexpr int SLOT_HEIGHT = 70;
+    /// Gap between slot boxes
+    static constexpr int SLOT_GAP = 10;
+
     /// Status aktif layar save/load
     bool active;
 
@@ -104,4 +147,13 @@ private:
 
     /// Texture background
     Texture2D bgTexture;
+
+    /// Array status okupansi slot (true=terisi)
+    bool slotOccupied[MANUAL_SLOT_COUNT + AUTOSAVE_SLOT_COUNT];
+
+    /// Array nama map per slot
+    std::string slotMapName[MANUAL_SLOT_COUNT + AUTOSAVE_SLOT_COUNT];
+
+    /// Array timestamp per slot
+    std::string slotTimestamp[MANUAL_SLOT_COUNT + AUTOSAVE_SLOT_COUNT];
 };
