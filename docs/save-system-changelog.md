@@ -103,6 +103,7 @@ Fast path (assets udah diload sebelumnya):
 ```
 
 Normal path (map switch):
+
 ```txt
   Stage 1: LoadMap + RunWorldgen (kalo worldgen) + LoadRuntimeState
   Stage 2: Init player, LoadEnemiesForMap/LoadItemsForMap (dari .json save per-map)
@@ -211,6 +212,7 @@ Normal path (map switch):
 `ClearSavedState()` dipanggil saat user cancel popup Load Game — otomatis hapus SEMUA `worldseed/save_*`. Efeknya: kalo user iseng klik Load terus cancel, worldgen run yang udah berjam-jam ilang.
 
 **Rekomendasi:** Pisahin `ClearSavedState()` jadi 2 fungsi:
+
 - `ResetMemoryState()` — clear in-memory state (hasSavedState, DeadEntities, etc.), tanpa hapus worldseed
 - `ResetWorldseed()` — hapus worldseed folder (panggil cuma di New Game, bukan cancel load)
 
@@ -236,6 +238,7 @@ Saat ini manual save cuma `saves/manual/slot0.json`. Untuk multi-slot:
 ### 4. Worldseed Multiple Slot Isolation
 
 `ClearSavedState()` hapus SEMUA `worldseed/save_*` tanpa pandang bulu. Kalo future support multiple worldgen run, setiap run butuh:
+
 - `worldseed/save_N/` sendiri (udah ada)
 - `saves/manual/slotN.json` sendiri (belum, masih slot0 doang)
 - Isolasi pas New Game: cuma hapus slot yang dipilih, bukan semua
