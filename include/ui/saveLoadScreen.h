@@ -12,11 +12,18 @@
 #include "../lib/raylib/include/raylib.h"
 #include "button.h"
 #include "screen.h"
+#include "popup.h"
 #include <string>
 #include <chrono>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
+
+/// Mode operasi SaveLoadScreen
+enum class SaveLoadMode {
+    SAVE_MODE,  ///< Mode menyimpan game (pilih slot)
+    LOAD_MODE   ///< Mode memuat game (pilih slot)
+};
 
 /*==============================================================================
  * SaveLoadScreen Class
@@ -74,11 +81,21 @@ public:
     /** @brief Set layar tujuan saat tombol BACK diklik */
     void SetReturnScreen(ScreenState screen);
 
+    /** @brief Set mode operasi (save/load) */
+    void SetMode(SaveLoadMode mode);
+
 private:
     /**
      * @brief Menghitung dimensi dan posisi elemen UI
      */
     void CalculateDimensions();
+
+    /**
+     * @brief Dapatkan index slot berdasarkan posisi klik
+     * @param mousePosition Posisi mouse
+     * @return Index slot (0-9) atau -1 jika tidak ada slot di posisi tersebut
+     */
+    int GetSlotAtPosition(Vector2 mousePosition);
 
     /**
      * @brief Gambar satu slot box
@@ -89,8 +106,9 @@ private:
      * @param mapName Nama map yang ditampilkan
      * @param timestamp Timestamp save
      * @param mousePosition Posisi mouse untuk efek hover
+     * @param enabled Apakah slot dapat diinteraksi
      */
-    void DrawSlotBox(int slotIndex, int posX, int posY, bool occupied, const std::string& mapName, const std::string& timestamp, Vector2 mousePosition);
+    void DrawSlotBox(int slotIndex, int posX, int posY, bool occupied, const std::string& mapName, const std::string& timestamp, Vector2 mousePosition, bool enabled);
 
     /**
      * @brief Gambar grid slot manual dan autosave
@@ -156,4 +174,12 @@ private:
 
     /// Array timestamp per slot
     std::string slotTimestamp[MANUAL_SLOT_COUNT + AUTOSAVE_SLOT_COUNT];
+
+    /// Mode operasi saat ini (save/load)
+    SaveLoadMode m_mode;
+    Popup m_overwritePopup;   ///< Popup konfirmasi timpa save
+    Popup m_loadPopup;        ///< Popup konfirmasi load game
+    bool m_showOverwritePopup; ///< Flag tampilkan overwrite popup
+    bool m_showLoadPopup;      ///< Flag tampilkan load popup
+    int m_selectedSlot;        ///< Slot yang dipilih untuk save/load
 };
