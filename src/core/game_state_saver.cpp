@@ -50,6 +50,77 @@ bool hasSavedState = false;
 static bool worldgenPending = false;
 
 /*==============================================================================
+ * Active Slot Tracking
+ *==============================================================================*/
+
+/**
+ * @brief Slot save yang sedang aktif
+ * -1 = tidak ada slot aktif (default/main menu)
+ * 0-4 = slot manual yang aktif
+ */
+int g_ActiveSaveSlot = -1;
+
+/**
+ * @brief Flag apakah ada slot yang sedang aktif
+ */
+bool g_SaveSlotActive = false;
+
+/**
+ * @brief Set slot save yang aktif.
+ * @param slot Nomor slot (0-4), -1 untuk menonaktifkan
+ */
+void SetActiveSlot(int slot)
+{
+    g_ActiveSaveSlot = slot;
+    g_SaveSlotActive = (slot >= 0 && slot <= 4);
+    TraceLog(LOG_INFO, "[SetActiveSlot] Slot %d %s", slot, g_SaveSlotActive ? "activated" : "deactivated");
+}
+
+/**
+ * @brief Dapatkan slot save yang aktif.
+ * @return Nomor slot aktif, -1 jika tidak ada
+ */
+int GetActiveSlot(void)
+{
+    return g_ActiveSaveSlot;
+}
+
+/**
+ * @brief Cek apakah ada slot yang sedang aktif.
+ * @return true jika ada slot aktif
+ */
+bool IsSlotActive(void)
+{
+    return g_SaveSlotActive;
+}
+
+/**
+ * @brief Dapatkan path file save untuk slot dan tipe tertentu.
+ * @param slot Nomor slot (0-4)
+ * @param type Tipe save ("manual" atau "autosave")
+ * @return Path lengkap file save
+ * @note Slot 2, type "manual" -> "saves/slot_2/manual/manual.json"
+ *       Slot 2, type "autosave" -> "saves/slot_2/autosave/"
+ */
+std::string GetSlotPath(int slot, const std::string& type)
+{
+    char buf[128];
+    if (type == "manual")
+    {
+        snprintf(buf, sizeof(buf), "saves/slot_%d/manual/manual.json", slot);
+    }
+    else if (type == "autosave")
+    {
+        snprintf(buf, sizeof(buf), "saves/slot_%d/autosave", slot);
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "saves/slot_%d/%s", slot, type.c_str());
+    }
+    return std::string(buf);
+}
+
+/*==============================================================================
  * File I/O Functions
  *==============================================================================*/
 
@@ -68,12 +139,12 @@ bool WriteSaveFile(const std::string& path)
     std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%S", std::gmtime(&t));
     root["timestamp"] = std::string(buf);
 
-    // Multi-slot metadata (will be populated by caller in later phases)
-    root["slotIndex"] = -1;            ///< -1 = unassigned, 0-4 = manual slot
+    // Multi-slot metadata
+    root["slotIndex"] = (g_ActiveSaveSlot >= 0) ? g_ActiveSaveSlot : -1;  ///< -1 = unassigned, 0-4 = manual slot
     root["saveType"] = "manual";       ///< "manual" or "autosave"
     root["playTime"] = 0.0f;           ///< Placeholder: gameplay timer deferred
-    root["mapDisplayName"] = "";       ///< Will be populated once GetMapDisplayName() exists (Task 5)
-    root["worldgenSlot"] = -1;         ///< -1 = unassigned, maps to worldseed/save_N/
+    root["mapDisplayName"] = savedPlayerState.mapDisplayName;
+    root["worldgenSlot"] = (g_ActiveSaveSlot >= 0) ? g_ActiveSaveSlot : -1;  ///< -1 = unassigned, maps to worldseed/save_N/
 
     // Player section
     json playerJson;
@@ -562,6 +633,7 @@ void SaveGameState(GameState *state)
      *==============================================================================*/
     const char *mapPath = GetCurrentMapPath();
     savedMapState.mapPath = (mapPath == nullptr || mapPath[0] == '\0') ? "assets/maps/tutorial.json" : std::string(mapPath);
+    savedPlayerState.mapDisplayName = GetMapDisplayName(savedMapState.mapPath);
     savedMapState.cameraTarget = camera.target;
     savedMapState.cameraZoom = camera.zoom;
 
