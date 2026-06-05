@@ -15,6 +15,7 @@
 #include "../../include/ui/videoTab.h"
 #include "../../include/ui/audioTab.h"
 #include "../../include/ui/keybindsTab.h"
+#include "../../include/ui/saveLoadScreen.h"
 #include "../../include/core/game_state_saver.h"
 #include "../../include/map/worldgenio.h"
 #include "../../include/core/seedmanager.h"
@@ -25,6 +26,12 @@
 #include "enemy_ai.h"
 #include "map.h"
 #include "mapLogic.h"
+
+/*==============================================================================
+ * External References
+ *==============================================================================*/
+
+extern SaveLoadScreen saveLoadScreen;
 
 /*==============================================================================
  * Static Variables (Popup Notifications)
@@ -453,23 +460,18 @@ void PauseMenu::HandleButtonClick(int buttonIndex, GameState* state)
             Hide();
             break;
         case 1:
-            // Save Game — simpan runtime + player state ke disk
-            WorldgenIO::SaveRuntimeState(g_SeedManager.GetCurrentStage());
-            SaveGameState(state);
-            if (WriteSaveFile(GetSlotPath(g_ActiveSaveSlot, "manual")))
-                savePopup.Show();
-            else
-                saveErrorPopup.Show();
+            // Save Game — buka SaveLoadScreen dalam mode save
+            state->previousScreen = PLAY;
+            saveLoadScreen.SetMode(SaveLoadMode::SAVE_MODE);
+            state->currentScreen = SAVE_LOAD;
+            Hide();
             break;
         case 2:
-            if (HasSaveFile(GetSlotPath(g_ActiveSaveSlot, "manual")))
-            {
-                loadConfirmPopup.Show();
-            }
-            else
-            {
-                noSavePopup.Show();
-            }
+            // Load Game — buka SaveLoadScreen dalam mode load
+            state->previousScreen = PLAY;
+            saveLoadScreen.SetMode(SaveLoadMode::LOAD_MODE);
+            state->currentScreen = SAVE_LOAD;
+            Hide();
             break;
         case 3: // Restart
             restartConfirmPopup.SetSubMessage("Current progress will be lost.");
