@@ -164,10 +164,20 @@ void RestoreDeadEntities(void);
 bool HasSavedState(void);
 
 /**
- * @brief Bersihkan state tersimpan
- * @details Untuk new game dari awal (fresh start)
+ * @brief Reset memory state only, does NOT clear worldseed directories
+ * @details Reset semua state yang tersimpan di memory untuk fresh start.
+ *          Tidak menghapus folder worldseed/save_* — gunakan ResetWorldseed() untuk itu.
  */
-void ClearSavedState(void);
+void ResetMemoryState(void);
+
+/**
+ * @brief Hapus worldseed save_N untuk slot tertentu
+ * @param slotIndex Nomor slot yang akan dibersihkan worldseednya
+ * @details Menghapus folder assets/maps/World_generation/worldseed/save_{slotIndex}
+ *          jika ada. Cocok dipanggil saat New Game confirm untuk membersihkan
+ *          worldseed slot tertentu tanpa menyentuh state memory.
+ */
+void ResetWorldseed(int slotIndex);
 
 /**
  * @brief Set or clear the worldgen pending flag

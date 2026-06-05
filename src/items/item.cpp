@@ -385,7 +385,7 @@ void ItemDataManager::ClearItems()
  *
  * @param mapPath Raw map path used to derive save file name
  */
-void SaveItemsForMapDir(const std::string &mapPath)
+void SaveItemsForMapDir(const std::string &mapPath, const std::string &baseDir)
 {
     // Sanitize map path: replace path separators with underscores
     std::string safeName = mapPath;
@@ -394,7 +394,7 @@ void SaveItemsForMapDir(const std::string &mapPath)
         if (c == '/' || c == '\\') c = '_';
     }
 
-    std::string dir = "saves/items";
+    std::string dir = baseDir;
     std::string filePath = dir + "/" + safeName;
 
     std::filesystem::create_directories(dir);
@@ -435,7 +435,7 @@ void SaveItemsForMapDir(const std::string &mapPath)
  * @param mapPath Raw map path used to derive save file name
  * @return true if items were loaded, false if no save file or parse failed
  */
-bool LoadItemsForMapDir(const std::string &mapPath)
+bool LoadItemsForMapDir(const std::string &mapPath, const std::string &baseDir)
 {
     // Sanitize map path: replace path separators with underscores
     std::string safeName = mapPath;
@@ -444,7 +444,7 @@ bool LoadItemsForMapDir(const std::string &mapPath)
         if (c == '/' || c == '\\') c = '_';
     }
 
-    std::string filePath = "saves/items/" + safeName;
+    std::string filePath = baseDir + "/" + safeName;
 
     if (!std::filesystem::exists(filePath))
         return false;

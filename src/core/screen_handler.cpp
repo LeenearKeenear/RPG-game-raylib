@@ -117,8 +117,8 @@ void InitAll()
     if (mapPath)
     {
         std::string cachePath = std::string(mapPath) + ".cache";
-        SaveEnemiesForMap(cachePath);
-        SaveItemsForMapDir(cachePath);
+        SaveEnemiesForMap(cachePath, "saves/cache/enemies");
+        SaveItemsForMapDir(cachePath, "saves/cache/items");
     }
 }
 

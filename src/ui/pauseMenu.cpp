@@ -580,8 +580,8 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
             if (mapPath)
             {
                 std::string cachePath = std::string(mapPath) + ".cache";
-                cacheLoaded = LoadEnemiesForMap(cachePath);
-                cacheLoaded = LoadItemsForMapDir(cachePath) || cacheLoaded;
+                cacheLoaded = LoadEnemiesForMap(cachePath, "saves/cache/enemies");
+                cacheLoaded = LoadItemsForMapDir(cachePath, "saves/cache/items") || cacheLoaded;
             }
 
             // Fallback: kalo cache gak ada, spawn item fresh dari map
@@ -613,8 +613,8 @@ void PauseMenu::Update(GameState* state, Vector2 mousePosition, bool mouseClicke
                 if (curPath)
                 {
                     std::string cp = std::string(curPath) + ".cache";
-                    SaveEnemiesForMap(cp);
-                    SaveItemsForMapDir(cp);
+                    SaveEnemiesForMap(cp, "saves/cache/enemies");
+                    SaveItemsForMapDir(cp, "saves/cache/items");
                 }
             }
 

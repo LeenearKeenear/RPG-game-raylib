@@ -337,7 +337,7 @@ bool ReadSaveFile(const std::string& path)
                 enemy.patrolTimer = e.value("patrolTimer", 0.0f);
                 enemy.mapObjectID = e.value("mapObjectID", -1);
                 enemy.spawnPoint = e.value("spawnPoint", nlohmann::json({{"x", 0}, {"y", 0}}));
-                enemy.healthRegenTimer = e.value("healthRegenTimer", 0.0f);
+                enemy.healthRegenTimer = e.value("healthRegenTimer", 2.0f);
                 enemy.attackCooldownTimer = e.value("attackCooldownTimer", 0.0f);
                 enemy.uuid = e.value("uuid", "");
                 savedEnemyStates.push_back(enemy);
@@ -676,6 +676,9 @@ void RestoreGameState(GameState *state)
                         enemy->SpawnPoint.y = saved.spawnPoint["y"].get<float>();
                     }
                     enemy->HealthRegenTimer = saved.healthRegenTimer;
+                    // Grace: if timer is 0 and enemy is at full health, set to 2.0f to prevent instant regen after load
+                    if (saved.healthRegenTimer <= 0.0f && enemy->Health >= enemy->MaxHealth)
+                        enemy->HealthRegenTimer = 2.0f;
                     enemy->SetAttackCooldownTimer(saved.attackCooldownTimer);
                     enemy->IsActive = true;
                     matchedEnemies.insert(enemy);
@@ -702,6 +705,9 @@ void RestoreGameState(GameState *state)
                             enemy->SpawnPoint.y = saved.spawnPoint["y"].get<float>();
                         }
                         enemy->HealthRegenTimer = saved.healthRegenTimer;
+                        // Grace: if timer is 0 and enemy is at full health, set to 2.0f to prevent instant regen after load
+                        if (saved.healthRegenTimer <= 0.0f && enemy->Health >= enemy->MaxHealth)
+                            enemy->HealthRegenTimer = 2.0f;
                         enemy->SetAttackCooldownTimer(saved.attackCooldownTimer);
                         enemy->IsActive = true;
                         matchedEnemies.insert(enemy);
@@ -831,11 +837,11 @@ bool IsWorldgenPending(void)
 }
 
 /**
- * @brief ClearSavedState()
- * Bersihkan state tersimpan untuk fresh start.
- * Juga membersihkan folder worldseed/save_* untuk worldgen fresh start.
+ * @brief ResetMemoryState()
+ * Reset semua state memory untuk fresh start — TIDAK menghapus worldseed directories.
+ * Gunakan ResetWorldseed(slotIndex) secara terpisah jika perlu cleanup worldseed.
  */
-void ClearSavedState(void)
+void ResetMemoryState(void)
 {
     hasSavedState = false;
     savedPlayerState.position = {0};
@@ -868,18 +874,22 @@ void ClearSavedState(void)
     chestManager.ResetConsumed();
     bombManager.ResetConsumed();
     crateManager.ResetConsumed();
+}
 
-    // Clean up stale worldseed save_N folders for a fresh worldgen start
-    const char* worldseedDir = "assets/maps/World_generation/worldseed";
-    if (std::filesystem::exists(worldseedDir))
+/**
+ * @brief ResetWorldseed()
+ * Hapus folder worldseed/save_{slotIndex} untuk fresh worldgen start.
+ * @param slotIndex Nomor slot yang akan dibersihkan (0-99)
+ */
+void ResetWorldseed(int slotIndex)
+{
+    char buf[128];
+    snprintf(buf, sizeof(buf), "assets/maps/World_generation/worldseed/save_%d", slotIndex);
+    std::string path(buf);
+
+    if (std::filesystem::exists(path))
     {
-        for (auto& entry : std::filesystem::directory_iterator(worldseedDir))
-        {
-            if (entry.is_directory() && entry.path().string().find("save_") != std::string::npos)
-            {
-                std::filesystem::remove_all(entry.path());
-                TraceLog(LOG_INFO, "[ClearSavedState] Removed stale worldgen save: %s", entry.path().string().c_str());
-            }
-        }
+        std::filesystem::remove_all(path);
+        TraceLog(LOG_INFO, "[ResetWorldseed] Removed worldgen save: %s", path.c_str());
     }
 }

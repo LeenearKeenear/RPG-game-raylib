@@ -679,7 +679,7 @@ void InitEnemy()
  *          Save file path derived by sanitizing mapPath (replacing / and \\ with _).
  * @param mapPath Raw map file path used to derive save file name (e.g., "assets/maps/tutorial.json")
  */
-void SaveEnemiesForMap(const std::string &mapPath)
+void SaveEnemiesForMap(const std::string &mapPath, const std::string &baseDir)
 {
     // Build per-map save file path
     std::string safeName = mapPath;
@@ -687,7 +687,7 @@ void SaveEnemiesForMap(const std::string &mapPath)
     {
         if (c == '/' || c == '\\') c = '_';
     }
-    std::string dir = "saves/enemies";
+    std::string dir = baseDir;
     std::string filePath = dir + "/" + safeName;
 
     std::filesystem::create_directories(dir);
@@ -737,7 +737,7 @@ void SaveEnemiesForMap(const std::string &mapPath)
  * @param mapPath Raw map file path used to derive save file name
  * @return true if at least one enemy was restored, false if no save file or parse failed
  */
-bool LoadEnemiesForMap(const std::string &mapPath)
+bool LoadEnemiesForMap(const std::string &mapPath, const std::string &baseDir)
 {
     // Build per-map save file path
     std::string safeName = mapPath;
@@ -745,7 +745,7 @@ bool LoadEnemiesForMap(const std::string &mapPath)
     {
         if (c == '/' || c == '\\') c = '_';
     }
-    std::string filePath = "saves/enemies/" + safeName;
+    std::string filePath = baseDir + "/" + safeName;
 
     if (!std::filesystem::exists(filePath))
         return false;
@@ -793,7 +793,7 @@ bool LoadEnemiesForMap(const std::string &mapPath)
                         enemy->SpawnPoint.x = e["spawnPoint"]["x"].get<float>();
                         enemy->SpawnPoint.y = e["spawnPoint"]["y"].get<float>();
                     }
-                    enemy->HealthRegenTimer = e.value("healthRegenTimer", 0.0f);
+                    enemy->HealthRegenTimer = e.value("healthRegenTimer", 2.0f);
                     enemy->SetAttackCooldownTimer(e.value("attackCooldownTimer", 0.0f));
                     std::string uuid = e.value("uuid", "");
                     if (!uuid.empty())

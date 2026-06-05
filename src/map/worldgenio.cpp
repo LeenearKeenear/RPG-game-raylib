@@ -109,7 +109,7 @@ namespace WorldgenIO
     /** @brief Hapus hanya file .cache dari folder saves/enemies dan saves/items */
     void ClearCache()
     {
-        const std::string dirs[] = {"saves/enemies", "saves/items"};
+        const std::string dirs[] = {"saves/cache/enemies", "saves/cache/items"};
         for (const auto &dir : dirs)
         {
             if (!fs::exists(dir))

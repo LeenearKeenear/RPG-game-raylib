@@ -143,7 +143,8 @@ void UpdateMainMenu(GameState *state)
         if (startNewPopup.IsConfirmClicked())
         {
             DeleteSaveFile("saves/manual/slot0.json");
-            ClearSavedState();
+            ResetMemoryState();
+            ResetWorldseed(0);
             // Reset worldgen flag for fresh start
             SetWorldgenPending(false);
             // Clean up per-map persistence from previous session so enemies/items
@@ -173,7 +174,7 @@ void UpdateMainMenu(GameState *state)
         }
         else if (!loadPopup.IsActive())
         {
-            ClearSavedState();
+            ResetMemoryState();
             waitingLoadConfirm = false;
         }
     }

@@ -171,8 +171,8 @@ void UpdateLoadingScreen(GameState *state)
                 if (currentPath)
                 {
                     std::string cachePath = std::string(currentPath) + ".cache";
-                    SaveEnemiesForMap(cachePath);
-                    SaveItemsForMapDir(cachePath);
+                    SaveEnemiesForMap(cachePath, "saves/cache/enemies");
+                    SaveItemsForMapDir(cachePath, "saves/cache/items");
                 }
             }
 
@@ -288,8 +288,8 @@ void UpdateLoadingScreen(GameState *state)
             if (currentPath)
             {
                 std::string cachePath = std::string(currentPath) + ".cache";
-                SaveEnemiesForMap(cachePath);
-                SaveItemsForMapDir(cachePath);
+                SaveEnemiesForMap(cachePath, "saves/cache/enemies");
+                SaveItemsForMapDir(cachePath, "saves/cache/items");
             }
         }
 
