@@ -121,6 +121,32 @@ std::string GetSlotPath(int slot, const std::string& type)
 }
 
 /*==============================================================================
+ * Slot Directory Utilities
+ *==============================================================================*/
+
+/**
+ * @brief Pastikan direktori slot save tersedia.
+ * @param slot Nomor slot (0-4)
+ * @details Membuat struktur direktori:
+ *          - saves/slot_N/manual/
+ *          - saves/slot_N/autosave/
+ *          - saves/slot_N/enemies/
+ *          - saves/slot_N/items/
+ *          Tidak melakukan apa-apa jika direktori sudah ada.
+ */
+void EnsureSlotDirectory(int slot)
+{
+    const char* subdirs[] = {"manual", "autosave", "enemies", "items"};
+    for (const char* subdir : subdirs)
+    {
+        char buf[128];
+        snprintf(buf, sizeof(buf), "saves/slot_%d/%s", slot, subdir);
+        std::filesystem::create_directories(buf);
+        TraceLog(LOG_INFO, "[EnsureSlotDirectory] %s", buf);
+    }
+}
+
+/*==============================================================================
  * File I/O Functions
  *==============================================================================*/
 

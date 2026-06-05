@@ -174,6 +174,22 @@ bool IsSlotActive(void);
 std::string GetSlotPath(int slot, const std::string& type);
 
 /*==============================================================================
+ * Slot Directory Utilities
+ *==============================================================================*/
+
+/**
+ * @brief Pastikan direktori slot save tersedia.
+ * @param slot Nomor slot (0-4)
+ * @details Membuat struktur direktori:
+ *          - saves/slot_N/manual/
+ *          - saves/slot_N/autosave/
+ *          - saves/slot_N/enemies/
+ *          - saves/slot_N/items/
+ *          Tidak melakukan apa-apa jika direktori sudah ada.
+ */
+void EnsureSlotDirectory(int slot);
+
+/*==============================================================================
  * State Save/Restore Functions
  *==============================================================================*/
 
