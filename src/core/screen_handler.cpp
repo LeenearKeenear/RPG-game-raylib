@@ -165,7 +165,7 @@ GameState InitScreen()
         (int)(GetMonitorHeight(0) * ScaleMinMultiplierMonitor));
 
     state.Dungeon = LoadRenderTexture(GameScreenWidth, GameScreenHeight);
-    SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_POINT);
+    SetTextureFilter(state.Dungeon.texture, TEXTURE_FILTER_BILINEAR);
 
     const int FPS = 60;
     SetTargetFPS(FPS);
