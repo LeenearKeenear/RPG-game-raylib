@@ -15,6 +15,8 @@
 #include "../lib/raylib/include/raylib.h"
 #include <vector>
 #include <string>
+
+class Player; // Forward declaration untuk DropAllItems
 #include <map>
 #include <random>
 #include <algorithm>
@@ -376,6 +378,9 @@ void SpawnRandomItem();
 
 /** @brief Ambil daftar item spawn aktif */
 std::vector<ItemSpawn> &GetActiveItems();
+
+/** @brief Drop semua item player ke ground saat mati */
+void DropAllItems(Player &player);
 
 /** @brief Instance global ItemDataManager */
 extern ItemDataManager itemData;

@@ -293,7 +293,51 @@ function Remove-OldRaylib() {
     }
 }
 
+function Install-Doctest() {
+    $cwd = $PWD.Path
+    $doctestDir = Join-Path $cwd "lib\doctest"
+    $doctestFile = Join-Path $doctestDir "doctest.h"
+    $doctestUrl = "https://github.com/doctest/doctest/releases/download/v2.4.11/doctest.h"
+
+    Write-Step "Checking for doctest..."
+    Write-Debug "Doctest path: $doctestFile"
+
+    if (Test-Path $doctestFile) {
+        Write-Step "doctest.h already exists at $doctestDir"
+        return
+    }
+
+    Write-Step "doctest.h not found. Downloading doctest v2.4.11 from GitHub..."
+    Write-Debug "URL: $doctestUrl"
+
+    if (-not (Test-Path $doctestDir)) {
+        New-Item -ItemType Directory -Path $doctestDir -Force | Out-Null
+    }
+
+    try {
+        Invoke-WebRequest -Uri $doctestUrl -OutFile $doctestFile -UserAgent "PowerShell"
+    } catch {
+        Write-Err "Download failed: $_"
+        exit 1
+    }
+
+    if (Test-Path $doctestFile) {
+        $fileSize = (Get-Item $doctestFile).Length
+        if ($fileSize -gt 50KB) {
+            Write-Step "doctest installed successfully to $doctestDir ($([math]::Round($fileSize/1KB, 1)) KB)" -ForegroundColor Green
+        } else {
+            Write-Err "Downloaded file too small ($fileSize bytes), likely failed"
+            Remove-Item -Path $doctestFile -Force -ErrorAction SilentlyContinue
+            exit 1
+        }
+    } else {
+        Write-Err "Download failed - file not created"
+        exit 1
+    }
+}
+
 Remove-OldRaylib
 Install-Raylib
 Install-Tileson
 Install-NlohmannJson
+Install-Doctest

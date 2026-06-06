@@ -39,6 +39,12 @@ jobs:
       - name: Build
         run: cmake --build --preset ninja
 
+      - name: Build tests
+        run: cmake --build build --target test_constants
+
+      - name: Run test constant check
+        run: cd build && ctest --output-on-failure
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -67,6 +73,12 @@ jobs:
 
       - name: Build
         run: cmake --build --preset ninja
+
+      - name: Build tests
+        run: cmake --build build --target test_constants
+
+      - name: Run tests
+        run: cd build && ctest --output-on-failure
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

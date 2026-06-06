@@ -146,6 +146,9 @@ void UpdateLoadingScreen(GameState *state)
             // Re-init player berdasarkan target door di map baru
             PlayerInstance.Init(gState, state->pendingDoorName.c_str());
 
+            // Capture start room spawn position untuk revive
+            TiledHelperFunction.TryGetObjectPositionByName(SPAWN_OBJECT_NAME, gState->startSpawnPos);
+
             // Bersihkan entitas map sebelumnya dan add player
             Entities::Clear();
             Entities::Add(&PlayerInstance);
@@ -160,6 +163,17 @@ void UpdateLoadingScreen(GameState *state)
             if (!LoadItemsForMapDir(state->pendingMapPath))
             {
                 SpawnItemWave();
+            }
+
+            // Capture cache untuk restart
+            {
+                const char *currentPath = GetCurrentMapPath();
+                if (currentPath)
+                {
+                    std::string cachePath = std::string(currentPath) + ".cache";
+                    SaveEnemiesForMap(cachePath);
+                    SaveItemsForMapDir(cachePath);
+                }
             }
 
             state->loadingStage++;
@@ -216,6 +230,15 @@ void UpdateLoadingScreen(GameState *state)
                 LoadMap(savedMapState.mapPath.c_str());
                 SetCurrentMapPath(savedMapState.mapPath.c_str());
                 BuildMapObjectIndex();
+
+                // Worldgen: regenerate layout + runtime state like normal switch path
+                if (savedMapState.mapPath.find("worldseed/save_") != std::string::npos)
+                {
+                    int stageIdx = g_SeedManager.GetCurrentStage();
+                    uint64_t seed = g_SeedManager.GetSeed(stageIdx);
+                    RunWorldgen(seed, stageIdx == SeedManager::SEED_COUNT - 1);
+                    WorldgenIO::LoadRuntimeState(stageIdx);
+                }
             }
             else
             {
@@ -258,6 +281,18 @@ void UpdateLoadingScreen(GameState *state)
         }
         // Safety net: deactivate any dead entities that survived spawn
         Entities::PruneDeadEntities();
+
+        // Capture fresh cache so restart has correct initial state
+        {
+            const char *currentPath = GetCurrentMapPath();
+            if (currentPath)
+            {
+                std::string cachePath = std::string(currentPath) + ".cache";
+                SaveEnemiesForMap(cachePath);
+                SaveItemsForMapDir(cachePath);
+            }
+        }
+
         InitMainMenu(state);
         return;
     }

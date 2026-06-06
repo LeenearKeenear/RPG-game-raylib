@@ -34,8 +34,6 @@ enum Action {
     HOTBAR_SLOT_3,
     HOTBAR_SLOT_4,
     // Debug gameplay
-    REVIVE,
-    TEST_LOSE_HP,
     GO_BACK,
     // Menu
     PAUSE_MENU,

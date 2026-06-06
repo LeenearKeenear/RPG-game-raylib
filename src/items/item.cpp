@@ -83,6 +83,33 @@ void SpawnRandomItem()
 /** @brief Getter untuk activeItems */
 std::vector<ItemSpawn> &GetActiveItems() { return itemData.activeItems; }
 
+/** @brief Drop semua item player ke ground dengan spread offset */
+void DropAllItems(Player &player)
+{
+    constexpr int SPREAD = 40;
+    constexpr int EMPTY_ID = -1;
+
+    auto DropSlot = [&](InventoryItem &slot)
+    {
+        if (slot.definitionId == EMPTY_ID || slot.amount <= 0)
+            return;
+        Vector2 dropPos = {
+            player.Position.x + (float)GetRandomValue(-SPREAD, SPREAD),
+            player.Position.y + (float)GetRandomValue(-SPREAD, SPREAD)};
+        ItemSpawn item = itemData.CreateItem(dropPos, slot.definitionId);
+        item.amount = slot.amount;
+        itemData.activeItems.push_back(item);
+        slot = {EMPTY_ID, 0};
+    };
+
+    for (int i = 0; i < player.GetMaxHotbar(); i++)
+        DropSlot(player.GetHotbarItem(i));
+    for (int i = 0; i < player.GetMaxBag(); i++)
+        DropSlot(player.GetBagItem(i));
+
+    player.hasDroppedItems = true;
+}
+
 /*==============================================================================
  * ItemDefinitionManager
  *==============================================================================*/

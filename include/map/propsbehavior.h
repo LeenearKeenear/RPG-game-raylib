@@ -161,6 +161,14 @@ public:
     /** @brief Ambil jumlah spike yang sedang dikelola */
     size_t GetCount() const { return spikes.size(); }
 
+    // Konstanta timing dan damage spike (public untuk unit test)
+    static constexpr float SPIKE_ACTIVE_MAX = 6.0f;      // Durasi aktif maksimum (detik)
+    static constexpr float SPIKE_ACTIVE_MIN = 3.0f;      // Durasi aktif minimum (detik)
+    static constexpr float SPIKE_INACTIVE_MAX = 7.0f;    // Durasi nonaktif maksimum (detik)
+    static constexpr float SPIKE_INACTIVE_MIN = 4.0f;    // Durasi nonaktif minimum (detik)
+    static constexpr float SPIKE_DAMAGE = 10.0f;         // Damage per hit
+    static constexpr float SPIKE_DAMAGE_COOLDOWN = 1.0f; // Cooldown damage global (detik)
+
 private:
     /** @brief Data internal satu spike */
     struct SpikeData
@@ -175,14 +183,6 @@ private:
         SpikeCallback onDeactivate;
         SpikeCallback onDamagePlayer;
     };
-
-    // Konstanta timing dan damage spike
-    static constexpr float SPIKE_ACTIVE_MAX = 6.0f;      // Durasi aktif maksimum (detik)
-    static constexpr float SPIKE_ACTIVE_MIN = 3.0f;      // Durasi aktif minimum (detik)
-    static constexpr float SPIKE_INACTIVE_MAX = 7.0f;    // Durasi nonaktif maksimum (detik)
-    static constexpr float SPIKE_INACTIVE_MIN = 4.0f;    // Durasi nonaktif minimum (detik)
-    static constexpr float SPIKE_DAMAGE = 10.0f;         // Damage per hit
-    static constexpr float SPIKE_DAMAGE_COOLDOWN = 1.0f; // Cooldown damage global (detik)
 
     float globalPlayerDamageCooldown = 0.0f; // Cooldown damage ke player (shared semua spike)
     float globalEnemyDamageCooldown = 0.0f;  // Cooldown damage ke enemy (shared semua spike)
@@ -260,6 +260,11 @@ public:
      */
     bool IsInExplosionRadius(Vector2 bombPos, Rectangle target);
 
+    // Konstanta bomb (public untuk unit test)
+    static constexpr float BOMB_EXPLOSION_RADIUS = 80.0f;  // Radius area ledakan (pixel)
+    static constexpr float BOMB_DAMAGE = 25.0f;            // Damage ledakan
+    static constexpr float BOMB_EXPLOSION_DURATION = 0.6f; // Durasi animasi ledakan (detik)
+
 private:
     /** @brief Data internal satu bomb */
     struct BombData
@@ -270,11 +275,6 @@ private:
         bool isTriggered = false; // Guard untuk mencegah infinite loop chain reaction
         float explosionTimer;     // Sisa waktu animasi ledakan
     };
-
-    // Konstanta bomb
-    static constexpr float BOMB_EXPLOSION_RADIUS = 80.0f;  // Radius area ledakan (pixel)
-    static constexpr float BOMB_DAMAGE = 25.0f;            // Damage ledakan
-    static constexpr float BOMB_EXPLOSION_DURATION = 0.6f; // Durasi animasi ledakan (detik)
 
     std::vector<BombData> bombs;                       // Daftar bomb yang sedang dikelola
     std::unordered_set<std::string> consumedPositions; // Posisi bomb yang sudah dikonsumsi agar tidak diproses ulang
@@ -325,6 +325,8 @@ public:
      */
     size_t GetCount() const { return crates.size(); }
 
+    static constexpr float CRATE_LOOT_CHANCE = 0.1f; // 10% chance drop loot (public untuk unit test)
+
 private:
     /** @brief Data internal satu crate */
     struct CrateData
@@ -332,8 +334,6 @@ private:
         TileObject tile; // Data object crate di map
         bool isAlive;    // False jika crate sudah dihancurkan
     };
-
-    static constexpr float CRATE_LOOT_CHANCE = 1.0f; // 10% chance drop loot
 
     std::vector<CrateData> crates;                     // Daftar crate yang sedang dikelola
     std::unordered_set<std::string> consumedPositions; // Posisi crate yang sudah dihancurkan agar tidak spawn ulang
@@ -378,6 +378,8 @@ public:
     /** @brief Set state hasReLocked */
     void SetHasReLocked(bool v) { hasReLocked = v; }
 
+    static constexpr float KILL_THRESHOLD = 0.9f;
+
 private:
     /** @brief Data internal satu barrier */
     struct BarrierData
@@ -386,8 +388,6 @@ private:
         bool isActive;
         bool isBoss = false; // true kalo dari type "barrier_boss"
     };
-
-    static constexpr float KILL_THRESHOLD = 0.9f;
 
     std::vector<BarrierData> barriers; // Daftar barrier yang sedang dikelola
     bool isBossMap = false;            // True kalo map ini punya boss spawn

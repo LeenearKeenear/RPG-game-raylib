@@ -108,6 +108,18 @@ void InitAll()
     globalFlowField.Invalidate(); // nanti diganti kalo nambah method ai nya
     // Spawn musuh dari map aktif
     SpawnEnemiesFromMap();
+
+    // Capture spawn pos start room buat revive
+    TiledHelperFunction.TryGetObjectPositionByName(SPAWN_OBJECT_NAME, gState->startSpawnPos);
+
+    // Cache enemy & item state buat restart
+    const char *mapPath = GetCurrentMapPath();
+    if (mapPath)
+    {
+        std::string cachePath = std::string(mapPath) + ".cache";
+        SaveEnemiesForMap(cachePath);
+        SaveItemsForMapDir(cachePath);
+    }
 }
 
 /**

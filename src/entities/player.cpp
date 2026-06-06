@@ -48,7 +48,7 @@ void Player::Init(GameState *state, const char *spawnObjectName)
 
         // Inisialisasi perlengkapan hotbar default
         Hotbar[0] = {1, 1}; // Iron Sword
-        Hotbar[1] = {4, 1}; // Iron Axe
+        Hotbar[1] = {4, 1}; // bow 
         Hotbar[2] = {2, 8}; // Health Potion
         Hotbar[3] = {3, 8}; // Mana Bread
 
@@ -126,7 +126,7 @@ void Player::ResetForNewGame()
  *
  * Urutan:
  * 1. Input polling
- * 2. Lifecycle checkup (revive)
+ * 2. Lifecycle checkup
  * 3. Timer & Status effects
  * 4. Physics & Knockback
  * 5. Logic modules (Movement, Combat, Inventory, Interaction)
@@ -140,12 +140,6 @@ void Player::Update()
     InputInstance.UpdateState();
 
     // 2. Pemeriksaan Lifecycle
-    if (InputInstance.IsRevive())
-    {
-        Combat::HandleRevive(*this);
-        return;
-    }
-
     if (Anim.isDead)
         return;
 
