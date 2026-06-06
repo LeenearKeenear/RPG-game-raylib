@@ -293,9 +293,9 @@ void SpawnBoss(const MapObject *obj);
 void InitEnemy();
 
 /** @brief Simpan status enemy ke file map */
-void SaveEnemiesForMap(const std::string &mapPath);
+void SaveEnemiesForMap(const std::string &mapPath, const std::string &baseDir = "saves/enemies");
 /** @brief Load status enemy dari file map */
-bool LoadEnemiesForMap(const std::string &mapPath);
+bool LoadEnemiesForMap(const std::string &mapPath, const std::string &baseDir = "saves/enemies");
 /** @brief Hapus semua enemy aktif */
 void ClearEnemies();
 

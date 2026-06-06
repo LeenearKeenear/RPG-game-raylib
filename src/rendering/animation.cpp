@@ -180,6 +180,10 @@ void InitFonts(void)
         fontLoadingTitle = GetFontDefault();
     }
 
+    SetTextureFilter(fontKeybindHeader.texture, TEXTURE_FILTER_POINT);
+    SetTextureFilter(fontKeybindEntry.texture, TEXTURE_FILTER_POINT);
+    SetTextureFilter(fontLoadingTitle.texture, TEXTURE_FILTER_POINT);
+
     TraceLog(LOG_INFO, "FONTS: NewDawn (header) glyphs=%d, Poppins (entry) glyphs=%d, Poppins-Bold (loading) glyphs=%d",
         fontKeybindHeader.glyphCount, fontKeybindEntry.glyphCount, fontLoadingTitle.glyphCount);
 }

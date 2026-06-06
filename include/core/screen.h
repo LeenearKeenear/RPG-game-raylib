@@ -42,7 +42,9 @@ enum ScreenState : std::uint8_t
     LOADING,    // State loading aset
     PLAY,       // State gameplay aktif
     OPTIONS,    // State menu pengaturan
-    GAME_OVER   // State game over
+    GAME_OVER,  // State game over
+    /** @brief State menu simpan/muat */
+    SAVE_LOAD   // State menu simpan/muat
 };
 
 /*==============================================================================

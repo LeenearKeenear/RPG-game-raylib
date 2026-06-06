@@ -14,6 +14,7 @@
 #include "../../include/ui/mainMenu.h"
 #include "../../include/ui/pauseMenu.h"
 #include "../../include/ui/gameOverScreen.h"
+#include "../../include/ui/saveLoadScreen.h"
 #include "../../include/core/loading_screen.h"
 #include "../../include/core/game_state_saver.h"
 #include "../../include/map/worldgenio.h"
@@ -35,6 +36,7 @@
  */
 PauseMenu pauseMenu;
 OptionsScreen optionsScreen;
+SaveLoadScreen saveLoadScreen;
 
 /**
  * @brief Custom TraceLog callback to prepend HH:mm:ss.fff timestamps
@@ -262,6 +264,24 @@ int main()
             UpdateGameOverScreen(&state);
             if (WindowShouldClose()) break;
             RenderGameOverScreen(&state);
+            DrawRenderWindows(&state);
+        }
+        // ===== State: SAVE_LOAD =====
+        else if (state.currentScreen == SAVE_LOAD)
+        {
+            if (!saveLoadScreen.IsActive())
+            {
+                saveLoadScreen.SetReturnScreen(state.previousScreen);
+                saveLoadScreen.Show();
+            }
+            UpdateGame(&state);
+            bool mouseClicked = IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+            saveLoadScreen.Update(&state, GetVirtualMousePosition(&state), mouseClicked);
+            if (WindowShouldClose()) break;
+            BeginTextureMode(state.Dungeon);
+            DrawMenuBackground();
+            saveLoadScreen.Draw(GetVirtualMousePosition(&state));
+            EndTextureMode();
             DrawRenderWindows(&state);
         }
     }

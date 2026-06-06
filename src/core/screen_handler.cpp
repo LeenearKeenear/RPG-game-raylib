@@ -43,6 +43,7 @@
 #include "hud.h"
 #include "propsbehavior.h"
 #include "seedmanager.h"
+#include "game_state_saver.h"
 #include "worldgenio.h"
 #include "worldgenenartion.h"
 
@@ -117,8 +118,8 @@ void InitAll()
     if (mapPath)
     {
         std::string cachePath = std::string(mapPath) + ".cache";
-        SaveEnemiesForMap(cachePath);
-        SaveItemsForMapDir(cachePath);
+        SaveEnemiesForMap(cachePath, "saves/cache/enemies");
+        SaveItemsForMapDir(cachePath, "saves/cache/items");
     }
 }
 
@@ -176,9 +177,8 @@ GameState InitScreen()
     state.pendingMapPath.clear();
     state.pendingDoorName.clear();
 
-    // Create save directories at startup
-    std::filesystem::create_directories("saves/manual");
-    std::filesystem::create_directories("saves/autosave");
+    // Save directories dibuat otomatis oleh EnsureSlotDirectory()
+    // atau WriteAutosave() saat pertama kali menyimpan.
 
     return state;
 }
@@ -258,17 +258,20 @@ void UpdateLogicAll()
     if (!gState->isSwitchingMap && !gState->isGoingBack)
     {
         const char *mapPath = GetCurrentMapPath();
-        if (mapPath && strstr(mapPath, "worldseed/save_") != nullptr)
+        if (mapPath)
         {
-            if (InputInstance.IsInteract())
+            std::string worldgenPrefix = "worldseed/save_" + std::to_string(g_ActiveSaveSlot);
+            if (strstr(mapPath, worldgenPrefix.c_str()) != nullptr)
             {
-                Vector2 playerCenter = PlayerInstance.GetCenter();
-                CellType cellType = GetCellTypeAtWorldPos(playerCenter);
-                if (cellType == CELL_FINISH)
+                if (InputInstance.IsInteract())
                 {
-                    WorldgenIO::NextStage();
+                    Vector2 playerCenter = PlayerInstance.GetCenter();
+                    CellType cellType = GetCellTypeAtWorldPos(playerCenter);
+                    if (cellType == CELL_FINISH)
+                    {
+                        WorldgenIO::NextStage();
+                    }
                 }
-
             }
         }
     }
