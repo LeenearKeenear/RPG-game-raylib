@@ -126,9 +126,9 @@ private:
     void RefreshSlotMetadata(void);
 
     /// Jumlah slot manual (0-4)
-    static constexpr int MANUAL_SLOT_COUNT = 5;
+    static constexpr int MANUAL_SLOT_COUNT = 6;
     /// Jumlah slot autosave (0-4)
-    static constexpr int AUTOSAVE_SLOT_COUNT = 5;
+    static constexpr int AUTOSAVE_SLOT_COUNT = 6;
     /// Slot box width in pixels
     static constexpr int SLOT_WIDTH = 250;
     /// Slot box height in pixels
