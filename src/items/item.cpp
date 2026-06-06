@@ -11,6 +11,8 @@
  */
 
 #include "item.h"
+// include fonts.h untuk fontLoadingTitle
+#include "fonts.h"
 #include "screen.h"
 #include "inventory.h"
 #include "combat.h"
@@ -576,15 +578,19 @@ void ItemRenderManager::Render(ItemSpawn &item)
     display.size = (int)(FRAME_SIZE * scale);
     DrawFrame(def.spriteKey, display);
 
+    // stack amount item di-drop: fontLoadingTitle 14px, bg rounded hitam, di bawah sprite
     if (item.amount > 1)
     {
         std::string amountText = std::to_string(item.amount);
-        int fontSize = 8;
-        int textWidth = MeasureText(amountText.c_str(), fontSize);
+        int fontSize = 14;
+        Vector2 textSz = MeasureTextEx(fontLoadingTitle, amountText.c_str(), fontSize, 0);
         Vector2 textPos = {
-            center.x - textWidth / 2.0f,
-            (center.y + 16.0f) - 5.0f};
-        DrawText(amountText.c_str(), (int)textPos.x, (int)textPos.y, fontSize, WHITE);
+            center.x - textSz.x / 2.0f,
+            center.y + 16.0f + 2.0f};
+        DrawRectangleRounded(
+            (Rectangle){textPos.x - 4, textPos.y - 4, textSz.x + 8, textSz.y + 8},
+            0.3f, 8, ColorAlpha(BLACK, 0.8f));
+        DrawTextEx(fontLoadingTitle, amountText.c_str(), textPos, fontSize, 0, WHITE);
     }
 }
 

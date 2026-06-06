@@ -241,8 +241,8 @@ private:
     /// Flag apakah texture sudah dimuat
     bool texturesLoaded;
 
-    /// Array tombol gambar (6 buah)
-    std::array<buttonImage, 6> buttons;
+    /// Array tombol gambar (7 buah)
+    std::array<buttonImage, 7> buttons;
 
     /// Texture background panel
     Texture2D bgTexture;
