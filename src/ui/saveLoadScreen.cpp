@@ -8,6 +8,7 @@
 
 #include "../../include/ui/saveLoadScreen.h"
 #include "../../include/core/game_state_saver.h"
+#include "fonts.h"
 #include "../lib/json/include/nlohmann/json.hpp"
 
 /*==============================================================================
@@ -233,9 +234,9 @@ void SaveLoadScreen::Draw(Vector2 mousePosition)
     // Draw header based on mode
     const char* headerText = (m_mode == SaveLoadMode::SAVE_MODE) ? "SAVE GAME" : "LOAD GAME";
     int headerFontSize = 24;
-    int headerTextWidth = MeasureText(headerText, headerFontSize);
-    int headerX = startX + (width - headerTextWidth) / 2;
-    DrawText(headerText, headerX, startY + 18, headerFontSize, WHITE);
+    Vector2 headerTextSize = MeasureTextEx(fontLoadingTitle, headerText, headerFontSize, 1);
+    int headerX = startX + (int)(width - headerTextSize.x) / 2;
+    DrawTextEx(fontLoadingTitle, headerText, Vector2{(float)headerX, (float)(startY + 18)}, headerFontSize, 1, WHITE);
 
     // Draw slot grid
     DrawSlotGrid(mousePosition);
@@ -303,12 +304,10 @@ int SaveLoadScreen::GetSlotAtPosition(Vector2 mousePosition)
     }
 
     int manualRow2Y = manualRow1Y + SLOT_HEIGHT + SLOT_GAP;
-    int rowWidth2 = 2 * SLOT_WIDTH + SLOT_GAP;
-    int row2X = startX + (width - rowWidth2) / 2;
 
-    // Manual row 2 (slots 3, 4)
-    for (int i = 3; i < 5; i++) {
-        int slotX = row2X + (i - 3) * (SLOT_WIDTH + SLOT_GAP);
+    // Manual row 2 (slots 3, 4, 5)
+    for (int i = 3; i < 6; i++) {
+        int slotX = row1X + (i - 3) * (SLOT_WIDTH + SLOT_GAP);
         Rectangle rect = {static_cast<float>(slotX), static_cast<float>(manualRow2Y), static_cast<float>(SLOT_WIDTH), static_cast<float>(SLOT_HEIGHT)};
         if (CheckCollisionPointRec(mousePosition, rect)) return i;
     }
@@ -316,18 +315,18 @@ int SaveLoadScreen::GetSlotAtPosition(Vector2 mousePosition)
     int autoLabelY = manualRow2Y + SLOT_HEIGHT + 15;
     int autoRow1Y = autoLabelY + 25;
 
-    // Auto row 1 (slots 5, 6, 7)
-    for (int i = 5; i < 8; i++) {
-        int slotX = row1X + (i - 5) * (SLOT_WIDTH + SLOT_GAP);
+    // Auto row 1 (slots 6, 7, 8)
+    for (int i = 6; i < 9; i++) {
+        int slotX = row1X + (i - 6) * (SLOT_WIDTH + SLOT_GAP);
         Rectangle rect = {static_cast<float>(slotX), static_cast<float>(autoRow1Y), static_cast<float>(SLOT_WIDTH), static_cast<float>(SLOT_HEIGHT)};
         if (CheckCollisionPointRec(mousePosition, rect)) return i;
     }
 
     int autoRow2Y = autoRow1Y + SLOT_HEIGHT + SLOT_GAP;
 
-    // Auto row 2 (slots 8, 9)
-    for (int i = 8; i < 10; i++) {
-        int slotX = row2X + (i - 8) * (SLOT_WIDTH + SLOT_GAP);
+    // Auto row 2 (slots 9, 10, 11)
+    for (int i = 9; i < 12; i++) {
+        int slotX = row1X + (i - 9) * (SLOT_WIDTH + SLOT_GAP);
         Rectangle rect = {static_cast<float>(slotX), static_cast<float>(autoRow2Y), static_cast<float>(SLOT_WIDTH), static_cast<float>(SLOT_HEIGHT)};
         if (CheckCollisionPointRec(mousePosition, rect)) return i;
     }
@@ -379,20 +378,20 @@ void SaveLoadScreen::DrawSlotBox(int slotIndex, int posX, int posY, bool occupie
     DrawRectangleLinesEx(slotRect, 1, borderColor);
 
     if (!enabled && slotIndex >= MANUAL_SLOT_COUNT && m_mode == SaveLoadMode::SAVE_MODE) {
-        DrawText("Auto Save", posX + 5, posY + 5, 12, DARKGRAY);
+        DrawTextEx(fontKeybindEntry, "Auto Save", Vector2{(float)(posX + 5), (float)(posY + 5)}, 12, 1, DARKGRAY);
     } else {
-        DrawText(TextFormat("Slot %d", slotIndex), posX + 5, posY + 5, 12, enabled ? LIGHTGRAY : DARKGRAY);
+        DrawTextEx(fontKeybindEntry, TextFormat("Slot %d", slotIndex), Vector2{(float)(posX + 5), (float)(posY + 5)}, 12, 1, enabled ? LIGHTGRAY : DARKGRAY);
     }
 
     if (occupied) {
-        DrawText(mapName.c_str(), posX + 5, posY + 22, 14, enabled ? WHITE : GRAY);
-        DrawText(timestamp.c_str(), posX + 5, posY + 44, 10, enabled ? (Color){180, 180, 180, 255} : (Color){80, 80, 80, 255});
+        DrawTextEx(fontKeybindEntry, mapName.c_str(), Vector2{(float)(posX + 5), (float)(posY + 22)}, 14, 1, enabled ? WHITE : GRAY);
+        DrawTextEx(fontKeybindEntry, timestamp.c_str(), Vector2{(float)(posX + 5), (float)(posY + 44)}, 10, 1, enabled ? (Color){180, 180, 180, 255} : (Color){80, 80, 80, 255});
     } else {
         const char* emptyText = "Empty";
-        int emptyTextWidth = MeasureText(emptyText, 16);
-        int emptyX = posX + (SLOT_WIDTH - emptyTextWidth) / 2;
+        Vector2 emptyTextSize = MeasureTextEx(fontKeybindEntry, emptyText, 16, 1);
+        int emptyX = posX + (SLOT_WIDTH - (int)emptyTextSize.x) / 2;
         int emptyY = posY + (SLOT_HEIGHT - 16) / 2;
-        DrawText(emptyText, emptyX, emptyY, 16, enabled ? GRAY : DARKGRAY);
+        DrawTextEx(fontKeybindEntry, emptyText, Vector2{(float)emptyX, (float)emptyY}, 16, 1, enabled ? GRAY : DARKGRAY);
     }
 }
 
@@ -405,7 +404,7 @@ void SaveLoadScreen::DrawSlotBox(int slotIndex, int posX, int posY, bool occupie
  */
 void SaveLoadScreen::DrawSlotGrid(Vector2 mousePosition)
 {
-    DrawText("MANUAL SAVE", startX + 10, startY + 50, 18, WHITE);
+    DrawTextEx(fontLoadingTitle, "MANUAL SAVE", Vector2{(float)(startX + 10), (float)(startY + 50)}, 18, 1, WHITE);
 
     int manualRow1Y = startY + 75;
     int rowWidth3 = 3 * SLOT_WIDTH + 2 * SLOT_GAP;
@@ -418,30 +417,28 @@ void SaveLoadScreen::DrawSlotGrid(Vector2 mousePosition)
     }
 
     int manualRow2Y = manualRow1Y + SLOT_HEIGHT + SLOT_GAP;
-    int rowWidth2 = 2 * SLOT_WIDTH + 1 * SLOT_GAP;
-    int row2X = startX + (width - rowWidth2) / 2;
 
-    for (int i = 3; i < 5; i++) {
-        int slotX = row2X + (i - 3) * (SLOT_WIDTH + SLOT_GAP);
+    for (int i = 3; i < 6; i++) {
+        int slotX = row1X + (i - 3) * (SLOT_WIDTH + SLOT_GAP);
         bool enabled = !(m_mode == SaveLoadMode::LOAD_MODE && !slotOccupied[i]);
         DrawSlotBox(i, slotX, manualRow2Y, slotOccupied[i], slotMapName[i], slotTimestamp[i], mousePosition, enabled);
     }
 
     int autoLabelY = manualRow2Y + SLOT_HEIGHT + 15;
-    DrawText("AUTO SAVE", startX + 10, autoLabelY, 18, WHITE);
+    DrawTextEx(fontLoadingTitle, "AUTO SAVE", Vector2{(float)(startX + 10), (float)autoLabelY}, 18, 1, WHITE);
 
     int autoRow1Y = autoLabelY + 25;
 
-    for (int i = 5; i < 8; i++) {
-        int slotX = row1X + (i - 5) * (SLOT_WIDTH + SLOT_GAP);
+    for (int i = 6; i < 9; i++) {
+        int slotX = row1X + (i - 6) * (SLOT_WIDTH + SLOT_GAP);
         bool enabled = !(m_mode == SaveLoadMode::SAVE_MODE); // Autosave disabled in save mode
         DrawSlotBox(i, slotX, autoRow1Y, slotOccupied[i], slotMapName[i], slotTimestamp[i], mousePosition, enabled);
     }
 
     int autoRow2Y = autoRow1Y + SLOT_HEIGHT + SLOT_GAP;
 
-    for (int i = 8; i < 10; i++) {
-        int slotX = row2X + (i - 8) * (SLOT_WIDTH + SLOT_GAP);
+    for (int i = 9; i < 12; i++) {
+        int slotX = row1X + (i - 9) * (SLOT_WIDTH + SLOT_GAP);
         bool enabled = !(m_mode == SaveLoadMode::SAVE_MODE); // Autosave disabled in save mode
         DrawSlotBox(i, slotX, autoRow2Y, slotOccupied[i], slotMapName[i], slotTimestamp[i], mousePosition, enabled);
     }
