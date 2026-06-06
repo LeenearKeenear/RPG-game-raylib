@@ -98,7 +98,7 @@ elseif(UNIX)
     if(APPLE)
         target_link_libraries(main PRIVATE -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo)
     else()
-        target_link_libraries(main PRIVATE GL m pthread dl rt)
+        target_link_libraries(main PRIVATE GL m pthread dl rt X11)
     endif()
 endif()
 
@@ -118,6 +118,7 @@ target_include_directories(test_constants PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/tileson
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/raylib/include
     ${CMAKE_CURRENT_SOURCE_DIR}/lib/json/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/doctest
 )
 set_target_properties(test_constants PROPERTIES UNITY_BUILD OFF WIN32_EXECUTABLE FALSE)
 enable_testing()
