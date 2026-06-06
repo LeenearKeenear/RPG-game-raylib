@@ -233,7 +233,7 @@ void SaveLoadScreen::Draw(Vector2 mousePosition)
 
     // Draw header based on mode
     const char* headerText = (m_mode == SaveLoadMode::SAVE_MODE) ? "SAVE GAME" : "LOAD GAME";
-    int headerFontSize = 24;
+    int headerFontSize = 28;
     Vector2 headerTextSize = MeasureTextEx(fontLoadingTitle, headerText, headerFontSize, 1);
     int headerX = startX + (int)(width - headerTextSize.x) / 2;
     DrawTextEx(fontLoadingTitle, headerText, Vector2{(float)headerX, (float)(startY + 18)}, headerFontSize, 1, WHITE);
@@ -378,20 +378,20 @@ void SaveLoadScreen::DrawSlotBox(int slotIndex, int posX, int posY, bool occupie
     DrawRectangleLinesEx(slotRect, 1, borderColor);
 
     if (!enabled && slotIndex >= MANUAL_SLOT_COUNT && m_mode == SaveLoadMode::SAVE_MODE) {
-        DrawTextEx(fontKeybindEntry, "Auto Save", Vector2{(float)(posX + 5), (float)(posY + 5)}, 12, 1, DARKGRAY);
+        DrawTextEx(fontKeybindEntry, "Auto Save", Vector2{(float)(posX + 5), (float)(posY + 5)}, 16, 1, DARKGRAY);
     } else {
-        DrawTextEx(fontKeybindEntry, TextFormat("Slot %d", slotIndex), Vector2{(float)(posX + 5), (float)(posY + 5)}, 12, 1, enabled ? LIGHTGRAY : DARKGRAY);
+        DrawTextEx(fontKeybindEntry, TextFormat("Slot %d", slotIndex), Vector2{(float)(posX + 5), (float)(posY + 5)}, 16, 1, enabled ? LIGHTGRAY : DARKGRAY);
     }
 
     if (occupied) {
-        DrawTextEx(fontKeybindEntry, mapName.c_str(), Vector2{(float)(posX + 5), (float)(posY + 22)}, 14, 1, enabled ? WHITE : GRAY);
-        DrawTextEx(fontKeybindEntry, timestamp.c_str(), Vector2{(float)(posX + 5), (float)(posY + 44)}, 10, 1, enabled ? (Color){180, 180, 180, 255} : (Color){80, 80, 80, 255});
+        DrawTextEx(fontKeybindEntry, mapName.c_str(), Vector2{(float)(posX + 5), (float)(posY + 24)}, 18, 1, enabled ? WHITE : GRAY);
+        DrawTextEx(fontKeybindEntry, timestamp.c_str(), Vector2{(float)(posX + 5), (float)(posY + 48)}, 14, 1, enabled ? (Color){180, 180, 180, 255} : (Color){80, 80, 80, 255});
     } else {
         const char* emptyText = "Empty";
-        Vector2 emptyTextSize = MeasureTextEx(fontKeybindEntry, emptyText, 16, 1);
+        Vector2 emptyTextSize = MeasureTextEx(fontKeybindEntry, emptyText, 20, 1);
         int emptyX = posX + (SLOT_WIDTH - (int)emptyTextSize.x) / 2;
-        int emptyY = posY + (SLOT_HEIGHT - 16) / 2;
-        DrawTextEx(fontKeybindEntry, emptyText, Vector2{(float)emptyX, (float)emptyY}, 16, 1, enabled ? GRAY : DARKGRAY);
+        int emptyY = posY + (SLOT_HEIGHT - 20) / 2;
+        DrawTextEx(fontKeybindEntry, emptyText, Vector2{(float)emptyX, (float)emptyY}, 20, 1, enabled ? GRAY : DARKGRAY);
     }
 }
 
@@ -404,7 +404,7 @@ void SaveLoadScreen::DrawSlotBox(int slotIndex, int posX, int posY, bool occupie
  */
 void SaveLoadScreen::DrawSlotGrid(Vector2 mousePosition)
 {
-    DrawTextEx(fontLoadingTitle, "MANUAL SAVE", Vector2{(float)(startX + 10), (float)(startY + 50)}, 18, 1, WHITE);
+    DrawTextEx(fontLoadingTitle, "MANUAL SAVE", Vector2{(float)(startX + 10), (float)(startY + 50)}, 22, 1, WHITE);
 
     int manualRow1Y = startY + 75;
     int rowWidth3 = 3 * SLOT_WIDTH + 2 * SLOT_GAP;
@@ -425,7 +425,7 @@ void SaveLoadScreen::DrawSlotGrid(Vector2 mousePosition)
     }
 
     int autoLabelY = manualRow2Y + SLOT_HEIGHT + 15;
-    DrawTextEx(fontLoadingTitle, "AUTO SAVE", Vector2{(float)(startX + 10), (float)autoLabelY}, 18, 1, WHITE);
+    DrawTextEx(fontLoadingTitle, "AUTO SAVE", Vector2{(float)(startX + 10), (float)autoLabelY}, 22, 1, WHITE);
 
     int autoRow1Y = autoLabelY + 25;
 
