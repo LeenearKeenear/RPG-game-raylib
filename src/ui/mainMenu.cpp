@@ -48,6 +48,11 @@ void InitMainMenu(GameState *state)
 {
     (void)state; // unused parameter, buat future use
 
+    // set texture background load-notif untuk semua popup main menu
+    loadPopup.SetBackgroundTexture("assets/textures/pauseButt/load-notif.png");
+    mainNoSavePopup.SetBackgroundTexture("assets/textures/pauseButt/load-notif.png");
+    mainCorruptPopup.SetBackgroundTexture("assets/textures/pauseButt/load-notif.png");
+
     // Load dan resize logo
     Image logoImg = LoadImage("assets/textures/logo.png");
     int targetWidth = static_cast<int>(3840 * 0.25F);
