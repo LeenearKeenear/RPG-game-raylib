@@ -440,8 +440,8 @@ void PauseMenu::LoadTextures()
     float btnHeight = 56.0F;
     float pairGap = 105.0F;
     float totalBtnHeight = 5.0F * btnHeight + 4.0F * gap;
-    // startY ditambah 40px agar tombol pause lebih ke bawah (25 → 65)
-    float startY = position.y + (height - totalBtnHeight) / 2.0F + 65.0F;
+    // startY ditambah 35px agar tombol pause agak ke bawah
+    float startY = position.y + (height - totalBtnHeight) / 2.0F + 35.0F;
 
     // Row 0: Resume (wide, centered)
     {

@@ -50,7 +50,7 @@ namespace Inventory
      * Input & Aksi Inventory
      *==============================================================================*/
 
-    /** @brief Handle left-click action untuk potion/equip */
+    /** @brief Handle right-click action untuk potion */
     void HandleInventoryActions(Player &player)
     {
         // Cooldown timer tick
@@ -61,10 +61,10 @@ namespace Inventory
         if (InputInstance.IsInventoryOpen())
             return;
 
-        if (player.IsDashing)
+        if (player.IsDashing || player.IsMoving)
             return;
 
-        if (!InputInstance.IsLeftClickPressed())
+        if (!InputInstance.IsRightClickPressed())
             return;
 
         PlayerAction action = InputInstance.ResolveAction();
@@ -74,10 +74,6 @@ namespace Inventory
             int slotIdx = (int)InputInstance.GetActiveSlot() - 1;
             if (slotIdx >= 0 && slotIdx < player.GetMaxHotbar())
                 UsePotion(player, slotIdx);
-        }
-        else if (action == ACTION_EQUIP_UNEQUIP)
-        {
-            TraceLog(LOG_INFO, "PLAYER: Equip/Unequip from inventory!");
         }
     }
 
