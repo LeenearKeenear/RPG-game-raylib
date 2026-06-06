@@ -417,6 +417,9 @@ void PauseMenu::LoadTextures()
     noSavePopup.SetBackgroundTexture("assets/textures/pauseButt/load-notif.png");
     pauseCorruptPopup.SetBackgroundTexture("assets/textures/pauseButt/load-notif.png");
     returnConfirmPopup.SetBackgroundTexture("assets/textures/pauseButt/load-notif.png");
+    restartConfirmPopup.SetBackgroundTexture("assets/textures/pauseButt/load-notif.png");
+    restartConfirmPopup.SetTextYOffset(15);
+    restartConfirmPopup.SetButtonYOffset(-20);
     // offset khusus returnConfirmPopup agar teks & tombol sejajar
     returnConfirmPopup.SetTextYOffset(15);
     returnConfirmPopup.SetButtonYOffset(-15);

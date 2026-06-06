@@ -267,14 +267,16 @@ void Popup::Draw(Vector2 mousePosition)
         DrawTextEx(fontLoadingTitle, subMessage, Vector2{static_cast<float>(subX), static_cast<float>(subY)}, fontSize, 0, RED);
     }
 
-    // highlight background saat hover biar teks hitam tetap kebaca
+    // highlight background saat hover — ukur teks pake fontLoadingTitle biar pas
     if (okButton.isHovered(mousePosition)) {
         Rectangle b = okButton.GetBounds();
-        DrawRectangleRounded((Rectangle){b.x - 6, b.y - 4, b.width + 12, b.height + 8}, 0.3f, 8, ColorAlpha(WHITE, 0.25f));
+        Vector2 ts = MeasureTextEx(fontLoadingTitle, buttonText, fontSize, 0);
+        DrawRectangleRounded((Rectangle){b.x, b.y, ts.x, ts.y}, 0.3f, 8, ColorAlpha(WHITE, 0.25f));
     }
     if (hasCancelButton && cancelButton.isHovered(mousePosition)) {
         Rectangle b = cancelButton.GetBounds();
-        DrawRectangleRounded((Rectangle){b.x - 6, b.y - 4, b.width + 12, b.height + 8}, 0.3f, 8, ColorAlpha(WHITE, 0.25f));
+        Vector2 ts = MeasureTextEx(fontLoadingTitle, cancelText, fontSize, 0);
+        DrawRectangleRounded((Rectangle){b.x, b.y, ts.x, ts.y}, 0.3f, 8, ColorAlpha(WHITE, 0.25f));
     }
     // tombol pakai BLACK via buttonTxt (di-set di CalculateDimensions)
     okButton.Draw(mousePosition);
