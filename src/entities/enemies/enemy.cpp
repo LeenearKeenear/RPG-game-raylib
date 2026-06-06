@@ -21,6 +21,7 @@
 #include "game_debug.h"
 #include "entities.h"
 #include "core/utils.h"
+#include "core/game_state_saver.h"
 #include <cmath>
 #include <fstream>
 #include <filesystem>
@@ -672,22 +673,35 @@ void InitEnemy()
 }
 
 /**
- * @brief Save all active enemy states for a map to the saves/enemies/ filesystem directory.
- * @details Serializes each live enemy's position, name, HP, AI state, patrol data, spawn point,
- *          health regen timer, attack cooldown timer, and UUID to a JSON file. Uses atomic
- *          write via .tmp + rename to prevent corruption. Skips inactive enemies.
- *          Save file path derived by sanitizing mapPath (replacing / and \\ with _).
- * @param mapPath Raw map file path used to derive save file name (e.g., "assets/maps/tutorial.json")
+ * @brief Simpan state semua enemy aktif untuk suatu map ke direktori saves/enemies/.
+ * @details Menyimpan posisi, nama, HP, state AI, data patroli, spawn point,
+ *          timer health regen, timer cooldown serangan, dan UUID setiap enemy
+ *          ke file JSON. Menggunakan atomic write via .tmp + rename untuk mencegah
+ *          korupsi. Melewati enemy yang tidak aktif.
+ *          Nama file save diturunkan dari mapPath dengan mengganti / dan \\ menjadi _.
+ *          Saat baseDir berupa default ("saves/enemies"), menggunakan direktori berbasis slot aktif: saves/slot_N/enemies/.
+ * @param mapPath Path file map mentah untuk diturunkan nama file save (contoh: "assets/maps/tutorial.json")
+ * @param baseDir Direktori dasar untuk file save. Default = dialihkan ke slot aktif.
  */
-void SaveEnemiesForMap(const std::string &mapPath)
+void SaveEnemiesForMap(const std::string &mapPath, const std::string &baseDir)
 {
+    // Pastikan direktori slot tersedia
+    if (baseDir == "saves/enemies")
+    {
+        EnsureSlotDirectory(g_ActiveSaveSlot);
+    }
+
     // Build per-map save file path
     std::string safeName = mapPath;
     for (auto &c : safeName)
     {
         if (c == '/' || c == '\\') c = '_';
     }
-    std::string dir = "saves/enemies";
+    std::string dir = baseDir;
+    if (dir == "saves/enemies")
+    {
+        dir = "saves/slot_" + std::to_string(g_ActiveSaveSlot) + "/enemies";
+    }
     std::string filePath = dir + "/" + safeName;
 
     std::filesystem::create_directories(dir);
@@ -729,15 +743,17 @@ void SaveEnemiesForMap(const std::string &mapPath)
 }
 
 /**
- * @brief Load enemy states for a map from the saves/enemies/ filesystem directory.
- * @details Reads the per-map save file, deserializes each enemy's state, and restores
- *          position, HP, AI state, patrol data, spawn point, timers, and UUID to the
- *          matching Enemy instance (matched by MapObjectID + Name). Dead enemies are
- *          registered via Entities::RegisterDeath to prevent respawn.
- * @param mapPath Raw map file path used to derive save file name
- * @return true if at least one enemy was restored, false if no save file or parse failed
+ * @brief Muat state enemy untuk suatu map dari direktori saves/enemies/.
+ * @details Membaca file save per-map, mendeserialisasi state setiap enemy, dan
+ *          mengembalikan posisi, HP, state AI, data patroli, spawn point, timer,
+ *          dan UUID ke instance Enemy yang cocok (dicocokkan berdasarkan MapObjectID + Name).
+ *          Enemy yang mati didaftarkan via Entities::RegisterDeath untuk mencegah respawn.
+ *          Saat baseDir berupa default ("saves/enemies"), menggunakan direktori berbasis slot aktif: saves/slot_N/enemies/.
+ * @param mapPath Path file map mentah untuk diturunkan nama file save
+ * @param baseDir Direktori dasar untuk file save. Default = dialihkan ke slot aktif.
+ * @return true jika setidaknya satu enemy dipulihkan, false jika tidak ada file save atau gagal parse
  */
-bool LoadEnemiesForMap(const std::string &mapPath)
+bool LoadEnemiesForMap(const std::string &mapPath, const std::string &baseDir)
 {
     // Build per-map save file path
     std::string safeName = mapPath;
@@ -745,7 +761,12 @@ bool LoadEnemiesForMap(const std::string &mapPath)
     {
         if (c == '/' || c == '\\') c = '_';
     }
-    std::string filePath = "saves/enemies/" + safeName;
+    std::string dir = baseDir;
+    if (dir == "saves/enemies")
+    {
+        dir = "saves/slot_" + std::to_string(g_ActiveSaveSlot) + "/enemies";
+    }
+    std::string filePath = dir + "/" + safeName;
 
     if (!std::filesystem::exists(filePath))
         return false;
@@ -793,7 +814,7 @@ bool LoadEnemiesForMap(const std::string &mapPath)
                         enemy->SpawnPoint.x = e["spawnPoint"]["x"].get<float>();
                         enemy->SpawnPoint.y = e["spawnPoint"]["y"].get<float>();
                     }
-                    enemy->HealthRegenTimer = e.value("healthRegenTimer", 0.0f);
+                    enemy->HealthRegenTimer = e.value("healthRegenTimer", 2.0f);
                     enemy->SetAttackCooldownTimer(e.value("attackCooldownTimer", 0.0f));
                     std::string uuid = e.value("uuid", "");
                     if (!uuid.empty())

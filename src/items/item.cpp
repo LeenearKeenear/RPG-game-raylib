@@ -26,6 +26,7 @@
 #include "../lib/json/include/nlohmann/json.hpp"
 #include "../lib/raylib/include/raymath.h"
 #include "core/utils.h"
+#include "core/game_state_saver.h"
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -380,14 +381,15 @@ void ItemDataManager::ClearItems()
  *==============================================================================*/
 
 /**
- * @brief Save all active items for a map to the saves/items/ filesystem directory.
+ * @brief Simpan semua item aktif untuk suatu map ke filesystem per-slot save.
  *
- * Serializes each item's fields (definitionId, position, isPickedUp, amount, uuid)
- * to a JSON array under the "items" key. Uses atomic write (.tmp + rename).
+ * Menyimpan tiap field item (definitionId, position, isPickedUp, amount, uuid)
+ * ke array JSON dengan key "items". Menggunakan atomic write (.tmp + rename).
  *
- * @param mapPath Raw map path used to derive save file name
+ * @param mapPath Path map mentah untuk menurunkan nama file save
+ * @param baseDir Direktori dasar (default diganti ke path per-slot otomatis)
  */
-void SaveItemsForMapDir(const std::string &mapPath)
+void SaveItemsForMapDir(const std::string &mapPath, const std::string &baseDir)
 {
     // Sanitize map path: replace path separators with underscores
     std::string safeName = mapPath;
@@ -396,7 +398,14 @@ void SaveItemsForMapDir(const std::string &mapPath)
         if (c == '/' || c == '\\') c = '_';
     }
 
-    std::string dir = "saves/items";
+    // Gunakan direktori per-slot jika baseDir adalah default
+    std::string dir = baseDir;
+    if (dir == "saves/items")
+    {
+        dir = "saves/slot_" + std::to_string(g_ActiveSaveSlot) + "/items";
+        EnsureSlotDirectory(g_ActiveSaveSlot);
+    }
+
     std::string filePath = dir + "/" + safeName;
 
     std::filesystem::create_directories(dir);
@@ -429,15 +438,16 @@ void SaveItemsForMapDir(const std::string &mapPath)
 }
 
 /**
- * @brief Load items for a map from the saves/items/ filesystem directory.
+ * @brief Muat item untuk suatu map dari filesystem per-slot save.
  *
- * Reads the JSON file, deserializes each item, reconstructs hitboxes from
- * ItemDefinition data, and populates itemData.activeItems.
+ * Membaca file JSON, deserialiasi tiap item, rekonstruksi hitbox dari
+ * data ItemDefinition, dan mengisi itemData.activeItems.
  *
- * @param mapPath Raw map path used to derive save file name
- * @return true if items were loaded, false if no save file or parse failed
+ * @param mapPath Path map mentah untuk menurunkan nama file save
+ * @param baseDir Direktori dasar (default diganti ke path per-slot otomatis)
+ * @return true jika item berhasil dimuat, false jika file tidak ada atau gagal parse
  */
-bool LoadItemsForMapDir(const std::string &mapPath)
+bool LoadItemsForMapDir(const std::string &mapPath, const std::string &baseDir)
 {
     // Sanitize map path: replace path separators with underscores
     std::string safeName = mapPath;
@@ -446,7 +456,14 @@ bool LoadItemsForMapDir(const std::string &mapPath)
         if (c == '/' || c == '\\') c = '_';
     }
 
-    std::string filePath = "saves/items/" + safeName;
+    // Gunakan direktori per-slot jika baseDir adalah default
+    std::string dir = baseDir;
+    if (dir == "saves/items")
+    {
+        dir = "saves/slot_" + std::to_string(g_ActiveSaveSlot) + "/items";
+    }
+
+    std::string filePath = dir + "/" + safeName;
 
     if (!std::filesystem::exists(filePath))
         return false;
